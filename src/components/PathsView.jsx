@@ -23,6 +23,90 @@ const pathShelves = [
 const currentPath = pathShelves[0]
 const currentRegion = currentPath.cards.find((card) => card.state === 'current')
 
+const detailLevels = [
+  {
+    level: 'Level 1',
+    title: 'Taking the First Steps',
+    lessons: [
+      { title: 'Writing Programs', image: '/assets/thinking-in-code.png', state: 'current' },
+      { title: 'Sequencing Commands', image: '/assets/programming-with-variables.png', state: 'available' },
+      { title: 'Using Variables', image: '/assets/programming-with-variables.png', state: 'available' },
+    ],
+  },
+  {
+    level: 'Level 2',
+    title: 'Building Blocks',
+    lessons: [
+      { title: 'Making Decisions', image: '/assets/scientific-thinking.png', state: 'locked' },
+      { title: 'Repeating Instructions', image: '/assets/thinking-in-code.png', state: 'locked' },
+      { title: 'Working with Data', image: '/assets/exploring-data-visually.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 3',
+    title: 'Thinking in Systems',
+    lessons: [
+      { title: 'Designing Solutions', image: '/assets/scientific-thinking.png', state: 'locked' },
+      { title: 'Testing Your Ideas', image: '/assets/probability-and-chance.png', state: 'locked' },
+      { title: 'A Complete Program', image: '/assets/thinking-in-code.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 4',
+    title: 'Functions',
+    lessons: [
+      { title: 'Reusable Steps', image: '/assets/programming-with-variables.png', state: 'locked' },
+      { title: 'Building Blocks', image: '/assets/scientific-thinking.png', state: 'locked' },
+      { title: 'Function Challenge', image: '/assets/thinking-in-code.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 5',
+    title: 'Working with Data',
+    lessons: [
+      { title: 'Data Structures', image: '/assets/exploring-data-visually.png', state: 'locked' },
+      { title: 'Patterns in Data', image: '/assets/probability-and-chance.png', state: 'locked' },
+      { title: 'Data Practice', image: '/assets/scientific-thinking.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 6',
+    title: 'Algorithms',
+    lessons: [
+      { title: 'Step-by-Step Solutions', image: '/assets/thinking-in-code.png', state: 'locked' },
+      { title: 'Finding Patterns', image: '/assets/programming-with-variables.png', state: 'locked' },
+      { title: 'Algorithm Challenge', image: '/assets/scientific-thinking.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 7',
+    title: 'Debugging',
+    lessons: [
+      { title: 'Spotting Mistakes', image: '/assets/scientific-thinking.png', state: 'locked' },
+      { title: 'Testing Ideas', image: '/assets/probability-and-chance.png', state: 'locked' },
+      { title: 'Debugging Challenge', image: '/assets/thinking-in-code.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 8',
+    title: 'Exploring with Logic',
+    lessons: [
+      { title: 'Logical Conditions', image: '/assets/programming-with-variables.png', state: 'locked' },
+      { title: 'Combining Ideas', image: '/assets/scientific-thinking.png', state: 'locked' },
+      { title: 'Logic Challenge', image: '/assets/thinking-in-code.png', state: 'locked' },
+    ],
+  },
+  {
+    level: 'Level 9',
+    title: 'Building Programs',
+    lessons: [
+      { title: 'Putting It Together', image: '/assets/thinking-in-code.png', state: 'locked' },
+      { title: 'Project Foundations', image: '/assets/exploring-data-visually.png', state: 'locked' },
+      { title: 'Final Program', image: '/assets/programming-with-variables.png', state: 'locked' },
+    ],
+  },
+]
+
 const explorePaths = [
   { type: 'career', category: 'Data & AI', family: 'ml', title: 'Machine Learning Engineer', meta: 'Beginner · 8 regions', reason: 'Prepare data, train models and deploy ML systems.', image: '/assets/scientific-thinking.png' },
   { type: 'career', category: 'Data & AI', family: 'data', title: 'Data Scientist', meta: 'Beginner · 7 regions', reason: 'Turn evidence into clear decisions with data.', image: '/assets/exploring-data-visually.png' },
@@ -36,7 +120,7 @@ const explorePaths = [
 
 const categories = ['All', 'Development', 'Data & AI', 'Cloud & Security', 'Design & Product', 'Business & Marketing', 'Quality']
 
-function CurrentPathCard({ onNotice }) {
+function CurrentPathCard({ onNotice, onOpenDetail }) {
   return (
     <section className="learning-overview" aria-labelledby="my-learning-title">
       <span className="paths-eyebrow">My learning</span>
@@ -57,7 +141,7 @@ function CurrentPathCard({ onNotice }) {
             <h4>{currentRegion.title}</h4>
             <p>{currentRegion.progress} complete</p>
           </div>
-          <button className="explore-path-action" onClick={() => onNotice(`${currentRegion.title} ready to continue`)}>
+          <button className="explore-path-action" onClick={onOpenDetail}>
             Continue <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -87,10 +171,87 @@ function ExplorePathCard({ path, onNotice }) {
   )
 }
 
+function LessonRow({ lesson, index, onStart, started }) {
+  const isCurrent = lesson.state === 'current'
+  const isLocked = lesson.state === 'locked'
+  return (
+    <article className={`path-detail-lesson path-detail-lesson-${lesson.state} path-detail-lesson-align-${index % 3}`}>
+      <div className="path-detail-lesson-art">
+        <img src="/assets/path-node.svg" alt="" />
+      </div>
+      <div className="path-detail-lesson-copy">
+        <span className="path-detail-lesson-state">
+          {isCurrent ? 'Current lesson' : isLocked ? 'Locked' : 'Available'}
+        </span>
+        <h3>{lesson.title}</h3>
+        {isCurrent && <p>Practice the foundations with a short, focused lesson.</p>}
+      </div>
+      <span className="path-detail-lesson-marker" aria-hidden="true">
+        {lesson.state === 'completed' ? '✓' : isLocked ? '□' : '○'}
+      </span>
+    </article>
+  )
+}
+
+function LearningPathDetail({ onNotice, onBack }) {
+  const [started, setStarted] = useState(false)
+  return (
+    <section className="path-detail" aria-labelledby="path-detail-title">
+      <button className="path-detail-back" onClick={onBack}>← Back to My learning</button>
+      <div className="path-detail-layout">
+        <aside className="path-detail-summary panel">
+          <div className="path-detail-summary-art">
+            <img src="/assets/thinking-in-code.png" alt="Thinking in Code illustration" />
+          </div>
+          <span className="paths-eyebrow">Skill path</span>
+          <h2 id="path-detail-title">Thinking in Code</h2>
+          <p>Build solid foundations for computational problem solving.</p>
+        </aside>
+
+        <div className="path-detail-track">
+          {detailLevels.map((level) => (
+            <section className="path-detail-level" key={level.level} aria-labelledby={`${level.level}-title`}>
+              <header className="path-detail-level-header">
+                <span>{level.level}</span>
+                <h2 id={`${level.level}-title`}>{level.title}</h2>
+              </header>
+              <div className="path-detail-lessons">
+                {level.lessons.map((lesson) => (
+                  <LessonRow
+                    key={lesson.title}
+                    lesson={lesson}
+                    index={level.lessons.indexOf(lesson)}
+                    started={started}
+                    onStart={() => {
+                      setStarted(true)
+                      onNotice(`${lesson.title} started`)
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+          <section className="path-detail-current-panel" aria-labelledby="current-lesson-title">
+            <h2 id="current-lesson-title">Writing Programs</h2>
+            <button className="path-detail-cta" onClick={() => {
+              setStarted(true)
+              onNotice('Writing Programs started')
+            }}>
+              {started ? 'Continue' : 'Start'} <span aria-hidden="true">→</span>
+            </button>
+          </section>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function PathsView({ onNotice }) {
   const [tab, setTab] = useState('learning')
+  const [view, setView] = useState('overview')
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
+
 
   const matchesPath = (path) => {
     const query = search.trim().toLowerCase()
@@ -102,6 +263,10 @@ export default function PathsView({ onNotice }) {
   const careerPaths = explorePaths.filter((path) => path.type === 'career' && matchesPath(path))
   const skillPaths = explorePaths.filter((path) => path.type === 'skill' && matchesPath(path))
   const recommendedPaths = explorePaths.filter((path) => path.type === 'career').slice(0, 3)
+
+  if (view === 'detail') {
+    return <LearningPathDetail onNotice={onNotice} onBack={() => setView('overview')} />
+  }
 
   return (
     <section className="paths-view" aria-label="Learning paths">
@@ -117,7 +282,7 @@ export default function PathsView({ onNotice }) {
 
       {tab === 'learning' ? (
         <div className="paths-learning">
-          <CurrentPathCard onNotice={onNotice} />
+          <CurrentPathCard onNotice={onNotice} onOpenDetail={() => setView('detail')} />
         </div>
       ) : (
         <div className="paths-explore">
