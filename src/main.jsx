@@ -1,10 +1,11 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import PathsView from './components/PathsView'
+import PathsView from './components/paths'
 import './styles.css'
 import './tailwind.css'
 import { ActionButton } from './components/ui/ActionButton'
 import { Badge } from './components/ui/Badge'
+import { BoltIcon, GemIcon } from './components/ui/icons'
 
 const mission = {
   title: 'Build your AI/ML career map',
@@ -15,18 +16,51 @@ const mission = {
 
 const week = ['Th', 'F', 'S', 'Su', 'M']
 
+function getInitialTheme() {
+  const stored = window.localStorage.getItem('devspace-theme')
+  if (stored === 'light' || stored === 'dark') return stored
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
 function App() {
   const [active, setActive] = useState('Home')
   const [menuOpen, setMenuOpen] = useState(false)
   const [started, setStarted] = useState(false)
   const [notice, setNotice] = useState('')
   const [devyOpen, setDevyOpen] = useState(false)
-  const [theme, setTheme] = useState(() => window.localStorage.getItem('devspace-theme') === 'light' ? 'light' : 'dark')
+  const [theme, setTheme] = useState(getInitialTheme)
+  const menuRef = useRef(null)
+  const menuButtonRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     window.localStorage.setItem('devspace-theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+
+    const closeMenu = () => {
+      setMenuOpen(false)
+      menuButtonRef.current?.focus()
+    }
+
+    const handlePointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target) && !menuButtonRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') closeMenu()
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
 
   const showNotice = (message) => {
     setNotice(message)
@@ -34,8 +68,9 @@ function App() {
   }
 
   const startMission = () => {
+    const wasStarted = started
     setStarted(true)
-    showNotice(started ? 'Mission ready to continue' : 'Mission started')
+    showNotice(wasStarted ? 'Mission ready to continue' : 'Mission started')
   }
 
   const toggleTheme = () => {
@@ -43,6 +78,11 @@ function App() {
     setTheme(nextTheme)
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
+
+  const streakDays = started ? 1 : 0
+  const xp = started ? 10 : 0
+  const xpGoal = 175
+  const xpPercent = Math.round((xp / xpGoal) * 100)
 
   return (
     <div className="app-shell">
@@ -63,20 +103,34 @@ function App() {
           ))}
         </nav>
 
+        <div className="header-chips">
+          <span className="header-chip">
+            <BoltIcon className="header-chip-icon" />
+            <span aria-hidden="true">{streakDays}</span>
+            <span className="visually-hidden">{streakDays === 1 ? '1 day streak' : `${streakDays} day streak`}</span>
+          </span>
+          <span className="header-chip">
+            <GemIcon className="header-chip-icon" />
+            <span aria-hidden="true">{xp}</span>
+            <span className="visually-hidden">{xp} XP</span>
+          </span>
+        </div>
+
         <button
+          ref={menuButtonRef}
           className="menu-button"
           onClick={() => setMenuOpen((open) => !open)}
-          aria-label="Open account menu"
+          aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
           aria-expanded={menuOpen}
         >
           ☰
         </button>
 
         {menuOpen && (
-          <div className="menu-popover">
-            <button className="menu-action" onClick={() => showNotice('Settings are coming soon')}>Settings</button>
-            <button className="menu-action" onClick={() => showNotice('Signed in as learner')}>Account</button>
-            <button className="menu-action" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
+          <div className="menu-popover" ref={menuRef} role="menu">
+            <button className="menu-action" role="menuitem" onClick={() => showNotice('Settings are coming soon')}>Settings</button>
+            <button className="menu-action" role="menuitem" onClick={() => showNotice('Signed in as learner')}>Account</button>
+            <button className="menu-action" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
           </div>
         )}
       </header>
@@ -88,16 +142,16 @@ function App() {
           <section className="panel utility-card streak-card">
             <div className="streak-header">
               <div className="streak-summary">
-                <span className="streak-number">0</span>
-                <span className="streak-symbol" aria-hidden="true">◒</span>
+                <span className="streak-number">{streakDays}</span>
+                <BoltIcon className="streak-symbol" />
               </div>
               <button className="utility-control" onClick={() => showNotice('Streak details')} aria-label="View streak details">•••</button>
             </div>
             <p>Solve <strong>3 problems</strong> to start a streak</p>
-            <div className="week-row" aria-label="Weekly streak activity">
+            <div className="week-row" role="img" aria-label="Weekly streak activity">
               {week.map((day, index) => (
                 <div className={index === 0 ? 'day active-day' : 'day'} key={day}>
-                  <span className="day-dot">{index === 0 ? '✓' : '·'}</span>
+                  <span className="day-dot"><BoltIcon className="day-dot-icon" /></span>
                   <small>{day}</small>
                 </div>
               ))}
@@ -124,8 +178,18 @@ function App() {
               </span>
               <span className="card-label">UNLOCK LEAGUES</span>
             </div>
-            <div className="league-progress"><span>0 of 175 XP</span><span>0%</span></div>
-            <div className="progress-track"><span /></div>
+            <div className="league-progress"><span>{xp} of {xpGoal} XP</span><span>{xpPercent}%</span></div>
+            <div
+              className="progress-track"
+              role="progressbar"
+              aria-label="Progress toward unlocking leagues"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={xpPercent}
+              aria-valuetext={`${xp} of ${xpGoal} XP`}
+            >
+              <span style={{ width: `${xpPercent}%` }} />
+            </div>
           </section>
 
           <section className="panel devy-card" aria-labelledby="devy-title">
@@ -172,7 +236,7 @@ function App() {
                 <p className="mission-meta">{mission.meta}</p>
               </div>
 
-              <div className="mission-object" aria-label="Mission illustration">
+              <div className="mission-object">
                 <div className="object-tile">
                   <div className="object-glow" />
                   <img src={mission.image} alt="A colorful symbolic illustration for the current mission" />
@@ -180,7 +244,7 @@ function App() {
               </div>
 
               <div className="mission-bottom">
-                <div className="progress-dots" aria-label="Step 1 of 5">
+                <div className="progress-dots" role="img" aria-label="Step 1 of 5">
                   {Array.from({ length: 5 }, (_, index) => <span className={index === 0 ? 'progress-dot active' : 'progress-dot'} key={index} />)}
                 </div>
                 <p className="mission-step"><strong>Step 1 of 5</strong> · {mission.step}</p>

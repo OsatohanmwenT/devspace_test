@@ -1,18 +1,5 @@
 @import "tailwindcss";
 
-@theme inline {
-  --breakpoint-tablet: 680px;
-  --breakpoint-desktop: 900px;
-  --color-surface-page: var(--surface-page);
-  --color-surface-menu: var(--surface-menu);
-  --color-border-hairline: var(--border-hairline);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-accent: var(--accent);
-  --color-accent-deep: var(--accent-deep);
-}
-
 @layer base {
   *,
   ::before,
