@@ -635,6 +635,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .path-detail-lesson-tray > div { min-width: 0; }
 .path-detail-lesson-tray > div > span { color: var(--text-secondary); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .path-detail-lesson-tray h2 { margin: 5px 0 0; overflow: hidden; color: var(--text-primary); font-family: 'Space Grotesk', Arial, sans-serif; font-size: 18px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.path-detail-lesson-description { max-width: 420px; margin: 6px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
 @media (max-width: 900px) {
   .path-detail-layout { grid-template-columns: 1fr; gap: 36px; }
   .path-detail-summary {
@@ -694,6 +695,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .learning-current-footer { align-items: stretch; flex-direction: column; gap: 14px; padding-top: 18px; }
   .learning-continue-button { width: 100%; min-height: 48px; }
   .illustrated-path-grid { grid-template-columns: 1fr; }
-  .illustrated-path-grid .explore-path-card { min-height: 0; }
+.illustrated-path-grid .explore-path-card { min-height: 0; }
 .illustrated-path-grid .explore-path-art { min-height: 210px; }
 }

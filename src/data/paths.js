@@ -32,9 +32,9 @@ export const detailLevels = [
     level: 'Level 1',
     title: 'Taking the First Steps',
     lessons: [
-      { id: 'writing-programs', title: 'Writing Programs', state: 'current' },
-      { id: 'sequencing-commands', title: 'Sequencing Commands', state: 'available' },
-      { id: 'using-variables', title: 'Using Variables', state: 'available', checkpoint: true },
+      { id: 'writing-programs', title: 'Writing Programs', state: 'current', description: 'Turn ideas into simple programs a computer can run.' },
+      { id: 'sequencing-commands', title: 'Sequencing Commands', state: 'available', description: 'Put instructions in an order a computer can follow.' },
+      { id: 'using-variables', title: 'Using Variables', state: 'available', checkpoint: true, description: 'Store information your programs can use.' },
     ],
   },
   {

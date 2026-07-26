@@ -71,6 +71,7 @@ export function LearningPathDetail({ onNotice, onBack }) {
               <div>
                 <span>Selected lesson</span>
                 <h2>{selectedLesson.title}</h2>
+                {selectedLesson.description && <p className="path-detail-lesson-description">{selectedLesson.description}</p>}
               </div>
               <ActionButton variant="primary" className="mission-button w-fit! px-20" onClick={() => {
                 setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
