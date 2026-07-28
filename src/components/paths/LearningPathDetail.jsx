@@ -3,7 +3,7 @@ import { ActionButton } from '../ui/ActionButton'
 import { detailLevels } from '../../data/paths'
 import { LessonRow } from './LessonRow'
 
-export function LearningPathDetail({ onNotice, onBack }) {
+export function LearningPathDetail({ onNotice, onOpenLesson, onBack }) {
   const lessons = detailLevels.flatMap((level) => level.lessons)
   const currentLesson = lessons.find((lesson) => lesson.state === 'current')
   const [selectedLessonId, setSelectedLessonId] = useState(currentLesson?.id)
@@ -77,7 +77,7 @@ export function LearningPathDetail({ onNotice, onBack }) {
                 setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
                   ? startedIds
                   : [...startedIds, selectedLesson.id])
-                onNotice(`${selectedLesson.title} ${selectedLessonStarted ? 'ready to continue' : 'started'}`)
+                onOpenLesson(selectedLesson.id)
               }}>
                 {selectedLessonStarted ? 'Continue' : 'Start'}
               </ActionButton>

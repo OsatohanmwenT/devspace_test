@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import PathsView from './components/paths'
+import LessonView from './components/lesson/LessonView'
 import './styles.css'
 import './tailwind.css'
 import { ActionButton } from './components/ui/ActionButton'
@@ -29,6 +30,7 @@ function App() {
   const [notice, setNotice] = useState('')
   const [devyOpen, setDevyOpen] = useState(false)
   const [theme, setTheme] = useState(getInitialTheme)
+  const [openLesson, setOpenLesson] = useState(null)
   const menuRef = useRef(null)
   const menuButtonRef = useRef(null)
 
@@ -136,7 +138,7 @@ function App() {
       </header>
 
       <main className={active === 'Paths' ? 'paths-page' : 'content'}>
-        {active === 'Paths' ? <PathsView onNotice={showNotice} /> : (
+        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : (
           <>
         <aside className="support-rail" aria-label="Learner support">
           <section className="panel utility-card streak-card">
@@ -260,6 +262,8 @@ function App() {
       </main>
 
       {notice && <div className="toast" role="status">{notice}</div>}
+
+      {openLesson && <LessonView navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
     </div>
   )
 }

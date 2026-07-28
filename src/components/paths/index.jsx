@@ -9,7 +9,7 @@ const tabs = [
   { id: 'explore', label: 'Explore' },
 ]
 
-export default function PathsView({ onNotice }) {
+export default function PathsView({ onNotice, onOpenLesson }) {
   const [tab, setTab] = useState('learning')
   const [view, setView] = useState('overview')
   const [category, setCategory] = useState('All')
@@ -40,15 +40,14 @@ export default function PathsView({ onNotice }) {
   }
 
   if (view === 'detail') {
-    return <LearningPathDetail onNotice={onNotice} onBack={() => setView('overview')} />
+    return <LearningPathDetail onNotice={onNotice} onOpenLesson={onOpenLesson} onBack={() => setView('overview')} />
   }
 
   return (
     <section className={`paths-view paths-view-${tab}`} aria-label="Learning paths">
       <header className="paths-page-header">
-        <span className="paths-eyebrow">Learning</span>
         <h1>Learning Paths</h1>
-        <p>Step-by-step paths to mastery</p>
+        {tab === 'explore' && <p>Step-by-step paths to mastery</p>}
         <div className="paths-tabs" role="tablist" aria-label="Path views" onKeyDown={handleTabKeyDown}>
           {tabs.map((item, index) => (
             <button
