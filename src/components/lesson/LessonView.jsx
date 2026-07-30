@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
+import { CodingLessonWorkspace } from './CodingLessonWorkspace'
 
-export default function LessonView({ navigationStyle = 'segments', onExit }) {
+export default function LessonView({ mode = 'coding', navigationStyle = 'segments', onExit }) {
   const [devyOpen, setDevyOpen] = useState(false)
+  const isCoding = mode === 'coding'
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -15,7 +17,7 @@ export default function LessonView({ navigationStyle = 'segments', onExit }) {
   }, [onExit])
 
   return (
-    <section className={devyOpen ? 'lesson-shell is-devy-open' : 'lesson-shell'} aria-label="Lesson">
+    <section className={`${devyOpen ? 'lesson-shell is-devy-open' : 'lesson-shell'}${isCoding ? ' lesson-shell-coding' : ''}`} aria-label="Lesson">
       <header className="lesson-shell-topbar">
         <button type="button" className="lesson-shell-exit" onClick={onExit} aria-label="Exit lesson">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -24,7 +26,7 @@ export default function LessonView({ navigationStyle = 'segments', onExit }) {
         {navigationStyle === 'pill' ? <LessonNavigationPill /> : <LessonProgressStrip />}
       </header>
 
-      {devyOpen && (
+      {!isCoding && devyOpen && (
         <aside className="lesson-devy-sidebar" aria-label="Devy assistant">
           <div className="lesson-devy-sidebar-header">
             <strong>Devy</strong>
@@ -40,17 +42,17 @@ export default function LessonView({ navigationStyle = 'segments', onExit }) {
       )}
 
       <main className="lesson-shell-main">
-        <div className="lesson-shell-canvas" aria-label="Lesson content" />
+        {isCoding ? <CodingLessonWorkspace /> : <div className="lesson-shell-canvas" aria-label="Lesson content" />}
       </main>
 
-      <footer className="lesson-shell-footer">
+      {!isCoding && <footer className="lesson-shell-footer">
         {!devyOpen ? (
           <button type="button" className="lesson-devy-launcher" onClick={() => setDevyOpen(true)} aria-label="Open Devy sidebar">
             <img src="/assets/devy.svg" alt="" />
           </button>
         ) : <span />}
         <ActionButton variant="primary" className="lesson-shell-check" disabled>Check</ActionButton>
-      </footer>
+      </footer>}
     </section>
   )
 }

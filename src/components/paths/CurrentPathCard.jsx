@@ -36,10 +36,10 @@ export function CurrentPathCard({ onOpenDetail }) {
 
         <section className="learning-current-region-focus" aria-labelledby="current-region-title">
           <div className="learning-current-region-main">
-            <span>Continue with</span>
-            <h3 id="current-region-title">{currentRegion.title}</h3>
-            <p><strong>Next lesson: {nextLesson?.title}</strong>{nextLesson?.description && ` — ${nextLesson.description}`}</p>
-            <small>{currentRegion.progress} complete</small>
+            <span>Next lesson</span>
+            <h3 id="current-region-title">{nextLesson?.title}</h3>
+            {nextLesson?.description && <p>{nextLesson.description}</p>}
+            <small>{currentRegion.title} · {currentRegion.progress} complete</small>
           </div>
           <button className="learning-continue-button" aria-label={'Continue ' + currentRegion.title} onClick={onOpenDetail}>Continue</button>
         </section>
