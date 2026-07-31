@@ -7,13 +7,7 @@ import './tailwind.css'
 import { ActionButton } from './components/ui/ActionButton'
 import { Badge } from './components/ui/Badge'
 import { BoltIcon, GemIcon } from './components/ui/icons'
-
-const mission = {
-  title: 'Build your AI/ML career map',
-  meta: 'Region 0 · Mission 1 · About 15 min',
-  step: 'Understand AI, ML and Data Science',
-  image: '/assets/hero-illustration.svg',
-}
+import { currentPath, detailLevels } from './data/paths'
 
 const week = ['Th', 'F', 'S', 'Su', 'M']
 
@@ -84,7 +78,12 @@ function App() {
   const streakDays = started ? 1 : 0
   const xp = started ? 10 : 0
   const xpGoal = 175
-  const xpPercent = Math.round((xp / xpGoal) * 100)
+
+  const nextLesson = detailLevels.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
+  const currentStepIndex = currentPath.cards.findIndex((card) => card.state === 'current')
+  const currentRegionCard = currentPath.cards[currentStepIndex] ?? currentPath.cards[0]
+  const completedRegions = currentPath.cards.filter((card) => card.state === 'completed').length
+  const missionProgress = Math.round((completedRegions / currentPath.cards.length) * 100)
 
   return (
     <div className="app-shell">
@@ -107,7 +106,7 @@ function App() {
 
         <div className="header-chips">
           <span className="header-chip">
-            <BoltIcon className="header-chip-icon" />
+            <BoltIcon className="header-chip-icon text-green-300!" />
             <span aria-hidden="true">{streakDays}</span>
             <span className="visually-hidden">{streakDays === 1 ? '1 day streak' : `${streakDays} day streak`}</span>
           </span>
@@ -147,7 +146,7 @@ function App() {
                 <span className="streak-number">{streakDays}</span>
                 <BoltIcon className="streak-symbol" />
               </div>
-              <button className="utility-control" onClick={() => showNotice('Streak details')} aria-label="View streak details">•••</button>
+              <button className="utility-control" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
             <p>Solve <strong>3 problems</strong> to start a streak</p>
             <div className="week-row" role="img" aria-label="Weekly streak activity">
@@ -174,24 +173,14 @@ function App() {
           </section>
 
           <section className="panel league-card">
-            <div className="league-title">
-              <span className="league-icon" aria-hidden="true">
-                <img src="/assets/leagues-locked.svg" alt="" />
-              </span>
-              <span className="card-label">UNLOCK LEAGUES</span>
+            <div className="league-heading">
+              <strong>Bronze league</strong>
+              <span>3 days left to join</span>
             </div>
-            <div className="league-progress"><span>{xp} of {xpGoal} XP</span><span>{xpPercent}%</span></div>
-            <div
-              className="progress-track"
-              role="progressbar"
-              aria-label="Progress toward unlocking leagues"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow={xpPercent}
-              aria-valuetext={`${xp} of ${xpGoal} XP`}
-            >
-              <span style={{ width: `${xpPercent}%` }} />
+            <div className="flex w-full items-center justify-center py-8 bg-neutral-700/40 my-2 rounded-lg" aria-hidden="true">
+              <img src="/assets/leagues-locked.svg" alt="" />
             </div>
+            <p className="league-caption">Earn pixels to join this week's league</p>
           </section>
 
           <section className="panel devy-card" aria-labelledby="devy-title">
@@ -202,7 +191,7 @@ function App() {
                 <p>Get one hint for your current mission.</p>
                 <ActionButton
                   variant="neutral"
-                  className="devy-button"
+                  className="devy-button border! border-neutral-400"
                   onClick={() => setDevyOpen((open) => !open)}
                   aria-expanded={devyOpen}
                   aria-controls="devy-hint"
@@ -229,27 +218,27 @@ function App() {
         <section className="mission-section">
           <h1>Your next mission</h1>
 
-          <div className="mission-card-stack">
-            <div className="mission-card-back" aria-hidden="true" />
-            <article className="mission-card">
+          <div className="mission-card-stack ">
+            {/* <div className="mission-card-back" aria-hidden="true" /> */}
+            <article className="mission-card bg-[#1C1C21]! border border-[#3C3D3F]">
               <div className="mission-copy">
-                <Badge>Current mission</Badge>
-                <h2>{mission.title}</h2>
-                <p className="mission-meta">{mission.meta}</p>
+                <Badge>{currentPath.level}</Badge>
+                <h2>{currentPath.title}</h2>
+                <p className="mission-meta">{currentRegionCard.title} · {missionProgress}% complete</p>
               </div>
 
               <div className="mission-object">
                 <div className="object-tile">
                   <div className="object-glow" />
-                  <img src={mission.image} alt="A colorful symbolic illustration for the current mission" />
+                  <img src={currentPath.emblem} alt="A colorful symbolic illustration for the current path" />
                 </div>
               </div>
 
               <div className="mission-bottom">
-                <div className="progress-dots" role="img" aria-label="Step 1 of 5">
-                  {Array.from({ length: 5 }, (_, index) => <span className={index === 0 ? 'progress-dot active' : 'progress-dot'} key={index} />)}
+                <div className="progress-dots" role="img" aria-label={`Step ${currentStepIndex + 1} of ${currentPath.cards.length}`}>
+                  {currentPath.cards.map((card, index) => <span className={index === currentStepIndex ? 'progress-dot active' : 'progress-dot'} key={card.id} />)}
                 </div>
-                <p className="mission-step"><strong>Step 1 of 5</strong> · {mission.step}</p>
+                <p className="mission-step"><strong>Step {currentStepIndex + 1} of {currentPath.cards.length}</strong> · {nextLesson?.title}</p>
                 <ActionButton variant="primary" className="mission-button" onClick={startMission}>
                   {started ? 'Continue mission' : 'Start mission'} <span aria-hidden="true">→</span>
                 </ActionButton>

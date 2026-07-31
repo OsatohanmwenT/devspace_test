@@ -115,14 +115,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .premium-heading span:not(.premium-graphic) { color: var(--text-secondary); font-size: 13px; }
 .premium-button { width: 100%; min-height: 52px; font-size: 15px; font-weight: 500; }
 
-.league-card { padding: 22px; }
-.league-title { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.league-icon { display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: 9px; background: var(--surface-tile); }
-.league-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.card-label { color: var(--text-secondary); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
-.league-progress { display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-secondary); font-size: 13px; }
-.progress-track { height: 6px; overflow: hidden; border-radius: 3px; background: var(--progress-track-bg); }
-.progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--blue-soft); }
+.league-card { padding: 22px; text-align: center; }
+.league-heading { display: grid; gap: 2px; margin-bottom: 14px; text-align: left; }
+.league-heading strong { color: var(--text-primary); font-size: 15px; font-weight: 600; }
+.league-heading span { color: var(--text-secondary); font-size: 13px; }
+.league-art { display: grid; place-items: center; margin: 0 auto 12px; border-radius: var(--radius-lg); background: var(--surface-tile); padding: 18px; }
+.league-art img { display: block; width: 56px; height: 56px; object-fit: contain; }
+.league-caption { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
 .devy-card { overflow: hidden; padding: 18px; }
 .devy-card-main { display: flex; min-height: 120px; align-items: center; justify-content: space-between; gap: 10px; }
 .devy-copy { min-width: 0; }
