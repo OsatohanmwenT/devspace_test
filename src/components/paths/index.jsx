@@ -35,7 +35,7 @@ export default function PathsView({ onOpenLesson }) {
   return (
     <section className="grid gap-10 max-[720px]:gap-[30px]" aria-label="Learning paths">
       <header className="grid gap-[7px] max-w-[680px]">
-        {/* <span className="text-[11px] font-semibold tracking-[.1em] uppercase text-[#4169e1] [[data-theme=light]_&]:text-[#19079b]">Your learning space</span> */}
+        {/* <span className="text-[11px] font-semibold tracking-[.1em] uppercase text-[#4169e1] [[data-theme=light]_&]:text-[#19079b]">Your learning space</span>  */}
         <h1 className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(36px,4vw,48px)] font-medium tracking-[-.05em]">Learning Paths</h1>
         <p className="text-[17px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Pick up where you left off, or explore what you want to learn next.</p>
       </header>

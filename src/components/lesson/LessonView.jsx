@@ -45,7 +45,7 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
       className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] ${isCoding ? 'grid-rows-[52px_minmax(0,1fr)]' : 'grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px]'}`}
       aria-label="Lesson"
     >
-      <header className="relative grid grid-cols-[1fr_auto_1fr] items-center bg-[#1a1a1a] border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] px-5 max-[720px]:px-3.5">
+      <header className="relative grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
         <button
           type="button"
           className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}

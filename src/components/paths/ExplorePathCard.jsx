@@ -14,15 +14,15 @@ export function ExplorePathCard({ path, onSelect }) {
 
   return (
     <article
-      className={`flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,${family.accent}_32%,#404040)] [[data-theme=light]_&]:border-[color-mix(in_srgb,${family.accent}_32%,#eeeeeb)] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white`}
+      className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
     >
       <div
         className={`grid min-h-44 place-items-center overflow-hidden [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_58%,#ffffff)] max-[900px]:min-h-[156px] max-[680px]:min-h-[164px]`}
       >
         <img className="block h-[150px] w-[min(78%,210px)] object-contain max-[900px]:h-[132px] max-[680px]:h-[138px]" src={path.image} alt="" />
       </div>
-      <div className="flex min-w-0 flex-1 border-t border-neutral-800 bg-neutral-800 flex-col p-[18px] max-[680px]:p-4">
-        <span className="text-[11px] font-bold tracking-[.08em] text-neutral-300 uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
+      <div className="flex min-w-0 flex-1 flex-col border-t border-neutral-800 [[data-theme=light]_&]:border-[#e5e5e5] bg-neutral-800 [[data-theme=light]_&]:bg-[#f5f5f4] p-[18px] max-[680px]:p-4">
+        <span className="text-[11px] font-bold tracking-[.08em] text-neutral-300 [[data-theme=light]_&]:text-[#525252] uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
         <h3 className="my-[6px] mb-2 font-['Space_Grotesk',Arial,sans-serif] text-xl leading-[1.15] font-medium tracking-[-.035em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] max-[680px]:text-lg">{path.title}</h3>
         <p className="mb-2.5 text-xs leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.reason}</p>
         {/* <div className="mt-2 flex items-center justify-between gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] pt-3">
