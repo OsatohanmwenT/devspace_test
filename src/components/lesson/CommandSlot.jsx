@@ -6,3 +6,4 @@ export function CommandSlot({ index, label }) {
     </div>
   )
 }
+

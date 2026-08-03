@@ -9,3 +9,4 @@ export function SettingsSection({ id, title, description, children }) {
     </section>
   )
 }
+

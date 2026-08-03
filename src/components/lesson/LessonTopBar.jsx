@@ -9,3 +9,4 @@ export function LessonTopBar({ onClose, center, right }) {
     </header>
   )
 }
+

@@ -10,3 +10,4 @@ export function LessonProgressBar({ percent, dotCount = 3 }) {
     </div>
   )
 }
+

@@ -37,3 +37,4 @@ export function AppSidebar({ active, onNavigate, theme, onToggleTheme }) {
     </aside>
   )
 }
+

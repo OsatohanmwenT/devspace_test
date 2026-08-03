@@ -144,3 +144,4 @@ export default function SettingsView({ theme, onToggleTheme, onNotice }) {
     </section>
   )
 }
+

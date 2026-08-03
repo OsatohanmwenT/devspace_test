@@ -10,3 +10,4 @@ export function CommandChip({ verb, object, onClick, used }) {
     </button>
   )
 }
+

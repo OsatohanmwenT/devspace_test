@@ -74,6 +74,7 @@ export const writingProgramsQuiz = {
   questions: [
     {
       id: 'q1',
+      type: 'multiple-choice',
       prompt: 'What order does Python follow when it runs a file?',
       options: [
         'Top to bottom, one statement at a time',
@@ -86,6 +87,7 @@ export const writingProgramsQuiz = {
     },
     {
       id: 'q2',
+      type: 'multiple-choice',
       prompt: 'Why use a variable instead of repeating a number?',
       options: [
         'It makes the program run faster',
@@ -98,6 +100,7 @@ export const writingProgramsQuiz = {
     },
     {
       id: 'q3',
+      type: 'multiple-choice',
       prompt: 'In `yearly_hours = hours_per_week * 52`, what does `yearly_hours` become?',
       options: [
         'A copy of the number 52',
@@ -107,6 +110,22 @@ export const writingProgramsQuiz = {
       ],
       correctIndex: 1,
       explanation: 'The expression on the right is evaluated first, then stored in yearly_hours.',
+    },
+  ],
+}
+
+export const writingProgramsClickFillQuiz = {
+  title: 'Fill in the program',
+  intro: 'Use the variables and values from this lesson to complete the calculation.',
+  questions: [
+    {
+      id: 'q4',
+      type: 'fill',
+      prompt: 'Fill in the blanks to complete the program.',
+      segments: ['A variable named ', ' stores the value calculated by ', ' multiplied by ', '.'],
+      answers: ['yearly_hours', 'hours_per_week', '52'],
+      options: ['yearly_hours', 'hours_per_week', '52'],
+      explanation: 'yearly_hours stores the result of hours_per_week multiplied by 52.',
     },
   ],
 }

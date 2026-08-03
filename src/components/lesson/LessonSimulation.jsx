@@ -20,3 +20,4 @@ export function LessonSimulation({ progress = 0 }) {
     </div>
   )
 }
+
