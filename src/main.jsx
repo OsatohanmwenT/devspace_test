@@ -284,36 +284,6 @@ function App() {
             </ActionButton>
           </section>
 
-          <section className="overflow-hidden p-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-labelledby="devy-title">
-            <div className="flex min-h-[120px] items-center justify-between gap-2.5">
-              <div className="min-w-0">
-                <span className="text-[#6f66ec] text-[10px] font-semibold tracking-[.12em]">DEVY</span>
-                <h2 id="devy-title" className="mt-[5px] mb-1 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-lg font-medium tracking-[-.03em]">Need a nudge?</h2>
-                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.4]">Get one hint for your current mission.</p>
-                <ActionButton
-                  variant="neutral"
-                  className="border! border-neutral-400 min-h-9 mt-3 px-3.5 text-xs font-medium"
-                  onClick={() => setDevyOpen((open) => !open)}
-                  aria-expanded={devyOpen}
-                  aria-controls="devy-hint"
-                >
-                  {devyOpen ? 'Hide hint' : 'Ask Devy'}
-                </ActionButton>
-              </div>
-              <img className="block w-[86px] h-[86px] max-[680px]:w-[72px] max-[680px]:h-[72px] flex-none object-contain" src="/assets/devy.svg" alt="" />
-            </div>
-
-            {devyOpen && (
-              <div className="grid gap-2.5 mt-3.5 pt-3.5 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]" id="devy-hint" role="status">
-                <div>
-                  <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-xs font-medium">Try this first</strong>
-                  <p className="mt-1 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.45]">Start by listing three AI/ML roles that interest you. You can refine them as you learn.</p>
-                </div>
-                <button className="justify-self-start border-0 bg-transparent p-0 text-[#6f66ec] text-xs font-medium focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-[3px]" onClick={() => setDevyOpen(false)}>Got it</button>
-              </div>
-            )}
-          </section>
-
         </aside>
 
         <section className="min-w-0 max-[680px]:order-1">
@@ -352,6 +322,25 @@ function App() {
         )}
       </main>
 
+      {active === 'Home' && (
+        <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
+          {devyOpen && (
+            <section id="devy-hint" className="w-[min(320px,calc(100vw-36px))] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-4 shadow-[0_12px_30px_rgba(0,0,0,.24)] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white" role="status" aria-label="Devy hint">
+              <div className="flex items-start gap-3">
+                <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
+                <div>
+                  <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Try this first</strong>
+                  <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Start by listing three AI/ML roles that interest you. You can refine them as you learn.</p>
+                </div>
+              </div>
+            </section>
+          )}
+          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen((open) => !open)} aria-expanded={devyOpen} aria-controls="devy-hint" aria-label={devyOpen ? 'Close Devy hint' : 'Ask Devy'}>
+            <img className="size-full object-contain" src="/assets/devy.svg" alt="" />
+          </button>
+        </div>
+      )}
+
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
 
       {openLesson && <LessonView navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
@@ -365,4 +354,3 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
-
