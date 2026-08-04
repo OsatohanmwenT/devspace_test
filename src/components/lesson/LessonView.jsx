@@ -3,20 +3,41 @@ import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
 import { CodingLessonWorkspace } from './CodingLessonWorkspace'
+import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
 import { LessonQuiz } from './LessonQuiz'
-import { writingProgramsArticle, writingProgramsClickFillQuiz, writingProgramsQuiz } from './lessonContent'
+import { writingProgramsLesson } from './lessonContent'
+import { buildLessonFlow } from './lessonFlow'
 
-const STEP_INDEX = { article: 1, quiz: 2, fill: 3, coding: 4 }
-const PREVIOUS_STEP = { article: undefined, quiz: 'article', fill: 'quiz', coding: 'fill' }
-const NEXT_STEP = { article: 'quiz', quiz: 'fill', fill: 'coding' }
-const CONTINUE_LABEL = { article: 'Continue to quiz', quiz: 'Continue to Click & Fill', fill: 'Continue to coding' }
+const lessonFlow = buildLessonFlow(writingProgramsLesson)
 
-export default function LessonView({ mode = 'article', navigationStyle = 'segments', onExit }) {
-  const [step, setStep] = useState(mode)
+function loadLessonSession(storageKey) {
+  try {
+    const savedSession = JSON.parse(localStorage.getItem(storageKey))
+    if (!savedSession) return { stepIndex: 0, activityStates: {} }
+
+    return {
+      stepIndex: Math.min(Math.max(savedSession.stepIndex ?? 0, 0), lessonFlow.length - 1),
+      activityStates: savedSession.activityStates ?? {},
+    }
+  } catch {
+    return { stepIndex: 0, activityStates: {} }
+  }
+}
+
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit }) {
+  const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
+  const storageKey = `devspace-lesson-session:${activeLessonId}`
+  const [session, setSession] = useState(() => loadLessonSession(storageKey))
   const [isDevyOpen, setIsDevyOpen] = useState(false)
-  const isCoding = step === 'coding'
-  const previousStep = PREVIOUS_STEP[step]
+  const currentStep = lessonFlow[session.stepIndex]
+  const isCoding = currentStep.kind === 'activity' && currentStep.type === 'coding'
+  const isMilestone = currentStep.kind === 'transition' || currentStep.kind === 'complete'
+  const isQuiz = currentStep.kind === 'activity' && currentStep.type === 'quiz'
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(session))
+  }, [session, storageKey])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -37,15 +58,47 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
     }
   }, [])
 
-  const isDevyPanelOpen = isDevyOpen && !isCoding
+  const goNext = () => {
+    setSession((current) => ({
+      ...current,
+      stepIndex: Math.min(current.stepIndex + 1, lessonFlow.length - 1),
+    }))
+    setIsDevyOpen(false)
+  }
+
+  const goPrevious = () => {
+    setSession((current) => ({ ...current, stepIndex: Math.max(current.stepIndex - 1, 0) }))
+    setIsDevyOpen(false)
+  }
+
+  const saveActivityState = (activityId, activityState) => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [activityId]: activityState },
+    }))
+  }
+
+  const returnToPath = () => {
+    localStorage.removeItem(storageKey)
+    onExit()
+  }
+
+  const isDevyPanelOpen = isDevyOpen && !isCoding && !isMilestone
   const focusRing = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]'
+  const footerAction = currentStep.kind === 'transition'
+    ? { label: `Continue to ${currentStep.nextConcept.title}`, onClick: goNext }
+    : currentStep.kind === 'complete'
+      ? { label: 'Return to path', onClick: returnToPath }
+      : currentStep.type === 'article'
+        ? { label: 'Continue to check', onClick: goNext }
+        : null
 
   return (
     <section
       className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] ${isCoding ? 'grid-rows-[52px_minmax(0,1fr)]' : 'grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px]'}`}
       aria-label="Lesson"
     >
-      <header className="relative grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
+      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
         <button
           type="button"
           className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}
@@ -57,9 +110,9 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
 
         {navigationStyle === 'pill' ? <LessonNavigationPill /> : (
           <LessonProgressStrip
-            currentStep={STEP_INDEX[step]}
-            totalSteps={4}
-            onPrevious={previousStep ? () => setStep(previousStep) : undefined}
+            currentStep={session.stepIndex + 1}
+            totalSteps={lessonFlow.length}
+            onPrevious={session.stepIndex > 0 ? goPrevious : undefined}
           />
         )}
       </header>
@@ -67,13 +120,31 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
       <main
         className={`min-w-0 min-h-0 p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
       >
-        {step === 'article' && <LessonArticle article={writingProgramsArticle} />}
-        {step === 'quiz' && <LessonQuiz quiz={writingProgramsQuiz} />}
-        {step === 'fill' && <LessonQuiz quiz={writingProgramsClickFillQuiz} />}
-        {step === 'coding' && <CodingLessonWorkspace />}
+        {currentStep.kind === 'activity' && currentStep.type === 'article' && (
+          <LessonArticle article={currentStep.content} />
+        )}
+        {currentStep.kind === 'activity' && currentStep.type === 'quiz' && (
+          <LessonQuiz
+            key={currentStep.id}
+            quiz={currentStep.content}
+            initialState={session.activityStates[currentStep.id]}
+            onStateChange={(activityState) => saveActivityState(currentStep.id, activityState)}
+            onComplete={goNext}
+          />
+        )}
+        {currentStep.kind === 'activity' && currentStep.type === 'coding' && (
+          <CodingLessonWorkspace
+            key={currentStep.id}
+            initialState={session.activityStates[currentStep.id]}
+            onStateChange={(activityState) => saveActivityState(currentStep.id, activityState)}
+            onComplete={goNext}
+          />
+        )}
+        {currentStep.kind === 'transition' && <ConceptTransition {...currentStep.transition} />}
+        {currentStep.kind === 'complete' && <ConceptTransition {...currentStep.completion} />}
       </main>
 
-      {!isCoding && <aside
+      {!isCoding && !isMilestone && <aside
         className={`absolute z-[1] top-16 bottom-0 left-0 flex w-80 max-[720px]:w-full flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
@@ -105,9 +176,9 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
       </aside>}
 
       {!isCoding && <footer
-        className={`grid grid-cols-[1fr_auto] items-center border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0' : 'ml-0'}`}
+        className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[1fr_auto]'} items-center border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0' : 'ml-0'}`}
       >
-        <button
+        {!isMilestone && <button
           type="button"
           className={`grid w-[70px] h-[70px] max-[720px]:w-[58px] max-[720px]:h-[58px] place-items-center border-0 bg-transparent p-0 ${focusRing}`}
           onClick={() => setIsDevyOpen(true)}
@@ -115,16 +186,16 @@ export default function LessonView({ mode = 'article', navigationStyle = 'segmen
           aria-expanded={isDevyOpen}
         >
           <img className="w-full h-full object-contain" src="/assets/devy.svg" alt="" />
-        </button>
-        <ActionButton
+        </button>}
+        {footerAction && <ActionButton
           variant="primary"
-          className="min-w-[200px] max-[720px]:min-w-[164px] min-h-[50px] text-[15px] font-semibold"
-          onClick={() => { setIsDevyOpen(false); setStep(NEXT_STEP[step]) }}
+          className={`${isMilestone ? 'w-[min(100%,640px)]' : 'min-w-[200px] max-[720px]:min-w-[164px]'} min-h-[50px] text-[15px] font-semibold`}
+          onClick={footerAction.onClick}
         >
-          {CONTINUE_LABEL[step]}
-        </ActionButton>
+          {footerAction.label}
+        </ActionButton>}
+        {isQuiz && <span className="sr-only" aria-live="polite">Complete the exercise to continue.</span>}
       </footer>}
     </section>
   )
 }
-

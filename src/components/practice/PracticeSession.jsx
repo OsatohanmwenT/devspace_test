@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { practiceSessions } from '../../data/practice'
 import { LessonQuiz } from '../lesson/LessonQuiz'
 
-export function PracticeSession({ sessionId, onExit }) {
+export function PracticeSession({ sessionId, onExit, onComplete }) {
   const session = practiceSessions.find((item) => item.id === sessionId)
 
   useEffect(() => {
@@ -41,7 +41,10 @@ export function PracticeSession({ sessionId, onExit }) {
       </header>
 
       <main className="min-w-0 min-h-0 overflow-auto">
-        <LessonQuiz quiz={{ title: session.title, intro: `A ${session.minutes}-minute practice round on ${session.topic}.`, questions: session.questions }} />
+        <LessonQuiz
+          quiz={{ title: session.title, intro: `A ${session.minutes}-minute practice round on ${session.topic}.`, questions: session.questions }}
+          onChecked={({ correctCount, total }) => onComplete?.(session.id, correctCount, total)}
+        />
       </main>
     </section>
   )

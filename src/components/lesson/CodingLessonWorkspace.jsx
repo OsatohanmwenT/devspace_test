@@ -91,11 +91,11 @@ function EditorSlot({ code, onChange }) {
   )
 }
 
-export function CodingLessonWorkspace() {
+export function CodingLessonWorkspace({ initialState, onStateChange, onComplete }) {
   const workspaceRef = useRef(null)
-  const [code, setCode] = useState(lesson.starterCode)
-  const [runResult, setRunResult] = useState(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [code, setCode] = useState(initialState?.code ?? lesson.starterCode)
+  const [runResult, setRunResult] = useState(initialState?.runResult ?? null)
+  const [submitted, setSubmitted] = useState(initialState?.submitted ?? false)
   const [instructionWidth, setInstructionWidth] = useState(450)
   const [consoleHeight, setConsoleHeight] = useState(260)
   const [resizing, setResizing] = useState(null)
@@ -129,13 +129,30 @@ export function CodingLessonWorkspace() {
     setCode(lesson.starterCode)
     setRunResult(null)
     setSubmitted(false)
+    onStateChange?.({ code: lesson.starterCode, runResult: null, submitted: false })
   }
 
   const runCode = () => {
-    setSubmitted(false)
-    setRunResult(lesson.answerPattern.test(code)
+    const nextResult = lesson.answerPattern.test(code)
       ? { type: 'output', text: '312' }
-      : { type: 'error', text: 'File "warmup.py", line 5\n  yearly = hours ____\n                 ^^^^\nSyntaxError: invalid syntax' })
+      : { type: 'error', text: 'File "warmup.py", line 5\n  yearly = hours ____\n                 ^^^^\nSyntaxError: invalid syntax' }
+
+    setSubmitted(false)
+    setRunResult(nextResult)
+    onStateChange?.({ code, runResult: nextResult, submitted: false })
+  }
+
+  const updateCode = (nextCode) => {
+    setCode(nextCode)
+    setRunResult(null)
+    setSubmitted(false)
+    onStateChange?.({ code: nextCode, runResult: null, submitted: false })
+  }
+
+  const submitBuild = () => {
+    setSubmitted(true)
+    onStateChange?.({ code, runResult, submitted: true })
+    onComplete?.()
   }
 
   const adjustSeparator = (separator, delta) => {
@@ -263,7 +280,7 @@ export function CodingLessonWorkspace() {
               <span className="inline-block w-2 h-2 rounded-full bg-[#888df2]" aria-hidden="true" /> {lesson.fileName}
             </strong>
           </header>
-          <EditorSlot code={code} onChange={setCode} />
+          <EditorSlot code={code} onChange={updateCode} />
         </div>
 
         <footer className="flex items-center justify-between border-0 border-t border-t-[#404040] border-b border-b-[#404040] bg-[#1f1f1f] py-[7px] px-3.5 max-[720px]:py-2 max-[720px]:px-3">
@@ -290,7 +307,7 @@ export function CodingLessonWorkspace() {
               variant="primary"
               className="min-h-[34px] text-[13px] font-semibold max-[720px]:min-h-11 max-[720px]:flex-1 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:translate-y-0"
               disabled={!canSubmit || submitted}
-              onClick={() => setSubmitted(true)}
+              onClick={submitBuild}
               aria-describedby={!canSubmit ? 'coding-submit-hint' : undefined}
             >
               {submitted ? 'Build submitted' : 'Submit build'}
@@ -349,4 +366,3 @@ export function CodingLessonWorkspace() {
     </div>
   )
 }
-

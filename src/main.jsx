@@ -13,6 +13,11 @@ import { BoltIcon, GemIcon } from './components/ui/icons'
 import { StreakPopover } from './components/header/StreakPopover'
 import { XpPopover } from './components/header/XpPopover'
 import { currentPath, detailLevels } from './data/paths'
+import { loadProgress, saveProgress } from './data/progress'
+import { getLeague } from './data/leagues'
+import { resolveWeek } from './lib/leagueSim'
+import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week'
+import { TierMedal } from './components/leaderboard/TierMedal'
 
 const week = ['Th', 'F', 'S', 'Su', 'M']
 
@@ -32,6 +37,7 @@ function App() {
   const [openLesson, setOpenLesson] = useState(null)
   const [openPractice, setOpenPractice] = useState(null)
   const [activePopover, setActivePopover] = useState(null)
+  const [progress, setProgress] = useState(loadProgress)
   const menuRef = useRef(null)
   const menuButtonRef = useRef(null)
   const streakButtonRef = useRef(null)
@@ -98,10 +104,73 @@ function App() {
     window.setTimeout(() => setNotice(''), 2200)
   }
 
+  // Settle any finished week before the leaderboard renders, so promotion and
+  // demotion have already been applied by first paint.
+  useEffect(() => {
+    setProgress((current) => {
+      const result = resolveWeek(current, now())
+      if (!result) return current
+      const next = {
+        ...current,
+        weekIndex: getWeekIndex(now()),
+        weeklyXp: 0,
+        leagueIndex: result.nextLeagueIndex,
+        lastLeagueResult: result,
+      }
+      saveProgress(next)
+      return next
+    })
+  }, [])
+
+  const recordActivity = (xpGain) => {
+    setProgress((current) => {
+      const today = new Date().toDateString()
+      const next = {
+        ...current,
+        xp: current.xp + xpGain,
+        weeklyXp: current.weeklyXp + xpGain,
+        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
+        lastActiveDate: today,
+      }
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const recordPracticeCompletion = (sessionId, correctCount, total) => {
+    setProgress((current) => {
+      const today = new Date().toDateString()
+      // Only the first check of a session earns XP; retries still update the score.
+      const isFirstAttempt = !current.completedSessions?.[sessionId]
+      const next = {
+        ...current,
+        xp: current.xp + (isFirstAttempt ? 10 : 0),
+        weeklyXp: current.weeklyXp + (isFirstAttempt ? 10 : 0),
+        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
+        lastActiveDate: today,
+        completedSessions: {
+          ...current.completedSessions,
+          [sessionId]: { correctCount, total, completedAt: today },
+        },
+      }
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const dismissLeagueResult = () => {
+    setProgress((current) => {
+      const next = { ...current, lastLeagueResult: null }
+      saveProgress(next)
+      return next
+    })
+  }
+
   const startMission = () => {
     const wasStarted = started
     setStarted(true)
     setOpenLesson(nextLesson?.id ?? true)
+    if (!wasStarted) recordActivity(10)
     showNotice(wasStarted ? 'Mission ready to continue' : 'Mission started')
   }
 
@@ -111,8 +180,8 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const streakDays = started ? 1 : 0
-  const xp = started ? 10 : 0
+  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions } = progress
+  const currentLeague = getLeague(leagueIndex)
   const xpGoal = 175
 
   const nextLesson = detailLevels.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
@@ -217,7 +286,16 @@ function App() {
       </header>
 
       <main className={active === 'Paths' || active === 'Leaderboard' || active === 'Practice' ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? <LeaderboardView /> : active === 'Practice' ? <PracticeView onStart={setOpenPractice} /> : (
+        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? (
+          <LeaderboardView
+            weeklyXp={weeklyXp}
+            xp={xp}
+            leagueIndex={leagueIndex}
+            lastLeagueResult={lastLeagueResult}
+            onDismissResult={dismissLeagueResult}
+            onStartPractice={() => setActive('Practice')}
+          />
+        ) : active === 'Practice' ? <PracticeView onStart={setOpenPractice} completedSessions={completedSessions} /> : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px]">
@@ -272,13 +350,15 @@ function App() {
 
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px] text-center">
             <div className="grid gap-0.5 mb-3.5 text-left">
-              <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">Bronze league</strong>
-              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">3 days left to join</span>
+              <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">{currentLeague.name}</strong>
+              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
             </div>
             <div className="flex w-full items-center justify-center py-8 bg-neutral-700/40 my-2 rounded-lg" aria-hidden="true">
-              <img src="/assets/leagues-locked.svg" alt="" />
+              <TierMedal league={currentLeague} state="current" />
             </div>
-            <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">Earn pixels to join this week's league</p>
+            <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">
+              {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} px earned this week` : "Earn pixels to join this week's league"}
+            </p>
             <ActionButton variant="neutral" className="w-full min-h-9 mt-3 px-3.5 text-xs font-medium" onClick={() => setActive('Leaderboard')}>
               View leaderboard
             </ActionButton>
@@ -343,8 +423,8 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
-      {openPractice && <PracticeSession sessionId={openPractice} onExit={() => setOpenPractice(null)} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
+      {openPractice && <PracticeSession sessionId={openPractice} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )
 }

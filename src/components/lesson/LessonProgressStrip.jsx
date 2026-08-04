@@ -3,7 +3,7 @@ const navButtonClassName = "grid w-9 h-9 max-[720px]:w-[34px] place-items-center
 export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPrevious }) {
   return (
     <div
-      className="grid grid-cols-[36px_minmax(0,520px)_36px] max-[720px]:grid-cols-[34px_minmax(0,1fr)_34px] items-center gap-3.5 max-[720px]:gap-1.5 w-[min(100%,600px)] text-[#89898e] [[data-theme=light]_&]:text-[#aaa]"
+      className="grid grid-cols-[36px_minmax(0,520px)_36px] max-[720px]:grid-cols-[34px_minmax(0,1fr)_34px] items-center justify-self-center gap-3.5 max-[720px]:gap-1.5 w-[min(100%,600px)] text-[#89898e] [[data-theme=light]_&]:text-[#aaa]"
       aria-label="Lesson navigation"
     >
       <button type="button" className={navButtonClassName} disabled={!onPrevious} onClick={onPrevious} aria-label="Previous lesson step">

@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 
-export function LessonQuiz({ quiz }) {
-  const [answers, setAnswers] = useState({})
-  const [checked, setChecked] = useState(false)
+// `onComplete` gates lesson progression and so fires only on a perfect score.
+// `onChecked` reports the score on every check, which is what practice needs.
+export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onChecked }) {
+  const [answers, setAnswers] = useState(initialState?.answers ?? {})
+  const [checked, setChecked] = useState(initialState?.checked ?? false)
+
+  const updateState = (nextAnswers, nextChecked) => {
+    setAnswers(nextAnswers)
+    setChecked(nextChecked)
+    onStateChange?.({ answers: nextAnswers, checked: nextChecked })
+  }
 
   const selectOption = (questionId, optionIndex) => {
-    setChecked(false)
-    setAnswers((current) => ({ ...current, [questionId]: optionIndex }))
+    updateState({ ...answers, [questionId]: optionIndex }, false)
   }
 
   const fillNextBlank = (question, optionIndex) => {
@@ -16,21 +23,15 @@ export function LessonQuiz({ quiz }) {
 
     if (nextBlankIndex === -1) return
 
-    setChecked(false)
-    setAnswers((current) => {
-      const nextAnswers = [...(current[question.id] ?? Array(question.answers.length).fill(undefined))]
-      nextAnswers[nextBlankIndex] = optionIndex
-      return { ...current, [question.id]: nextAnswers }
-    })
+    const nextAnswers = [...(answers[question.id] ?? Array(question.answers.length).fill(undefined))]
+    nextAnswers[nextBlankIndex] = optionIndex
+    updateState({ ...answers, [question.id]: nextAnswers }, false)
   }
 
   const clearBlank = (questionId, blankIndex) => {
-    setChecked(false)
-    setAnswers((current) => {
-      const nextAnswers = [...(current[questionId] ?? [])]
-      nextAnswers[blankIndex] = undefined
-      return { ...current, [questionId]: nextAnswers }
-    })
+    const nextAnswers = [...(answers[questionId] ?? [])]
+    nextAnswers[blankIndex] = undefined
+    updateState({ ...answers, [questionId]: nextAnswers }, false)
   }
 
   const isQuestionComplete = (question) => question.type === 'fill'
@@ -43,6 +44,12 @@ export function LessonQuiz({ quiz }) {
 
   const canCheck = quiz.questions.every(isQuestionComplete)
   const correctCount = quiz.questions.filter(isQuestionCorrect).length
+
+  const checkAnswers = () => {
+    updateState(answers, true)
+    onChecked?.({ correctCount, total: quiz.questions.length })
+    if (correctCount === quiz.questions.length) onComplete?.()
+  }
 
   return (
     <article className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-labelledby="lesson-quiz-title">
@@ -151,7 +158,7 @@ export function LessonQuiz({ quiz }) {
             variant="primary"
             className="min-w-[200px] min-h-[50px] text-[15px] font-semibold"
             disabled={!canCheck}
-            onClick={() => setChecked(true)}
+            onClick={checkAnswers}
             aria-describedby={!canCheck ? 'lesson-quiz-check-hint' : undefined}
           >
             Check answers

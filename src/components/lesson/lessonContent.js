@@ -32,12 +32,12 @@ export const lessonContent = {
   },
 }
 
-export const writingProgramsArticle = {
-  title: 'Writing programs',
-  intro: 'A program is a set of instructions that a computer follows in order. Python lets you write those instructions in a clear, readable way.',
+export const programExecutionArticle = {
+  title: 'Program execution',
+  intro: 'A Python program is a set of instructions that the computer follows in order.',
   video: {
     title: 'Hello, programs!',
-    subtitle: 'Writing programs',
+    subtitle: 'Program execution',
     duration: '3:12',
     badgeLabel: 'PY',
   },
@@ -46,6 +46,17 @@ export const writingProgramsArticle = {
       title: 'Programs are instructions',
       body: 'Each line tells Python to do one small thing. When you run a file, Python starts at the top and works through the statements in sequence.',
     },
+  ],
+  next: {
+    title: 'Check the execution order',
+    body: 'Use what you just learned to identify how Python works through a file.',
+  },
+}
+
+export const variablesExpressionsArticle = {
+  title: 'Variables and expressions',
+  intro: 'Variables give values useful names, while expressions combine those values to produce a result.',
+  sections: [
     {
       title: 'Variables keep track of values',
       body: 'A variable gives a value a useful name. Instead of repeating a number, you can store it once and reuse that name in a calculation.',
@@ -64,13 +75,13 @@ export const writingProgramsArticle = {
   },
   next: {
     title: 'Your first calculation',
-    body: 'Use these same building blocks to finish a short Python program and run it yourself.',
+    body: 'Check your understanding, then use these building blocks to finish and run a short Python program.',
   },
 }
 
-export const writingProgramsQuiz = {
-  title: 'Check your understanding',
-  intro: 'Answer a couple of questions about writing programs before moving on.',
+export const programExecutionQuiz = {
+  title: 'Check program execution',
+  intro: 'Show that you understand how Python works through a file before moving on.',
   questions: [
     {
       id: 'q1',
@@ -85,6 +96,13 @@ export const writingProgramsQuiz = {
       correctIndex: 0,
       explanation: 'Python starts at the top of the file and works through statements in sequence.',
     },
+  ],
+}
+
+export const variablesExpressionsQuiz = {
+  title: 'Check variables and expressions',
+  intro: 'Answer these questions before applying the concept in code.',
+  questions: [
     {
       id: 'q2',
       type: 'multiple-choice',
@@ -128,4 +146,39 @@ export const writingProgramsClickFillQuiz = {
       explanation: 'yearly_hours stores the result of hours_per_week multiplied by 52.',
     },
   ],
+}
+
+export const writingProgramsLesson = {
+  id: 'writing-programs',
+  title: 'Writing programs',
+  concepts: [
+    {
+      id: 'program-execution',
+      title: 'Program execution',
+      activities: [
+        { id: 'program-execution-learn', type: 'article', content: programExecutionArticle },
+        { id: 'program-execution-check', type: 'quiz', content: programExecutionQuiz },
+      ],
+      transition: {
+        eyebrow: 'Concept complete',
+        title: 'Great work—you finished Program execution!',
+        body: 'Next, you’ll learn how Python stores and works with values.',
+      },
+    },
+    {
+      id: 'variables-expressions',
+      title: 'Variables and expressions',
+      activities: [
+        { id: 'variables-expressions-learn', type: 'article', content: variablesExpressionsArticle },
+        { id: 'variables-expressions-check', type: 'quiz', content: variablesExpressionsQuiz },
+        { id: 'variables-expressions-fill', type: 'quiz', content: writingProgramsClickFillQuiz },
+        { id: 'variables-expressions-code', type: 'coding' },
+      ],
+    },
+  ],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'Lesson complete!',
+    body: 'You learned how Python runs instructions and uses variables in calculations.',
+  },
 }

@@ -50,36 +50,41 @@ export function LessonArticle({ article }) {
           </section>
         ))}
 
-        <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6">
-          <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.025em]">{article.diagram.title}</h2>
-          <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]">{article.diagram.body}</p>
-          <div
-            className="flex items-center flex-wrap gap-2 mt-3.5 border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-xl bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] p-3.5"
-            role="img"
-            aria-label={article.diagram.label}
-          >
-            {article.diagram.nodes.map((node, index) => (
-              <div className="flex items-center gap-2" key={node}>
-                <span className="border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-lg bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-2.5 py-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] text-[13px] font-semibold">{node}</span>
-                {index < article.diagram.nodes.length - 1 && <i className="text-[#6f66ec] text-[17px] not-italic" aria-hidden="true">→</i>}
-              </div>
-            ))}
-          </div>
-        </section>
+        {article.diagram && (
+          <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6">
+            <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.025em]">{article.diagram.title}</h2>
+            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]">{article.diagram.body}</p>
+            <div
+              className="flex items-center flex-wrap gap-2 mt-3.5 border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-xl bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] p-3.5"
+              role="img"
+              aria-label={article.diagram.label}
+            >
+              {article.diagram.nodes.map((node, index) => (
+                <div className="flex items-center gap-2" key={node}>
+                  <span className="border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-lg bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-2.5 py-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] text-[13px] font-semibold">{node}</span>
+                  {index < article.diagram.nodes.length - 1 && <i className="text-[#6f66ec] text-[17px] not-italic" aria-hidden="true">→</i>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6">
-          <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.025em]">{article.example.title}</h2>
-          <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]">{article.example.body}</p>
-          <pre className="overflow-auto mt-3.5 border border-[#36363c] rounded-xl bg-[#121214] text-[#f4f4f2] px-[18px] py-4 text-sm leading-[1.7] font-['JetBrains_Mono',ui-monospace,monospace]"><code>{article.example.code}</code></pre>
-        </section>
+        {article.example && (
+          <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6">
+            <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.025em]">{article.example.title}</h2>
+            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]">{article.example.body}</p>
+            <pre className="overflow-auto mt-3.5 border border-[#36363c] rounded-xl bg-[#121214] text-[#f4f4f2] px-[18px] py-4 text-sm leading-[1.7] font-['JetBrains_Mono',ui-monospace,monospace]"><code>{article.example.code}</code></pre>
+          </section>
+        )}
 
-        <aside className="grid gap-1.5 max-w-[62ch] mt-7 border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-[14px] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-[18px] py-4">
-          <span className="block text-[#6f66ec] text-xs font-bold tracking-[0.08em] uppercase">Up next</span>
-          <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl">{article.next.title}</strong>
-          <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] leading-[1.55]">{article.next.body}</p>
-        </aside>
+        {article.next && (
+          <aside className="grid gap-1.5 max-w-[62ch] mt-7 border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] rounded-[14px] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-[18px] py-4">
+            <span className="block text-[#6f66ec] text-xs font-bold tracking-[0.08em] uppercase">Up next</span>
+            <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl">{article.next.title}</strong>
+            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] leading-[1.55]">{article.next.body}</p>
+          </aside>
+        )}
       </div>
     </article>
   )
 }
-
