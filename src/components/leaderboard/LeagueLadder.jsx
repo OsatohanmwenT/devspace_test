@@ -12,7 +12,7 @@ function at(scale, distance) {
 
 export function LeagueLadder({ leagueIndex }) {
   return (
-    <ul className="flex items-center justify-center gap-3 max-[680px]:gap-2 m-0 p-0 list-none overflow-x-auto" aria-label="League progression">
+    <ul className="flex items-center justify-center gap-3 max-[680px]:gap-2 m-0 px-2 py-2 list-none overflow-x-auto" aria-label="League progression">
       {leagues.map((league, index) => {
         const distance = Math.abs(index - leagueIndex)
         const state = index === leagueIndex ? 'current' : index < leagueIndex ? 'unlocked' : 'locked'

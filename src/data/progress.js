@@ -11,6 +11,9 @@ const defaultProgress = {
   lastActiveDate: null,
   lastLeagueResult: null,
   completedSessions: {},
+  completedLessons: {},
+  // Absent until onboarding completes — its absence is the first-run signal.
+  profile: null,
 }
 
 export function loadProgress() {

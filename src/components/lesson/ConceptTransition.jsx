@@ -1,7 +1,7 @@
 export function ConceptTransition({ eyebrow, title, body }) {
   return (
     <section
-      className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fffdf5]"
+      className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
       aria-labelledby="lesson-transition-title"
     >
       <div className="grid min-h-full place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">

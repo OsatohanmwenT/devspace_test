@@ -1,51 +1,70 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
-import { CodingLessonWorkspace } from './CodingLessonWorkspace'
 import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
-import { LessonQuiz } from './LessonQuiz'
-import { writingProgramsLesson } from './lessonContent'
+import { LessonQuestion } from './LessonQuestion'
+import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
+import { isQuestionComplete, isQuestionCorrect } from './questionState'
 
-const lessonFlow = buildLessonFlow(writingProgramsLesson)
+const STREAK_THRESHOLD = 3
 
-function loadLessonSession(storageKey) {
+function loadLessonSession(storageKey, flowLength) {
+  const empty = { stepIndex: 0, activityStates: {}, streak: 0 }
   try {
     const savedSession = JSON.parse(localStorage.getItem(storageKey))
-    if (!savedSession) return { stepIndex: 0, activityStates: {} }
+    if (!savedSession) return empty
 
     return {
-      stepIndex: Math.min(Math.max(savedSession.stepIndex ?? 0, 0), lessonFlow.length - 1),
+      stepIndex: Math.min(Math.max(savedSession.stepIndex ?? 0, 0), flowLength - 1),
       activityStates: savedSession.activityStates ?? {},
+      streak: savedSession.streak ?? 0,
     }
   } catch {
-    return { stepIndex: 0, activityStates: {} }
+    return empty
   }
 }
 
-export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit }) {
+function UnavailableLesson({ lessonId }) {
+  return (
+    <div className="grid h-full place-items-center px-6 text-center">
+      <div className="grid max-w-[42ch] gap-2">
+        <h1 className="m-0 font-['Space_Grotesk',Arial,sans-serif] text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+          This lesson isn’t written yet
+        </h1>
+        <p className="m-0 text-[15px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">
+          <code className="font-['JetBrains_Mono',ui-monospace,monospace] text-[.9em]">{lessonId}</code> has no content authored against it yet. Pick another lesson from your path.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete }) {
   const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
+  const lesson = getLesson(activeLessonId)
+  // Rebuilt per lesson rather than once at module load, so the id actually selects content.
+  const lessonFlow = useMemo(() => (lesson ? buildLessonFlow(lesson) : []), [lesson])
+
   const storageKey = `devspace-lesson-session:${activeLessonId}`
-  const [session, setSession] = useState(() => loadLessonSession(storageKey))
+  const [session, setSession] = useState(() => loadLessonSession(storageKey, lessonFlow.length || 1))
   const [isDevyOpen, setIsDevyOpen] = useState(false)
+
   const currentStep = lessonFlow[session.stepIndex]
-  const isCoding = currentStep.kind === 'activity' && currentStep.type === 'coding'
-  const isMilestone = currentStep.kind === 'transition' || currentStep.kind === 'complete'
-  const isQuiz = currentStep.kind === 'activity' && currentStep.type === 'quiz'
+  const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete'
+  const isQuestion = currentStep?.type === 'question'
+
+  const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
+  const answer = questionState?.answer
+  const isChecked = questionState?.checked ?? false
+  const canCheck = isQuestion && isQuestionComplete(currentStep.question, answer)
+  const isLastStep = session.stepIndex === lessonFlow.length - 1
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(session))
   }, [session, storageKey])
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onExit()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onExit])
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow
@@ -59,10 +78,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   }, [])
 
   const goNext = () => {
-    setSession((current) => ({
-      ...current,
-      stepIndex: Math.min(current.stepIndex + 1, lessonFlow.length - 1),
-    }))
+    setSession((current) => ({ ...current, stepIndex: Math.min(current.stepIndex + 1, lessonFlow.length - 1) }))
     setIsDevyOpen(false)
   }
 
@@ -71,34 +87,80 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setIsDevyOpen(false)
   }
 
-  const saveActivityState = (activityId, activityState) => {
+  const answerQuestion = (nextAnswer) => {
     setSession((current) => ({
       ...current,
-      activityStates: { ...current.activityStates, [activityId]: activityState },
+      activityStates: { ...current.activityStates, [currentStep.id]: { answer: nextAnswer, checked: false } },
     }))
   }
 
-  const returnToPath = () => {
+  const checkQuestion = () => {
+    const correct = isQuestionCorrect(currentStep.question, answer)
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { answer, checked: true } },
+      streak: correct ? current.streak + 1 : 0,
+    }))
+  }
+
+  const finishLesson = () => {
     localStorage.removeItem(storageKey)
+    onComplete?.(activeLessonId)
     onExit()
   }
 
-  const isDevyPanelOpen = isDevyOpen && !isCoding && !isMilestone
+  const footerAction = !currentStep
+    ? null
+    : currentStep.kind === 'transition'
+      ? { label: `Continue to ${currentStep.nextConcept.title}`, onClick: goNext }
+      : currentStep.kind === 'complete'
+        ? { label: 'Return to path', onClick: finishLesson }
+        : currentStep.type === 'article'
+          ? { label: 'Continue', onClick: goNext }
+          : isQuestion
+            ? (isChecked
+              ? { label: 'Continue', onClick: goNext }
+              : { label: 'Check', onClick: checkQuestion, disabled: !canCheck })
+            : { label: 'Continue', onClick: goNext }
+
+  // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onExit()
+        return
+      }
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        if (footerAction && !footerAction.disabled) {
+          event.preventDefault()
+          footerAction.onClick()
+        }
+        return
+      }
+      if (!isQuestion || isChecked) return
+      if (currentStep.question.type !== 'multiple-choice') return
+
+      const digit = Number(event.key)
+      if (Number.isInteger(digit) && digit >= 1 && digit <= currentStep.question.options.length) {
+        event.preventDefault()
+        answerQuestion(digit - 1)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  })
+
+  const isDevyPanelOpen = isDevyOpen && !isMilestone
   const focusRing = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]'
-  const footerAction = currentStep.kind === 'transition'
-    ? { label: `Continue to ${currentStep.nextConcept.title}`, onClick: goNext }
-    : currentStep.kind === 'complete'
-      ? { label: 'Return to path', onClick: returnToPath }
-      : currentStep.type === 'article'
-        ? { label: 'Continue to check', onClick: goNext }
-        : null
+  const showStreak = session.streak >= STREAK_THRESHOLD
 
   return (
     <section
-      className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] ${isCoding ? 'grid-rows-[52px_minmax(0,1fr)]' : 'grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px]'}`}
+      className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]"
       aria-label="Lesson"
     >
-      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
+      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-5 max-[720px]:px-3.5">
         <button
           type="button"
           className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}
@@ -111,40 +173,36 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         {navigationStyle === 'pill' ? <LessonNavigationPill /> : (
           <LessonProgressStrip
             currentStep={session.stepIndex + 1}
-            totalSteps={lessonFlow.length}
+            totalSteps={Math.max(lessonFlow.length, 1)}
             onPrevious={session.stepIndex > 0 ? goPrevious : undefined}
+            onNext={!isLastStep && (!isQuestion || isChecked) ? goNext : undefined}
+            streaking={showStreak}
           />
         )}
       </header>
 
       <main
-        className={`min-w-0 min-h-0 p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
+        className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
       >
-        {currentStep.kind === 'activity' && currentStep.type === 'article' && (
-          <LessonArticle article={currentStep.content} />
+        {!lesson && <UnavailableLesson lessonId={activeLessonId} />}
+        {currentStep?.type === 'article' && <LessonArticle article={currentStep.content} />}
+        {isQuestion && (
+          <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
+            <LessonQuestion
+              key={currentStep.id}
+              question={currentStep.question}
+              headingLevel="h1"
+              answer={answer}
+              checked={isChecked}
+              onAnswer={answerQuestion}
+            />
+          </div>
         )}
-        {currentStep.kind === 'activity' && currentStep.type === 'quiz' && (
-          <LessonQuiz
-            key={currentStep.id}
-            quiz={currentStep.content}
-            initialState={session.activityStates[currentStep.id]}
-            onStateChange={(activityState) => saveActivityState(currentStep.id, activityState)}
-            onComplete={goNext}
-          />
-        )}
-        {currentStep.kind === 'activity' && currentStep.type === 'coding' && (
-          <CodingLessonWorkspace
-            key={currentStep.id}
-            initialState={session.activityStates[currentStep.id]}
-            onStateChange={(activityState) => saveActivityState(currentStep.id, activityState)}
-            onComplete={goNext}
-          />
-        )}
-        {currentStep.kind === 'transition' && <ConceptTransition {...currentStep.transition} />}
-        {currentStep.kind === 'complete' && <ConceptTransition {...currentStep.completion} />}
+        {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} />}
+        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} />}
       </main>
 
-      {!isCoding && !isMilestone && <aside
+      {!isMilestone && <aside
         className={`absolute z-[1] top-16 bottom-0 left-0 flex w-80 max-[720px]:w-full flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
@@ -175,27 +233,35 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         </form>
       </aside>}
 
-      {!isCoding && <footer
-        className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[1fr_auto]'} items-center border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0' : 'ml-0'}`}
+      <footer
+        className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0' : 'ml-0'}`}
       >
         {!isMilestone && <button
           type="button"
-          className={`grid w-[70px] h-[70px] max-[720px]:w-[58px] max-[720px]:h-[58px] place-items-center border-0 bg-transparent p-0 ${focusRing}`}
+          className={`relative grid w-[70px] h-[70px] max-[720px]:w-[58px] max-[720px]:h-[58px] place-items-center border-0 bg-transparent p-0 ${focusRing}`}
           onClick={() => setIsDevyOpen(true)}
           aria-label="Open Devy chat"
           aria-expanded={isDevyOpen}
         >
           <img className="w-full h-full object-contain" src="/assets/devy.svg" alt="" />
+          {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
         </button>}
+
+        {!isMilestone && (
+          <p className="m-0 min-w-0 text-[13px] leading-[1.4] text-[#f0c964]" role="status" aria-live="polite">
+            {showStreak ? `${session.streak} correct answers in a row!` : ''}
+          </p>
+        )}
+
         {footerAction && <ActionButton
           variant="primary"
-          className={`${isMilestone ? 'w-[min(100%,640px)]' : 'min-w-[200px] max-[720px]:min-w-[164px]'} min-h-[50px] text-[15px] font-semibold`}
+          className={`${isMilestone ? 'w-[min(100%,640px)]' : 'min-w-[200px] max-[720px]:min-w-[140px]'} min-h-[50px] text-[15px] font-semibold`}
           onClick={footerAction.onClick}
+          disabled={footerAction.disabled}
         >
           {footerAction.label}
         </ActionButton>}
-        {isQuiz && <span className="sr-only" aria-live="polite">Complete the exercise to continue.</span>}
-      </footer>}
+      </footer>
     </section>
   )
 }

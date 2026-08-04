@@ -12,14 +12,39 @@ import { Badge } from './components/ui/Badge'
 import { BoltIcon, GemIcon } from './components/ui/icons'
 import { StreakPopover } from './components/header/StreakPopover'
 import { XpPopover } from './components/header/XpPopover'
-import { currentPath, detailLevels } from './data/paths'
+import OnboardingView from './components/onboarding'
+import { computeDailyGoal } from './lib/onboarding'
+import { getPath, detailLevels } from './data/paths'
 import { loadProgress, saveProgress } from './data/progress'
 import { getLeague } from './data/leagues'
 import { resolveWeek } from './lib/leagueSim'
 import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week'
 import { TierMedal } from './components/leaderboard/TierMedal'
 
-const week = ['Th', 'F', 'S', 'Su', 'M']
+const DAY_INITIALS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S']
+const WEEK_LENGTH = 5
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// The last five days ending today, with a day marked active when it falls inside
+// the current streak — a streak of N days ending on lastActiveDate means exactly
+// those N days were active, so no extra stored history is needed.
+function getStreakWeek(streakDays, lastActiveDate) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const lastActive = lastActiveDate ? new Date(lastActiveDate) : null
+  if (lastActive) lastActive.setHours(0, 0, 0, 0)
+
+  return Array.from({ length: WEEK_LENGTH }, (_, index) => {
+    const date = new Date(today.getTime() - (WEEK_LENGTH - 1 - index) * DAY_MS)
+    const daysBeforeLastActive = lastActive ? Math.round((lastActive - date) / DAY_MS) : -1
+    return {
+      key: date.toDateString(),
+      label: DAY_INITIALS[date.getDay()],
+      isActive: daysBeforeLastActive >= 0 && daysBeforeLastActive < streakDays,
+    }
+  })
+}
 
 function getInitialTheme() {
   const stored = window.localStorage.getItem('devspace-theme')
@@ -158,12 +183,40 @@ function App() {
     })
   }
 
+  const recordLessonCompletion = (completedLessonId) => {
+    setProgress((current) => {
+      const today = new Date().toDateString()
+      // First completion earns XP; replays still update the record.
+      const isFirstCompletion = !current.completedLessons?.[completedLessonId]
+      const next = {
+        ...current,
+        xp: current.xp + (isFirstCompletion ? 25 : 0),
+        weeklyXp: current.weeklyXp + (isFirstCompletion ? 25 : 0),
+        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
+        lastActiveDate: today,
+        completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
+      }
+      saveProgress(next)
+      return next
+    })
+    showNotice('Lesson complete · +25 XP')
+  }
+
   const dismissLeagueResult = () => {
     setProgress((current) => {
       const next = { ...current, lastLeagueResult: null }
       saveProgress(next)
       return next
     })
+  }
+
+  const completeOnboarding = (nextProfile) => {
+    setProgress((current) => {
+      const next = { ...current, profile: nextProfile }
+      saveProgress(next)
+      return next
+    })
+    showNotice(`Path set: ${getPath(nextProfile.pathId).title}`)
   }
 
   const startMission = () => {
@@ -180,15 +233,18 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions } = progress
+  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, lastActiveDate, profile } = progress
+  // Onboarding picks the path; before that, the default shelf is the spine.
+  const currentPath = getPath(profile?.pathId)
   const currentLeague = getLeague(leagueIndex)
-  const xpGoal = 175
+  const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
   const nextLesson = detailLevels.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
   const currentStepIndex = currentPath.cards.findIndex((card) => card.state === 'current')
   const currentRegionCard = currentPath.cards[currentStepIndex] ?? currentPath.cards[0]
-  const completedRegions = currentPath.cards.filter((card) => card.state === 'completed').length
-  const missionProgress = Math.round((completedRegions / currentPath.cards.length) * 100)
+  const streakWeek = getStreakWeek(streakDays, lastActiveDate)
+
+  if (!profile) return <OnboardingView onComplete={completeOnboarding} />
 
   return (
     <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
@@ -307,31 +363,28 @@ function App() {
               <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
             <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Solve <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">3 problems</strong> to start a streak</p>
-            <div className="flex justify-between gap-2" role="img" aria-label="Weekly streak activity">
-              {week.map((day, index) => {
-                const isActive = index === 0
-                return (
-                  <div
+            <div className="flex justify-between gap-2" role="img" aria-label={`Activity for the last ${WEEK_LENGTH} days: ${streakWeek.filter((day) => day.isActive).length} active`}>
+              {streakWeek.map(({ key, label, isActive }) => (
+                <div
+                  className={
+                    isActive
+                      ? 'flex flex-1 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
+                      : 'flex flex-1 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                  }
+                  key={key}
+                >
+                  <span
                     className={
                       isActive
-                        ? 'flex flex-1 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
-                        : 'flex flex-1 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                        ? 'grid place-items-center w-10 h-10 rounded-full border border-[#888df2] bg-[#1e193d] [[data-theme=light]_&]:bg-[#c8c3e7] text-[#c4d8f2]'
+                        : 'grid place-items-center w-10 h-10 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
                     }
-                    key={day}
                   >
-                    <span
-                      className={
-                        isActive
-                          ? 'grid place-items-center w-10 h-10 rounded-full border border-[#888df2] bg-[#1e193d] [[data-theme=light]_&]:bg-[#c8c3e7] text-[#c4d8f2]'
-                          : 'grid place-items-center w-10 h-10 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
-                      }
-                    >
-                      <BoltIcon className="w-[18px] h-[18px]" />
-                    </span>
-                    <small>{day}</small>
-                  </div>
-                )
-              })}
+                    <BoltIcon className="w-[18px] h-[18px]" />
+                  </span>
+                  <small>{label}</small>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -357,7 +410,7 @@ function App() {
               <TierMedal league={currentLeague} state="current" />
             </div>
             <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">
-              {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} px earned this week` : "Earn pixels to join this week's league"}
+              {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} XP earned this week` : "Earn XP to join this week's league"}
             </p>
             <ActionButton variant="neutral" className="w-full min-h-9 mt-3 px-3.5 text-xs font-medium" onClick={() => setActive('Leaderboard')}>
               View leaderboard
@@ -367,14 +420,14 @@ function App() {
         </aside>
 
         <section className="min-w-0 max-[680px]:order-1">
-          {/* <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium tracking-[-.04em]">Your next mission</h1> */}
+          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium tracking-[-.04em]">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
             <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
                 <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] tracking-[-.06em] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
-                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {missionProgress}% complete</p>
+                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.progressValue}% complete</p>
               </div>
 
               <div className="relative w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] max-[680px]:mx-auto flex-none">
@@ -423,7 +476,7 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} />}
       {openPractice && <PracticeSession sessionId={openPractice} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )

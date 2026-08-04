@@ -109,6 +109,28 @@ export const pathShelves = [
   },
 ]
 
+// Only `machine-learning` has authored regions. For any other selected path we
+// keep that path's own identity — title, description, emblem — and borrow the
+// authored region structure, so a user who picks Backend Developer sees Backend
+// Developer rather than silently being shown ML.
+export function getPath(pathId) {
+  const authored = pathShelves.find((path) => path.id === pathId)
+  if (authored) return authored
+
+  const stub = explorePaths.find((path) => path.id === pathId)
+  if (!stub) return pathShelves[0]
+
+  return {
+    ...pathShelves[0],
+    id: stub.id,
+    title: stub.title,
+    description: stub.description ?? pathDescriptions[stub.id],
+    emblem: stub.image,
+    level: stub.type === 'skill' ? 'Skill path' : 'Career path',
+    family: stub.family,
+  }
+}
+
 export const currentPath = pathShelves[0]
 const currentRegionIndex = currentPath.cards.findIndex((card) => card.state === 'current')
 export const currentRegion = currentPath.cards[currentRegionIndex] ?? currentPath.cards[0]

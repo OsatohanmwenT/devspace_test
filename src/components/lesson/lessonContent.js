@@ -1,37 +1,3 @@
-export const lessonContent = {
-  regionLabel: 'Terrain 2',
-  heading: 'Programming Foundations with Python',
-  bodyParagraphs: [
-    'Learn core Python syntax by writing a real, working script.',
-    'This terrain contributes to your Personal Data Calculator.',
-    'Use the evidence in this lesson to make the next action clear and explainable.',
-  ],
-  devyQuestion: 'What should guide your work in programming foundations with python?',
-  devyOptions: [
-    'The clearest available evidence',
-    'A guess',
-    'The longest possible answer',
-    'An unrelated task',
-  ],
-  introCornerMessage: "New terrain starts here. Ask Devy if the vocabulary doesn't click.",
-  exercise: {
-    instruction: 'Drive forward and deliver the package.',
-    tag: { label: 'Solitary', superscript: 'ST' },
-    remainingLabel: '1 left',
-    commands: [
-      { id: 'drive-forward', verb: 'drive', object: 'forward' },
-      { id: 'deliver-package', verb: 'deliver', object: 'package' },
-    ],
-    correctSequence: ['drive-forward', 'deliver-package'],
-    cornerMessage: 'You know how to move the truck around.',
-    chatHistory: [
-      { id: 1, text: 'You know how to move the truck around.' },
-      { id: 2, text: "Let's add a new command: delivering packages." },
-      { id: 3, text: 'Drive forward and deliver the package.', active: true },
-    ],
-  },
-}
-
 export const programExecutionArticle = {
   title: 'Program execution',
   intro: 'A Python program is a set of instructions that the computer follows in order.',
@@ -44,7 +10,13 @@ export const programExecutionArticle = {
   sections: [
     {
       title: 'Programs are instructions',
-      body: 'Each line tells Python to do one small thing. When you run a file, Python starts at the top and works through the statements in sequence.',
+      body: [
+        'Each line tells Python to do one small thing. When you run a file, Python starts at the ',
+        { strong: 'top' },
+        ' and works through the statements in sequence — so ',
+        { code: 'print("first")' },
+        ' really does run before the line beneath it.',
+      ],
     },
   ],
   next: {
@@ -59,7 +31,23 @@ export const variablesExpressionsArticle = {
   sections: [
     {
       title: 'Variables keep track of values',
-      body: 'A variable gives a value a useful name. Instead of repeating a number, you can store it once and reuse that name in a calculation.',
+      body: [
+        'A variable gives a value a useful name. Instead of repeating a number, store it once as ',
+        { code: 'hours_per_week' },
+        ' and reuse that name wherever the calculation needs it.',
+      ],
+    },
+    {
+      title: 'Names use snake case',
+      body: [
+        'When a name needs more than one word, join them with underscores — ',
+        { code: 'home_city' },
+        ', not ',
+        { code: 'homeCity' },
+        '. Python programmers call this ',
+        { strong: 'snake case' },
+        '.',
+      ],
     },
   ],
   diagram: {
@@ -75,7 +63,7 @@ export const variablesExpressionsArticle = {
   },
   next: {
     title: 'Your first calculation',
-    body: 'Check your understanding, then use these building blocks to finish and run a short Python program.',
+    body: 'Check your understanding, then use these building blocks to finish a short Python program.',
   },
 }
 
@@ -106,12 +94,12 @@ export const variablesExpressionsQuiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      prompt: 'Why use a variable instead of repeating a number?',
+      prompt: 'What do computers use variables for?',
       options: [
-        'It makes the program run faster',
-        'It gives the value a useful name you can reuse',
-        'Python requires every number to be a variable',
-        'It hides the value from the console',
+        'To display information on the screen',
+        'To store information for later use',
+        'To make the program run faster',
+        'To hide values from the console',
       ],
       correctIndex: 1,
       explanation: 'A variable names a value once so you can reuse it in later calculations.',
@@ -119,15 +107,26 @@ export const variablesExpressionsQuiz = {
     {
       id: 'q3',
       type: 'multiple-choice',
-      prompt: 'In `yearly_hours = hours_per_week * 52`, what does `yearly_hours` become?',
+      prompt: [{ code: 'yearly_hours = hours_per_week * 52' }, ' — what does ', { code: 'yearly_hours' }, ' become?'],
       options: [
         'A copy of the number 52',
-        'The result of multiplying hours_per_week by 52',
-        'An error, since hours_per_week is undefined',
-        'The string "hours_per_week * 52"',
+        [{ code: 'hours_per_week' }, ' multiplied by 52'],
+        [{ code: 'hours_per_week' }, ' is undefined, so this errors'],
+        'The text of the expression itself',
       ],
       correctIndex: 1,
       explanation: 'The expression on the right is evaluated first, then stored in yearly_hours.',
+    },
+    {
+      id: 'q4',
+      type: 'multiple-choice',
+      prompt: 'How does snake case format multiple words when creating a variable name?',
+      options: [
+        [{ strong: 'Using capital letters' }, ' — ', { code: 'myVariableName' }],
+        [{ strong: 'Using underscores' }, ' — ', { code: 'my_variable_name' }],
+      ],
+      correctIndex: 1,
+      explanation: 'Snake case joins words with underscores and keeps every letter lowercase.',
     },
   ],
 }
@@ -137,13 +136,27 @@ export const writingProgramsClickFillQuiz = {
   intro: 'Use the variables and values from this lesson to complete the calculation.',
   questions: [
     {
-      id: 'q4',
+      id: 'q5',
       type: 'fill',
-      prompt: 'Fill in the blanks to complete the program.',
+      prompt: 'Fill in the blanks to complete the sentence.',
       segments: ['A variable named ', ' stores the value calculated by ', ' multiplied by ', '.'],
       answers: ['yearly_hours', 'hours_per_week', '52'],
       options: ['yearly_hours', 'hours_per_week', '52'],
       explanation: 'yearly_hours stores the result of hours_per_week multiplied by 52.',
+    },
+    {
+      id: 'q6',
+      type: 'code-fill',
+      filename: 'warmup.py',
+      prompt: 'Finish the program so it prints the yearly total.',
+      segments: [
+        '# Weekly learning hours\nhours_per_week = 6\n\n# Multiply by the weeks in a year\nyearly_hours = ',
+        ' * 52\n\n# Show the result\nprint(',
+        ')',
+      ],
+      answers: ['hours_per_week', 'yearly_hours'],
+      options: ['hours_per_week', 'yearly_hours'],
+      explanation: 'The expression reads hours_per_week, multiplies it by 52, and stores it in yearly_hours — which is what print then shows.',
     },
   ],
 }
@@ -172,7 +185,6 @@ export const writingProgramsLesson = {
         { id: 'variables-expressions-learn', type: 'article', content: variablesExpressionsArticle },
         { id: 'variables-expressions-check', type: 'quiz', content: variablesExpressionsQuiz },
         { id: 'variables-expressions-fill', type: 'quiz', content: writingProgramsClickFillQuiz },
-        { id: 'variables-expressions-code', type: 'coding' },
       ],
     },
   ],
@@ -181,4 +193,110 @@ export const writingProgramsLesson = {
     title: 'Lesson complete!',
     body: 'You learned how Python runs instructions and uses variables in calculations.',
   },
+}
+
+export const dataTypesArticle = {
+  title: 'Values have types',
+  intro: 'Every value in Python has a type, and the type decides what you can do with it.',
+  sections: [
+    {
+      title: 'Three types to start with',
+      body: [
+        'Text is a ',
+        { strong: 'string' },
+        ' and goes in quotes — ',
+        { code: '"word"' },
+        '. Whole numbers are ',
+        { strong: 'integers' },
+        ' like ',
+        { code: '42' },
+        '. And ',
+        { code: 'True' },
+        ' or ',
+        { code: 'False' },
+        ' is a ',
+        { strong: 'boolean' },
+        '.',
+      ],
+    },
+    {
+      title: 'Types change what happens',
+      body: [
+        { code: '2 + 2' },
+        ' gives ',
+        { code: '4' },
+        ', but ',
+        { code: '"2" + "2"' },
+        ' gives ',
+        { code: '"22"' },
+        ' — the same operator behaves differently depending on the type.',
+      ],
+    },
+  ],
+  example: {
+    title: 'One of each',
+    body: 'Three variables, three different types.',
+    code: 'name = "Ada"\nage = 36\nis_learning = True\nprint(name, age, is_learning)',
+  },
+  next: {
+    title: 'Check what you know',
+    body: 'Identify the types before you use them in code.',
+  },
+}
+
+export const dataTypesQuiz = {
+  title: 'Check data types',
+  intro: 'Match each value to the type Python gives it.',
+  questions: [
+    {
+      id: 'dt1',
+      type: 'multiple-choice',
+      prompt: [{ code: '"42"' }, ' — what type is this value?'],
+      options: [
+        [{ strong: 'Integer' }, ' — a whole number'],
+        [{ strong: 'String' }, ' — text in quotes'],
+        [{ strong: 'Boolean' }, ' — true or false'],
+      ],
+      correctIndex: 1,
+      explanation: 'The quotes make it a string. Without them, 42 would be an integer.',
+    },
+    {
+      id: 'dt2',
+      type: 'code-fill',
+      filename: 'types.py',
+      prompt: 'Give each variable a value of the right type.',
+      segments: ['name = ', '\nage = ', '\nis_learning = ', ''],
+      answers: ['"Ada"', '36', 'True'],
+      options: ['"Ada"', '36', 'True'],
+      explanation: 'A string in quotes, an integer with no quotes, and a boolean written with a capital T.',
+    },
+  ],
+}
+
+export const dataTypesLesson = {
+  id: 'data-types',
+  title: 'Data types',
+  concepts: [
+    {
+      id: 'value-types',
+      title: 'Values have types',
+      activities: [
+        { id: 'value-types-learn', type: 'article', content: dataTypesArticle },
+        { id: 'value-types-check', type: 'quiz', content: dataTypesQuiz },
+      ],
+    },
+  ],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'Lesson complete!',
+    body: 'You can now tell strings, integers and booleans apart — and you know why it matters.',
+  },
+}
+
+const lessons = [writingProgramsLesson, dataTypesLesson]
+
+export const lessonsById = Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson]))
+
+export function getLesson(lessonId) {
+  return lessonsById[lessonId] ?? null
 }

@@ -39,7 +39,7 @@ export default function PathsView({ onOpenLesson }) {
         <div className="flex gap-2" role="group" aria-label="Path type">
           {[['all', 'All'], ['career', 'Career paths'], ['skill', 'Skill paths']].map(([value, label]) => {
             const isActive = type === value
-            return <button key={value} type="button" aria-pressed={isActive} onClick={() => setType(value)} className={isActive ? 'min-h-10 rounded-full border border-[#4169e1] bg-[#4169e1] px-4 text-[13px] font-semibold text-white focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3' : 'min-h-10 rounded-full border border-[#525252] px-4 text-[13px] text-[#b8b8bb] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-[#525252] focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3'}>{label}</button>
+            return <button key={value} type="button" aria-pressed={isActive} onClick={() => setType(value)} className={isActive ? 'min-h-10 rounded-md border border-[#4169e1] bg-[#4169e1] px-4 text-[13px] font-semibold text-white focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3' : 'min-h-10 rounded-md [[data-theme=light]_&]:border-[#d4d4d4] bg-neutral-700/80 [[data-theme=light]_&]:bg-white px-4 text-[13px] text-[#b8b8bb] [[data-theme=light]_&]:text-[#525252] focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3'}>{label}</button>
           })}
         </div>
         <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[680px]:grid-cols-1">

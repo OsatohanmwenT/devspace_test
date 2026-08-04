@@ -1,3 +1,5 @@
+import { RichText } from './RichText'
+
 export function LessonArticle({ article }) {
   return (
     <article
@@ -46,7 +48,7 @@ export function LessonArticle({ article }) {
         {article.sections.map((section) => (
           <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6" key={section.title}>
             <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.025em]">{section.title}</h2>
-            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]">{section.body}</p>
+            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]"><RichText content={section.body} /></p>
           </section>
         ))}
 

@@ -42,8 +42,8 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
               <button
                 className={
                   isActive
-                    ? 'min-h-10 flex-none rounded-full border border-[#291c87] [[data-theme=light]_&]:border-[#19079b] bg-[#291c87] [[data-theme=light]_&]:bg-[#19079b] py-[7px] px-[15px] text-[12px] text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
-                    : 'min-h-10 flex-none rounded-full border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white py-[7px] px-[15px] text-[12px] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] hover:border-[#8a8a8e] [[data-theme=light]_&]:hover:border-[#737371] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
+                    ? 'min-h-10 flex-none rounded-md border border-[#291c87] [[data-theme=light]_&]:border-[#19079b] bg-[#291c87] [[data-theme=light]_&]:bg-[#19079b] py-[7px] px-[15px] text-[12px] text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
+                    : 'min-h-10 flex-none rounded-md [[data-theme=light]_&]:border-[#d4d4d4] bg-neutral-700/80 [[data-theme=light]_&]:bg-white py-[7px] px-[15px] text-[12px] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] hover:border-[#8a8a8e] [[data-theme=light]_&]:hover:border-[#737371] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
                 }
                 key={item}
                 type="button"

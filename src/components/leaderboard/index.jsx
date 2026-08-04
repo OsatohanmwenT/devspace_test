@@ -86,9 +86,9 @@ export default function LeaderboardView({ weeklyXp = 0, xp = 0, leagueIndex = 0,
             </p>
           </div>
 
-          <PromotionSummary summary={summary} />
+          {/* <PromotionSummary summary={summary} /> */}
 
-          <div className="flex justify-center gap-2" role="group" aria-label="Leaderboard range">
+          {/* <div className="flex justify-center gap-2" role="group" aria-label="Leaderboard range">
             {TABS.map((item) => {
               const isActive = tab === item
               return (
@@ -107,7 +107,7 @@ export default function LeaderboardView({ weeklyXp = 0, xp = 0, leagueIndex = 0,
                 </button>
               )
             })}
-          </div>
+          </div> */}
 
           <ol className="grid list-none m-0 p-1.5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-label={`${league.name} standings`}>
             <li className="flex items-center justify-between px-4 pt-2 pb-2.5 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
