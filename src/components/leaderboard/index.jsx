@@ -7,7 +7,7 @@ export default function LeaderboardView() {
   return (
     <section className="grid gap-7" aria-label="Leaderboard">
       <header className="grid gap-[7px] max-w-[680px]">
-        <h1 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(36px,4vw,48px)] font-medium tracking-[-.06em]">Leaderboard</h1>
+        <h1 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-3xl font-medium tracking-[-.06em]">Leaderboard</h1>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[17px] leading-[1.5]">Earn pixels to climb the league and unlock the next one.</p>
       </header>
 

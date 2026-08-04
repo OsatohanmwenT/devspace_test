@@ -129,3 +129,31 @@ export const explorePaths = [
 ]
 
 export const categories = ['All', 'Development', 'Data & AI', 'Cloud & Security', 'Design & Product', 'Business & Marketing', 'Quality']
+
+const pathTools = {
+  'machine-learning': ['Python', 'Data', 'ML'],
+  'data-scientist': ['Python', 'SQL', 'Analytics'],
+  'backend-developer': ['Python', 'APIs', 'Databases'],
+  'ai-engineer': ['Python', 'LLMs', 'ML'],
+  'learn-python': ['Python', 'Logic'],
+  'learn-sql': ['SQL', 'Data'],
+  'learn-git': ['Git', 'Collaboration'],
+  'learn-docker': ['Docker', 'Containers'],
+}
+
+const pathDescriptions = {
+  'machine-learning': 'Prepare data, train models, and deploy reliable ML systems that solve practical problems.',
+  'data-scientist': 'Turn evidence into clear decisions by exploring data, finding patterns, and communicating results.',
+  'backend-developer': 'Build reliable APIs, data services, and software systems that power useful applications.',
+  'ai-engineer': 'Build intelligent products with modern AI tools, from useful prompts to production-ready features.',
+  'learn-python': 'Build useful programs with Python and learn the programming patterns behind clear, confident code.',
+  'learn-sql': 'Query data, answer real questions, and turn raw tables into useful insight for better decisions.',
+  'learn-git': 'Work confidently with versions, collaboration, and the everyday Git workflow used by development teams.',
+  'learn-docker': 'Package and run projects consistently, so your development environment works wherever it needs to.',
+}
+
+explorePaths.forEach((path) => {
+  path.tools = pathTools[path.id]
+  path.description = pathDescriptions[path.id]
+  path.recommended = path.id === 'ai-engineer'
+})

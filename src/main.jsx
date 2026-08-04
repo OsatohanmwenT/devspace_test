@@ -2,6 +2,8 @@ import { StrictMode, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import PathsView from './components/paths'
 import LeaderboardView from './components/leaderboard'
+import PracticeView from './components/practice'
+import { PracticeSession } from './components/practice/PracticeSession'
 import LessonView from './components/lesson/LessonView'
 import './styles.css'
 import './tailwind.css'
@@ -28,6 +30,7 @@ function App() {
   const [devyOpen, setDevyOpen] = useState(false)
   const [theme, setTheme] = useState(getInitialTheme)
   const [openLesson, setOpenLesson] = useState(null)
+  const [openPractice, setOpenPractice] = useState(null)
   const [activePopover, setActivePopover] = useState(null)
   const menuRef = useRef(null)
   const menuButtonRef = useRef(null)
@@ -130,7 +133,7 @@ function App() {
         </button>
 
         <nav className="flex gap-6 ml-12 mr-auto max-[680px]:hidden" aria-label="Primary navigation">
-          {['Home', 'Paths', 'Leaderboard'].map((item) => {
+          {['Home', 'Paths', 'Leaderboard', 'Practice'].map((item) => {
             const isActive = active === item
             return (
               <button
@@ -213,8 +216,8 @@ function App() {
         )}
       </header>
 
-      <main className={active === 'Paths' || active === 'Leaderboard' ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? <LeaderboardView /> : (
+      <main className={active === 'Paths' || active === 'Leaderboard' || active === 'Practice' ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? <LeaderboardView /> : active === 'Practice' ? <PracticeView onStart={setOpenPractice} /> : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px]">
@@ -314,7 +317,7 @@ function App() {
         </aside>
 
         <section className="min-w-0 max-[680px]:order-1">
-          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium tracking-[-.04em]">Your next mission</h1>
+          {/* <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium tracking-[-.04em]">Your next mission</h1> */}
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
             <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
@@ -352,6 +355,7 @@ function App() {
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
 
       {openLesson && <LessonView navigationStyle="segments" onExit={() => setOpenLesson(null)} />}
+      {openPractice && <PracticeSession sessionId={openPractice} onExit={() => setOpenPractice(null)} />}
     </div>
   )
 }
