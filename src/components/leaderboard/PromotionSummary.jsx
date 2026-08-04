@@ -23,7 +23,7 @@ export function PromotionSummary({ summary }) {
   const fill = target > 0 ? Math.min(100, Math.round((user.score / target) * 100)) : 100
 
   return (
-    <div className="grid gap-3 p-4 rounded-2xl border-2" style={{ borderColor: accent }}>
+    <div className="grid gap-3 rounded-2xl border-2 bg-[#242424] p-4 [[data-theme=light]_&]:bg-white" style={{ borderColor: accent }}>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="grid gap-0.5">
           <span className="flex items-center gap-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
