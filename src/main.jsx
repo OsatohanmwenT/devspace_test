@@ -233,7 +233,7 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, lastActiveDate, profile } = progress
+  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, profile } = progress
   // Onboarding picks the path; before that, the default shelf is the spine.
   const currentPath = getPath(profile?.pathId)
   const currentLeague = getLeague(leagueIndex)
@@ -243,6 +243,10 @@ function App() {
   const currentStepIndex = currentPath.cards.findIndex((card) => card.state === 'current')
   const currentRegionCard = currentPath.cards[currentStepIndex] ?? currentPath.cards[0]
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
+  // Reflects what the learner actually onboarded as, rather than ML for everyone.
+  const homeHint = nextLesson
+    ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
+    : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
 
   if (!profile) return <OnboardingView onComplete={completeOnboarding} />
 
@@ -342,7 +346,7 @@ function App() {
       </header>
 
       <main className={active === 'Paths' || active === 'Leaderboard' || active === 'Practice' ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView onNotice={showNotice} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? (
+        {active === 'Paths' ? <PathsView completedLessons={completedLessons} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? (
           <LeaderboardView
             weeklyXp={weeklyXp}
             xp={xp}
@@ -463,7 +467,7 @@ function App() {
                 <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
                 <div>
                   <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Try this first</strong>
-                  <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Start by listing three AI/ML roles that interest you. You can refine them as you learn.</p>
+                  <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{homeHint}</p>
                 </div>
               </div>
             </section>
@@ -476,8 +480,8 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} />}
-      {openPractice && <PracticeSession sessionId={openPractice} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} />}
+      {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )
 }

@@ -100,6 +100,19 @@ export const STEP_ANSWER_KEY = {
   daily_time: 'dailyMinutes',
 }
 
+// Steps where more than one answer is genuinely reasonable. The UI reads this
+// to toggle rather than replace, and buildProfile stores them as arrays.
+export const MULTI_SELECT_STEPS = new Set(['project_interest', 'immediate_need'])
+
+export function isMultiSelectStep(stepId) {
+  return MULTI_SELECT_STEPS.has(stepId)
+}
+
+function toArray(value) {
+  if (Array.isArray(value)) return value
+  return value === undefined || value === null ? [] : [value]
+}
+
 export function resolvePlacement(answers = {}) {
   const role = resolveRole(answers)
   const rung = getExperienceRung(answers.experience)
@@ -128,8 +141,8 @@ export function buildProfile(answers = {}) {
     experience: answers.experience ?? null,
     rung: getExperienceRung(answers.experience),
     startingPoint: resolvePlacement(answers)?.value ?? null,
-    projectInterest: answers.projectInterest ?? null,
-    immediateNeed: answers.immediateNeed ?? null,
+    projectInterest: toArray(answers.projectInterest),
+    immediateNeed: toArray(answers.immediateNeed),
     dailyMinutes: answers.dailyMinutes ?? 10,
     pathId: resolvePath(answers),
     completedAt: new Date().toDateString(),

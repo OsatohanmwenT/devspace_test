@@ -7,8 +7,8 @@ const BLANK_BASE = 'inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38
 function blankClassName(checked, selected, correct) {
   if (checked && selected && correct) return `${BLANK_BASE} border border-solid cursor-pointer border-[#04adc0] bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
   if (checked && selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
-  if (selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#6f66ec] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
-  return `${BLANK_BASE} border border-dashed cursor-default border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
+  if (selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#6f66ec] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
+  return `${BLANK_BASE} border border-dashed cursor-default border-[#515151] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
 }
 
 function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption }) {
@@ -45,7 +45,7 @@ function TokenBank({ question, answer, checked, onAnswer }) {
         <button
           type="button"
           key={optionIndex}
-          className="min-h-11 rounded-[10px] border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 font-[inherit] text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] transition-[border-color,background] duration-[120ms] enabled:hover:border-[#6f66ec] enabled:hover:bg-[#272634] [[data-theme=light]_&]:enabled:hover:bg-[#f1f0fd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6f66ec]"
+          className="min-h-11 rounded-[10px] border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white px-4 font-[inherit] text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] transition-[border-color,background] duration-[120ms] enabled:hover:border-[#6f66ec] enabled:hover:bg-[#393747] [[data-theme=light]_&]:enabled:hover:bg-[#f1f0fd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6f66ec]"
           disabled={used.includes(optionIndex) || checked}
           draggable={!used.includes(optionIndex) && !checked}
           onDragStart={(event) => {
@@ -152,18 +152,17 @@ export function LessonQuestion({ question, answer, checked, onAnswer, headingLev
         {prefix}<RichText content={question.prompt} />
       </Heading>
 
-      {question.type === 'code-fill'
-        ? <CodeFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />
-        : isFillType(question)
-          ? <ProseFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />
-          : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
-
-      {isFillType(question) && (
-        <>
-          <p className="m-0 text-base font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">Click or drag an option to fill the blanks:</p>
-          <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
-        </>
-      )}
+      {isFillType(question)
+        ? <div className="grid gap-5 rounded-2xl border border-[#373737] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#202020] [[data-theme=light]_&]:bg-[#f7f7f7] p-5 max-[720px]:p-4">
+          {question.type === 'code-fill'
+            ? <CodeFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />
+            : <ProseFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />}
+          <div className="grid gap-3">
+            <p className="m-0 text-base font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">Click or drag an option to fill the blanks:</p>
+            <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
+          </div>
+        </div>
+        : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
 
       {checked && (
         <p className={`m-0 text-sm leading-[1.5] ${correct ? 'text-[#04adc0]' : 'text-[#ff676d]'}`}>

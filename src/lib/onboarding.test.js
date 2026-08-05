@@ -9,6 +9,8 @@ import {
   resolvePath,
   resolvePlacement,
   resolveRole,
+  isMultiSelectStep,
+  MULTI_SELECT_STEPS,
   STEP_ANSWER_KEY,
 } from './onboarding.js'
 
@@ -53,7 +55,8 @@ function walk(pick) {
     if (!key) continue
     const options = getStepOptions(step.id, answers)
     assert.ok(options.length > 0, `step "${step.id}" offers no options`)
-    answers[key] = pick(step.id, options)
+    const picked = pick(step.id, options)
+    answers[key] = isMultiSelectStep(step.id) ? [picked] : picked
   }
   return { answers, visited }
 }
@@ -149,6 +152,41 @@ test('visible steps grow and shrink with the answers', () => {
   const full = ids({ branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' })
   assert.ok(full.length > empty.length)
   assert.ok(full.includes('role_payoff'))
+})
+
+test('multi-select steps store arrays and every other step stays scalar', () => {
+  const { answers } = walk((_, options) => options[0].value)
+
+  for (const [stepId, key] of Object.entries(STEP_ANSWER_KEY)) {
+    if (answers[key] === undefined) continue
+    const stored = answers[key]
+    if (isMultiSelectStep(stepId)) assert.ok(Array.isArray(stored), `${stepId} should store an array`)
+    else assert.ok(!Array.isArray(stored), `${stepId} should stay scalar`)
+  }
+
+  const profile = buildProfile(answers)
+  assert.ok(Array.isArray(profile.projectInterest))
+  assert.ok(Array.isArray(profile.immediateNeed))
+  assert.ok(!Array.isArray(profile.motivation))
+})
+
+test('multi-select answers survive into the profile, and absent ones default to empty', () => {
+  const many = buildProfile({ projectInterest: ['ai_tools', 'games', 'fintech'], immediateNeed: ['build_projects'] })
+  assert.deepEqual(many.projectInterest, ['ai_tools', 'games', 'fintech'])
+  assert.deepEqual(many.immediateNeed, ['build_projects'])
+
+  const none = buildProfile({})
+  assert.deepEqual(none.projectInterest, [])
+  assert.deepEqual(none.immediateNeed, [])
+
+  // A scalar left over from an older stored profile still normalises.
+  assert.deepEqual(buildProfile({ projectInterest: 'games' }).projectInterest, ['games'])
+})
+
+test('the multi-select set only names steps that exist', () => {
+  for (const stepId of MULTI_SELECT_STEPS) {
+    assert.ok(STEP_ANSWER_KEY[stepId], `${stepId} is not a real answerable step`)
+  }
 })
 
 test('the profile records the raw answers alongside the resolved ones', () => {

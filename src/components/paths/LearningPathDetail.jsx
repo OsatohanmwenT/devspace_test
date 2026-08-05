@@ -3,14 +3,18 @@ import { ActionButton } from '../ui/ActionButton'
 import { BookOpenIcon, ChecklistIcon } from '../ui/icons'
 import { FAMILY_ACCENTS } from './ExplorePathCard'
 import { LessonRow } from './LessonRow'
+import { CheatsheetDrawer } from './CheatsheetDrawer'
+import { GuidebookView } from './GuidebookView'
+import { getRegionTopics } from '../../data/learningResources'
 
-export function LearningPathDetail({ path, onOpenLesson, onBack }) {
+export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack }) {
   const regions = path.cards
   const lessons = regions.flatMap((region) => region.lessons)
   const currentLesson = lessons.find((lesson) => lesson.state === 'current')
   const [selectedLessonId, setSelectedLessonId] = useState(currentLesson?.id)
   const [startedLessonIds, setStartedLessonIds] = useState([])
   const [pinnedRegionId, setPinnedRegionId] = useState(null)
+  const [openResource, setOpenResource] = useState(null)
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId)
   const selectedRegion = regions.find((region) => region.lessons.some((lesson) => lesson.id === selectedLessonId)) ?? regions[0]
   const selectedLessonStarted = selectedLesson && startedLessonIds.includes(selectedLesson.id)
@@ -19,11 +23,11 @@ export function LearningPathDetail({ path, onOpenLesson, onBack }) {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onBack()
+      if (event.key === 'Escape' && !openResource) onBack()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onBack])
+  }, [onBack, openResource])
 
   useEffect(() => {
     const updatePinnedRegion = () => {
@@ -71,8 +75,8 @@ export function LearningPathDetail({ path, onOpenLesson, onBack }) {
             {selectedRegion.summary}
           </p>
           <div className="grid grid-cols-2 gap-3 mt-1 pt-[18px] border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] max-[900px]:row-span-2 max-[900px]:col-start-3 max-[900px]:border-t-0 max-[900px]:border-l max-[900px]:pt-0 max-[900px]:pl-[22px] max-[680px]:row-span-1 max-[680px]:[grid-column:1/-1] max-[680px]:border-t max-[680px]:border-l-0 max-[680px]:pl-0 max-[680px]:pt-3.5">
-            <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold"><ChecklistIcon className="size-4" />Cheatsheet</ActionButton>
-            <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold"><BookOpenIcon className="size-4" />Guidebook</ActionButton>
+            <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('cheatsheet')}><ChecklistIcon className="size-4" />Cheatsheet</ActionButton>
+            <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('guidebook')}><BookOpenIcon className="size-4" />Guidebook</ActionButton>
           </div>
         </aside>
 
@@ -127,6 +131,21 @@ export function LearningPathDetail({ path, onOpenLesson, onBack }) {
           )}
         </div>
       </div>
+      {openResource === 'cheatsheet' && (
+        <CheatsheetDrawer
+          title="Cheatsheet"
+          subtitle={selectedRegion.title}
+          topics={getRegionTopics(selectedRegion.id)}
+          onClose={() => setOpenResource(null)}
+        />
+      )}
+      {openResource === 'guidebook' && (
+        <GuidebookView
+          key={selectedRegion.id}
+          region={selectedRegion}
+          onBack={() => setOpenResource(null)}
+        />
+      )}
     </section>
   )
 }

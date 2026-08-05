@@ -7,6 +7,7 @@ import {
   computeLessonsPerWeek,
   getStepOptions,
   getVisibleSteps,
+  isMultiSelectStep,
   resolveBranch,
   resolvePlacement,
   resolveRole,
@@ -47,14 +48,24 @@ export default function OnboardingView({ onComplete }) {
   }, [])
 
   const select = (nextValue) => {
-    setAnswers((current) => ({ ...current, [answerKey]: nextValue }))
+    setAnswers((current) => {
+      if (!isMultiSelectStep(step.id)) return { ...current, [answerKey]: nextValue }
+      const chosen = current[answerKey] ?? []
+      return {
+        ...current,
+        [answerKey]: chosen.includes(nextValue)
+          ? chosen.filter((item) => item !== nextValue)
+          : [...chosen, nextValue],
+      }
+    })
   }
 
   const goNext = () => setIndex((current) => Math.min(current + 1, getVisibleSteps(answers).length - 1))
   const goBack = () => setIndex((current) => Math.max(current - 1, 0))
 
   const isChoice = Boolean(answerKey)
-  const canAdvance = !isChoice || value !== undefined
+  const isMulti = isMultiSelectStep(step.id)
+  const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
   const isLast = step.id === 'summary'
 
   const primaryLabel = step.id === 'welcome' ? 'Let’s go' : isLast ? 'Start learning' : 'Continue'
@@ -84,7 +95,9 @@ export default function OnboardingView({ onComplete }) {
         </div>
       </header>
 
-      <main className="grid justify-items-center gap-7 overflow-auto px-6 py-8 max-[680px]:px-4">
+      {/* Choice steps pack to the top so the heading and options keep a tight
+          rhythm; payoff and welcome screens stay vertically centred. */}
+      <main className={`grid justify-items-center gap-6 overflow-auto px-6 pb-8 max-[680px]:px-4 ${isChoice ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
         {step.id === 'welcome' && (
           <div className="grid justify-items-center gap-5 self-center text-center">
             <img className="h-24 w-24 object-contain" src="/assets/devy.svg" alt="" />
@@ -135,11 +148,13 @@ export default function OnboardingView({ onComplete }) {
           <>
             <StepHeading
               title={step.id === 'role_sub_quiz' ? roleSubQuiz[branch]?.prompt ?? '' : COPY[step.id]?.title ?? ''}
-              subtitle={step.id === 'role_sub_quiz' ? 'Pick whichever sounds more like you — there’s no wrong answer.' : COPY[step.id]?.subtitle}
+              subtitle={step.id === 'role_sub_quiz'
+                ? 'Pick whichever sounds more like you — there’s no wrong answer.'
+                : isMulti ? 'Select all that apply.' : COPY[step.id]?.subtitle}
             />
             {step.id === 'project_interest'
               ? <ChipList options={options} value={value} onSelect={select} />
-              : <OptionList options={options} value={value} onSelect={select} showNumbers={step.id === 'motivation'} />}
+              : <OptionList options={options} value={value} onSelect={select} />}
           </>
         )}
       </main>

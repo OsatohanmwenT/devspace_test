@@ -5,9 +5,13 @@ import { LessonProgressStrip } from './LessonProgressStrip'
 import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
 import { LessonQuestion } from './LessonQuestion'
+import { DevyAssistant } from './DevyAssistant'
+import { ChecklistIcon } from '../ui/icons'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
 import { isQuestionComplete, isQuestionCorrect } from './questionState'
+import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
+import { getLessonTopics } from '../../data/learningResources'
 
 const STREAK_THRESHOLD = 3
 
@@ -42,7 +46,7 @@ function UnavailableLesson({ lessonId }) {
   )
 }
 
-export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete }) {
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile }) {
   const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
   const lesson = getLesson(activeLessonId)
   // Rebuilt per lesson rather than once at module load, so the id actually selects content.
@@ -51,6 +55,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const storageKey = `devspace-lesson-session:${activeLessonId}`
   const [session, setSession] = useState(() => loadLessonSession(storageKey, lessonFlow.length || 1))
   const [isDevyOpen, setIsDevyOpen] = useState(false)
+  const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
+  const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
 
   const currentStep = lessonFlow[session.stepIndex]
   const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete'
@@ -126,6 +132,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // The drawer owns the keyboard while it's open.
+      if (isCheatsheetOpen) return
       if (event.key === 'Escape') {
         onExit()
         return
@@ -179,6 +187,19 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             streaking={showStreak}
           />
         )}
+
+        {/* Reference belongs where the work happens — this is the moment you
+            actually need to look up syntax. */}
+        {lessonTopics.length > 0 && (
+          <button
+            type="button"
+            className={`grid w-11 h-11 place-items-center justify-self-end border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}
+            onClick={() => setIsCheatsheetOpen(true)}
+            aria-label="Open cheatsheet"
+          >
+            <ChecklistIcon className="w-[19px] h-[19px]" />
+          </button>
+        )}
       </header>
 
       <main
@@ -206,31 +227,14 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         className={`absolute z-[1] top-16 bottom-0 left-0 flex w-80 max-[720px]:w-full flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
-        <div className="flex items-center justify-between text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
-          <strong className="text-base">Devy</strong>
-          <button
-            type="button"
-            className={`grid w-9 h-9 place-items-center border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] ${focusRing}`}
-            onClick={() => setIsDevyOpen(false)}
-            aria-label="Close Devy chat"
-          >
-            <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          </button>
-        </div>
-        <div className="flex-1">
-          <p className="mt-6 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-sm leading-[1.55]">Hi, I’m Devy. Ask me about programs, variables, or the example on this page.</p>
-        </div>
-        <form
-          className="mb-5 max-[720px]:mb-4 border rounded-full border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5]"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <input
-            type="text"
-            className="w-full h-12 border-0 rounded-[inherit] bg-transparent px-4 text-[#89898e] [[data-theme=light]_&]:text-[#aaa] font-[inherit]"
-            placeholder="Ask Devy"
-            aria-label="Ask Devy a question"
-          />
-        </form>
+        <DevyAssistant
+          key={currentStep?.id}
+          step={currentStep}
+          checked={isChecked}
+          profile={profile}
+          onClose={() => setIsDevyOpen(false)}
+          focusRing={focusRing}
+        />
       </aside>}
 
       <footer
@@ -262,6 +266,15 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           {footerAction.label}
         </ActionButton>}
       </footer>
+
+      {isCheatsheetOpen && (
+        <CheatsheetDrawer
+          title="Cheatsheet"
+          subtitle={lesson?.title}
+          topics={lessonTopics}
+          onClose={() => setIsCheatsheetOpen(false)}
+        />
+      )}
     </section>
   )
 }
