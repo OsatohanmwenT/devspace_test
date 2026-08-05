@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { ALL_ROLES, BRANCHES, roleOptions, roleSubQuiz, startingPointOptions, branchTriage } from '../data/onboarding.js'
 import {
   buildProfile,
+  getBreakContent,
   getVisibleSteps,
   getStepOptions,
   resolveBranch,
@@ -151,7 +152,65 @@ test('visible steps grow and shrink with the answers', () => {
 
   const full = ids({ branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' })
   assert.ok(full.length > empty.length)
-  assert.ok(full.includes('role_payoff'))
+  assert.ok(full.includes('role_break'))
+})
+
+test('every question is immediately followed by a Devy break', () => {
+  const steps = getVisibleSteps({ branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' })
+  for (const [index, step] of steps.entries()) {
+    if (!STEP_ANSWER_KEY[step.id]) continue
+    assert.deepEqual(steps[index + 1], { id: `${step.id}_break`, type: 'break', questionId: step.id })
+  }
+})
+
+test('break content includes selected labels for single and multi-select answers', () => {
+  const single = getBreakContent('branch', { branch: 'web' })
+  assert.match(single.message, /Websites & Interfaces/)
+  assert.equal(single.insight, 'The web turns ideas into tools anyone can reach.')
+  assert.deepEqual(Object.keys(single), ['message', 'insight'])
+
+  const multi = getBreakContent('project_interest', { projectInterest: ['ai_tools', 'games'] })
+  assert.equal(multi.message, 'Nice mix. Your projects will feel familiar.')
+  assert.equal(multi.insight, 'Relevant projects make new skills stick.')
+})
+
+test('triage and role feedback resolve insights from the selected branch', () => {
+  const triage = getBreakContent('branch_triage', { branch: 'not_sure', branchFromTriage: 'ai' })
+  assert.equal(triage.insight, 'AI is reshaping how every industry works.')
+
+  const role = getBreakContent('role', { branch: 'ai', role: 'ml_engineer' })
+  const roleQuiz = getBreakContent('role_sub_quiz', { branch: 'ai', role: 'help_me_choose', roleFromSubQuiz: 'ml_engineer' })
+  assert.equal(role.insight, 'AI roles turn data into useful predictions and tools.')
+  assert.equal(roleQuiz.insight, role.insight)
+})
+
+test('every feedback type returns a concise message and insight', () => {
+  const cases = {
+    motivation: { motivation: 'professional_developer' },
+    branch: { branch: 'ai' },
+    branch_triage: { branch: 'not_sure', branchFromTriage: 'ai' },
+    role: { branch: 'ai', role: 'ml_engineer' },
+    role_sub_quiz: { branch: 'ai', role: 'help_me_choose', roleFromSubQuiz: 'ml_engineer' },
+    experience: { experience: 'complete_beginner' },
+    starting_point: { branch: 'ai', role: 'ml_engineer', experience: 'built_small_projects', startingPoint: 'core_ml_algorithms' },
+    project_interest: { projectInterest: ['ai_tools', 'games'] },
+    immediate_need: { immediateNeed: ['learn_basics', 'build_projects'] },
+    daily_time: { dailyMinutes: 10 },
+  }
+
+  for (const [stepId, answers] of Object.entries(cases)) {
+    const content = getBreakContent(stepId, answers)
+    assert.ok(content.message.trim(), `${stepId} has no message`)
+    assert.ok(content.insight.trim(), `${stepId} has no insight`)
+    assert.ok(content.insight.split(/\s+/).length <= 10, `${stepId} insight is too long`)
+  }
+})
+
+test('duplicate payoff steps are not part of the flow', () => {
+  const steps = ids({ branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' })
+  assert.ok(!steps.includes('role_payoff'))
+  assert.ok(!steps.includes('goals_payoff'))
+  assert.ok(!steps.includes('commitment_payoff'))
 })
 
 test('multi-select steps store arrays and every other step stays scalar', () => {

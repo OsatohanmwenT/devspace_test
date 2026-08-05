@@ -1,6 +1,7 @@
 import {
   BRANCHES,
   branchTriage,
+  breakPrompts,
   dailyTimeOptions,
   experienceOptions,
   immediateNeedOptions,
@@ -35,33 +36,57 @@ export function resolveBranch(answers) {
 // The ordered list of steps this particular set of answers has to walk. The
 // progress bar reads its length, so it stays honest as branches open and close.
 export function getVisibleSteps(answers = {}) {
-  const steps = [{ id: 'welcome', type: 'intro' }, { id: 'motivation', type: 'single' }]
+  const steps = [{ id: 'welcome', type: 'intro' }]
+  const addQuestion = (id, type = 'single') => {
+    steps.push({ id, type })
+    steps.push({ id: `${id}_break`, type: 'break', questionId: id })
+  }
 
-  steps.push({ id: 'branch', type: 'single' })
-  if (answers.branch === 'not_sure') steps.push({ id: 'branch_triage', type: 'single' })
+  addQuestion('motivation')
+  addQuestion('branch')
+  if (answers.branch === 'not_sure') addQuestion('branch_triage')
 
   const branch = resolveBranch(answers)
-  if (branch) steps.push({ id: 'role', type: 'role_reveal' })
-  if (branch && answers.role === 'help_me_choose') steps.push({ id: 'role_sub_quiz', type: 'single' })
+  if (branch) addQuestion('role', 'role_reveal')
+  if (branch && answers.role === 'help_me_choose') addQuestion('role_sub_quiz')
 
   const role = resolveRole(answers)
-  if (role) steps.push({ id: 'role_payoff', type: 'payoff' })
 
-  steps.push({ id: 'experience', type: 'single' })
+  addQuestion('experience')
   // Below rung 2 there is nothing meaningful to place against, so the question
   // is skipped rather than shown with a single sensible answer.
   if (role && getExperienceRung(answers.experience) >= RUNG_REQUIRING_PLACEMENT) {
-    steps.push({ id: 'starting_point', type: 'single' })
+    addQuestion('starting_point')
   }
 
-  steps.push({ id: 'project_interest', type: 'single' })
-  steps.push({ id: 'immediate_need', type: 'single' })
-  steps.push({ id: 'goals_payoff', type: 'payoff' })
-  steps.push({ id: 'daily_time', type: 'single' })
-  steps.push({ id: 'commitment_payoff', type: 'payoff' })
+  addQuestion('project_interest')
+  addQuestion('immediate_need')
+  addQuestion('daily_time')
   steps.push({ id: 'summary', type: 'summary' })
 
   return steps
+}
+
+export function getBreakContent(questionId, answers = {}) {
+  const config = breakPrompts[questionId]
+  const answerKey = STEP_ANSWER_KEY[questionId]
+  const values = toArray(answers[answerKey])
+  const options = questionId === 'branch_triage'
+    ? BRANCHES
+    : questionId === 'role_sub_quiz'
+      ? getStepOptions('role', answers)
+      : getStepOptions(questionId, answers)
+  const labels = values
+    .map((value) => options.find((option) => option.value === value)?.label)
+    .filter(Boolean)
+  const answer = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}` : labels[0] ?? 'that'
+  const branch = questionId === 'branch' && values.includes('not_sure') ? 'not_sure' : resolveBranch(answers)
+
+  if (!config) return null
+  return {
+    message: config.message(answer, labels, values),
+    insight: typeof config.insight === 'function' ? config.insight(branch) : config.insight,
+  }
 }
 
 export function getStepOptions(stepId, answers = {}) {

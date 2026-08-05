@@ -30,7 +30,7 @@ function CopyButton({ text }) {
 function Snippet({ code }) {
   return (
     <div className="group relative">
-      <pre className="m-0 overflow-x-auto rounded-xl border border-[#343438] bg-[#121214] px-4 py-3.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[13.5px] leading-[1.7] text-[#f4f4f2]"><code>{code}</code></pre>
+      <pre className="m-0 overflow-x-auto border-l-2 border-[#3f3b68] bg-[#1e1e1e] px-4 py-3.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[14px] leading-[1.7] text-[#f4f4f2]"><code>{code}</code></pre>
       <CopyButton text={code} />
     </div>
   )
@@ -42,7 +42,7 @@ function CheatsheetEntry({ topic }) {
   return (
     <article className="grid gap-3 border-b border-[#2c2c30] pb-7 last:border-b-0 last:pb-0 [[data-theme=light]_&]:border-[#ececea]">
       <h3 className="m-0 flex items-center gap-2.5 font-['Space_Grotesk',Arial,sans-serif] text-[19px] font-semibold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
-        <span className="grid size-8 flex-none place-items-center rounded-lg bg-[#252528] text-[#888df2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#513deb]">
+        <span className="grid size-8 flex-none place-items-center bg-[#252528] text-[#888df2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#513deb]">
           <TopicGlyph topicId={topic.id} className="size-[18px]" />
         </span>
         {topic.title}
@@ -58,7 +58,7 @@ function CheatsheetEntry({ topic }) {
         </summary>
         <div className="grid gap-3 pt-3">
           <Snippet code={topic.cheatsheet.example} />
-          <p className="m-0 rounded-lg border-l-2 border-[#f0c964] bg-[#241f16] px-3.5 py-2.5 text-[13.5px] leading-[1.55] text-[#d6c9aa] [[data-theme=light]_&]:bg-[#fff8e9] [[data-theme=light]_&]:text-[#5e4b24]">
+          <p className="m-0 border-l-2 border-[#f0c964] bg-[#241f16] px-3.5 py-2.5 text-[14px] leading-[1.6] text-[#d6c9aa] [[data-theme=light]_&]:bg-[#fff8e9] [[data-theme=light]_&]:text-[#5e4b24]">
             {topic.cheatsheet.mistake}
           </p>
         </div>

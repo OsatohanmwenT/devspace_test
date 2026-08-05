@@ -250,6 +250,44 @@ export const dailyTimeOptions = [
   { value: 20, label: '20 min +', aside: 'I’m serious' },
 ]
 
+const branchInsights = {
+  web: 'The web turns ideas into tools anyone can reach.',
+  mobile: 'Phones put your work directly into people’s hands.',
+  backend: 'Reliable products depend on strong invisible systems.',
+  data: 'Good data turns uncertainty into better decisions.',
+  ai: 'AI is reshaping how every industry works.',
+  product: 'Great products begin with the right problem.',
+  design: 'Good design makes complex things feel simple.',
+  cloud: 'Modern products depend on secure, reliable infrastructure.',
+  not_sure: 'Exploring is how the right direction becomes clear.',
+}
+
+const roleInsights = {
+  web: 'Web roles blend logic with visual craft.',
+  mobile: 'Mobile roles design for life beyond the desk.',
+  backend: 'Backend roles keep data moving safely.',
+  data: 'Data roles turn patterns into better decisions.',
+  ai: 'AI roles turn data into useful predictions and tools.',
+  product: 'Product roles connect user needs with execution.',
+  design: 'Design roles turn friction into clear experiences.',
+  cloud: 'Cloud roles keep digital products secure and available.',
+}
+
+// Short pauses acknowledge what the learner shared and add one useful spark
+// without changing their learning profile.
+export const breakPrompts = {
+  motivation: { message: () => 'That’s a strong reason to start.', insight: 'Clear goals make consistent practice easier.' },
+  branch: { message: (answer, _, values) => values.includes('not_sure') ? 'We’ll narrow it down together.' : `${answer} it is.`, insight: (branch) => branchInsights[branch] ?? branchInsights.not_sure },
+  branch_triage: { message: (answer) => `${answer} fits you well.`, insight: (branch) => branchInsights[branch] ?? branchInsights.not_sure },
+  role: { message: (answer, _, values) => values.includes('help_me_choose') ? 'I’ll help you find the right fit.' : `${answer} it is.`, insight: (branch) => roleInsights[branch] ?? 'Every role grows from strong foundations.' },
+  role_sub_quiz: { message: (answer) => `${answer} sounds right.`, insight: (branch) => roleInsights[branch] ?? 'Every role grows from strong foundations.' },
+  experience: { message: () => 'We’ll start at your level.', insight: 'The right starting level keeps challenge productive.' },
+  starting_point: { message: () => 'That’s where your path will begin.', insight: 'You can revisit earlier lessons whenever you need.' },
+  project_interest: { message: (answer, labels) => labels.length > 1 ? 'Nice mix. Your projects will feel familiar.' : `Projects inspired by ${answer}.`, insight: 'Relevant projects make new skills stick.' },
+  immediate_need: { message: (answer, labels) => labels.length > 1 ? 'We’ll put those goals first.' : `We’ll focus on ${answer.toLowerCase()} first.`, insight: 'A clear priority keeps learning focused.' },
+  daily_time: { message: (answer) => `${answer} a day. You’ve got this.`, insight: 'Short daily practice beats occasional long sessions.' },
+}
+
 // What the answers actually produce. v2 declared nothing here at all.
 export const outcomes = {
   roleToPath: {

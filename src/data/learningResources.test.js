@@ -25,6 +25,35 @@ test('every topic carries the fields both surfaces render', () => {
   }
 })
 
+// A worked example the reader can't see the result of isn't worked — they'd
+// have to run Python in their head, which is what a beginner can't do.
+test('every example shows its output', () => {
+  for (const topic of Object.values(learningResources).flatMap((resource) => resource.topics)) {
+    assert.match(topic.guidebook.code, /^#/m, `${topic.id} guidebook code shows no output`)
+    assert.match(topic.cheatsheet.example, /^#/m, `${topic.id} cheatsheet example shows no output`)
+  }
+})
+
+test('"why this works" says something the walkthrough does not', () => {
+  for (const topic of Object.values(learningResources).flatMap((resource) => resource.topics)) {
+    const { walkthrough, why } = topic.guidebook
+    assert.ok(why.length > 80, `${topic.id} "why" is too thin to add anything`)
+    assert.notEqual(why, walkthrough, `${topic.id} "why" duplicates the walkthrough`)
+  }
+})
+
+test('cross-references point at real topics and never at themselves', () => {
+  for (const resource of Object.values(learningResources)) {
+    const ids = new Set(resource.topics.map((topic) => topic.id))
+    for (const topic of resource.topics) {
+      const { builtOn } = topic.guidebook
+      if (!builtOn) continue
+      assert.ok(ids.has(builtOn), `${topic.id} builds on "${builtOn}", which does not exist`)
+      assert.notEqual(builtOn, topic.id, `${topic.id} references itself`)
+    }
+  }
+})
+
 test('region topics resolve, and unknown regions return empty rather than throwing', () => {
   assert.ok(getRegionTopics('python-foundations').length > 0)
   assert.deepEqual(getRegionTopics('does-not-exist'), [])

@@ -4,7 +4,7 @@ import { getPath } from '../../data/paths'
 import { branchTriage, BRANCHES, roleSubQuiz } from '../../data/onboarding'
 import {
   buildProfile,
-  computeLessonsPerWeek,
+  getBreakContent,
   getStepOptions,
   getVisibleSteps,
   isMultiSelectStep,
@@ -36,6 +36,7 @@ export default function OnboardingView({ onComplete }) {
   const answerKey = STEP_ANSWER_KEY[step.id]
   const value = answerKey ? answers[answerKey] : undefined
   const options = getStepOptions(step.id, answers)
+  const breakContent = step.type === 'break' ? getBreakContent(step.questionId, answers) : null
 
   const branch = resolveBranch(answers)
   const role = resolveRole(answers)
@@ -64,6 +65,7 @@ export default function OnboardingView({ onComplete }) {
   const goBack = () => setIndex((current) => Math.max(current - 1, 0))
 
   const isChoice = Boolean(answerKey)
+  const isBreak = step.type === 'break'
   const isMulti = isMultiSelectStep(step.id)
   const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
   const isLast = step.id === 'summary'
@@ -105,30 +107,10 @@ export default function OnboardingView({ onComplete }) {
           </div>
         )}
 
-        {step.id === 'role_payoff' && (
-          <div className="grid justify-items-center gap-5 self-center text-center">
-            <img className="h-24 w-24 object-contain" src={getPath(buildProfile(answers).pathId).emblem} alt="" />
-            <StepHeading
-              title={`${role ? roleLabel(branch, role) : 'Good choice'} it is`}
-              subtitle="We’ll use examples from this kind of work wherever it helps."
-            />
-          </div>
-        )}
-
-        {step.id === 'goals_payoff' && (
-          <div className="grid justify-items-center gap-5 self-center text-center">
-            <span className="grid h-20 w-20 place-items-center rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white text-[34px]" aria-hidden="true">🎯</span>
-            <StepHeading title="Noted" subtitle="We’ll put what you asked for first, and keep the rest within reach." />
-          </div>
-        )}
-
-        {step.id === 'commitment_payoff' && (
-          <div className="grid justify-items-center gap-5 self-center text-center">
-            <span className="grid h-20 w-20 place-items-center rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white text-[34px]" aria-hidden="true">⚡</span>
-            <StepHeading
-              title={`That’s about ${computeLessonsPerWeek(answers.dailyMinutes)} lessons a week`}
-              subtitle="Enough to build a habit that actually sticks. Your daily goal is set from this."
-            />
+        {isBreak && breakContent && (
+          <div className="grid w-full max-w-[520px] justify-items-center gap-5 self-center text-center">
+            <img className="h-24 w-24 object-contain" src="/assets/devy.svg" alt="" />
+            <StepHeading title={breakContent.message} subtitle={breakContent.insight} />
           </div>
         )}
 

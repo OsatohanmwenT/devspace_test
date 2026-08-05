@@ -62,7 +62,7 @@ export function Drawer({ title, subtitle, onClose, children, labelledBy = 'drawe
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="relative grid h-full w-[min(100%,520px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[#404040] bg-[#151517] shadow-[-24px_0_60px_rgba(0,0,0,.45)] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white"
+        className="relative grid h-full w-[min(100%,560px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[#404040] bg-[#151517] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white"
       >
         <header className="flex items-start justify-between gap-4 border-b border-[#404040] px-6 py-4 [[data-theme=light]_&]:border-[#e1e1e1] max-[680px]:px-4">
           <div className="min-w-0">
