@@ -19,7 +19,7 @@ const dailyGoals = [
   { id: 'intense', label: 'Intense', meta: '30 XP / day' },
 ]
 
-export default function SettingsView({ theme, onToggleTheme, onNotice }) {
+export default function SettingsView({ theme, onToggleTheme, onNotice, email }) {
   const [notifications, setNotifications] = useState({
     reminders: true,
     streak: true,
@@ -38,40 +38,46 @@ export default function SettingsView({ theme, onToggleTheme, onNotice }) {
   }
 
   return (
-    <section className="settings-view" aria-label="Settings">
-      <header className="settings-page-header">
-        <h1>Settings</h1>
-        <p>Manage your account, appearance, and learning preferences.</p>
+    <section className="grid gap-8 max-[720px]:gap-[30px]" aria-label="Settings">
+      <header className="grid gap-[7px] max-w-[680px]">
+        <h1 className="text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Settings</h1>
+        <p className="text-[17px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Manage your account, appearance, and learning preferences.</p>
       </header>
 
-      <div className="settings-grid">
-        <nav className="settings-nav" aria-label="Settings sections">
+      <div className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-10 max-[720px]:grid-cols-1 max-[720px]:gap-6">
+        <nav className="sticky top-6 grid gap-1 max-[720px]:hidden" aria-label="Settings sections">
           {navItems.map((item) => (
-            <a key={item.id} href={`#${item.id}`} className="settings-nav-link">{item.label}</a>
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#9a9a9d] hover:bg-[#262629] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-[#202020]"
+            >
+              {item.label}
+            </a>
           ))}
         </nav>
 
-        <div className="settings-sections">
+        <div className="grid gap-6 min-w-0">
           <SettingsSection id="account" title="Account" description="Your profile information as seen by other learners.">
-            <div className="settings-profile">
-              <span className="settings-avatar" aria-hidden="true">L</span>
-              <div className="settings-profile-copy">
-                <strong>Learner</strong>
-                <span>devspaceglobal@gmail.com</span>
+            <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
+              <span className="grid size-12 flex-none place-items-center rounded-full bg-[#6f66ec] text-lg font-semibold text-white" aria-hidden="true">L</span>
+              <div className="grid min-w-0 flex-1 gap-0.5">
+                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Learner</strong>
+                <span className="truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{email}</span>
               </div>
-              <ActionButton variant="neutral" className="settings-profile-edit" onClick={() => onNotice('Profile editing is coming soon')}>
+              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Profile editing is coming soon')}>
                 Edit profile
               </ActionButton>
             </div>
           </SettingsSection>
 
           <SettingsSection id="appearance" title="Appearance" description="Choose how Devspace looks on this device.">
-            <div className="settings-theme-toggle" role="radiogroup" aria-label="Theme">
+            <div className="flex gap-2 rounded-xl border border-[#404040] p-1 [[data-theme=light]_&]:border-[#d4d4d4]" role="radiogroup" aria-label="Theme">
               <button
                 type="button"
                 role="radio"
                 aria-checked={theme === 'dark'}
-                className={theme === 'dark' ? 'settings-theme-option active' : 'settings-theme-option'}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'bg-[#6f66ec] text-white' : 'text-[#9a9a9d] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]'}`}
                 onClick={() => theme !== 'dark' && onToggleTheme()}
               >
                 Dark
@@ -80,7 +86,7 @@ export default function SettingsView({ theme, onToggleTheme, onNotice }) {
                 type="button"
                 role="radio"
                 aria-checked={theme === 'light'}
-                className={theme === 'light' ? 'settings-theme-option active' : 'settings-theme-option'}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'light' ? 'bg-[#6f66ec] text-white' : 'text-[#9a9a9d] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]'}`}
                 onClick={() => theme !== 'light' && onToggleTheme()}
               >
                 Light
@@ -113,28 +119,32 @@ export default function SettingsView({ theme, onToggleTheme, onNotice }) {
           </SettingsSection>
 
           <SettingsSection id="learning" title="Learning" description="Set your daily XP goal to shape your streak pace.">
-            <div className="settings-goal-grid">
+            <div className="grid grid-cols-2 gap-3 max-[480px]:grid-cols-1">
               {dailyGoals.map((goal) => (
                 <button
                   key={goal.id}
                   type="button"
-                  className={dailyGoal === goal.id ? 'settings-goal-card active' : 'settings-goal-card'}
+                  className={`grid gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${dailyGoal === goal.id ? 'border-[#6f66ec] bg-[#211f30] [[data-theme=light]_&]:bg-[#f1efff]' : 'border-[#404040] hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:hover:border-[#b8b2a8]'}`}
                   aria-pressed={dailyGoal === goal.id}
                   onClick={() => selectDailyGoal(goal.id)}
                 >
-                  <strong>{goal.label}</strong>
-                  <span>{goal.meta}</span>
+                  <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{goal.label}</strong>
+                  <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{goal.meta}</span>
                 </button>
               ))}
             </div>
           </SettingsSection>
 
           <SettingsSection id="danger" title="Account actions">
-            <div className="settings-danger-row">
-              <ActionButton variant="neutral" onClick={() => onNotice('Signed out')}>
+            <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
+              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Signed out')}>
                 Sign out
               </ActionButton>
-              <button type="button" className="settings-delete-link" onClick={() => onNotice('Account deletion requires confirmation via email')}>
+              <button
+                type="button"
+                className="text-sm font-medium text-[#e5636b] hover:underline"
+                onClick={() => onNotice('Account deletion requires confirmation via email')}
+              >
                 Delete account
               </button>
             </div>
@@ -144,4 +154,3 @@ export default function SettingsView({ theme, onToggleTheme, onNotice }) {
     </section>
   )
 }
-

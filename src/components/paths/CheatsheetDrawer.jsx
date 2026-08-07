@@ -41,7 +41,7 @@ function Snippet({ code }) {
 function CheatsheetEntry({ topic }) {
   return (
     <article className="grid gap-3 border-b border-[#2c2c30] pb-7 last:border-b-0 last:pb-0 [[data-theme=light]_&]:border-[#ececea]">
-      <h3 className="m-0 flex items-center gap-2.5 font-['Space_Grotesk',Arial,sans-serif] text-[19px] font-semibold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+      <h3 className="m-0 flex items-center gap-2.5 font-['Rethink_Sans',Arial,sans-serif] text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
         <span className="grid size-8 flex-none place-items-center bg-[#252528] text-[#888df2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#513deb]">
           <TopicGlyph topicId={topic.id} className="size-[18px]" />
         </span>

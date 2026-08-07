@@ -1,3 +1,17 @@
+const upcomingRegion = (id, level, title, summary, lessonTitle, image) => ({
+  id,
+  level,
+  title,
+  summary,
+  reason: summary,
+  goals: [],
+  state: 'locked',
+  progress: '0%',
+  progressValue: 0,
+  image,
+  lessons: [{ id: `${id}-preview`, title: lessonTitle, state: 'locked', checkpoint: true }],
+})
+
 export const pathShelves = [
   {
     id: 'machine-learning',
@@ -147,9 +161,102 @@ export const pathShelves = [
       },
     ],
   },
+  {
+    id: 'technical-project-coordinator',
+    family: 'data',
+    level: 'Career path',
+    title: 'Technical Project Coordinator',
+    description: 'Keep technical work organised, visible, and moving through the right people and milestones.',
+    progressValue: 0,
+    emblem: '/assets/programming-with-variables.png',
+    cards: [
+      {
+        id: 'working-in-a-technical-team',
+        level: 'Region 1',
+        title: 'Working in a Technical Team',
+        summary: 'Learn how technical teams organise work, handle dependencies, and communicate progress.',
+        reason: 'Understanding the coordinator’s role gives you a foundation for planning and delivery work.',
+        goals: ['Understand team roles', 'Spot dependencies', 'Share clear updates'],
+        state: 'current',
+        progress: '0%',
+        progressValue: 0,
+        image: '/assets/programming-with-variables.png',
+        lessons: [
+          { id: 'technical-teams-basics', title: 'How technical teams work', state: 'current', description: 'Learn how coordinators create clarity and help teams move forward.' },
+        ],
+      },
+      upcomingRegion('coordinator-scope-planning', 'Region 2', 'Scope & Planning', 'Turn goals into milestones, deliverables, and realistic timelines.', 'Plan a delivery', '/assets/scientific-thinking.png'),
+      upcomingRegion('coordinator-agile-delivery', 'Region 3', 'Agile Delivery', 'Support sprints, ceremonies, backlogs, and changing priorities.', 'Run a sprint', '/assets/thinking-in-code.png'),
+      upcomingRegion('coordinator-stakeholders', 'Region 4', 'Stakeholders & Communication', 'Keep technical and non-technical partners aligned.', 'Lead a stakeholder update', '/assets/exploring-data-visually.png'),
+      upcomingRegion('coordinator-risk-reporting', 'Region 5', 'Risk & Reporting', 'Track dependencies, surface risks, and report progress clearly.', 'Build a delivery report', '/assets/probability-and-chance.png'),
+      upcomingRegion('coordinator-capstone', 'Region 6', 'Launch Coordination Capstone', 'Coordinate a complete digital product launch from kickoff to release.', 'Coordinate a launch', '/assets/scientific-thinking.png'),
+    ],
+  },
+  {
+    id: 'digital-marketing',
+    family: 'ml',
+    level: 'Career path',
+    title: 'Digital Marketing',
+    description: 'Understand customers, shape clear messages, and grow digital products through measurable campaigns.',
+    progressValue: 0,
+    emblem: '/assets/exploring-data-visually.png',
+    cards: [
+      {
+        id: 'customer-campaign-foundations',
+        level: 'Region 1',
+        title: 'Customer & Campaign Foundations',
+        summary: 'Learn how audience, goals, messages, channels, and evidence connect.',
+        reason: 'These foundations make later campaign decisions easier to understand and improve.',
+        goals: ['Know the audience', 'Choose a clear goal', 'Use results to improve'],
+        state: 'current',
+        progress: '0%',
+        progressValue: 0,
+        image: '/assets/exploring-data-visually.png',
+        lessons: [
+          { id: 'digital-marketing-basics', title: 'How digital marketing works', state: 'current', description: 'Learn how marketers connect an audience, a goal, and measurable results.' },
+        ],
+      },
+      upcomingRegion('marketing-messaging-content', 'Region 2', 'Messaging & Content', 'Develop useful messages and content around real customer needs.', 'Shape a content message', '/assets/thinking-in-code.png'),
+      upcomingRegion('marketing-channels', 'Region 3', 'Channels & Content Planning', 'Choose suitable channels and plan consistent campaign content.', 'Build a content calendar', '/assets/scientific-thinking.png'),
+      upcomingRegion('marketing-lifecycle', 'Region 4', 'Email & Lifecycle', 'Guide customers from awareness to activation and retention.', 'Design an email journey', '/assets/programming-with-variables.png'),
+      upcomingRegion('marketing-analytics', 'Region 5', 'Analytics & Optimisation', 'Read campaign results and decide what to improve next.', 'Optimise a campaign', '/assets/probability-and-chance.png'),
+      upcomingRegion('marketing-capstone', 'Region 6', 'Campaign Capstone', 'Bring strategy, content, channels, and measurement into one product launch.', 'Launch a campaign', '/assets/exploring-data-visually.png'),
+    ],
+  },
+  {
+    id: 'data-analyst',
+    family: 'data',
+    level: 'Career path',
+    title: 'Data Analyst',
+    description: 'Use data to answer practical questions, uncover patterns, and guide better everyday decisions.',
+    progressValue: 0,
+    emblem: '/assets/exploring-data-visually.png',
+    cards: [
+      {
+        id: 'data-analysis-foundations',
+        level: 'Region 1',
+        title: 'Data Analysis Foundations',
+        summary: 'Learn how a clear question, clean data, and honest evidence lead to a decision worth trusting.',
+        reason: 'These foundations make every later spreadsheet, query, and chart easier to trust and act on.',
+        goals: ['Ask a clear question', 'Clean before concluding', 'Turn evidence into a decision'],
+        state: 'current',
+        progress: '0%',
+        progressValue: 0,
+        image: '/assets/exploring-data-visually.png',
+        lessons: [
+          { id: 'data-analysis-basics', title: 'How data analysis works', state: 'current', description: 'Learn how analysts move from raw data to a decision worth trusting.' },
+        ],
+      },
+      upcomingRegion('data-analyst-spreadsheets', 'Region 2', 'Spreadsheet Fundamentals', 'Organise, filter, and summarise data with confidence in a spreadsheet.', 'Build a summary table', '/assets/programming-with-variables.png'),
+      upcomingRegion('data-analyst-sql', 'Region 3', 'SQL Fundamentals', 'Pull the exact rows you need straight from a database.', 'Write a first query', '/assets/thinking-in-code.png'),
+      upcomingRegion('data-analyst-cleaning-viz', 'Region 4', 'Data Cleaning & Visualization', 'Spot messy data and present findings so people understand them fast.', 'Clean a dataset', '/assets/scientific-thinking.png'),
+      upcomingRegion('data-analyst-statistics', 'Region 5', 'Statistics Basics', 'Use averages, distributions, and significance to avoid fooling yourself.', 'Test an assumption', '/assets/probability-and-chance.png'),
+      upcomingRegion('data-analyst-capstone', 'Region 6', 'Insights Capstone', 'Take a real dataset from question to a decision-ready report.', 'Deliver an insight report', '/assets/exploring-data-visually.png'),
+    ],
+  },
 ]
 
-// Only `machine-learning` has authored regions. For any other selected path we
+// Authored paths use their own regions. For any other selected path we
 // keep that path's own identity — title, description, emblem — and borrow the
 // authored region structure, so a user who picks Backend Developer sees Backend
 // Developer rather than silently being shown ML.
@@ -200,6 +307,7 @@ export const explorePaths = [
   { id: 'product-manager', type: 'career', category: 'Design & Product', family: 'data', title: 'Product Manager', meta: 'Beginner · 6 regions', reason: 'Guide product decisions from customer problems to outcomes.', image: '/assets/scientific-thinking.png' },
   { id: 'business-analyst', type: 'career', category: 'Design & Product', family: 'data', title: 'Business Analyst', meta: 'Beginner · 6 regions', reason: 'Clarify requirements and improve the processes behind products.', image: '/assets/exploring-data-visually.png' },
   { id: 'technical-project-coordinator', type: 'career', category: 'Design & Product', family: 'backend', title: 'Technical Project Coordinator', meta: 'Beginner · 6 regions', reason: 'Keep technical work organised, visible, and moving forward.', image: '/assets/programming-with-variables.png' },
+  { id: 'digital-marketing', type: 'career', category: 'Business & Marketing', family: 'ml', title: 'Digital Marketing', meta: 'Beginner · 6 regions', reason: 'Understand customers and grow products with measurable campaigns.', image: '/assets/exploring-data-visually.png' },
   { id: 'ui-ux-designer', type: 'career', category: 'Design & Product', family: 'data', title: 'UI/UX Designer', meta: 'Beginner · 6 regions', reason: 'Design clear digital experiences around real user needs.', image: '/assets/thinking-in-code.png' },
   { id: 'product-designer', type: 'career', category: 'Design & Product', family: 'data', title: 'Product Designer', meta: 'Beginner · 7 regions', reason: 'Shape useful products from early ideas to refined experiences.', image: '/assets/scientific-thinking.png' },
   { id: 'design-systems-specialist', type: 'career', category: 'Design & Product', family: 'backend', title: 'Design Systems Specialist', meta: 'Intermediate · 7 regions', reason: 'Create reusable design foundations that help teams move faster.', image: '/assets/thinking-in-code.png' },
@@ -235,6 +343,7 @@ const pathTools = {
   'product-manager': ['Discovery', 'Strategy', 'Analytics'],
   'business-analyst': ['Requirements', 'Processes', 'Analytics'],
   'technical-project-coordinator': ['Planning', 'Agile', 'Collaboration'],
+  'digital-marketing': ['Audience', 'Content', 'Analytics'],
   'ui-ux-designer': ['UX research', 'Wireframes', 'Prototyping'],
   'product-designer': ['UX', 'UI design', 'Prototyping'],
   'design-systems-specialist': ['Components', 'Tokens', 'Accessibility'],
@@ -268,6 +377,7 @@ const pathDescriptions = {
   'product-manager': 'Guide product decisions from customer problems through delivery and measurable outcomes.',
   'business-analyst': 'Clarify requirements and improve the processes that help products and teams work better.',
   'technical-project-coordinator': 'Keep technical work organised, visible, and moving through the right people and milestones.',
+  'digital-marketing': 'Understand customers, create useful campaigns, and improve results with clear evidence.',
   'ui-ux-designer': 'Design clear, inclusive digital experiences around real user needs, journeys, and feedback.',
   'product-designer': 'Shape useful products from early ideas through refined experiences that solve real problems.',
   'design-systems-specialist': 'Create reusable design foundations, components, and patterns that help teams move faster.',

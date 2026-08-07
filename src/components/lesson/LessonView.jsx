@@ -35,7 +35,7 @@ function UnavailableLesson({ lessonId }) {
   return (
     <div className="grid h-full place-items-center px-6 text-center">
       <div className="grid max-w-[42ch] gap-2">
-        <h1 className="m-0 font-['Space_Grotesk',Arial,sans-serif] text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+        <h1 className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(24px,3vw,30px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
           This lesson isn’t written yet
         </h1>
         <p className="m-0 text-[15px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">
@@ -231,7 +231,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           key={currentStep?.id}
           step={currentStep}
           checked={isChecked}
-          profile={profile}
+          profile={lesson?.role ? { ...profile, role: lesson.role } : profile}
           onClose={() => setIsDevyOpen(false)}
           focusRing={focusRing}
         />

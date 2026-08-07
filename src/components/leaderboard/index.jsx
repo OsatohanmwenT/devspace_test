@@ -76,7 +76,7 @@ export default function LeaderboardView({ weeklyXp = 0, xp = 0, leagueIndex = 0,
       ) : (
         <>
           <div className="grid justify-items-center gap-2 text-center max-w-[560px] mx-auto">
-            <h1 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(28px,3.6vw,36px)] font-medium tracking-[-.04em]">{league.name}</h1>
+            <h1 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,3.6vw,36px)] font-medium">{league.name}</h1>
             <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">
               {league.promoteCount > 0 && league.demoteCount > 0
                 ? `Top ${league.promoteCount} advance · bottom ${league.demoteCount} drop · league ${leagueIndex + 1} of ${leagues.length}`

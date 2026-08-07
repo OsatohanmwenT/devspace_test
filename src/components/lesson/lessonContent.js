@@ -1,3 +1,5 @@
+import { dataAnalysisLesson, digitalMarketingLesson, technicalTeamsLesson } from './nonCodingLessons.js'
+
 export const programExecutionArticle = {
   title: 'Program execution',
   intro: 'A Python program is a set of instructions that the computer follows in order.',
@@ -293,7 +295,7 @@ export const dataTypesLesson = {
   },
 }
 
-const lessons = [writingProgramsLesson, dataTypesLesson]
+const lessons = [writingProgramsLesson, dataTypesLesson, technicalTeamsLesson, digitalMarketingLesson, dataAnalysisLesson]
 
 export const lessonsById = Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson]))
 

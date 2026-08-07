@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { currentPath, explorePaths } from '../../data/paths'
+import { currentPath, explorePaths, getPath, pathShelves } from '../../data/paths'
 import { CurrentPathCard } from './CurrentPathCard'
 import { ExplorePathCard, PathPreview } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
 
-export default function PathsView({ completedLessons, onOpenLesson }) {
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson }) {
   const [view, setView] = useState('overview')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
@@ -15,7 +15,8 @@ export default function PathsView({ completedLessons, onOpenLesson }) {
   })
 
   const selectPath = (path) => {
-    if (path.id === 'machine-learning') {
+    if (pathShelves.some((authoredPath) => authoredPath.id === path.id)) {
+      setSelectedPath(path)
       setView('detail')
       return
     }
@@ -23,21 +24,21 @@ export default function PathsView({ completedLessons, onOpenLesson }) {
     setView('preview')
   }
 
-  if (view === 'detail') return <LearningPathDetail path={currentPath} completedLessons={completedLessons} onOpenLesson={onOpenLesson} onBack={() => setView('overview')} />
+  if (view === 'detail') return <LearningPathDetail path={selectedPath ? getPath(selectedPath.id) : currentPath} completedLessons={completedLessons} onOpenLesson={onOpenLesson} onBack={() => setView('overview')} />
   if (view === 'preview' && selectedPath) return <PathPreview path={selectedPath} onBack={() => setView('overview')} />
 
   return (
     <section className="grid gap-8 max-[720px]:gap-[30px]" aria-label="Learning paths">
       <header className="grid gap-[7px] max-w-[680px]">
-        <h1 className="text-3xl font-medium tracking-[-.05em] text-[#f4f4f2] font-['Space_Grotesk',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Paths</h1>
+        <h1 className="text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Paths</h1>
         <p className="text-[17px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Continue learning or choose a new path.</p>
       </header>
 
-      <CurrentPathCard onOpenDetail={() => setView('detail')} />
+      <CurrentPathCard path={currentLearnerPath} onOpenDetail={() => { setSelectedPath(null); setView('detail') }} />
 
       <section className="grid gap-5 border-t border-[#404040] pt-7 [[data-theme=light]_&]:border-[#eeeeeb]" aria-labelledby="explore-paths-title">
         <div className="flex items-center justify-between gap-4">
-          <h2 id="explore-paths-title" className="text-[24px] font-medium tracking-[-.04em] text-[#f4f4f2] font-['Space_Grotesk',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Explore paths</h2>
+          <h2 id="explore-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Explore paths</h2>
           <span className="text-[13px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{explorePaths.length} paths</span>
         </div>
         <div className="flex items-center justify-between gap-4 max-[680px]:items-stretch max-[680px]:flex-col">

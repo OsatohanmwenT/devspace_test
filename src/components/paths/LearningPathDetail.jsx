@@ -67,7 +67,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           <span className="text-[11px] font-semibold tracking-[.1em] uppercase" style={{ color: familyAccent }}>{selectedRegion.level}</span>
           <h2
             id="path-detail-title"
-            className="mt-[-2px] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] font-semibold tracking-[-.05em] max-[680px]:text-[23px]"
+            className="mt-[-2px] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] font-semibold max-[680px]:text-[23px]"
           >
             {selectedRegion.title}
           </h2>
@@ -114,7 +114,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
             >
               <div className="min-w-0">
                 <span className="text-[10px] font-bold tracking-[.08em] uppercase text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{canOpenLesson ? 'Current lesson' : 'Lesson preview'}</span>
-                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
+                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
                 {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
               </div>
               {canOpenLesson && (

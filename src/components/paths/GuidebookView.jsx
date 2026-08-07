@@ -10,7 +10,7 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
     >
       <header>
         <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Chapter {index + 1} · {topic.lessonTitle}</span>
-        <h2 className="mt-1.5 mb-0 font-['Space_Grotesk',Arial,sans-serif] text-[clamp(21px,2.2vw,25px)] font-semibold tracking-[-0.035em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{topic.title}</h2>
+        <h2 className="mt-1.5 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(21px,2.2vw,25px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{topic.title}</h2>
         {/* The chapters form a strict chain, so say what this one rests on. */}
         {builtOnTopic && (
           <p className="mt-2 mb-0 text-[14px] text-[#8c8c91] [[data-theme=light]_&]:text-[#767674]">
@@ -160,14 +160,14 @@ export function GuidebookView({ region, onBack }) {
             </nav>
           )}
 
-          <div className="min-w-0">
+          <div className={`min-w-0 ${topics.length > 0 ? '[grid-column:2/3]' : '[grid-column:1/-1]'} max-[900px]:[grid-column:1/-1]`}>
             {/* Compact header — the region's rationale and goals live on the
                 path detail page, where they orient rather than delay. */}
             <header className="mb-10 flex items-start gap-5">
               {region.image && <img className="size-20 flex-none object-contain max-[680px]:size-14" src={region.image} alt="" />}
               <div className="min-w-0">
                 <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Guidebook · {region.level}</span>
-                <h1 ref={headingRef} tabIndex="-1" className="mt-1.5 mb-2 font-['Space_Grotesk',Arial,sans-serif] text-[clamp(26px,3.6vw,34px)] font-semibold leading-[1.1] tracking-[-0.05em] outline-none">{region.title}</h1>
+                <h1 ref={headingRef} tabIndex="-1" className="mt-1.5 mb-2 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.6vw,34px)] font-semibold leading-[1.1] outline-none">{region.title}</h1>
                 <p className="m-0 text-[15px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
                   {topics.length > 0 ? `${topics.length} chapters explaining how these ideas work.` : region.summary}
                 </p>
@@ -175,10 +175,13 @@ export function GuidebookView({ region, onBack }) {
             </header>
 
             {topics.length === 0 ? (
-              <div className="grid justify-items-center gap-3 border border-dashed border-[#404040] px-6 py-14 text-center [[data-theme=light]_&]:border-[#d8d8d4]">
-                <img className="size-20 object-contain opacity-70" src="/assets/devy.svg" alt="" />
-                <p className="m-0 max-w-[36ch] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-                  No chapters here yet — they'll arrive as this section's lessons are written.
+              <div className="mx-auto grid max-w-[440px] justify-items-center gap-3 rounded-2xl border border-dashed border-[#404040] px-8 py-16 text-center [[data-theme=light]_&]:border-[#d8d8d4]">
+                <img className="size-16 object-contain opacity-70" src="/assets/devy.svg" alt="" />
+                <p className="m-0 max-w-[36ch] text-[17px] font-medium leading-[1.5] text-[#d4d4d7] [[data-theme=light]_&]:text-[#3d3d3d]">
+                  No chapters here yet
+                </p>
+                <p className="m-0 max-w-[34ch] text-[14.5px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                  This region's lesson is ready — reference chapters like this arrive once its content is written up in depth.
                 </p>
               </div>
             ) : (

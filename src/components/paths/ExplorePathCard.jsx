@@ -19,7 +19,7 @@ export function ExplorePathCard({ path, onSelect }) {
           <span className="text-[11px] font-bold tracking-[.08em] text-neutral-300 uppercase [[data-theme=light]_&]:text-[#525252]">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
           {path.recommended && <span className="rounded-full bg-[#4169e1]/15 px-2 py-1 text-[10px] font-bold tracking-[.06em] text-[#84a5ff] uppercase [[data-theme=light]_&]:text-[#4169e1]">Recommended</span>}
         </div>
-        <h3 className="mt-2 text-xl leading-[1.15] font-medium tracking-[-.035em] text-[#f4f4f2] font-['Space_Grotesk',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020] max-[680px]:text-lg">{path.title}</h3>
+        <h3 className="mt-2 text-xl leading-[1.15] font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020] max-[680px]:text-lg">{path.title}</h3>
         <p className="mt-2 text-sm leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.description}</p>
         <div className="mt-4 border-t border-[#404040] pt-3 [[data-theme=light]_&]:border-[#dededb]">
           <div className="flex flex-wrap gap-1.5">{path.tools.map((tool) => <span key={tool} className="rounded-full bg-[#363636] px-2 py-1 text-[11px] text-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#525252]">{tool}</span>)}</div>
@@ -38,7 +38,7 @@ export function PathPreview({ path, onBack }) {
         <div className="grid min-h-56 place-items-center bg-[#303030] [[data-theme=light]_&]:bg-[#f5f5f4]"><img className="h-44 w-[min(78%,260px)] object-contain" src={path.image} alt="" /></div>
         <div className="grid content-center gap-3 p-[clamp(28px,5vw,60px)]">
           <span className="text-[11px] font-bold tracking-[.08em] text-[#4169e1] uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
-          <h1 id="path-preview-title" className="text-[clamp(32px,4vw,48px)] leading-[1.05] font-semibold tracking-[-.055em] text-[#f4f4f2] font-['Space_Grotesk',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">{path.title}</h1>
+          <h1 id="path-preview-title" className="text-[clamp(32px,4vw,48px)] leading-[1.05] font-semibold text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">{path.title}</h1>
           <p className="max-w-[48ch] text-base leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.reason}</p>
           <p className="text-sm text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{path.meta} · {path.tools.join(' · ')}</p>
           <p className="border-t border-[#404040] pt-4 text-sm text-[#7d7d80] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#737371]">This path is coming soon. Its curriculum is not available to start yet.</p>

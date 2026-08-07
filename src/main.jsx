@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client'
 import PathsView from './components/paths'
 import LeaderboardView from './components/leaderboard'
 import PracticeView from './components/practice'
+import SettingsView from './components/settings'
 import { PracticeSession } from './components/practice/PracticeSession'
 import LessonView from './components/lesson/LessonView'
+import { LessonLoading } from './components/lesson/LessonLoading'
 import './styles.css'
 import './tailwind.css'
 import { ActionButton } from './components/ui/ActionButton'
@@ -13,8 +15,10 @@ import { BoltIcon, GemIcon } from './components/ui/icons'
 import { StreakPopover } from './components/header/StreakPopover'
 import { XpPopover } from './components/header/XpPopover'
 import OnboardingView from './components/onboarding'
+import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome'
 import { computeDailyGoal } from './lib/onboarding'
-import { getPath, detailLevels } from './data/paths'
+import { getPath } from './data/paths'
+import { getLesson } from './components/lesson/lessonContent'
 import { loadProgress, saveProgress } from './data/progress'
 import { getLeague } from './data/leagues'
 import { resolveWeek } from './lib/leagueSim'
@@ -60,6 +64,8 @@ function App() {
   const [devyOpen, setDevyOpen] = useState(false)
   const [theme, setTheme] = useState(getInitialTheme)
   const [openLesson, setOpenLesson] = useState(null)
+  const [loadingLesson, setLoadingLesson] = useState(null)
+  const [showFirstLessonWelcome, setShowFirstLessonWelcome] = useState(false)
   const [openPractice, setOpenPractice] = useState(null)
   const [activePopover, setActivePopover] = useState(null)
   const [progress, setProgress] = useState(loadProgress)
@@ -68,11 +74,16 @@ function App() {
   const streakButtonRef = useRef(null)
   const xpButtonRef = useRef(null)
   const popoverRef = useRef(null)
+  const lessonLaunchTimerRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     window.localStorage.setItem('devspace-theme', theme)
   }, [theme])
+
+  useEffect(() => () => {
+    if (lessonLaunchTimerRef.current) window.clearTimeout(lessonLaunchTimerRef.current)
+  }, [])
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -216,13 +227,25 @@ function App() {
       saveProgress(next)
       return next
     })
-    showNotice(`Path set: ${getPath(nextProfile.pathId).title}`)
+    setShowFirstLessonWelcome(true)
+  }
+
+  const launchLesson = (lessonId) => {
+    if (loadingLesson || lessonLaunchTimerRef.current) return
+
+    setLoadingLesson(lessonId)
+    lessonLaunchTimerRef.current = window.setTimeout(() => {
+      setOpenLesson(lessonId)
+      setLoadingLesson(null)
+      lessonLaunchTimerRef.current = null
+    }, 3000)
   }
 
   const startMission = () => {
     const wasStarted = started
     setStarted(true)
-    setOpenLesson(nextLesson?.id ?? true)
+    setShowFirstLessonWelcome(false)
+    launchLesson(nextLesson?.id ?? true)
     if (!wasStarted) recordActivity(10)
     showNotice(wasStarted ? 'Mission ready to continue' : 'Mission started')
   }
@@ -239,7 +262,7 @@ function App() {
   const currentLeague = getLeague(leagueIndex)
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
-  const nextLesson = detailLevels.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
+  const nextLesson = currentPath.cards.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
   const currentStepIndex = currentPath.cards.findIndex((card) => card.state === 'current')
   const currentRegionCard = currentPath.cards[currentStepIndex] ?? currentPath.cards[0]
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
@@ -249,6 +272,8 @@ function App() {
     : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
 
   if (!profile) return <OnboardingView onComplete={completeOnboarding} />
+  if (showFirstLessonWelcome) return <FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />
+  if (loadingLesson) return <LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />
 
   return (
     <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
@@ -338,15 +363,17 @@ function App() {
             ref={menuRef}
             role="menu"
           >
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => showNotice('Settings are coming soon')}>Settings</button>
+            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
             <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => showNotice('Signed in as learner')}>Account</button>
             <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
           </div>
         )}
       </header>
 
-      <main className={active === 'Paths' || active === 'Leaderboard' || active === 'Practice' ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView completedLessons={completedLessons} onOpenLesson={setOpenLesson} /> : active === 'Leaderboard' ? (
+      <main className={['Paths', 'Leaderboard', 'Practice', 'Settings'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+        {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
+          <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" />
+        ) : active === 'Leaderboard' ? (
           <LeaderboardView
             weeklyXp={weeklyXp}
             xp={xp}
@@ -361,7 +388,7 @@ function App() {
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
+                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
                 <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]" />
               </div>
               <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
@@ -424,13 +451,13 @@ function App() {
         </aside>
 
         <section className="min-w-0 max-[680px]:order-1">
-          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium tracking-[-.04em]">Your next mission</h1>
+          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
             <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
-                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] tracking-[-.06em] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
+                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
                 <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.progressValue}% complete</p>
               </div>
 

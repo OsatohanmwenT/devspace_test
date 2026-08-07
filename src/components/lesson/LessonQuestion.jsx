@@ -148,7 +148,7 @@ export function LessonQuestion({ question, answer, checked, onAnswer, headingLev
 
   return (
     <section className="grid gap-4">
-      <Heading className="m-0 font-['Space_Grotesk',Arial,sans-serif] text-[19px] font-semibold tracking-[-0.02em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+      <Heading className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
         {prefix}<RichText content={question.prompt} />
       </Heading>
 

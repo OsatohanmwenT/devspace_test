@@ -66,7 +66,7 @@ export function ChipList({ options, value, onSelect }) {
 export function StepHeading({ title, subtitle }) {
   return (
     <div className="grid content-start justify-items-center gap-2 text-center">
-      <h1 className="m-0 max-w-[20ch] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{title}</h1>
+      <h1 className="m-0 max-w-[20ch] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{title}</h1>
       {subtitle && <p className="m-0 max-w-[46ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
     </div>
   )

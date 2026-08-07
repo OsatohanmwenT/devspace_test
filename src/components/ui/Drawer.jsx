@@ -66,7 +66,7 @@ export function Drawer({ title, subtitle, onClose, children, labelledBy = 'drawe
       >
         <header className="flex items-start justify-between gap-4 border-b border-[#404040] px-6 py-4 [[data-theme=light]_&]:border-[#e1e1e1] max-[680px]:px-4">
           <div className="min-w-0">
-            <h2 id={labelledBy} className="m-0 font-['Space_Grotesk',Arial,sans-serif] text-xl font-semibold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{title}</h2>
+            <h2 id={labelledBy} className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{title}</h2>
             {subtitle && <p className="mt-0.5 mb-0 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
           </div>
           <button

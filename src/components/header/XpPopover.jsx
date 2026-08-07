@@ -10,7 +10,7 @@ export function XpPopover({ earnedToday }) {
       role="dialog"
       aria-label="Weekly activity"
     >
-      <h2 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-lg font-semibold">
+      <h2 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-lg font-semibold">
         You earned <strong className="text-[#6f66ec]">{earnedToday}px</strong> today!
       </h2>
       <p className="mt-1 mb-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs">Here's a look at your weekly activity</p>

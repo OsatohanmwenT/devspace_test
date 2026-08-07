@@ -17,6 +17,7 @@ export const BRANCHES = [
   { value: 'data', label: 'Data & Insights' },
   { value: 'ai', label: 'AI & Automation' },
   { value: 'product', label: 'Product & Business' },
+  { value: 'marketing', label: 'Marketing & Growth' },
   { value: 'design', label: 'Design & User Experience' },
   { value: 'cloud', label: 'Cloud, Security & Deployment' },
 ]
@@ -58,6 +59,10 @@ export const roleOptions = {
     { value: 'product_manager', label: 'Product Manager' },
     { value: 'business_analyst', label: 'Business Analyst', note: 'Requirements and process, not dashboards' },
     { value: 'technical_project_coordinator', label: 'Technical Project Coordinator' },
+  ],
+  marketing: [
+    { value: 'help_me_choose', label: 'Help me choose' },
+    { value: 'digital_marketer', label: 'Digital Marketer' },
   ],
   design: [
     { value: 'help_me_choose', label: 'Help me choose' },
@@ -103,6 +108,7 @@ export const startingPointOptions = {
   product_manager: ladder(['product_fundamentals', 'Product fundamentals'], ['user_research_basics', 'User research basics'], ['roadmapping_prioritization', 'Roadmapping & prioritization'], ['working_with_eng_design', 'Working with engineering & design'], ['metrics_analytics', 'Metrics & analytics']),
   business_analyst: ladder(['business_analysis_fundamentals', 'Business analysis fundamentals'], ['requirements_gathering', 'Requirements gathering'], ['data_analysis_basics', 'Data analysis basics'], ['process_mapping', 'Process mapping'], ['stakeholder_communication', 'Stakeholder communication']),
   technical_project_coordinator: ladder(['project_management_fundamentals', 'Project management fundamentals'], ['agile_scrum_basics', 'Agile & Scrum basics'], ['pm_tools', 'Tools (Jira / Trello)'], ['technical_communication', 'Technical communication'], ['risk_timeline_tracking', 'Risk & timeline tracking']),
+  digital_marketer: ladder(['marketing_fundamentals', 'Marketing fundamentals'], ['audience_research', 'Audience research'], ['content_campaigns', 'Content and campaigns'], ['channel_analytics', 'Channels and analytics'], ['campaign_optimisation', 'Campaign optimisation']),
 
   ui_ux_designer: ladder(['design_fundamentals', 'Design fundamentals'], ['wireframing_prototyping', 'Wireframing & prototyping'], ['user_research_basics', 'User research basics'], ['usability_testing', 'Usability testing'], ['design_systems', 'Design systems']),
   product_designer: ladder(['design_fundamentals', 'Design fundamentals'], ['end_to_end_design_process', 'End-to-end design process'], ['prototyping_testing', 'Prototyping & testing'], ['collaborating_with_engineering', 'Collaborating with engineering'], ['design_systems', 'Design systems']),
@@ -165,6 +171,12 @@ export const roleSubQuiz = {
       { value: 'technical_project_coordinator', label: 'Keeping everyone unblocked and on schedule' },
     ],
   },
+  marketing: {
+    prompt: 'Which result would you most enjoy working toward?',
+    options: [
+      { value: 'digital_marketer', label: 'A campaign that reaches the right people and improves over time' },
+    ],
+  },
   design: {
     prompt: 'Which would bother you most in an app you use?',
     options: [
@@ -196,6 +208,7 @@ export const branchTriage = {
     { value: 'backend', label: 'Building the machinery nobody sees but everyone relies on' },
     { value: 'mobile', label: 'Making something that lives on a phone' },
     { value: 'product', label: 'Working out what’s worth building and why' },
+    { value: 'marketing', label: 'Helping the right people discover and choose a product' },
     { value: 'cloud', label: 'Keeping everything running, safe and online' },
   ],
 }
@@ -257,6 +270,7 @@ const branchInsights = {
   data: 'Good data turns uncertainty into better decisions.',
   ai: 'AI is reshaping how every industry works.',
   product: 'Great products begin with the right problem.',
+  marketing: 'Good marketing connects useful products with the right people.',
   design: 'Good design makes complex things feel simple.',
   cloud: 'Modern products depend on secure, reliable infrastructure.',
   not_sure: 'Exploring is how the right direction becomes clear.',
@@ -269,6 +283,7 @@ const roleInsights = {
   data: 'Data roles turn patterns into better decisions.',
   ai: 'AI roles turn data into useful predictions and tools.',
   product: 'Product roles connect user needs with execution.',
+  marketing: 'Marketing roles connect customer insight with measurable growth.',
   design: 'Design roles turn friction into clear experiences.',
   cloud: 'Cloud roles keep digital products secure and available.',
 }
@@ -294,9 +309,10 @@ export const outcomes = {
     frontend_developer: 'backend-developer', fullstack_developer: 'backend-developer', ui_ux_developer: 'backend-developer',
     ios_developer: 'backend-developer', android_developer: 'backend-developer', cross_platform_developer: 'backend-developer',
     backend_developer: 'backend-developer', database_developer: 'learn-sql', api_systems_engineer: 'backend-developer',
-    data_analyst: 'data-scientist', data_engineer: 'data-scientist', business_intelligence: 'learn-sql', data_scientist: 'data-scientist',
+    data_analyst: 'data-analyst', data_engineer: 'data-scientist', business_intelligence: 'learn-sql', data_scientist: 'data-scientist',
     ml_engineer: 'machine-learning', ai_app_developer: 'ai-engineer', automation_developer: 'learn-python',
-    product_manager: 'data-scientist', business_analyst: 'data-scientist', technical_project_coordinator: 'learn-git',
+    product_manager: 'data-scientist', business_analyst: 'data-scientist', technical_project_coordinator: 'technical-project-coordinator',
+    digital_marketer: 'digital-marketing',
     ui_ux_designer: 'backend-developer', product_designer: 'backend-developer', design_systems_specialist: 'backend-developer',
     devops_engineer: 'learn-docker', cloud_engineer: 'learn-docker', cybersecurity_specialist: 'ai-engineer',
   },

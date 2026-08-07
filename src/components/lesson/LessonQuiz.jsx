@@ -29,7 +29,7 @@ export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onCh
       <div className="w-[min(100%,760px)] mx-auto pt-[clamp(24px,4vw,48px)] px-7 pb-10 max-[720px]:pt-6 max-[720px]:px-5 max-[720px]:pb-9">
         <h1
           id="lesson-quiz-title"
-          className="max-w-[22ch] mt-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold tracking-[-0.04em] leading-[1.15]"
+          className="max-w-[22ch] mt-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold leading-[1.15]"
         >
           {quiz.title}
         </h1>

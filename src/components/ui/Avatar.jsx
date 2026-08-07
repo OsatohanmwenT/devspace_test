@@ -14,7 +14,7 @@ export function Avatar({ name, size = 'md', className = '' }) {
   const initial = name?.trim()?.[0]?.toUpperCase() ?? '?'
 
   return (
-    <span className={`inline-grid shrink-0 place-items-center rounded-full font-['Space_Grotesk',Arial,sans-serif] font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
+    <span className={`inline-grid shrink-0 place-items-center rounded-full font-['Rethink_Sans',Arial,sans-serif] font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
       {initial}
     </span>
   )

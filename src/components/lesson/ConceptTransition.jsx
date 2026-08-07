@@ -17,7 +17,7 @@ export function ConceptTransition({ eyebrow, title, body }) {
           </span>
           <h1
             id="lesson-transition-title"
-            className="m-0 max-w-[18ch] text-balance font-['Space_Grotesk',Arial,sans-serif] text-[clamp(32px,4.4vw,50px)] font-semibold leading-[1.08] tracking-[-0.05em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[720px]:text-[30px]"
+            className="m-0 max-w-[20ch] text-balance font-['Rethink_Sans',Arial,sans-serif] text-[clamp(27px,3vw,38px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[720px]:text-[26px]"
           >
             {title}
           </h1>

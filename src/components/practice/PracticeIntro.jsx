@@ -15,7 +15,7 @@ export function PracticeIntro({ session, completion, onStart }) {
               <span className="text-xs font-bold uppercase tracking-[0.11em] text-[#888df2] [[data-theme=light]_&]:text-[#19079b]">Let’s practice</span>
               <h1
                 id="practice-intro-title"
-                className="mt-2 mb-0 font-['Space_Grotesk',Arial,sans-serif] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.1] tracking-[-0.045em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:text-[30px]"
+                className="mt-2 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.1] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:text-[30px]"
               >
                 {session.title}
               </h1>
@@ -30,7 +30,7 @@ export function PracticeIntro({ session, completion, onStart }) {
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold tracking-[-0.025em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
                     {questionCount} {questionCount === 1 ? 'question' : 'questions'}
                   </h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">Complete every challenge and check your answers.</p>
@@ -45,7 +45,7 @@ export function PracticeIntro({ session, completion, onStart }) {
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold tracking-[-0.025em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">No time limit</h2>
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">No time limit</h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">Most learners finish in about {session.minutes} min.</p>
                 </div>
               </section>
@@ -57,7 +57,7 @@ export function PracticeIntro({ session, completion, onStart }) {
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold tracking-[-0.025em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
                     {completion ? 'Improve your score' : 'Earn 10 XP'}
                   </h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">

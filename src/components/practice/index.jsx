@@ -18,7 +18,7 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
     <section className="grid gap-7 max-[720px]:gap-6" aria-label="Practice">
       <header className="flex items-end justify-between gap-6 max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-2">
         <div className="grid gap-2 max-w-[680px]">
-          <h1 className="m-0 text-3xl font-medium tracking-[-.05em] text-[#f4f4f2] font-['Space_Grotesk',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Practice</h1>
+          <h1 className="m-0 text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Practice</h1>
           <p className="m-0 text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Keep your skills sharp with quick, repeatable knowledge checks. You earn XP for every round.</p>
         </div>
         <span className="flex-none pb-1.5 text-[12px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] whitespace-nowrap" aria-live="polite" aria-atomic="true">

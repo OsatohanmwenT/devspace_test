@@ -20,7 +20,7 @@ export function LockedLeaderboard({ league, pxToJoin, onStartPractice }) {
   return (
     <>
       <div className="grid justify-items-center gap-3 text-center max-w-[520px] mx-auto">
-        <h2 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Space_Grotesk',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium tracking-[-.04em]">
+        <h2 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium">
           Join the {league.name}
         </h2>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">

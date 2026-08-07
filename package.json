@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test src/components/lesson/lessonFlow.test.js src/data/learningResources.test.js",
+    "test": "node --test",
     "preview": "vite preview"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "gsap": "^3.15.0",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"

@@ -18,7 +18,7 @@ export function PracticeCard({ session, onStart, completion }) {
             </span>
           )}
         </div>
-        <h3 className="m-0 font-['Space_Grotesk',Arial,sans-serif] text-lg font-medium tracking-[-.02em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{session.title}</h3>
+        <h3 className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-lg font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{session.title}</h3>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] px-5 py-3.5">
