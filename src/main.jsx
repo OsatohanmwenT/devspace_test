@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef, useState } from 'react'
+import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import PathsView from './components/paths'
 import LeaderboardView from './components/leaderboard'
@@ -19,36 +19,19 @@ import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome'
 import { computeDailyGoal } from './lib/onboarding'
 import { getPath } from './data/paths'
 import { getLesson } from './components/lesson/lessonContent'
-import { loadProgress, saveProgress } from './data/progress'
+import { applyActivity, loadProgress, saveProgress } from './data/progress'
 import { getLeague } from './data/leagues'
 import { resolveWeek } from './lib/leagueSim'
 import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week'
 import { TierMedal } from './components/leaderboard/TierMedal'
+import { derivePathProgress } from './lib/pathProgress'
+import { getStreakWeek, getStreakMessage, isActiveToday, WEEK_LENGTH } from './lib/streak'
+import { LESSON_XP } from './lib/lessonMeta'
+import { practiceSessions } from './data/practice'
+import { ShortSessionRow } from './components/home/ShortSessionRow'
 
-const DAY_INITIALS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'S']
-const WEEK_LENGTH = 5
-const DAY_MS = 24 * 60 * 60 * 1000
-
-// The last five days ending today, with a day marked active when it falls inside
-// the current streak — a streak of N days ending on lastActiveDate means exactly
-// those N days were active, so no extra stored history is needed.
-function getStreakWeek(streakDays, lastActiveDate) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const lastActive = lastActiveDate ? new Date(lastActiveDate) : null
-  if (lastActive) lastActive.setHours(0, 0, 0, 0)
-
-  return Array.from({ length: WEEK_LENGTH }, (_, index) => {
-    const date = new Date(today.getTime() - (WEEK_LENGTH - 1 - index) * DAY_MS)
-    const daysBeforeLastActive = lastActive ? Math.round((lastActive - date) / DAY_MS) : -1
-    return {
-      key: date.toDateString(),
-      label: DAY_INITIALS[date.getDay()],
-      isActive: daysBeforeLastActive >= 0 && daysBeforeLastActive < streakDays,
-    }
-  })
-}
+// Practice awards a flat rate on first completion, mirroring LESSON_XP.
+const PRACTICE_XP = 10
 
 function getInitialTheme() {
   const stored = window.localStorage.getItem('devspace-theme')
@@ -160,14 +143,7 @@ function App() {
 
   const recordActivity = (xpGain) => {
     setProgress((current) => {
-      const today = new Date().toDateString()
-      const next = {
-        ...current,
-        xp: current.xp + xpGain,
-        weeklyXp: current.weeklyXp + xpGain,
-        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
-        lastActiveDate: today,
-      }
+      const next = applyActivity(current, xpGain)
       saveProgress(next)
       return next
     })
@@ -179,11 +155,7 @@ function App() {
       // Only the first check of a session earns XP; retries still update the score.
       const isFirstAttempt = !current.completedSessions?.[sessionId]
       const next = {
-        ...current,
-        xp: current.xp + (isFirstAttempt ? 10 : 0),
-        weeklyXp: current.weeklyXp + (isFirstAttempt ? 10 : 0),
-        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
-        lastActiveDate: today,
+        ...applyActivity(current, isFirstAttempt ? PRACTICE_XP : 0, today),
         completedSessions: {
           ...current.completedSessions,
           [sessionId]: { correctCount, total, completedAt: today },
@@ -200,17 +172,13 @@ function App() {
       // First completion earns XP; replays still update the record.
       const isFirstCompletion = !current.completedLessons?.[completedLessonId]
       const next = {
-        ...current,
-        xp: current.xp + (isFirstCompletion ? 25 : 0),
-        weeklyXp: current.weeklyXp + (isFirstCompletion ? 25 : 0),
-        streakDays: current.lastActiveDate === today ? current.streakDays : current.streakDays + 1,
-        lastActiveDate: today,
+        ...applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today),
         completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
       }
       saveProgress(next)
       return next
     })
-    showNotice('Lesson complete · +25 XP')
+    showNotice(`Lesson complete · +${LESSON_XP} XP`)
   }
 
   const dismissLeagueResult = () => {
@@ -262,10 +230,21 @@ function App() {
   const currentLeague = getLeague(leagueIndex)
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
-  const nextLesson = currentPath.cards.flatMap((level) => level.lessons).find((lesson) => lesson.state === 'current')
-  const currentStepIndex = currentPath.cards.findIndex((card) => card.state === 'current')
-  const currentRegionCard = currentPath.cards[currentStepIndex] ?? currentPath.cards[0]
+  // Percentages and the "next up" pointer come from what the learner has
+  // actually completed, rather than the authored literals in data/paths.js
+  // which never moved.
+  const derived = useMemo(() => derivePathProgress(currentPath, completedLessons), [currentPath, completedLessons])
+  const nextLesson = derived.currentLesson
+  const currentStepIndex = derived.currentRegionIndex
+  const currentRegionCard = derived.currentRegion ?? derived.regions[0]
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
+  const streakMessage = getStreakMessage(streakDays, isActiveToday(lastActiveDate))
+
+  // Two or three unfinished sessions for the row under the mission card.
+  const homePracticeSessions = useMemo(() => {
+    const unfinished = practiceSessions.filter((session) => !completedSessions[session.id])
+    return (unfinished.length > 0 ? unfinished : practiceSessions).slice(0, 3)
+  }, [completedSessions])
   // Reflects what the learner actually onboarded as, rather than ML for everyone.
   const homeHint = nextLesson
     ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
@@ -389,26 +368,33 @@ function App() {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
-                <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]" />
+                <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
               </div>
               <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
-            <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Solve <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">3 problems</strong> to start a streak</p>
-            <div className="flex justify-between gap-2" role="img" aria-label={`Activity for the last ${WEEK_LENGTH} days: ${streakWeek.filter((day) => day.isActive).length} active`}>
+            {/* Was the fixed string "Solve 3 problems to start a streak", which
+                contradicted the streak count rendered directly above it. */}
+            <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
+              {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">{streakMessage.emphasis} </strong>}
+              {streakMessage.text}
+            </p>
+            {/* Seven fixed 40px circles overflow the 300px sidebar, so they size
+                themselves from the space available and cap at the original 40px. */}
+            <div className="flex justify-between gap-1.5" role="img" aria-label={`Activity for the last ${WEEK_LENGTH} days: ${streakWeek.filter((day) => day.isActive).length} active`}>
               {streakWeek.map(({ key, label, isActive }) => (
                 <div
                   className={
                     isActive
-                      ? 'flex flex-1 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
-                      : 'flex flex-1 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                      ? 'flex flex-1 min-w-0 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
+                      : 'flex flex-1 min-w-0 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
                   }
                   key={key}
                 >
                   <span
                     className={
                       isActive
-                        ? 'grid place-items-center w-10 h-10 rounded-full border border-[#888df2] bg-[#1e193d] [[data-theme=light]_&]:bg-[#c8c3e7] text-[#c4d8f2]'
-                        : 'grid place-items-center w-10 h-10 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                        ? 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#f5a623] bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]'
+                        : 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
                     }
                   >
                     <BoltIcon className="w-[18px] h-[18px]" />
@@ -458,7 +444,7 @@ function App() {
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
                 <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
-                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.progressValue}% complete</p>
+                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.percent}% complete</p>
               </div>
 
               <div className="relative w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] max-[680px]:mx-auto flex-none">
@@ -469,18 +455,27 @@ function App() {
               </div>
 
               <div className="w-full mt-auto">
-                <div className="flex items-center justify-center gap-1.5 mb-[9px]" role="img" aria-label={`Step ${currentStepIndex + 1} of ${currentPath.cards.length}`}>
-                  {currentPath.cards.map((card, index) => (
-                    <span className={`w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={card.id} />
+                <div className="flex items-center justify-center gap-1.5 mb-[9px]" role="img" aria-label={`Region ${currentStepIndex + 1} of ${derived.regionsTotal}`}>
+                  {derived.regions.map((region, index) => (
+                    <span className={`w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={region.id} />
                   ))}
                 </div>
-                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">Step {currentStepIndex + 1} of {currentPath.cards.length}</strong> · {nextLesson?.title}</p>
+                {/* The dots count regions, so the label says so — "Step N of 6"
+                    followed by a lesson title read as though the lesson were the step. */}
+                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
                 <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
                   {started ? 'Continue mission' : 'Start mission'} <span aria-hidden="true">→</span>
                 </ActionButton>
               </div>
             </article>
           </div>
+
+          <ShortSessionRow
+            sessions={homePracticeSessions}
+            completedSessions={completedSessions}
+            onStartPractice={setOpenPractice}
+            onSeeAll={() => setActive('Practice')}
+          />
         </section>
           </>
         )}
