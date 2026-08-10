@@ -1,10 +1,11 @@
 import { ActionButton } from '../ui/ActionButton'
+import { ROW_GRID } from './rowGrid'
 
 const SKELETON_WIDTHS = ['58%', '72%', '44%', '66%', '52%', '78%']
 
 function SkeletonRow({ width }) {
   return (
-    <div className="grid grid-cols-[28px_40px_minmax(0,1fr)_auto] max-[680px]:grid-cols-[22px_34px_minmax(0,1fr)_auto] items-center gap-3.5 max-[680px]:gap-2.5 p-3.5 max-[680px]:p-2.5">
+    <div className={ROW_GRID}>
       <span className="w-2.5 h-2.5 rounded-full bg-[#2e2e2e] [[data-theme=light]_&]:bg-[#ececea] justify-self-center" />
       <span className="w-10 h-10 max-[680px]:w-[34px] max-[680px]:h-[34px] rounded-full bg-[#2e2e2e] [[data-theme=light]_&]:bg-[#ececea]" />
       <span className="grid gap-1.5">
@@ -12,6 +13,7 @@ function SkeletonRow({ width }) {
         <span className="h-2 rounded-full bg-[#282828] [[data-theme=light]_&]:bg-[#f2f2f0] w-[34%]" />
       </span>
       <span className="w-12 h-2.5 rounded-full bg-[#2e2e2e] [[data-theme=light]_&]:bg-[#ececea]" />
+      <span aria-hidden="true" />
     </div>
   )
 }
@@ -32,7 +34,7 @@ export function LockedLeaderboard({ league, pxToJoin, onStartPractice }) {
       </div>
 
       <div
-        className="grid list-none m-0 p-1.5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+        className="grid list-none m-0 p-1.5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]"
         aria-label="Standings are hidden until you join this week's league"
       >
         {SKELETON_WIDTHS.map((width, index) => <SkeletonRow key={index} width={width} />)}

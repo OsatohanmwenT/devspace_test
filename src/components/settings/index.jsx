@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 import { ToggleSwitch } from '../ui/ToggleSwitch'
+import { InfoTooltip } from '../ui/InfoTooltip'
 import { SettingsSection } from './SettingsSection'
 import { SettingsRow } from './SettingsRow'
 
 const navItems = [
   { id: 'account', label: 'Account' },
+  { id: 'premium', label: 'Premium' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'notifications', label: 'Notifications' },
   { id: 'learning', label: 'Learning' },
@@ -19,7 +21,7 @@ const dailyGoals = [
   { id: 'intense', label: 'Intense', meta: '30 XP / day' },
 ]
 
-export default function SettingsView({ theme, onToggleTheme, onNotice, email }) {
+export default function SettingsView({ theme, onToggleTheme, onNotice, email, progress, onOpenPlans }) {
   const [notifications, setNotifications] = useState({
     reminders: true,
     streak: true,
@@ -67,6 +69,24 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email }) 
               </div>
               <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Profile editing is coming soon')}>
                 Edit profile
+              </ActionButton>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection id="premium" title="Premium" description={progress?.isPremium ? 'Manage your plan and see what it unlocks.' : 'Status and safety nets for your streak and league.'}>
+            <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
+              <span className="flex items-center gap-1.5">
+                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+                  {progress?.isPremium ? 'Premium is active' : 'Not subscribed'}
+                </strong>
+                {!progress?.isPremium && (
+                  <InfoTooltip label="Does Premium change my score?" align="start">
+                    Premium never gives a faster score — it's status and safety nets only.
+                  </InfoTooltip>
+                )}
+              </span>
+              <ActionButton variant={progress?.isPremium ? 'neutral' : 'premium'} className="min-h-10 text-sm" onClick={() => onOpenPlans?.()}>
+                {progress?.isPremium ? 'Manage plan' : 'See plans'}
               </ActionButton>
             </div>
           </SettingsSection>

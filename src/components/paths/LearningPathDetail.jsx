@@ -54,13 +54,17 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   return (
     <section className="min-w-0 pb-8" aria-labelledby="path-detail-title">
       <button
-        className="mb-4.5 min-h-11 border-0 bg-transparent py-2 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] focus-visible:rounded focus-visible:outline-3 focus-visible:outline-[#9f9dd7] focus-visible:outline-offset-3"
+        className="inline-flex items-center gap-2 mb-4.5 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#888df2] [[data-theme=light]_&]:text-[#071d3a] [[data-theme=light]_&]:hover:text-[#070c72] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#9f9dd7] focus-visible:outline-offset-3"
         onClick={onBack}
       >
-        ← Back to My learning
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>My learning</span>
+        <BookOpenIcon className="w-5 h-5" />
       </button>
       <div className="grid grid-cols-[minmax(340px,420px)_minmax(0,700px)] justify-between items-start gap-14 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[680px]:gap-6">
-        <aside className="sticky top-[22px] grid grid-cols-1 gap-3.5 pt-[26px] px-7 pb-7 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white max-[900px]:static max-[900px]:grid-cols-[120px_minmax(0,1fr)_auto] max-[900px]:items-center max-[900px]:p-[22px] max-[680px]:grid-cols-[92px_minmax(0,1fr)] max-[680px]:gap-x-4 max-[680px]:gap-y-3 max-[680px]:p-4.5">
+        <aside className="sticky top-[22px] grid grid-cols-1 gap-3.5 pt-[26px] px-7 pb-7 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[900px]:static max-[900px]:grid-cols-[120px_minmax(0,1fr)_auto] max-[900px]:items-center max-[900px]:p-[22px] max-[680px]:grid-cols-[92px_minmax(0,1fr)] max-[680px]:gap-x-4 max-[680px]:gap-y-3 max-[680px]:p-4.5">
           <div className="relative grid min-h-[178px] place-items-center -mt-1.5 mb-1 after:content-[''] after:absolute after:bottom-[15px] after:left-1/2 after:-translate-x-1/2 after:w-[166px] after:h-3.5 after:rounded-full after:bg-black/50 [[data-theme=light]_&]:after:bg-black/[0.12] max-[900px]:row-span-3 max-[900px]:min-h-[120px] max-[900px]:m-0 max-[900px]:after:bottom-[5px] max-[900px]:after:w-[106px] max-[900px]:after:h-2.5 max-[680px]:min-h-[92px] max-[680px]:after:bottom-[2px] max-[680px]:after:w-[80px] max-[680px]:after:h-2">
             <img className="relative z-[1] block w-[174px] h-[174px] object-contain rotate-[-2deg] max-[900px]:w-[118px] max-[900px]:h-[118px] max-[680px]:w-[92px] max-[680px]:h-[92px]" src={selectedRegion.image} alt="" />
           </div>
@@ -109,7 +113,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           })}
           {selectedLesson && (
             <aside
-              className="sticky z-[5] bottom-[18px] flex min-h-[92px] items-center justify-between gap-[18px] mx-4 py-4 px-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[20px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white max-[680px]:min-h-0 max-[680px]:mx-0 max-[680px]:p-3 max-[680px]:rounded-2xl"
+              className="sticky z-[5] bottom-[18px] flex min-h-[92px] items-center justify-between gap-[18px] mx-4 py-4 px-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[20px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[680px]:min-h-0 max-[680px]:mx-0 max-[680px]:p-3 max-[680px]:rounded-2xl"
               aria-label="Selected lesson"
             >
               <div className="min-w-0">

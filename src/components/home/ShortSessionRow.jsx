@@ -1,8 +1,8 @@
 import { PracticeCard } from '../practice/PracticeCard'
+import { BoltIcon } from '../ui/icons'
 
 // Home's second reason to exist: something worth doing when there isn't time
-// for a full lesson. Every card here is backed by real data — practice sessions
-// carry their own `minutes` and question counts.
+// for a full lesson. Every card here is backed by real data.
 export function ShortSessionRow({ sessions, completedSessions, onStartPractice, onSeeAll }) {
   if (sessions.length === 0) return null
 
@@ -15,9 +15,13 @@ export function ShortSessionRow({ sessions, completedSessions, onStartPractice, 
         <button
           type="button"
           onClick={onSeeAll}
-          className="text-[13px] text-[#9a9a9d] hover:text-[#f4f4f2] focus-visible:rounded focus-visible:outline-3 focus-visible:outline-[#888df2] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]"
+          className="inline-flex items-center gap-2 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#888df2] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#888df2] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#071d3a] [[data-theme=light]_&]:hover:text-[#070c72]"
         >
-          All practice →
+          <BoltIcon className="w-5 h-5" />
+          <span>All practice</span>
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
       {/* Breakpoints are wider than the app's usual 900/680 because this row

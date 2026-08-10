@@ -3,14 +3,22 @@ import { Badge } from '../ui/Badge'
 import { CheckIcon } from '../ui/icons'
 import { TopicIcon } from './TopicIcon'
 
+const TOPIC_TONES = {
+  Python: 'blue',
+  SQL: 'teal',
+  Git: 'orange',
+  Data: 'violet',
+  Theory: 'pink',
+}
+
 export function PracticeCard({ session, onStart, completion }) {
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-colors duration-150 hover:border-[#6f66ec] [[data-theme=light]_&]:hover:border-[#6f66ec]">
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] transition-colors duration-150 hover:border-[#6f66ec] [[data-theme=light]_&]:hover:border-[#6f66ec]">
       <div className="flex flex-col gap-3 p-5 pb-4">
         <div className="flex items-start justify-between gap-2">
-          <Badge>{session.topic}</Badge>
+          <Badge tone={TOPIC_TONES[session.topic]}>{session.topic}</Badge>
           {completion && (
             <span className="flex flex-none items-center gap-1 rounded-full bg-[rgba(4,173,192,0.16)] [[data-theme=light]_&]:bg-[#cee9ed] px-2 py-1 text-[11px] font-bold text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]">
               <CheckIcon className="w-3 h-3" />

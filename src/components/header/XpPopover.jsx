@@ -6,7 +6,7 @@ export function XpPopover({ earnedToday }) {
 
   return (
     <div
-      className="absolute z-[6] top-[calc(100%+10px)] right-0 grid gap-4 w-[300px] p-5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[18px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-left"
+      className="absolute z-[6] top-[calc(100%+10px)] right-0 grid gap-4 w-[300px] p-5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[18px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_8px_24px_rgba(20,20,20,0.10)] text-left"
       role="dialog"
       aria-label="Weekly activity"
     >

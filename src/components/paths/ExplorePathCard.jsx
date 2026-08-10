@@ -9,7 +9,7 @@ export function ExplorePathCard({ path, onSelect }) {
   const family = FAMILY_ACCENTS[path.family] ?? FAMILY_ACCENTS.backend
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white">
+    <article className="min-w-0 overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
       <button type="button" className="flex h-full w-full flex-col text-left" onClick={() => onSelect(path)} aria-label={`Open ${path.title} path`}>
         <div className={`grid min-h-40 place-items-center overflow-hidden [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_42%,#ffffff)]`}>
           <img className="block h-32 w-[min(66%,180px)] object-contain" src={path.image} alt="" />
@@ -34,7 +34,7 @@ export function PathPreview({ path, onBack }) {
   return (
     <section className="grid gap-5" aria-labelledby="path-preview-title">
       <button className="min-h-11 justify-self-start py-2 text-[13px] text-[#9a9a9d] hover:text-[#f4f4f2] focus-visible:rounded focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]" onClick={onBack}>← Back to paths</button>
-      <article className="grid overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
+      <article className="grid overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
         <div className="grid min-h-56 place-items-center bg-[#303030] [[data-theme=light]_&]:bg-[#f5f5f4]"><img className="h-44 w-[min(78%,260px)] object-contain" src={path.image} alt="" /></div>
         <div className="grid content-center gap-3 p-[clamp(28px,5vw,60px)]">
           <span className="text-[11px] font-bold tracking-[.08em] text-[#4169e1] uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>

@@ -4,6 +4,7 @@ import PathsView from './components/paths'
 import LeaderboardView from './components/leaderboard'
 import PracticeView from './components/practice'
 import SettingsView from './components/settings'
+import PlansView from './components/plans'
 import { PracticeSession } from './components/practice/PracticeSession'
 import LessonView from './components/lesson/LessonView'
 import { LessonLoading } from './components/lesson/LessonLoading'
@@ -11,15 +12,16 @@ import './styles.css'
 import './tailwind.css'
 import { ActionButton } from './components/ui/ActionButton'
 import { Badge } from './components/ui/Badge'
-import { BoltIcon, GemIcon } from './components/ui/icons'
-import { StreakPopover } from './components/header/StreakPopover'
+import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons'
+import { StreakJourneyModal } from './components/header/StreakJourneyModal'
 import { XpPopover } from './components/header/XpPopover'
 import OnboardingView from './components/onboarding'
 import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome'
 import { computeDailyGoal } from './lib/onboarding'
 import { getPath } from './data/paths'
 import { getLesson } from './components/lesson/lessonContent'
-import { applyActivity, loadProgress, saveProgress } from './data/progress'
+import { activatePremium, applyActivity, deactivatePremium, loadProgress, saveProgress } from './data/progress'
+import { can, CAPABILITIES } from './lib/entitlements'
 import { getLeague } from './data/leagues'
 import { resolveWeek } from './lib/leagueSim'
 import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week'
@@ -29,6 +31,7 @@ import { getStreakWeek, getStreakMessage, isActiveToday, WEEK_LENGTH } from './l
 import { LESSON_XP } from './lib/lessonMeta'
 import { practiceSessions } from './data/practice'
 import { ShortSessionRow } from './components/home/ShortSessionRow'
+import { InfoTooltip } from './components/ui/InfoTooltip'
 
 // Practice awards a flat rate on first completion, mirroring LESSON_XP.
 const PRACTICE_XP = 10
@@ -51,7 +54,9 @@ function App() {
   const [showFirstLessonWelcome, setShowFirstLessonWelcome] = useState(false)
   const [openPractice, setOpenPractice] = useState(null)
   const [activePopover, setActivePopover] = useState(null)
+  const [streakJourneyOpen, setStreakJourneyOpen] = useState(false)
   const [progress, setProgress] = useState(loadProgress)
+  const [plansHighlight, setPlansHighlight] = useState(null)
   const menuRef = useRef(null)
   const menuButtonRef = useRef(null)
   const streakButtonRef = useRef(null)
@@ -96,7 +101,7 @@ function App() {
   useEffect(() => {
     if (!activePopover) return undefined
 
-    const triggerRef = activePopover === 'streak' ? streakButtonRef : xpButtonRef
+    const triggerRef = xpButtonRef
 
     const handlePointerDown = (event) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target) && !triggerRef.current?.contains(event.target)) {
@@ -152,10 +157,17 @@ function App() {
   const recordPracticeCompletion = (sessionId, correctCount, total) => {
     setProgress((current) => {
       const today = new Date().toDateString()
-      // Only the first check of a session earns XP; retries still update the score.
-      const isFirstAttempt = !current.completedSessions?.[sessionId]
+      const priorCompletion = current.completedSessions?.[sessionId]
+      // Free learners only earn XP the first time. Premium also earns it on a
+      // replay, but only once per day — completedAt is overwritten every time,
+      // so a same-day retry can never be double-counted.
+      const isFirstAttempt = !priorCompletion
+      const isFreshPremiumReplay = Boolean(priorCompletion) && priorCompletion.completedAt !== today
+        && can(current, CAPABILITIES.REPLAY_XP)
+      const earnsXp = isFirstAttempt || isFreshPremiumReplay
+
       const next = {
-        ...applyActivity(current, isFirstAttempt ? PRACTICE_XP : 0, today),
+        ...applyActivity(current, earnsXp ? PRACTICE_XP : 0, today),
         completedSessions: {
           ...current.completedSessions,
           [sessionId]: { correctCount, total, completedAt: today },
@@ -187,6 +199,29 @@ function App() {
       saveProgress(next)
       return next
     })
+  }
+
+  const startPremium = (planId) => {
+    setProgress((current) => {
+      const next = activatePremium(current, planId)
+      saveProgress(next)
+      return next
+    })
+    showNotice('Premium active')
+  }
+
+  const endPremium = () => {
+    setProgress((current) => {
+      const next = deactivatePremium(current)
+      saveProgress(next)
+      return next
+    })
+    showNotice('Premium turned off')
+  }
+
+  const openPlans = (perkId = null) => {
+    setPlansHighlight(perkId)
+    setActive('Plans')
   }
 
   const completeOnboarding = (nextProfile) => {
@@ -224,7 +259,7 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, profile } = progress
+  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile } = progress
   // Onboarding picks the path; before that, the default shelf is the spine.
   const currentPath = getPath(profile?.pathId)
   const currentLeague = getLeague(leagueIndex)
@@ -238,7 +273,9 @@ function App() {
   const currentStepIndex = derived.currentRegionIndex
   const currentRegionCard = derived.currentRegion ?? derived.regions[0]
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
-  const streakMessage = getStreakMessage(streakDays, isActiveToday(lastActiveDate))
+  const activeToday = isActiveToday(lastActiveDate)
+  const streakAtRisk = streakDays > 0 && !activeToday
+  const streakMessage = getStreakMessage(streakDays, activeToday)
 
   // Two or three unfinished sessions for the row under the mission card.
   const homePracticeSessions = useMemo(() => {
@@ -256,6 +293,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
+      {active !== 'Plans' && (
       <header className="relative flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-transparent">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
@@ -289,20 +327,20 @@ function App() {
             <button
               ref={streakButtonRef}
               type="button"
-              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white px-3 text-[13px] font-medium cursor-pointer font-[inherit] hover:border-[#9a9a9d] [[data-theme=light]_&]:hover:border-[#686968] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${activePopover === 'streak' ? 'border-[#6f66ec] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]' : 'border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}
-              onClick={() => setActivePopover((current) => (current === 'streak' ? null : 'streak'))}
+              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : streakJourneyOpen ? 'border-indigo-400/80 bg-indigo-500/10 text-amber-300 [[data-theme=light]_&]:border-indigo-500 [[data-theme=light]_&]:bg-indigo-50 [[data-theme=light]_&]:text-amber-700' : 'border-[#404040] bg-[#262626] text-amber-300 hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-amber-700 [[data-theme=light]_&]:hover:border-[#686968]'}`}
+              onClick={() => {
+                setActivePopover(null)
+                setStreakJourneyOpen(true)
+              }}
               aria-haspopup="dialog"
-              aria-expanded={activePopover === 'streak'}
+              aria-expanded={streakJourneyOpen}
+              aria-controls="streak-journey-dialog"
+              aria-label={streakAtRisk ? `Open streak journey. ${streakDays} day streak. Activity required today.` : activeToday ? `Open streak journey. ${streakDays} day streak. Today complete.` : 'Open streak journey and start your streak.'}
             >
-              <BoltIcon className="w-3.5 h-3.5 text-yellow-300!" />
+              {streakAtRisk ? <SirenIcon className="size-4" /> : <BoltIcon className="size-4" />}
               <span aria-hidden="true">{streakDays}</span>
-              <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{streakDays === 1 ? '1 day streak' : `${streakDays} day streak`}</span>
+              {streakAtRisk && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-[#121214] bg-red-400 motion-safe:animate-pulse [[data-theme=light]_&]:border-white" aria-hidden="true" />}
             </button>
-            {activePopover === 'streak' && (
-              <div ref={popoverRef}>
-                <StreakPopover currentStreak={streakDays} bestStreak={streakDays} />
-              </div>
-            )}
           </div>
 
           <div className="relative">
@@ -348,23 +386,28 @@ function App() {
           </div>
         )}
       </header>
+      )}
 
-      <main className={['Paths', 'Leaderboard', 'Practice', 'Settings'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
         {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
-          <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" />
+          <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
+        ) : active === 'Plans' ? (
+          <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
         ) : active === 'Leaderboard' ? (
           <LeaderboardView
             weeklyXp={weeklyXp}
             xp={xp}
             leagueIndex={leagueIndex}
             lastLeagueResult={lastLeagueResult}
+            progress={progress}
             onDismissResult={dismissLeagueResult}
             onStartPractice={() => setActive('Practice')}
+            onOpenPlans={openPlans}
           />
         ) : active === 'Practice' ? <PracticeView onStart={setOpenPractice} completedSessions={completedSessions} /> : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px]">
+          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
@@ -405,7 +448,7 @@ function App() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f6eef7] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
+          <section className="overflow-hidden rounded-2xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f6eef7] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
               <div className="grid gap-1">
@@ -413,25 +456,30 @@ function App() {
                 <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Get smarter, faster with Premium.</span>
               </div>
             </div>
-            <ActionButton variant="premium" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => showNotice('Premium trial selected')}>
+            <ActionButton variant="premium" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => openPlans()}>
               Explore Premium
             </ActionButton>
           </section>
 
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-[22px] text-center">
-            <div className="grid gap-0.5 mb-3.5 text-left">
-              <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">{currentLeague.name}</strong>
+          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px] text-center">
+            <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
+              <div className="grid gap-0.5">
+                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">{currentLeague.name}</strong>
               <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
+              </div>
+              <InfoTooltip label="How leagues work" align="end">
+                Earn XP this week to move up the leaderboard. Final standings update when the week ends.
+              </InfoTooltip>
             </div>
-            <div className="flex w-full items-center justify-center py-8 bg-neutral-700/40 my-2 rounded-lg" aria-hidden="true">
-              <TierMedal league={currentLeague} state="current" />
+            <div
+              className="flex w-full items-center justify-center py-8 my-2 rounded-lg border border-[#404040] bg-[#171717] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4]"
+              aria-hidden="true"
+            >
+              <TierMedal league={currentLeague} state="current" size={64} />
             </div>
             <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">
               {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} XP earned this week` : "Earn XP to join this week's league"}
             </p>
-            <ActionButton variant="neutral" className="w-full min-h-9 mt-3 px-3.5 text-xs font-medium" onClick={() => setActive('Leaderboard')}>
-              View leaderboard
-            </ActionButton>
           </section>
 
         </aside>
@@ -440,7 +488,7 @@ function App() {
           <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
-            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
+            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
                 <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
@@ -484,7 +532,7 @@ function App() {
       {active === 'Home' && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
           {devyOpen && (
-            <section id="devy-hint" className="w-[min(320px,calc(100vw-36px))] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-4 shadow-[0_12px_30px_rgba(0,0,0,.24)] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white" role="status" aria-label="Devy hint">
+            <section id="devy-hint" className="w-[min(320px,calc(100vw-36px))] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-4 shadow-[0_12px_30px_rgba(0,0,0,.24)] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]" role="status" aria-label="Devy hint">
               <div className="flex items-start gap-3">
                 <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
                 <div>
@@ -498,6 +546,23 @@ function App() {
             <img className="size-full object-contain" src="/assets/devy.svg" alt="" />
           </button>
         </div>
+      )}
+
+      {streakJourneyOpen && (
+        <StreakJourneyModal
+          currentStreak={streakDays}
+          longestStreak={longestStreak}
+          activeDates={streakActivityDates}
+          restoresLeft={streakRestoreCredits}
+          earnedMilestones={earnedStreakMilestones}
+          lastActiveDate={lastActiveDate}
+          isActiveToday={activeToday}
+          lastProtection={lastStreakProtection}
+          onClose={() => {
+            setStreakJourneyOpen(false)
+            streakButtonRef.current?.focus()
+          }}
+        />
       )}
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}

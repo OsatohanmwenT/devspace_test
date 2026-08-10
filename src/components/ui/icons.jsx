@@ -14,6 +14,15 @@ export function GemIcon({ className }) {
   )
 }
 
+export function SirenIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 16v-4a5 5 0 0 1 10 0v4H7Z" fill="currentColor" />
+      <path d="M5 16h14v3H5zM12 4V2M5.6 6.1 4.2 4.7M18.4 6.1l1.4-1.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LockIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -27,6 +36,16 @@ export function CheckIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="m5 13 5 5 9-11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function InfoIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="12" cy="7.5" r="1.25" fill="currentColor" />
     </svg>
   )
 }

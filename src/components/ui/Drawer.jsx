@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 // A side panel over a scrim. Unlike the full-bleed overlays elsewhere in the
 // app, this deliberately leaves the page visible behind it — the point of a
 // reference panel is that you don't lose your place while consulting it.
-export function Drawer({ title, subtitle, onClose, children, labelledBy = 'drawer-title' }) {
+export function Drawer({ id, title, subtitle, onClose, children, labelledBy = 'drawer-title' }) {
   const panelRef = useRef(null)
   const closeRef = useRef(null)
 
@@ -59,10 +59,11 @@ export function Drawer({ title, subtitle, onClose, children, labelledBy = 'drawe
 
       <section
         ref={panelRef}
+        id={id}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="relative grid h-full w-[min(100%,560px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[#404040] bg-[#151517] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white"
+        className="relative grid h-full w-[min(100%,560px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[#404040] bg-[#151517] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[-8px_0_24px_rgba(20,20,20,0.08)]"
       >
         <header className="flex items-start justify-between gap-4 border-b border-[#404040] px-6 py-4 [[data-theme=light]_&]:border-[#e1e1e1] max-[680px]:px-4">
           <div className="min-w-0">
