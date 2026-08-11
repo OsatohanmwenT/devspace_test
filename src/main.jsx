@@ -4,6 +4,7 @@ import PathsView from './components/paths'
 import LeaderboardView from './components/leaderboard'
 import PracticeView from './components/practice'
 import SettingsView from './components/settings'
+import ProfileView from './components/profile'
 import PlansView from './components/plans'
 import { PracticeSession } from './components/practice/PracticeSession'
 import LessonView from './components/lesson/LessonView'
@@ -380,17 +381,19 @@ function App() {
             ref={menuRef}
             role="menu"
           >
+            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}>Profile</button>
             <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => showNotice('Signed in as learner')}>Account</button>
             <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
           </div>
         )}
       </header>
       )}
 
-      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
         {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
           <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
+        ) : active === 'Profile' ? (
+          <ProfileView profile={profile} progress={progress} currentPath={currentPath} pathProgress={derived} onEditProfile={() => setActive('Settings')} />
         ) : active === 'Plans' ? (
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
         ) : active === 'Leaderboard' ? (
