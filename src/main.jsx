@@ -327,7 +327,7 @@ function App() {
             <button
               ref={streakButtonRef}
               type="button"
-              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : streakJourneyOpen ? 'border-indigo-400/80 bg-indigo-500/10 text-amber-300 [[data-theme=light]_&]:border-indigo-500 [[data-theme=light]_&]:bg-indigo-50 [[data-theme=light]_&]:text-amber-700' : 'border-[#404040] bg-[#262626] text-amber-300 hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-amber-700 [[data-theme=light]_&]:hover:border-[#686968]'}`}
+              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : 'border-[#404040] bg-[#262626] text-[#f4f4f2] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#202020] [[data-theme=light]_&]:hover:border-[#686968]'}`}
               onClick={() => {
                 setActivePopover(null)
                 setStreakJourneyOpen(true)
@@ -347,12 +347,12 @@ function App() {
             <button
               ref={xpButtonRef}
               type="button"
-              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white px-3 text-[13px] font-medium cursor-pointer font-[inherit] hover:border-[#9a9a9d] [[data-theme=light]_&]:hover:border-[#686968] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${activePopover === 'xp' ? 'border-[#6f66ec] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]' : 'border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}
+              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${activePopover === 'xp' ? 'border-[#6f66ec] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]' : 'border-[#404040] text-[#9a9a9d] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:border-[#686968]'} bg-[#262626] [[data-theme=light]_&]:bg-white`}
               onClick={() => setActivePopover((current) => (current === 'xp' ? null : 'xp'))}
               aria-haspopup="dialog"
               aria-expanded={activePopover === 'xp'}
             >
-              <GemIcon className="w-3.5 h-3.5 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]" />
+              <GemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6f66ec]" />
               <span aria-hidden="true">{xp}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
