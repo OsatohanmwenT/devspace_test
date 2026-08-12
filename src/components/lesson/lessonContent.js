@@ -1,4 +1,4 @@
-import { dataAnalysisLesson, digitalMarketingLesson, technicalTeamsLesson } from './nonCodingLessons.js'
+import { contentCreationLesson, dataAnalysisLesson, digitalMarketingLesson, graphicDesignLesson, socialMediaLesson, technicalTeamsLesson, videoEditingLesson } from './nonCodingLessons.js'
 
 export const programExecutionArticle = {
   title: 'Program execution',
@@ -295,7 +295,7 @@ export const dataTypesLesson = {
   },
 }
 
-const lessons = [writingProgramsLesson, dataTypesLesson, technicalTeamsLesson, digitalMarketingLesson, dataAnalysisLesson]
+const lessons = [writingProgramsLesson, dataTypesLesson, technicalTeamsLesson, digitalMarketingLesson, dataAnalysisLesson, videoEditingLesson, contentCreationLesson, socialMediaLesson, graphicDesignLesson]
 
 export const lessonsById = Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson]))
 

@@ -24,16 +24,18 @@ export function ShortSessionRow({ sessions, completedSessions, onStartPractice, 
           </svg>
         </button>
       </div>
-      {/* Breakpoints are wider than the app's usual 900/680 because this row
-          sits in the main column, which the 300px sidebar already narrows. */}
-      <div className="grid grid-cols-3 gap-4 max-[1120px]:grid-cols-2 max-[680px]:grid-cols-1">
+      {/* flex-wrap lets cards grow to fill the row from the left, instead of
+          grid-cols-3 leaving dead space (or a stray centered card) when there
+          are fewer than three sessions. */}
+      <div className="flex flex-wrap gap-4">
         {sessions.map((session) => (
-          <PracticeCard
-            key={session.id}
-            session={session}
-            completion={completedSessions[session.id]}
-            onStart={onStartPractice}
-          />
+          <div key={session.id} className="min-w-[260px] max-w-[380px] flex-1 basis-[280px]">
+            <PracticeCard
+              session={session}
+              completion={completedSessions[session.id]}
+              onStart={onStartPractice}
+            />
+          </div>
         ))}
       </div>
     </section>

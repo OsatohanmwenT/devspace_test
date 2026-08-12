@@ -35,8 +35,8 @@ test('every branch has roles, a sub-quiz, and reachable ladders', () => {
 })
 
 test('every role resolves to a path', () => {
-  assert.equal(ALL_ROLES.length, 26)
-  assert.equal(new Set(ALL_ROLES).size, 26, 'role values must be unique across branches')
+  assert.equal(ALL_ROLES.length, 30)
+  assert.equal(new Set(ALL_ROLES).size, 30, 'role values must be unique across branches')
   for (const role of ALL_ROLES) {
     assert.ok(resolvePath({ role }), `${role} does not resolve to a path`)
   }
@@ -46,6 +46,10 @@ test('non coding roles resolve to their authored career paths', () => {
   assert.equal(resolvePath({ role: 'technical_project_coordinator' }), 'technical-project-coordinator')
   assert.equal(resolvePath({ role: 'digital_marketer' }), 'digital-marketing')
   assert.equal(resolvePath({ role: 'data_analyst' }), 'data-analyst')
+  assert.equal(resolvePath({ role: 'video_editor' }), 'video-editor')
+  assert.equal(resolvePath({ role: 'content_creator' }), 'content-creator')
+  assert.equal(resolvePath({ role: 'social_media_manager' }), 'social-media-manager')
+  assert.equal(resolvePath({ role: 'graphic_designer' }), 'graphic-designer')
 })
 
 // Walks the flow the way a user does, asserting every answerable step can

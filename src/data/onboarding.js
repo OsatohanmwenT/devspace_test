@@ -18,6 +18,7 @@ export const BRANCHES = [
   { value: 'ai', label: 'AI & Automation' },
   { value: 'product', label: 'Product & Business' },
   { value: 'marketing', label: 'Marketing & Growth' },
+  { value: 'content_media', label: 'Content & Media' },
   { value: 'design', label: 'Design & User Experience' },
   { value: 'cloud', label: 'Cloud, Security & Deployment' },
 ]
@@ -63,12 +64,19 @@ export const roleOptions = {
   marketing: [
     { value: 'help_me_choose', label: 'Help me choose' },
     { value: 'digital_marketer', label: 'Digital Marketer' },
+    { value: 'social_media_manager', label: 'Social Media Manager' },
+  ],
+  content_media: [
+    { value: 'help_me_choose', label: 'Help me choose' },
+    { value: 'video_editor', label: 'Video Editor' },
+    { value: 'content_creator', label: 'Content Creator' },
   ],
   design: [
     { value: 'help_me_choose', label: 'Help me choose' },
     { value: 'ui_ux_designer', label: 'UI/UX Designer', note: 'Designs the interface rather than building it' },
     { value: 'product_designer', label: 'Product Designer' },
     { value: 'design_systems_specialist', label: 'Design Systems Specialist' },
+    { value: 'graphic_designer', label: 'Graphic Designer' },
   ],
   cloud: [
     { value: 'help_me_choose', label: 'Help me choose' },
@@ -109,10 +117,15 @@ export const startingPointOptions = {
   business_analyst: ladder(['business_analysis_fundamentals', 'Business analysis fundamentals'], ['requirements_gathering', 'Requirements gathering'], ['data_analysis_basics', 'Data analysis basics'], ['process_mapping', 'Process mapping'], ['stakeholder_communication', 'Stakeholder communication']),
   technical_project_coordinator: ladder(['project_management_fundamentals', 'Project management fundamentals'], ['agile_scrum_basics', 'Agile & Scrum basics'], ['pm_tools', 'Tools (Jira / Trello)'], ['technical_communication', 'Technical communication'], ['risk_timeline_tracking', 'Risk & timeline tracking']),
   digital_marketer: ladder(['marketing_fundamentals', 'Marketing fundamentals'], ['audience_research', 'Audience research'], ['content_campaigns', 'Content and campaigns'], ['channel_analytics', 'Channels and analytics'], ['campaign_optimisation', 'Campaign optimisation']),
+  social_media_manager: ladder(['social_media_fundamentals', 'Social media fundamentals'], ['audience_content_basics', 'Audience and content basics'], ['content_planning', 'Content planning'], ['community_management', 'Community management'], ['social_analytics', 'Social analytics']),
+
+  video_editor: ladder(['editing_fundamentals', 'Editing fundamentals'], ['timeline_basics', 'Timeline and sequence basics'], ['audio_and_pacing', 'Audio and pacing'], ['colour_and_graphics', 'Colour and motion graphics'], ['portfolio_edit', 'Producing a portfolio edit']),
+  content_creator: ladder(['content_fundamentals', 'Content fundamentals'], ['audience_and_ideas', 'Audience and idea development'], ['production_basics', 'Content production basics'], ['publishing_workflow', 'Publishing workflow'], ['content_strategy', 'Content strategy and growth']),
 
   ui_ux_designer: ladder(['design_fundamentals', 'Design fundamentals'], ['wireframing_prototyping', 'Wireframing & prototyping'], ['user_research_basics', 'User research basics'], ['usability_testing', 'Usability testing'], ['design_systems', 'Design systems']),
   product_designer: ladder(['design_fundamentals', 'Design fundamentals'], ['end_to_end_design_process', 'End-to-end design process'], ['prototyping_testing', 'Prototyping & testing'], ['collaborating_with_engineering', 'Collaborating with engineering'], ['design_systems', 'Design systems']),
   design_systems_specialist: ladder(['design_fundamentals', 'Design fundamentals'], ['component_libraries', 'Component libraries'], ['design_tokens', 'Design tokens'], ['documentation_governance', 'Documentation & governance'], ['cross_team_collaboration', 'Cross-team collaboration']),
+  graphic_designer: ladder(['design_fundamentals', 'Design fundamentals'], ['layout_typography', 'Layout and typography'], ['colour_composition', 'Colour and composition'], ['brand_design', 'Brand design'], ['portfolio_system', 'Building a portfolio system']),
 
   devops_engineer: ladder(['linux_cli_basics', 'Linux & command line basics'], ['git_version_control', 'Version control (Git)'], ['ci_cd_pipelines', 'CI/CD pipelines'], ['containers_docker', 'Containers (Docker)'], ['iac_cloud_basics', 'Infrastructure as code']),
   cloud_engineer: ladder(['cloud_fundamentals', 'Cloud fundamentals'], ['networking_basics', 'Networking basics'], ['compute_storage_services', 'Compute & storage services'], ['infrastructure_as_code', 'Infrastructure as code'], ['security_cost_management', 'Security & cost management']),
@@ -175,6 +188,14 @@ export const roleSubQuiz = {
     prompt: 'Which result would you most enjoy working toward?',
     options: [
       { value: 'digital_marketer', label: 'A campaign that reaches the right people and improves over time' },
+      { value: 'social_media_manager', label: 'A social presence that earns attention and builds a real community' },
+    ],
+  },
+  content_media: {
+    prompt: 'Which result would you most enjoy creating?',
+    options: [
+      { value: 'video_editor', label: 'A polished story shaped from raw footage' },
+      { value: 'content_creator', label: 'Original content that people choose to watch, read, or share' },
     ],
   },
   design: {
@@ -183,6 +204,7 @@ export const roleSubQuiz = {
       { value: 'ui_ux_designer', label: 'A screen that’s confusing to use' },
       { value: 'product_designer', label: 'A feature that solves the wrong problem' },
       { value: 'design_systems_specialist', label: 'Buttons that look different on every page' },
+      { value: 'graphic_designer', label: 'A layout whose type, colour, and composition do not work together' },
     ],
   },
   cloud: {
@@ -209,14 +231,15 @@ export const branchTriage = {
     { value: 'mobile', label: 'Making something that lives on a phone' },
     { value: 'product', label: 'Working out what’s worth building and why' },
     { value: 'marketing', label: 'Helping the right people discover and choose a product' },
+    { value: 'content_media', label: 'Turning an idea into something people want to watch, read, or share' },
     { value: 'cloud', label: 'Keeping everything running, safe and online' },
   ],
 }
 
 export const motivationOptions = [
-  { value: 'professional_developer', label: 'I want to become a professional developer', icon: '🧑‍💻' },
+  { value: 'professional_developer', label: 'I want to build a professional career', icon: '🧑‍💻' },
   { value: 'advance_career', label: 'To advance my current career', icon: '💼' },
-  { value: 'build_things', label: 'To build apps, websites, or internal tools', icon: '🧱' },
+  { value: 'build_things', label: 'To create useful work and real projects', icon: '🧱' },
   { value: 'for_fun', label: 'Just to have fun', icon: '🎉' },
   { value: 'different_reason', label: 'I have a different reason', icon: '❓' },
 ]
@@ -228,7 +251,7 @@ export const experienceOptions = [
   { value: 'watched_tutorials', label: 'I’ve watched tutorials', rung: 1 },
   { value: 'tried_small_exercises', label: 'I’ve tried small exercises', rung: 2 },
   { value: 'built_small_projects', label: 'I’ve built small projects', rung: 3 },
-  { value: 'pushed_to_platform', label: 'I’ve pushed work to GitHub, Figma, Power BI or similar', rung: 3 },
+  { value: 'pushed_to_platform', label: 'I’ve shared work on GitHub, Figma, Power BI, YouTube, Vimeo or similar', rung: 3 },
   { value: 'built_used_by_others', label: 'I’ve built something people used', rung: 4 },
   { value: 'worked_clients_teams', label: 'I’ve worked with clients or teams', rung: 4 },
 ]
@@ -244,11 +267,15 @@ export const projectInterestOptions = [
   { value: 'social', label: 'Social platforms' },
   { value: 'dashboards', label: 'Business dashboards' },
   { value: 'school_project', label: 'School / final-year projects' },
+  { value: 'video', label: 'Video and film' },
+  { value: 'campaigns', label: 'Campaigns' },
+  { value: 'brand_content', label: 'Brand and content' },
+  { value: 'social_media', label: 'Social media' },
 ]
 
 export const immediateNeedOptions = [
   { value: 'career_path', label: 'Pick the right career path' },
-  { value: 'choose_stack', label: 'Choose the right stack' },
+  { value: 'choose_stack', label: 'Choose the right tools' },
   { value: 'learn_basics', label: 'Learn the basics from scratch' },
   { value: 'build_projects', label: 'Build projects' },
   { value: 'improve_portfolio', label: 'Improve my portfolio' },
@@ -271,6 +298,7 @@ const branchInsights = {
   ai: 'AI is reshaping how every industry works.',
   product: 'Great products begin with the right problem.',
   marketing: 'Good marketing connects useful products with the right people.',
+  content_media: 'Strong content gives an audience a reason to pay attention.',
   design: 'Good design makes complex things feel simple.',
   cloud: 'Modern products depend on secure, reliable infrastructure.',
   not_sure: 'Exploring is how the right direction becomes clear.',
@@ -284,6 +312,7 @@ const roleInsights = {
   ai: 'AI roles turn data into useful predictions and tools.',
   product: 'Product roles connect user needs with execution.',
   marketing: 'Marketing roles connect customer insight with measurable growth.',
+  content_media: 'Content and media roles turn ideas into stories people choose to engage with.',
   design: 'Design roles turn friction into clear experiences.',
   cloud: 'Cloud roles keep digital products secure and available.',
 }
@@ -312,8 +341,9 @@ export const outcomes = {
     data_analyst: 'data-analyst', data_engineer: 'data-scientist', business_intelligence: 'learn-sql', data_scientist: 'data-scientist',
     ml_engineer: 'machine-learning', ai_app_developer: 'ai-engineer', automation_developer: 'learn-python',
     product_manager: 'data-scientist', business_analyst: 'data-scientist', technical_project_coordinator: 'technical-project-coordinator',
-    digital_marketer: 'digital-marketing',
-    ui_ux_designer: 'backend-developer', product_designer: 'backend-developer', design_systems_specialist: 'backend-developer',
+    digital_marketer: 'digital-marketing', social_media_manager: 'social-media-manager',
+    video_editor: 'video-editor', content_creator: 'content-creator',
+    ui_ux_designer: 'backend-developer', product_designer: 'backend-developer', design_systems_specialist: 'backend-developer', graphic_designer: 'graphic-designer',
     devops_engineer: 'learn-docker', cloud_engineer: 'learn-docker', cybersecurity_specialist: 'ai-engineer',
   },
   // Minutes a day at roughly one lesson per five minutes, over a week.

@@ -58,6 +58,11 @@ function App() {
   const [streakJourneyOpen, setStreakJourneyOpen] = useState(false)
   const [progress, setProgress] = useState(loadProgress)
   const [plansHighlight, setPlansHighlight] = useState(null)
+  // Progress lives in localStorage and resolves instantly, but the profile is
+  // the one page whose data would come from a server in a real deployment.
+  // Standing the fetch up now means the skeleton is a real state the page
+  // passes through, rather than a component nothing ever renders.
+  const [profileLoading, setProfileLoading] = useState(false)
   const menuRef = useRef(null)
   const menuButtonRef = useRef(null)
   const streakButtonRef = useRef(null)
@@ -123,6 +128,20 @@ function App() {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [activePopover])
+
+  // Opening the profile stands the record up from storage. The delay is short
+  // enough not to be in the way and long enough that the skeleton is seen —
+  // cleared on unmount so navigating away mid-load cannot set state late.
+  useEffect(() => {
+    if (active !== 'Profile') return undefined
+
+    setProfileLoading(true)
+    const timer = window.setTimeout(() => setProfileLoading(false), 650)
+    return () => {
+      window.clearTimeout(timer)
+      setProfileLoading(false)
+    }
+  }, [active])
 
   const showNotice = (message) => {
     setNotice(message)
@@ -225,6 +244,18 @@ function App() {
     setActive('Plans')
   }
 
+  // The learner's own words and links, layered onto the onboarding-derived
+  // profile — everything else on the CV comes from real progress records,
+  // but name, headline, bio, links, and works are theirs to say.
+  const saveProfileFields = (fields) => {
+    setProgress((current) => {
+      const next = { ...current, profile: { ...current.profile, ...fields } }
+      saveProgress(next)
+      return next
+    })
+    showNotice('Profile updated')
+  }
+
   const completeOnboarding = (nextProfile) => {
     setProgress((current) => {
       const next = { ...current, profile: nextProfile }
@@ -294,8 +325,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
-      {active !== 'Plans' && (
-      <header className="relative flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-transparent">
+      {active !== 'Plans' && !openLesson && (
+      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
           onClick={() => setActive('Home')}
@@ -389,11 +420,19 @@ function App() {
       </header>
       )}
 
-      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[300px_minmax(0,1fr)] max-[900px]:grid-cols-[260px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-6 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
         {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
           <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
         ) : active === 'Profile' ? (
-          <ProfileView profile={profile} progress={progress} currentPath={currentPath} pathProgress={derived} onEditProfile={() => setActive('Settings')} />
+          <ProfileView
+            profile={profile}
+            progress={progress}
+            currentPath={currentPath}
+            pathProgress={derived}
+            onSaveProfile={saveProfileFields}
+            onStartLearning={() => setActive('Paths')}
+            isLoading={profileLoading}
+          />
         ) : active === 'Plans' ? (
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
         ) : active === 'Leaderboard' ? (

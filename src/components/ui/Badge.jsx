@@ -13,4 +13,3 @@ export function Badge({ children, tone = 'violet', className = '' }) {
     </span>
   )
 }
-

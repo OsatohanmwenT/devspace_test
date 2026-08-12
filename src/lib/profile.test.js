@@ -1,11 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getProfileProgress, isProfileUrl, normalizeProfile } from './profile.js'
+import { getProfileProgress, isProfileUrl, normalizeProfile, WORK_TYPES } from './profile.js'
 
 test('profile migration keeps existing onboarding data and adds safe defaults', () => {
   assert.deepEqual(normalizeProfile({ role: 'frontend_developer' }), {
-    role: 'frontend_developer', name: '', headline: '', projects: [], links: [],
+    role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
   })
+})
+
+test('profile migration turns older scalar interests and needs into arrays', () => {
+  const profile = normalizeProfile({ projectInterest: 'video', immediateNeed: 'build_projects' })
+
+  assert.deepEqual(profile.projectInterest, ['video'])
+  assert.deepEqual(profile.immediateNeed, ['build_projects'])
 })
 
 test('profile migration leaves evidence records in place', () => {
@@ -15,6 +22,15 @@ test('profile migration leaves evidence records in place', () => {
 
   assert.deepEqual(profile.projects, [project])
   assert.deepEqual(profile.links, [link])
+})
+
+test('profile migration supports every work type and ignores unknown types', () => {
+  const projects = WORK_TYPES.map((type) => ({ id: type, title: type, type }))
+  const normalized = normalizeProfile({ projects: [...projects, { id: 'legacy', title: 'Legacy' }, { id: 'bad', title: 'Bad', type: 'unknown' }] })
+
+  assert.deepEqual(normalized.projects.slice(0, WORK_TYPES.length), projects)
+  assert.deepEqual(normalized.projects.at(-2), { id: 'legacy', title: 'Legacy' })
+  assert.deepEqual(normalized.projects.at(-1), { id: 'bad', title: 'Bad' })
 })
 
 test('only http and https proof links are accepted', () => {
@@ -27,12 +43,22 @@ test('only http and https proof links are accepted', () => {
 test('profile progress identifies the next valuable evidence action', () => {
   assert.deepEqual(getProfileProgress({ name: 'Ari', headline: 'Frontend developer' }, { lessonsCompleted: 2 }), {
     percent: 50,
-    next: 'Add a project with proof',
+    next: 'Add a work sample with proof',
     items: [
       { label: 'Add your name and headline', complete: true },
-      { label: 'Add a project with proof', complete: false },
-      { label: 'Add a professional link', complete: false },
+      { label: 'Add a work sample with proof', complete: false },
+      { label: 'Add a relevant link', complete: false },
       { label: 'Complete verified learning', complete: true },
     ],
   })
+})
+
+test('profile progress requires valid proof and relevant links', () => {
+  const emptyEvidence = getProfileProgress({ name: 'Ari', headline: 'Editor', projects: [{ title: 'Reel', url: '' }], links: [{ url: 'vimeo.com/ari' }] }, {})
+  assert.equal(emptyEvidence.items[1].complete, false)
+  assert.equal(emptyEvidence.items[2].complete, false)
+
+  const realEvidence = getProfileProgress({ name: 'Ari', headline: 'Editor', projects: [{ title: 'Reel', url: 'https://vimeo.com/ari' }], links: [{ url: 'https://behance.net/ari' }] }, {})
+  assert.equal(realEvidence.items[1].complete, true)
+  assert.equal(realEvidence.items[2].complete, true)
 })

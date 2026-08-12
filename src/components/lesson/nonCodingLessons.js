@@ -246,3 +246,187 @@ export const dataAnalysisLesson = {
     body: 'You learned how a clear question, clean data, and honest evidence lead to a decision worth trusting.',
   },
 }
+
+export const videoEditingLesson = {
+  id: 'video-editing-basics',
+  title: 'How video editing works',
+  role: 'video_editor',
+  concepts: [{
+    id: 'video-editing-basics-foundations',
+    title: 'Video editing foundations',
+    activities: [
+      {
+        id: 'video-editing-basics-learn',
+        type: 'article',
+        content: {
+          title: 'Video editing foundations',
+          intro: 'Video editing turns selected images and sounds into a sequence with a clear purpose, feeling, and flow.',
+          sections: [
+            { title: 'Start with the story', body: 'Before choosing transitions or effects, decide what the viewer should understand or feel. That purpose guides which footage belongs in the edit.' },
+            { title: 'Selection and timing create meaning', body: 'Editors choose the strongest moments, place them in a useful order, and adjust timing so each cut helps the viewer follow the story.' },
+          ],
+          next: { title: 'Check video editing foundations', body: 'Choose the response that best applies the foundation you just learned.' },
+        },
+      },
+      {
+        id: 'video-editing-basics-check',
+        type: 'quiz',
+        content: {
+          title: 'Check video editing foundations',
+          intro: 'Choose the clearest next step.',
+          questions: [{
+            id: 'video-editing-basics-q1',
+            type: 'multiple-choice',
+            prompt: 'You receive an hour of footage for a 60 second story. What should you do first?',
+            options: ['Add effects to every clip', 'Define the story and select footage that supports it', 'Use the clips in the order they were filmed', 'Choose music before watching the footage'],
+            correctIndex: 1,
+            explanation: 'The story and audience give you a reason to include or remove each piece of footage.',
+          }],
+        },
+      },
+    ],
+  }],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'You understand video editing foundations!',
+    body: 'You learned how purpose, selection, order, and timing shape raw footage into a clear story.',
+  },
+}
+
+export const contentCreationLesson = {
+  id: 'content-creation-basics',
+  title: 'How content creation works',
+  role: 'content_creator',
+  concepts: [{
+    id: 'content-creation-basics-foundations',
+    title: 'Content creation foundations',
+    activities: [
+      {
+        id: 'content-creation-basics-learn',
+        type: 'article',
+        content: {
+          title: 'Content creation foundations',
+          intro: 'Useful content gives a specific audience a clear reason to watch, read, save, or share.',
+          sections: [
+            { title: 'Know who it is for', body: 'A focused audience makes the idea easier to shape. Start with a real question, need, or interest instead of trying to speak to everyone.' },
+            { title: 'Make one clear promise', body: 'Strong content tells the audience what they will learn, feel, or be able to do, then delivers that value in a suitable format.' },
+          ],
+          next: { title: 'Check content creation foundations', body: 'Choose the response that best applies the foundation you just learned.' },
+        },
+      },
+      {
+        id: 'content-creation-basics-check',
+        type: 'quiz',
+        content: {
+          title: 'Check content creation foundations',
+          intro: 'Choose the clearest next step.',
+          questions: [{
+            id: 'content-creation-basics-q1',
+            type: 'multiple-choice',
+            prompt: 'Which is the strongest starting point for a new piece of content?',
+            options: ['A trend everyone else is copying', 'A clear audience question you can answer well', 'The most expensive camera available', 'A format with no defined purpose'],
+            correctIndex: 1,
+            explanation: 'A real audience question provides both relevance and a clear promise for the content.',
+          }],
+        },
+      },
+    ],
+  }],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'You understand content creation foundations!',
+    body: 'You learned how audience, purpose, format, and a clear promise shape useful content.',
+  },
+}
+
+export const socialMediaLesson = {
+  id: 'social-media-basics',
+  title: 'How social media management works',
+  role: 'social_media_manager',
+  concepts: [{
+    id: 'social-media-basics-foundations',
+    title: 'Social media foundations',
+    activities: [
+      {
+        id: 'social-media-basics-learn',
+        type: 'article',
+        content: {
+          title: 'Social media foundations',
+          intro: 'Social media management connects what an audience values with a clear organisation goal and a healthy community.',
+          sections: [
+            { title: 'Give each channel a job', body: 'A channel should have a clear audience, purpose, and role. Posting everywhere without a reason creates work without creating value.' },
+            { title: 'Measure the useful action', body: 'Reach and likes can provide context, but the best measure depends on the goal, such as useful replies, event signups, qualified visits, or retained community members.' },
+          ],
+          next: { title: 'Check social media foundations', body: 'Choose the response that best applies the foundation you just learned.' },
+        },
+      },
+      {
+        id: 'social-media-basics-check',
+        type: 'quiz',
+        content: {
+          title: 'Check social media foundations',
+          intro: 'Choose the clearest next step.',
+          questions: [{
+            id: 'social-media-basics-q1',
+            type: 'multiple-choice',
+            prompt: 'A team wants more event registrations. Which result is most useful to track?',
+            options: ['How many posts were published', 'Event registrations attributed to social content', 'The total number of emojis used', 'Whether every channel used identical copy'],
+            correctIndex: 1,
+            explanation: 'The measure should connect directly to the goal the social work is meant to support.',
+          }],
+        },
+      },
+    ],
+  }],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'You understand social media foundations!',
+    body: 'You learned how audience value, channel purpose, community, and measurable goals work together.',
+  },
+}
+
+export const graphicDesignLesson = {
+  id: 'graphic-design-basics',
+  title: 'How graphic design works',
+  role: 'graphic_designer',
+  concepts: [{
+    id: 'graphic-design-basics-foundations',
+    title: 'Graphic design foundations',
+    activities: [
+      {
+        id: 'graphic-design-basics-learn',
+        type: 'article',
+        content: {
+          title: 'Graphic design foundations',
+          intro: 'Graphic design organises type, image, colour, and space so a message is clear, useful, and memorable.',
+          sections: [
+            { title: 'Hierarchy guides attention', body: 'Scale, weight, contrast, and position tell people what to notice first, what supports it, and what action or detail comes next.' },
+            { title: 'Composition supports the message', body: 'Alignment, spacing, and grouping create relationships between elements. Every visual choice should help the intended audience understand the message.' },
+          ],
+          next: { title: 'Check graphic design foundations', body: 'Choose the response that best applies the foundation you just learned.' },
+        },
+      },
+      {
+        id: 'graphic-design-basics-check',
+        type: 'quiz',
+        content: {
+          title: 'Check graphic design foundations',
+          intro: 'Choose the clearest next step.',
+          questions: [{
+            id: 'graphic-design-basics-q1',
+            type: 'multiple-choice',
+            prompt: 'A poster has five messages competing at the same size and weight. What should the designer do first?',
+            options: ['Add more colours', 'Choose the primary message and create a clear hierarchy', 'Make every message bold', 'Remove all spacing'],
+            correctIndex: 1,
+            explanation: 'A clear primary message gives the design an intentional reading order.',
+          }],
+        },
+      },
+    ],
+  }],
+  completion: {
+    eyebrow: 'Lesson complete',
+    title: 'You understand graphic design foundations!',
+    body: 'You learned how hierarchy, composition, type, and colour guide attention and communicate meaning.',
+  },
+}

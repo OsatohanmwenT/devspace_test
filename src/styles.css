@@ -1,2 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rethink+Sans:wght@400;500;600;700&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Profile/CV entrance — a quiet, single-run reveal, not a loop. */
+@keyframes profile-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .profile-rise {
+    animation: profile-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
