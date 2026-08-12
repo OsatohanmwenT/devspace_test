@@ -30,7 +30,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
   return (
     <section className="grid gap-8 max-[720px]:gap-[30px]" aria-label="Learning paths">
       <header className="grid gap-[7px] max-w-[680px]">
-        <h1 className="text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Paths</h1>
+        <h1 className="text-3xl font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Paths</h1>
         <p className="text-[17px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Continue learning or choose a new path.</p>
       </header>
 
@@ -38,7 +38,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
 
       <section className="grid gap-5 border-t border-[#404040] pt-7 [[data-theme=light]_&]:border-[#eeeeeb]" aria-labelledby="explore-paths-title">
         <div className="flex items-center justify-between gap-4">
-          <h2 id="explore-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Explore paths</h2>
+          <h2 id="explore-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Explore paths</h2>
           <span className="text-[13px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{explorePaths.length} paths</span>
         </div>
         <div className="flex items-center justify-between gap-4 max-[680px]:items-stretch max-[680px]:flex-col">
@@ -54,7 +54,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search paths"
             aria-label="Search paths"
-            className="h-10 w-[220px] rounded-md border border-[#4a4a4a] bg-[#252525] px-3 text-[13px] text-[#f4f4f2] placeholder:text-[#89898e] outline-none focus:border-[#4169e1] focus:ring-2 focus:ring-[#4169e1]/30 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#202020] [[data-theme=light]_&]:placeholder:text-[#737371] max-[680px]:w-full"
+            className="h-10 w-[220px] rounded-md border border-[#4a4a4a] bg-[#252525] px-3 text-[13px] text-[#f4f4f2] placeholder:text-[#89898e] outline-none focus:border-[#4169e1] focus:ring-2 focus:ring-[#4169e1]/30 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:placeholder:text-[#737371] max-[680px]:w-full"
           />
         </div>
         <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[680px]:grid-cols-1">

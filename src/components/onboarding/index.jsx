@@ -78,7 +78,7 @@ export default function OnboardingView({ onComplete }) {
       <header className="flex items-center gap-4 px-6 max-[680px]:px-4">
         <button
           type="button"
-          className="grid h-10 w-10 flex-none place-items-center rounded-lg border-0 bg-transparent text-[#9a9a9d] disabled:opacity-30 hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+          className="grid h-10 w-10 flex-none place-items-center rounded-lg border-0 bg-transparent text-[#9a9a9d] disabled:opacity-30 hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]"
           onClick={goBack}
           disabled={index === 0}
           aria-label="Previous step"
@@ -93,7 +93,7 @@ export default function OnboardingView({ onComplete }) {
           aria-valuemin={1}
           aria-valuemax={steps.length}
         >
-          <div className="h-full rounded-full bg-[#6f66ec] transition-[width] duration-200" style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-[#6699ec] transition-[width] duration-200" style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
         </div>
       </header>
 
@@ -159,7 +159,7 @@ function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between gap-4 bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 py-3.5">
       <dt className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{label}</dt>
-      <dd className="m-0 text-right text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{value}</dd>
+      <dd className="m-0 text-right text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{value}</dd>
     </div>
   )
 }

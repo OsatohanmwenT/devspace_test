@@ -6,7 +6,7 @@ export function LessonNavigationPill() {
     >
       <button
         type="button"
-        className="grid w-9 h-8 place-items-center border-0 border-r border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-[#6f66ec]"
+        className="grid w-9 h-8 place-items-center border-0 border-r border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-[#6699ec]"
         disabled
         aria-label="Previous lesson step"
       >
@@ -15,7 +15,7 @@ export function LessonNavigationPill() {
       <span className="min-w-[72px] text-center">Lesson</span>
       <button
         type="button"
-        className="grid w-9 h-8 place-items-center border-0 border-l border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-[#6f66ec]"
+        className="grid w-9 h-8 place-items-center border-0 border-l border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-[#6699ec]"
         disabled
         aria-label="Next lesson step"
       >

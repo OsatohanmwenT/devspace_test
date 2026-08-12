@@ -1,8 +1,8 @@
 // Reuses the segmented-control language from the leaderboard tabs rather than
 // inventing a third kind of switch: a quiet track with one raised active chip.
-const BASE = 'relative z-10 min-h-9 rounded-lg px-4 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]'
-const ACTIVE = `${BASE} text-[#f7f7f8] [[data-theme=light]_&]:text-[#181818]`
-const IDLE = `${BASE} bg-transparent text-[#9a9a9d] hover:text-[#f7f7f8] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#181818]`
+const BASE = 'relative z-10 min-h-9 rounded-lg px-4 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]'
+const ACTIVE = `${BASE} text-[#f7f7f8] [[data-theme=light]_&]:text-neutral-800`
+const IDLE = `${BASE} bg-transparent text-[#9a9a9d] hover:text-[#f7f7f8] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-neutral-700`
 
 export function PlanTypeToggle({ types, active, onSelect }) {
   const activeIndex = Math.max(0, types.findIndex((type) => type.id === active))

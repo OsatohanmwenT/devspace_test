@@ -35,7 +35,7 @@ function HiddenRows({ count, locked, onExpand }) {
     <button
       type="button"
       onClick={onExpand}
-      className="w-full py-2 text-[11px] font-semibold tracking-[.06em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-2"
+      className="w-full py-2 text-[11px] font-semibold tracking-[.06em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] focus-visible:outline-offset-2"
     >
       ··· {count} more{locked ? ' · Premium' : ''}
     </button>
@@ -59,11 +59,11 @@ function AllTimePreview({ rows, onOpenPlans }) {
         </div>
         <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-transparent to-[#1f1f1f] [[data-theme=light]_&]:to-white">
           <div className="grid justify-items-center gap-2 text-center">
-          <span className="text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">See every XP you&apos;ve earned.</span>
+          <span className="text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">See every XP you&apos;ve earned.</span>
           <button
             type="button"
             onClick={() => onOpenPlans?.('all-time')}
-            className="rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#262626] [[data-theme=light]_&]:bg-white px-4 py-2 text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] hover:brightness-110"
+            className="rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#262626] [[data-theme=light]_&]:bg-white px-4 py-2 text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:brightness-110"
           >
             Unlock all-time standings
           </button>
@@ -114,7 +114,7 @@ export default function LeaderboardView({
     : summary?.inPromotion
       ? { label: summary.promotionCushion > 0 ? `Promotion zone · ${summary.promotionCushion.toLocaleString()} px clear` : 'Promotion zone · hold your place', tone: 'text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]' }
       : summary?.promotesAnyone
-        ? { label: `${summary.gapToPromotion.toLocaleString()} px to promotion`, tone: 'text-[#8d89ff] [[data-theme=light]_&]:text-[#513deb]' }
+        ? { label: `${summary.gapToPromotion.toLocaleString()} px to promotion`, tone: 'text-[#89baff] [[data-theme=light]_&]:text-[#3d77eb]' }
         : { label: 'Holding your place', tone: 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' }
 
   const userRole = weekly.find((entry) => entry.isCurrentUser)?.role
@@ -146,7 +146,7 @@ export default function LeaderboardView({
           the learner what their next useful move is before they scan the rows. */}
       <div className="grid justify-items-center gap-3 text-center max-w-[640px] mx-auto">
         <LeagueLadder leagueIndex={leagueIndex} />
-        <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.2vw,32px)] font-medium leading-tight">{league.name}</h1>
+        <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[clamp(26px,3.2vw,32px)] font-medium leading-tight">{league.name}</h1>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">
           {league.promoteCount > 0 && league.demoteCount > 0
             ? `Top ${league.promoteCount} advance · bottom ${league.demoteCount} drop`
@@ -162,7 +162,7 @@ export default function LeaderboardView({
         <div className="grid w-full max-w-[680px] mx-auto gap-6">
           <div className="flex items-center justify-between gap-4 border-y border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] px-2 py-3" role="status">
             <div className="flex items-center gap-3">
-              <span className="rounded-full border border-[#57575d] [[data-theme=light]_&]:border-[#d4d4d4] px-2.5 py-1 text-[11px] font-bold tabular-nums text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">#{summary.user.rank}</span>
+              <span className="rounded-full border border-[#57575d] [[data-theme=light]_&]:border-[#d4d4d4] px-2.5 py-1 text-[11px] font-bold tabular-nums text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">#{summary.user.rank}</span>
               <div className="grid gap-0.5">
                 <span className="text-[11px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Next target</span>
                 <strong className={`text-sm font-semibold ${progressStatus.tone}`}>{progressStatus.label}</strong>

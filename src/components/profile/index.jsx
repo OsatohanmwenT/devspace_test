@@ -30,7 +30,7 @@ const STARTING_POINT_LABELS = Object.fromEntries(
 
 const RULE = 'bg-[#333336] [[data-theme=light]_&]:bg-[#e6e6e2]'
 const HAIRLINE = 'border-[#333336] [[data-theme=light]_&]:border-[#e6e6e2]'
-const INK = 'text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]'
+const INK = 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'
 const MUTED = 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
 // Softening these greys for the premium pass dropped them to 4.19:1 (dark)
 // and 2.81:1 (light) at 12px. Dates and field labels are content, not
@@ -179,7 +179,7 @@ function QuestRow({ label, complete }) {
     <li className="flex items-center gap-2.5">
       <span
         className={`grid size-5 flex-none place-items-center rounded-full ${
-          complete ? 'bg-[#6f66ec] text-white' : `border ${HAIRLINE}`
+          complete ? 'bg-[#6699ec] text-white' : `border ${HAIRLINE}`
         }`}
         aria-hidden="true"
       >
@@ -277,17 +277,17 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
           {/* A fine diagonal rule field rather than a soft gradient wash —
               closer to engraved stationery than to a hero banner. */}
           <div
-            className="h-28 bg-[#6f66ec]/12 [[data-theme=light]_&]:bg-[#6f66ec]/8"
+            className="h-28 bg-[#6699ec]/12 [[data-theme=light]_&]:bg-[#6699ec]/8"
             style={{
               backgroundImage:
-                'repeating-linear-gradient(135deg, rgba(111,102,236,.16) 0 1px, transparent 1px 9px)',
+                'repeating-linear-gradient(135deg, rgba(102, 153, 236,.16) 0 1px, transparent 1px 9px)',
             }}
             aria-hidden="true"
           />
           <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
             <div className="relative -mt-11 w-[88px]">
               <span
-                className="grid size-[88px] place-items-center rounded-full bg-[#6f66ec] font-['Rethink_Sans',Arial,sans-serif] text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
                 aria-hidden="true"
               >
                 L
@@ -302,7 +302,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
             </div>
 
             <div className="grid gap-1.5">
-              <h1 className={`m-0 font-['Rethink_Sans',Arial,sans-serif] text-[30px] font-medium leading-[1.1] tracking-[-.025em] ${INK}`}>
+              <h1 className={`m-0 font-rethink-sans text-[30px] font-medium leading-[1.1] tracking-[-.025em] ${INK}`}>
                 Learner
               </h1>
               <p className={`m-0 text-[16px] leading-[1.45] ${INK}`}>
@@ -329,7 +329,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               </div>
               <div className={`h-2 w-full overflow-hidden rounded-full bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]`}>
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#6f66ec] to-[#8b7cf6] transition-[width] duration-500 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-[#6699ec] to-[#8b7cf6] transition-[width] duration-500 ease-out"
                   style={{ width: `${levelInfo.percent}%` }}
                 />
               </div>

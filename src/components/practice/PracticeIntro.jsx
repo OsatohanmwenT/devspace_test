@@ -12,10 +12,10 @@ export function PracticeIntro({ session, completion, onStart }) {
             aria-labelledby="practice-intro-title"
           >
             <header className="text-center">
-              <span className="text-xs font-bold uppercase tracking-[0.11em] text-[#888df2] [[data-theme=light]_&]:text-[#19079b]">Let’s practice</span>
+              <span className="text-xs font-bold uppercase tracking-[0.11em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">Let’s practice</span>
               <h1
                 id="practice-intro-title"
-                className="mt-2 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.1] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:text-[30px]"
+                className="mt-2 mb-0 font-rethink-sans text-[clamp(30px,4vw,44px)] font-semibold leading-[1.1] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[680px]:text-[30px]"
               >
                 {session.title}
               </h1>
@@ -23,14 +23,14 @@ export function PracticeIntro({ session, completion, onStart }) {
 
             <div className="mt-11 grid grid-cols-3 gap-8 max-[680px]:mt-7 max-[680px]:grid-cols-1 max-[680px]:gap-4">
               <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
-                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#29273b] text-[#888df2] [[data-theme=light]_&]:bg-[#eeedff] [[data-theme=light]_&]:text-[#513deb] max-[680px]:size-[58px]" aria-hidden="true">
+                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <rect x="9" y="7" width="30" height="34" rx="5" stroke="currentColor" strokeWidth="2.5" />
                     <path d="m15 18 3 3 5-6M27 18h6M15 30l3 3 5-6M27 30h6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[680px]:m-0 max-[680px]:text-lg">
                     {questionCount} {questionCount === 1 ? 'question' : 'questions'}
                   </h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">Complete every challenge and check your answers.</p>
@@ -38,26 +38,26 @@ export function PracticeIntro({ session, completion, onStart }) {
               </section>
 
               <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
-                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#29273b] text-[#888df2] [[data-theme=light]_&]:bg-[#eeedff] [[data-theme=light]_&]:text-[#513deb] max-[680px]:size-[58px]" aria-hidden="true">
+                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <circle cx="24" cy="25" r="15" stroke="currentColor" strokeWidth="2.5" />
                     <path d="M19 7h10M24 10v4M24 25l7-6M34.5 13.5l3 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">No time limit</h2>
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[680px]:m-0 max-[680px]:text-lg">No time limit</h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">Most learners finish in about {session.minutes} min.</p>
                 </div>
               </section>
 
               <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
-                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#29273b] text-[#888df2] [[data-theme=light]_&]:bg-[#eeedff] [[data-theme=light]_&]:text-[#513deb] max-[680px]:size-[58px]" aria-hidden="true">
+                <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <path d="M27 5 12 27h11l-2 16 15-23H25l2-15Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
                 <div>
-                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[680px]:m-0 max-[680px]:text-lg">
+                  <h2 className="mt-5 mb-2 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[680px]:m-0 max-[680px]:text-lg">
                     {completion ? 'Improve your score' : 'Earn 10 XP'}
                   </h2>
                   <p className="m-0 text-sm leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1">

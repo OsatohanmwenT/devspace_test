@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
@@ -35,11 +35,11 @@ function UnavailableLesson({ lessonId }) {
   return (
     <div className="grid h-full place-items-center px-6 text-center">
       <div className="grid max-w-[42ch] gap-2">
-        <h1 className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(24px,3vw,30px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+        <h1 className="m-0 font-rethink-sans text-[clamp(24px,3vw,30px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
           This lesson isn’t written yet
         </h1>
         <p className="m-0 text-[15px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">
-          <code className="font-['JetBrains_Mono',ui-monospace,monospace] text-[.9em]">{lessonId}</code> has no content authored against it yet. Pick another lesson from your path.
+          <code className="font-rubik text-[.9em]">{lessonId}</code> has no content authored against it yet. Pick another lesson from your path.
         </p>
       </div>
     </div>
@@ -55,6 +55,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const storageKey = `devspace-lesson-session:${activeLessonId}`
   const [session, setSession] = useState(() => loadLessonSession(storageKey, lessonFlow.length || 1))
   const [isDevyOpen, setIsDevyOpen] = useState(false)
+  const [devyPanelWidth, setDevyPanelWidth] = useState(() => Math.round(Math.max(320, window.innerWidth * 0.25)))
+  const resizeStartRef = useRef(null)
   const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
 
@@ -160,18 +162,37 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   })
 
   const isDevyPanelOpen = isDevyOpen && !isMilestone
-  const focusRing = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]'
+  const focusRing = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]'
   const showStreak = session.streak >= STREAK_THRESHOLD
+
+  const startDevyResize = (event) => {
+    if (window.innerWidth <= 720) return
+    event.preventDefault()
+    resizeStartRef.current = { x: event.clientX, width: devyPanelWidth }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const resizeDevy = (event) => {
+    if (!resizeStartRef.current) return
+    const { x, width } = resizeStartRef.current
+    const nextWidth = width + event.clientX - x
+    setDevyPanelWidth(Math.round(Math.min(Math.max(nextWidth, 320), Math.max(320, window.innerWidth * 0.25))))
+  }
+
+  const stopDevyResize = () => {
+    resizeStartRef.current = null
+  }
 
   return (
     <section
-      className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]"
+      className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_92px] max-[720px]:grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"
       aria-label="Lesson"
+      style={{ '--devy-panel-width': `${devyPanelWidth}px` }}
     >
       <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-5 max-[720px]:px-3.5">
         <button
           type="button"
-          className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}
+          className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 ${focusRing}`}
           onClick={onExit}
           aria-label="Exit lesson"
         >
@@ -193,7 +214,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         {lessonTopics.length > 0 && (
           <button
             type="button"
-            className={`grid w-11 h-11 place-items-center justify-self-end border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] ${focusRing}`}
+            className={`grid w-11 h-11 place-items-center justify-self-end border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 ${focusRing}`}
             onClick={() => setIsCheatsheetOpen(true)}
             aria-label="Open cheatsheet"
           >
@@ -203,7 +224,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       </header>
 
       <main
-        className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
+        className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
       >
         {!lesson && <UnavailableLesson lessonId={activeLessonId} />}
         {currentStep?.type === 'article' && <LessonArticle article={currentStep.content} />}
@@ -224,9 +245,19 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       </main>
 
       {!isMilestone && <aside
-        className={`absolute z-[1] top-16 bottom-0 left-0 flex w-80 max-[720px]:w-full flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`absolute z-[1] top-16 bottom-0 left-0 flex w-[var(--devy-panel-width)] max-[720px]:w-full max-[720px]:min-w-0 flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize Devy chat"
+          className="absolute top-0 right-0 hidden h-full w-2 translate-x-1/2 cursor-col-resize touch-none md:block before:absolute before:inset-y-0 before:left-1/2 before:w-px before:bg-transparent hover:before:bg-[#6699ec] active:before:bg-[#6699ec]"
+          onPointerDown={startDevyResize}
+          onPointerMove={resizeDevy}
+          onPointerUp={stopDevyResize}
+          onPointerCancel={stopDevyResize}
+        />
         <DevyAssistant
           key={currentStep?.id}
           step={currentStep}
@@ -238,7 +269,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       </aside>}
 
       <footer
-        className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-80 max-[720px]:ml-0' : 'ml-0'}`}
+        className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] pt-2.5 px-6 pb-4 max-[720px]:pt-2 max-[720px]:px-3.5 max-[720px]:pb-3 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0' : 'ml-0'}`}
       >
         {!isMilestone && <button
           type="button"
@@ -247,7 +278,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           aria-label="Open Devy chat"
           aria-expanded={isDevyOpen}
         >
-          <img className="w-full h-full object-contain" src="/assets/devy.svg" alt="" />
+          <img className="devy-idle w-full h-full object-contain" src="/assets/devy.svg" alt="" />
           {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
         </button>}
 

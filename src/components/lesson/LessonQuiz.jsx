@@ -29,7 +29,7 @@ export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onCh
       <div className="w-[min(100%,760px)] mx-auto pt-[clamp(24px,4vw,48px)] px-7 pb-10 max-[720px]:pt-6 max-[720px]:px-5 max-[720px]:pb-9">
         <h1
           id="lesson-quiz-title"
-          className="max-w-[22ch] mt-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold leading-[1.15]"
+          className="max-w-[22ch] mt-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold leading-[1.15]"
         >
           {quiz.title}
         </h1>
@@ -60,7 +60,7 @@ export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onCh
           </ActionButton>
           {!canCheck && <span className="text-[#89898e] [[data-theme=light]_&]:text-[#aaa] text-[13px]" id="lesson-quiz-check-hint">Answer every question to unlock</span>}
           {checked && canCheck && (
-            <p className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] text-sm font-semibold" role="status">
+            <p className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm font-semibold" role="status">
               {correctCount} of {quiz.questions.length} correct
             </p>
           )}

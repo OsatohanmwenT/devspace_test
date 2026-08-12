@@ -19,8 +19,8 @@ function CopyButton({ text }) {
     <button
       type="button"
       onClick={copy}
-      className="absolute right-2 top-2 rounded-md border border-[#3a3a3e] bg-[#1f1f22] px-2 py-1 text-[11px] font-semibold text-[#b2b2b6] opacity-0 transition-opacity hover:text-white focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#888df2] group-hover:opacity-100"
-      aria-label={copied ? 'Copied' : 'Copy code'}
+      className="absolute right-2.5 top-2.5 rounded-lg border border-[#333338] bg-[#232326] px-2.5 py-1 text-[11px] font-semibold text-[#b2b2b6] transition-colors hover:border-[#4a4a50] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#88bdf2]"
+      aria-label={copied ? 'Copied' : 'Copy'}
     >
       {copied ? 'Copied' : 'Copy'}
     </button>
@@ -29,10 +29,18 @@ function CopyButton({ text }) {
 
 function Snippet({ code }) {
   return (
-    <div className="group relative">
-      <pre className="m-0 overflow-x-auto border-l-2 border-[#3f3b68] bg-[#1e1e1e] px-4 py-3.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[14px] leading-[1.7] text-[#f4f4f2]"><code>{code}</code></pre>
+    <div className="relative">
+      <pre className="m-0 overflow-x-auto rounded-xl border border-[#2c2c30] bg-[#1c1c1f] px-4 py-3.5 pr-16 font-rubik text-[14px] leading-[1.7] text-[#f4f4f2]"><code>{code}</code></pre>
       <CopyButton text={code} />
     </div>
+  )
+}
+
+function ChevronIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m7 10 5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
@@ -41,8 +49,8 @@ function Snippet({ code }) {
 function CheatsheetEntry({ topic }) {
   return (
     <article className="grid gap-3 border-b border-[#2c2c30] pb-7 last:border-b-0 last:pb-0 [[data-theme=light]_&]:border-[#ececea]">
-      <h3 className="m-0 flex items-center gap-2.5 font-['Rethink_Sans',Arial,sans-serif] text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
-        <span className="grid size-8 flex-none place-items-center bg-[#252528] text-[#888df2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#513deb]">
+      <h3 className="m-0 flex items-center gap-2.5 font-rethink-sans text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+        <span className="grid size-9 flex-none place-items-center rounded-xl bg-[#1c2a4d] text-[#88bdf2] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-[#2563eb]">
           <TopicGlyph topicId={topic.id} className="size-[18px]" />
         </span>
         {topic.title}
@@ -53,12 +61,14 @@ function CheatsheetEntry({ topic }) {
       <p className="m-0 text-[14px] leading-[1.6] text-[#a8a8ac] [[data-theme=light]_&]:text-[#5c5c5c]">{topic.cheatsheet.rule}</p>
 
       <details className="group/details">
-        <summary className="cursor-pointer list-none text-[13px] font-semibold text-[#888df2] marker:hidden hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:text-[#513deb]">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg text-[13px] font-semibold text-[#88bdf2] marker:hidden hover:text-[#a8cbf7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] [[data-theme=light]_&]:hover:text-[#1d4ed8]">
+          <ChevronIcon className="size-4 flex-none transition-transform group-open/details:rotate-180" />
           Example and common mistake
         </summary>
         <div className="grid gap-3 pt-3">
           <Snippet code={topic.cheatsheet.example} />
-          <p className="m-0 border-l-2 border-[#f0c964] bg-[#241f16] px-3.5 py-2.5 text-[14px] leading-[1.6] text-[#d6c9aa] [[data-theme=light]_&]:bg-[#fff8e9] [[data-theme=light]_&]:text-[#5e4b24]">
+          <p className="m-0 flex gap-2.5 rounded-xl bg-[#2a2117] px-3.5 py-2.5 text-[14px] leading-[1.6] text-[#d6c9aa] [[data-theme=light]_&]:bg-[#fff8e9] [[data-theme=light]_&]:text-[#5e4b24]">
+            <span aria-hidden="true">⚠️</span>
             {topic.cheatsheet.mistake}
           </p>
         </div>

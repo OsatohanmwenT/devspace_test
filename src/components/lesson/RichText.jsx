@@ -12,7 +12,7 @@ export function RichText({ content, className = '' }) {
           return (
             <code
               key={index}
-              className="mx-[2px] rounded-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0] px-1.5 py-0.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[.9em] text-[#c4d8f2] [[data-theme=light]_&]:text-[#19079b]"
+              className="mx-[2px] rounded-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0] px-1.5 py-0.5 font-rubik text-[.9em] text-[#c4d8f2] [[data-theme=light]_&]:text-[#07389b]"
             >
               {segment.code}
             </code>
@@ -20,7 +20,7 @@ export function RichText({ content, className = '' }) {
         }
 
         if (segment.strong) {
-          return <strong key={index} className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{segment.strong}</strong>
+          return <strong key={index} className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{segment.strong}</strong>
         }
 
         return null

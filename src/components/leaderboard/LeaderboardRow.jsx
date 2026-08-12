@@ -34,20 +34,20 @@ export function LeaderboardRow({ entry, isCurrentUser }) {
   const tier = MEDALS[entry.rank]
 
   return (
-    <div className={isCurrentUser ? `${ROW_GRID} rounded-xl border border-[#6f66ec] bg-[#2a293c] shadow-[0_0_0_1px_rgba(141,137,255,0.35)] [[data-theme=light]_&]:bg-[#f1f0fd]` : `${ROW_GRID} rounded-none border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f7f7f5]`}>
+    <div className={isCurrentUser ? `${ROW_GRID} rounded-xl border border-[#6699ec] bg-[#2a293c] shadow-[0_0_0_1px_rgba(141,137,255,0.35)] [[data-theme=light]_&]:bg-[#f0f5fd]` : `${ROW_GRID} rounded-none border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f7f7f5]`}>
       <span className={`grid place-items-center text-[13px] text-center ${tier ? TIER_RANK_COLOR[tier] : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'}`}>
         <span aria-hidden="true">{tier ? <TrophyIcon className="w-[18px] h-[18px]" /> : entry.rank}</span>
         <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">Rank {entry.rank}</span>
       </span>
       <Avatar name={entry.name} size="md" />
       <div className="grid min-w-0">
-        <span className="flex items-center gap-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-sm font-semibold">
+        <span className="flex items-center gap-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm font-semibold">
           {entry.name}
-          {entry.tag && <span className="rounded-full bg-[rgba(111,102,236,0.22)] [[data-theme=light]_&]:bg-[#dde8f7] px-1.5 py-px text-[#d8d3ff] [[data-theme=light]_&]:text-[#070c72] text-[10px] font-bold tracking-[.04em]">{entry.tag}</span>}
+          {entry.tag && <span className="rounded-full bg-[rgba(102, 153, 236,0.22)] [[data-theme=light]_&]:bg-[#dde8f7] px-1.5 py-px text-[#d3e2ff] [[data-theme=light]_&]:text-[#073c72] text-[10px] font-bold tracking-[.04em]">{entry.tag}</span>}
         </span>
         <span className="overflow-hidden text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs text-ellipsis whitespace-nowrap">{entry.role}</span>
       </div>
-      <span className={`text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-sm tabular-nums whitespace-nowrap ${isCurrentUser ? 'font-semibold' : ''}`}>{entry.score.toLocaleString()}</span>
+      <span className={`text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm tabular-nums whitespace-nowrap ${isCurrentUser ? 'font-semibold' : ''}`}>{entry.score.toLocaleString()}</span>
       <RankDelta delta={entry.delta} />
     </div>
   )

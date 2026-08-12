@@ -1,38 +1,38 @@
-import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
-import { createRoot } from 'react-dom/client'
-import PathsView from './components/paths'
-import LeaderboardView from './components/leaderboard'
-import PracticeView from './components/practice'
-import SettingsView from './components/settings'
-import ProfileView from './components/profile'
-import PlansView from './components/plans'
-import { PracticeSession } from './components/practice/PracticeSession'
-import LessonView from './components/lesson/LessonView'
-import { LessonLoading } from './components/lesson/LessonLoading'
-import './styles.css'
-import './tailwind.css'
-import { ActionButton } from './components/ui/ActionButton'
-import { Badge } from './components/ui/Badge'
-import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons'
-import { StreakJourneyModal } from './components/header/StreakJourneyModal'
-import { XpPopover } from './components/header/XpPopover'
-import OnboardingView from './components/onboarding'
-import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome'
-import { computeDailyGoal } from './lib/onboarding'
-import { getPath } from './data/paths'
-import { getLesson } from './components/lesson/lessonContent'
-import { activatePremium, applyActivity, deactivatePremium, loadProgress, saveProgress } from './data/progress'
-import { can, CAPABILITIES } from './lib/entitlements'
-import { getLeague } from './data/leagues'
-import { resolveWeek } from './lib/leagueSim'
-import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week'
-import { TierMedal } from './components/leaderboard/TierMedal'
-import { derivePathProgress } from './lib/pathProgress'
-import { getStreakWeek, getStreakMessage, isActiveToday, WEEK_LENGTH } from './lib/streak'
-import { LESSON_XP } from './lib/lessonMeta'
-import { practiceSessions } from './data/practice'
-import { ShortSessionRow } from './components/home/ShortSessionRow'
-import { InfoTooltip } from './components/ui/InfoTooltip'
+import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { StreakJourneyModal } from './components/header/StreakJourneyModal';
+import { XpPopover } from './components/header/XpPopover';
+import { ShortSessionRow } from './components/home/ShortSessionRow';
+import LeaderboardView from './components/leaderboard';
+import { TierMedal } from './components/leaderboard/TierMedal';
+import { getLesson } from './components/lesson/lessonContent';
+import { LessonLoading } from './components/lesson/LessonLoading';
+import LessonView from './components/lesson/LessonView';
+import OnboardingView from './components/onboarding';
+import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome';
+import PathsView from './components/paths';
+import PlansView from './components/plans';
+import PracticeView from './components/practice';
+import { PracticeSession } from './components/practice/PracticeSession';
+import ProfileView from './components/profile';
+import SettingsView from './components/settings';
+import { ActionButton } from './components/ui/ActionButton';
+import { Badge } from './components/ui/Badge';
+import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons';
+import { InfoTooltip } from './components/ui/InfoTooltip';
+import { getLeague } from './data/leagues';
+import { getPath } from './data/paths';
+import { practiceSessions } from './data/practice';
+import { activatePremium, applyActivity, deactivatePremium, loadProgress, saveProgress } from './data/progress';
+import { can, CAPABILITIES } from './lib/entitlements';
+import { resolveWeek } from './lib/leagueSim';
+import { LESSON_XP } from './lib/lessonMeta';
+import { computeDailyGoal } from './lib/onboarding';
+import { derivePathProgress } from './lib/pathProgress';
+import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
+import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week';
+import './styles.css';
+import './tailwind.css';
 
 // Practice awards a flat rate on first completion, mirroring LESSON_XP.
 const PRACTICE_XP = 10
@@ -324,11 +324,11 @@ function App() {
   if (loadingLesson) return <LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />
 
   return (
-    <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
+    <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
       {active !== 'Plans' && !openLesson && (
       <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
-          className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
+          className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setActive('Home')}
           aria-label="Devspace home"
         >
@@ -343,8 +343,8 @@ function App() {
                 key={item}
                 className={
                   isActive
-                    ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6f66ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
-                    : "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
+                    ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6699ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
+                    : "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
                 }
                 onClick={() => setActive(item)}
               >
@@ -359,7 +359,7 @@ function App() {
             <button
               ref={streakButtonRef}
               type="button"
-              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : 'border-[#404040] bg-[#262626] text-[#f4f4f2] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#202020] [[data-theme=light]_&]:hover:border-[#686968]'}`}
+              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : 'border-[#404040] bg-[#262626] text-[#f4f4f2] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#686968]'}`}
               onClick={() => {
                 setActivePopover(null)
                 setStreakJourneyOpen(true)
@@ -379,12 +379,12 @@ function App() {
             <button
               ref={xpButtonRef}
               type="button"
-              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${activePopover === 'xp' ? 'border-[#6f66ec] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]' : 'border-[#404040] text-[#9a9a9d] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:border-[#686968]'} bg-[#262626] [[data-theme=light]_&]:bg-white`}
+              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${activePopover === 'xp' ? 'border-[#6699ec] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800' : 'border-[#404040] text-[#9a9a9d] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:border-[#686968]'} bg-[#262626] [[data-theme=light]_&]:bg-white`}
               onClick={() => setActivePopover((current) => (current === 'xp' ? null : 'xp'))}
               aria-haspopup="dialog"
               aria-expanded={activePopover === 'xp'}
             >
-              <GemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6f66ec]" />
+              <GemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
               <span aria-hidden="true">{xp}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
@@ -398,7 +398,7 @@ function App() {
 
         <button
           ref={menuButtonRef}
-          className="min-w-11 min-h-11 max-[680px]:ml-auto p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
+          className="min-w-11 min-h-11 max-[680px]:ml-auto p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
           aria-expanded={menuOpen}
@@ -412,9 +412,9 @@ function App() {
             ref={menuRef}
             role="menu"
           >
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}>Profile</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
+            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}>Profile</button>
+            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
+            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
           </div>
         )}
       </header>
@@ -452,15 +452,15 @@ function App() {
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
+                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800font-rethink-sans text-[38px] font-medium">{streakDays}</span>
                 <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
               </div>
-              <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
+              <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
             {/* Was the fixed string "Solve 3 problems to start a streak", which
                 contradicted the streak count rendered directly above it. */}
             <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
-              {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">{streakMessage.emphasis} </strong>}
+              {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">{streakMessage.emphasis} </strong>}
               {streakMessage.text}
             </p>
             {/* Seven fixed 40px circles overflow the 300px sidebar, so they size
@@ -494,7 +494,7 @@ function App() {
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
               <div className="grid gap-1">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-medium">Unlock all learning</strong>
+                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-medium">Unlock all learning</strong>
                 <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Get smarter, faster with Premium.</span>
               </div>
             </div>
@@ -506,7 +506,7 @@ function App() {
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px] text-center">
             <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
               <div className="grid gap-0.5">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">{currentLeague.name}</strong>
+                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-semibold">{currentLeague.name}</strong>
               <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
               </div>
               <InfoTooltip label="How leagues work" align="end">
@@ -527,13 +527,13 @@ function App() {
         </aside>
 
         <section className="min-w-0 max-[680px]:order-1">
-          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium">Your next mission</h1>
+          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-[30px] max-[680px]:text-[27px] font-semibold">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
             <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
-                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
+                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-3xl sm:text-3xl lg:text-4xl font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
                 <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.percent}% complete</p>
               </div>
 
@@ -552,7 +552,7 @@ function App() {
                 </div>
                 {/* The dots count regions, so the label says so — "Step N of 6"
                     followed by a lesson title read as though the lesson were the step. */}
-                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
+                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
                 <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
                   {started ? 'Continue mission' : 'Start mission'} <span aria-hidden="true">→</span>
                 </ActionButton>
@@ -578,7 +578,7 @@ function App() {
               <div className="flex items-start gap-3">
                 <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
                 <div>
-                  <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Try this first</strong>
+                  <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Try this first</strong>
                   <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{homeHint}</p>
                 </div>
               </div>
@@ -607,7 +607,7 @@ function App() {
         />
       )}
 
-      {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
+      {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
       {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} />}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}

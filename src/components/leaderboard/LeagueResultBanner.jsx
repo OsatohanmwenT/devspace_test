@@ -6,7 +6,7 @@ import { can, CAPABILITIES } from '../../lib/entitlements'
 const TONE = {
   promoted: { accent: '#04adc0', surface: 'bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]' },
   demoted: { accent: '#ff676d', surface: 'bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]' },
-  stayed: { accent: '#6f66ec', surface: 'bg-[#2a293c] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]' },
+  stayed: { accent: '#6699ec', surface: 'bg-[#2a293c] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]' },
 }
 
 export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans }) {
@@ -32,12 +32,12 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans })
       <div className="flex items-start justify-between gap-4">
         <div className="grid gap-1">
           <strong className="text-[13px] font-semibold uppercase tracking-[.08em]" style={{ color: tone.accent }}>Last week's result</strong>
-          <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px]">{message}</span>
+          <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px]">{message}</span>
           <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{result.score.toLocaleString()} px earned</span>
         </div>
         <button
           type="button"
-          className="grid w-9 h-9 flex-none place-items-center border-0 rounded-lg bg-transparent text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+          className="grid w-9 h-9 flex-none place-items-center border-0 rounded-lg bg-transparent text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]"
           onClick={onDismiss}
           aria-label="Dismiss last week's result"
         >

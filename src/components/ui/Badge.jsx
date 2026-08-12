@@ -1,5 +1,5 @@
 const TONES = {
-  violet: 'bg-[rgba(111,102,236,0.22)] [[data-theme=light]_&]:bg-[#dde8f7] text-[#d8d3ff] [[data-theme=light]_&]:text-[#070c72]',
+  violet: 'bg-[rgba(102, 153, 236,0.22)] [[data-theme=light]_&]:bg-[#dde8f7] text-[#d3e2ff] [[data-theme=light]_&]:text-[#073c72]',
   blue: 'bg-[#2f6fed] text-white',
   teal: 'bg-[#04adc0] text-white',
   orange: 'bg-[#f5a623] text-white',

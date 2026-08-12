@@ -20,7 +20,7 @@ function DayChip({ label, state }) {
   const tone = state === 'earned'
     ? 'border-amber-400 bg-amber-400 text-amber-950'
     : state === 'next'
-      ? 'border-[#6f66ec] bg-[#6f66ec] text-white'
+      ? 'border-[#6699ec] bg-[#6699ec] text-white'
       : 'border-[#404040] bg-[#1f1f1f] text-[#7d7d80] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#9a9a9d]'
 
   return (
@@ -94,7 +94,7 @@ export function StreakJourneyModal({
       <div className="grid gap-7">
         <div className="grid gap-2">
           <div className="flex items-center gap-3">
-            <strong className="font-['Rethink_Sans',Arial,sans-serif] text-[44px] leading-none font-medium tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+            <strong className="font-rethink-sans text-[44px] leading-none font-medium tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
               {currentStreak}
             </strong>
             <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
@@ -129,8 +129,8 @@ export function StreakJourneyModal({
             ))}
           </ol>
           <div className="flex justify-between gap-3 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-            <span>Longest streak: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{longestStreak}</strong></span>
-            <span>Restores left: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{restoresLeft}</strong></span>
+            <span>Longest streak: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{longestStreak}</strong></span>
+            <span>Restores left: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{restoresLeft}</strong></span>
           </div>
         </div>
 
@@ -149,7 +149,7 @@ export function StreakJourneyModal({
                 <DayChip label={step.label} state={step.state} />
                 <div className="grid min-w-0 gap-0.5 pt-1">
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className={`flex items-center gap-1.5 text-sm font-semibold ${step.state === 'locked' ? 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]'}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-semibold ${step.state === 'locked' ? 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'}`}>
                       {step.state === 'locked' && <LockIcon className="size-3 flex-none" aria-hidden="true" />}
                       {step.title}
                       {step.state === 'earned' && <CheckIcon className="size-3.5 flex-none text-amber-400" aria-label="Earned" />}
@@ -159,7 +159,7 @@ export function StreakJourneyModal({
                         step.state === 'earned'
                           ? 'bg-amber-400/15 text-amber-300 [[data-theme=light]_&]:bg-amber-100 [[data-theme=light]_&]:text-amber-800'
                           : step.state === 'next'
-                            ? 'bg-[#6f66ec]/20 text-[#b8b3ff] [[data-theme=light]_&]:bg-[#f1efff] [[data-theme=light]_&]:text-[#513deb]'
+                            ? 'bg-[#6699ec]/20 text-[#b8b3ff] [[data-theme=light]_&]:bg-[#eff4ff] [[data-theme=light]_&]:text-[#3d77eb]'
                             : 'bg-[#262626] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#f2f2f0] [[data-theme=light]_&]:text-[#686968]'
                       }`}>
                         {step.reward}

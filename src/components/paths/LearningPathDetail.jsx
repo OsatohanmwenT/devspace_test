@@ -54,7 +54,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   return (
     <section className="min-w-0 pb-8" aria-labelledby="path-detail-title">
       <button
-        className="inline-flex items-center gap-2 mb-4.5 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#888df2] [[data-theme=light]_&]:text-[#071d3a] [[data-theme=light]_&]:hover:text-[#070c72] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#9f9dd7] focus-visible:outline-offset-3"
+        className="inline-flex items-center gap-2 mb-4.5 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#88bdf2] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:text-[#073c72] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#9db5d7] focus-visible:outline-offset-3"
         onClick={onBack}
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -71,7 +71,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           <span className="text-[11px] font-semibold tracking-[.1em] uppercase" style={{ color: familyAccent }}>{selectedRegion.level}</span>
           <h2
             id="path-detail-title"
-            className="mt-[-2px] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] font-semibold max-[680px]:text-[23px]"
+            className="mt-[-2px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[30px] font-semibold max-[680px]:text-[23px]"
           >
             {selectedRegion.title}
           </h2>
@@ -95,7 +95,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                   <span className="relative z-[1] text-[11px] font-bold tracking-[.1em] uppercase text-[#4169e1]">
                     {region.level.replace('Region', 'Section')}
                   </span>
-                  <h2 id={`${region.id}-title`} className="relative z-[1] m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[16px] font-medium">{region.title}</h2>
+                  <h2 id={`${region.id}-title`} className="relative z-[1] m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[16px] font-medium">{region.title}</h2>
                 </header>
                 <div className="relative grid gap-2.5 pt-8 px-6 pb-1 before:content-[''] before:absolute before:top-3 before:bottom-[18px] before:left-1/2 before:-translate-x-1/2 before:w-0.5 before:bg-[#404040] [[data-theme=light]_&]:before:bg-[#eeeeeb] max-[680px]:pt-6 max-[680px]:px-0 max-[680px]:pb-0.5">
                   {region.lessons.map((lesson, index) => (
@@ -118,7 +118,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
             >
               <div className="min-w-0">
                 <span className="text-[10px] font-bold tracking-[.08em] uppercase text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{canOpenLesson ? 'Current lesson' : 'Lesson preview'}</span>
-                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
+                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
                 {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
               </div>
               {canOpenLesson && (
