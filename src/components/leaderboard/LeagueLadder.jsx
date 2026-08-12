@@ -27,7 +27,7 @@ export function LeagueLadder({ leagueIndex }) {
           <li className="grid justify-items-center gap-2 flex-none" key={league.id} style={{ opacity: at(OPACITY_BY_DISTANCE, distance) }}>
             <TierMedal league={league} state={state} size={at(SIZE_BY_DISTANCE, distance)} />
             {state === 'current' && (
-              <small className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[11px] font-semibold tracking-[.06em] uppercase">{shortName}</small>
+              <small className="text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)] text-[11px] font-semibold tracking-[.06em] uppercase">{shortName}</small>
             )}
             <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">
               {shortName}{state === 'current' ? ' — your league' : state === 'locked' ? ' — locked' : ' — unlocked'}

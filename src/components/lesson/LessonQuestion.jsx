@@ -2,13 +2,13 @@ import { RichText } from './RichText'
 import { tokenizePython, TOKEN_CLASSES } from './pythonHighlight'
 import { clearBlank, fillNextBlank, isFillType, isQuestionCorrect } from './questionState'
 
-const BLANK_BASE = 'inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38px] max-[720px]:min-h-9 items-center justify-center mx-[3px] rounded-lg px-2.5 max-[720px]:px-2 py-[3px] text-[15px] leading-[1.2] align-middle font-[inherit] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6f66ec]'
+const BLANK_BASE = 'inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38px] max-[720px]:min-h-9 items-center justify-center mx-[3px] rounded-lg px-2.5 max-[720px]:px-2 py-[3px] text-[15px] leading-[1.2] align-middle font-[inherit] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--brand-cta)]'
 
 function blankClassName(checked, selected, correct) {
-  if (checked && selected && correct) return `${BLANK_BASE} border border-solid cursor-pointer border-[#04adc0] bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
-  if (checked && selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
-  if (selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#6f66ec] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
-  return `${BLANK_BASE} border border-dashed cursor-default border-[#515151] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]`
+  if (checked && selected && correct) return `${BLANK_BASE} border border-solid cursor-pointer border-[var(--accent-data)] bg-[var(--surface-data-tint)] [[data-theme=light]_&]:bg-[var(--surface-data-tint)] text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]`
+  if (checked && selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[var(--accent-error)] bg-[var(--surface-error-tint)] [[data-theme=light]_&]:bg-[var(--surface-error-tint)] text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]`
+  if (selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[var(--brand-cta)] bg-[var(--surface-raised)] [[data-theme=light]_&]:bg-white text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]`
+  return `${BLANK_BASE} cursor-default border border-dashed border-[var(--border-interactive)] bg-[var(--surface-raised)] text-[var(--text-primary)]`
 }
 
 function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption }) {
@@ -45,7 +45,7 @@ function TokenBank({ question, answer, checked, onAnswer }) {
         <button
           type="button"
           key={optionIndex}
-          className="min-h-11 rounded-[10px] border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white px-4 font-[inherit] text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] transition-[border-color,background] duration-[120ms] enabled:hover:border-[#6f66ec] enabled:hover:bg-[#393747] [[data-theme=light]_&]:enabled:hover:bg-[#f1f0fd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6f66ec]"
+          className="min-h-11 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-raised)] px-4 font-[inherit] text-[15px] font-semibold text-[var(--text-primary)] transition-[border-color,background] duration-[var(--duration-fast)] enabled:hover:border-[var(--brand-cta)] enabled:hover:bg-[var(--surface-brand-tint)] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--brand-cta)]"
           disabled={used.includes(optionIndex) || checked}
           draggable={!used.includes(optionIndex) && !checked}
           onDragStart={(event) => {
@@ -65,12 +65,12 @@ function TokenBank({ question, answer, checked, onAnswer }) {
 // highlighted; the blanks are the same fill model as prose questions.
 function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#3a3a3a] bg-[#1e1e1e]">
-      <div className="flex items-center gap-2 border-b border-[#404040] bg-[#252526] px-4 py-2.5">
-        <span className="grid h-4 w-4 place-items-center rounded-sm bg-[#569cd6] text-[9px] font-bold text-[#1e1e1e]">PY</span>
-        <span className="font-['JetBrains_Mono',ui-monospace,monospace] text-xs text-[#d4d4d4]">{question.filename ?? 'script.py'}</span>
+    <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-default)]">
+      <div className="flex items-center gap-2 border-b border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-2.5">
+        <span className="grid h-4 w-4 place-items-center rounded-sm bg-[var(--accent-data)] text-[9px] font-bold text-[var(--surface-default)]">PY</span>
+        <span className="font-['JetBrains_Mono',ui-monospace,monospace] text-xs text-[var(--border-default)]">{question.filename ?? 'script.py'}</span>
       </div>
-      <pre className="overflow-x-auto p-4 font-['JetBrains_Mono',ui-monospace,monospace] text-[14px] leading-[1.9] text-[#d4d4d4]">
+      <pre className="overflow-x-auto p-4 font-['JetBrains_Mono',ui-monospace,monospace] text-[14px] leading-[1.9] text-[var(--border-default)]">
         <code>
           {question.segments.map((segment, index) => (
             <span key={index}>
@@ -90,7 +90,7 @@ function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
 
 function ProseFill({ question, answer, checked, onAnswer, onDropOption }) {
   return (
-    <p className="m-0 text-[clamp(19px,2.2vw,24px)] max-[720px]:text-xl leading-[1.7] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+    <p className="m-0 text-[clamp(19px,2.2vw,24px)] max-[720px]:text-xl leading-[1.7] text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">
       {question.segments.map((segment, index) => (
         <span key={index}>
           {segment}
@@ -110,24 +110,24 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
         const isSelected = answer === optionIndex
         const isCorrectOption = optionIndex === question.correctIndex
         const optionClassName = checked && isCorrectOption
-          ? 'border-[#04adc0] bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed]'
+          ? 'border-[var(--accent-data)] bg-[var(--surface-data-tint)] [[data-theme=light]_&]:bg-[var(--surface-data-tint)]'
           : checked && isSelected
-            ? 'border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2]'
+            ? 'border-[var(--accent-error)] bg-[var(--surface-error-tint)] [[data-theme=light]_&]:bg-[var(--surface-error-tint)]'
             : isSelected
-              ? 'border-[#6f66ec] bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e5e4f4]'
-              : 'border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] hover:border-[#6f66ec]'
+              ? 'border-[var(--brand-cta)] bg-[var(--surface-brand-tint)]'
+              : 'border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-default)] bg-[var(--surface-raised)] [[data-theme=light]_&]:bg-[var(--surface-subtle)] hover:border-[var(--brand-cta)]'
 
         return (
           <button
             type="button"
             key={optionIndex}
-            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-[15px] leading-[1.5] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] transition-[border-color,background] duration-[120ms] ${optionClassName}`}
+            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-[15px] leading-[1.5] text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)] transition-[border-color,background] duration-[120ms] ${optionClassName}`}
             aria-pressed={isSelected}
             disabled={checked}
             onClick={() => onAnswer(optionIndex)}
           >
             <RichText content={option} />
-            <span className="grid h-6 w-6 flex-none place-items-center rounded-md border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] text-[11px] text-[#89898e] [[data-theme=light]_&]:text-[#737371]" aria-hidden="true">
+            <span className="grid h-6 w-6 flex-none place-items-center rounded-md border border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-default)] text-[11px] text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]" aria-hidden="true">
               {optionIndex + 1}
             </span>
           </button>
@@ -148,24 +148,24 @@ export function LessonQuestion({ question, answer, checked, onAnswer, headingLev
 
   return (
     <section className="grid gap-4">
-      <Heading className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+      <Heading className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-[19px] font-semibold text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">
         {prefix}<RichText content={question.prompt} />
       </Heading>
 
       {isFillType(question)
-        ? <div className="grid gap-5 rounded-2xl border border-[#373737] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#202020] [[data-theme=light]_&]:bg-[#f7f7f7] p-5 max-[720px]:p-4">
+        ? <div className="grid gap-5 rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-subtle)] p-5 max-[720px]:p-4">
           {question.type === 'code-fill'
             ? <CodeFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />
             : <ProseFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />}
           <div className="grid gap-3">
-            <p className="m-0 text-base font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">Click or drag an option to fill the blanks:</p>
+            <p className="m-0 text-base font-semibold text-[var(--text-secondary)] [[data-theme=light]_&]:text-[#777]">Click or drag an option to fill the blanks:</p>
             <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
           </div>
         </div>
         : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
 
       {checked && (
-        <p className={`m-0 text-sm leading-[1.5] ${correct ? 'text-[#04adc0]' : 'text-[#ff676d]'}`}>
+        <p className={`m-0 text-sm leading-[1.5] ${correct ? 'text-[var(--accent-data)]' : 'text-[var(--accent-error)]'}`}>
           <RichText content={question.explanation} />
         </p>
       )}

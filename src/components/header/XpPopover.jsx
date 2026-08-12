@@ -6,14 +6,14 @@ export function XpPopover({ earnedToday }) {
 
   return (
     <div
-      className="absolute z-[6] top-[calc(100%+10px)] right-0 grid gap-4 w-[300px] p-5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[18px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_8px_24px_rgba(20,20,20,0.10)] text-left"
+      className="absolute right-0 top-[calc(100%+10px)] z-[6] grid w-[300px] gap-4 rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-overlay)] p-5 text-start shadow-[var(--shadow-overlay)]"
       role="dialog"
       aria-label="Weekly activity"
     >
-      <h2 className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-lg font-semibold">
-        You earned <strong className="text-[#6f66ec]">{earnedToday}px</strong> today!
+      <h2 className="m-0 font-[var(--font-display)] text-[var(--type-subheading)] font-semibold text-[var(--text-primary)]">
+        You earned <strong className="text-[var(--brand-cta)]">{earnedToday}px</strong> today!
       </h2>
-      <p className="mt-1 mb-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs">Here's a look at your weekly activity</p>
+      <p className="meta-copy mb-0 mt-1">Here's a look at your weekly activity</p>
       <div className="flex items-end justify-between gap-2" role="img" aria-label="Weekly px earned">
         {DAY_LABELS.map((label, index) => {
           const isToday = index === todayIndex
@@ -21,11 +21,11 @@ export function XpPopover({ earnedToday }) {
             <div className="grid justify-items-center gap-2 flex-1" key={index}>
               <span className="flex items-end w-2.5 h-[72px] rounded-full overflow-hidden">
                 <span
-                  className={isToday ? 'block w-full rounded-[inherit] bg-[#6f66ec]' : 'block w-full rounded-[inherit] bg-[#24242d] [[data-theme=light]_&]:bg-[#e5e6ea]'}
+                  className={isToday ? 'block w-full rounded-[inherit] bg-[var(--brand-cta)]' : 'block w-full rounded-[inherit] bg-[var(--surface-subtle)]'}
                   style={{ height: isToday && earnedToday > 0 ? '100%' : '10%' }}
                 />
               </span>
-              <small className={isToday ? 'text-[#6f66ec] text-[11px] font-bold' : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] text-[11px] font-semibold'}>{label}</small>
+              <small className={isToday ? 'text-[var(--brand-cta)] text-[11px] font-bold' : 'text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)] text-[11px] font-semibold'}>{label}</small>
             </div>
           )
         })}
@@ -33,4 +33,3 @@ export function XpPopover({ earnedToday }) {
     </div>
   )
 }
-

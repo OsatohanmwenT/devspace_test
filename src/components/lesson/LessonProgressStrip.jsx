@@ -1,11 +1,11 @@
-const navButtonClassName = "grid w-9 h-9 max-[720px]:w-[34px] place-items-center border-0 bg-transparent text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+const navButtonClassName = "grid min-h-11 min-w-11 place-items-center border-0 bg-transparent text-[var(--text-muted)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-cta)]"
 
 export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPrevious, onNext, streaking = false }) {
-  const filledClassName = streaking ? 'h-2 rounded bg-[#f0c964]' : 'h-2 rounded bg-[#2986f2]'
+  const filledClassName = streaking ? 'h-2 rounded bg-[var(--accent-progress)]' : 'h-2 rounded bg-[var(--brand-cta)]'
 
   return (
     <div
-      className="grid grid-cols-[36px_minmax(0,520px)_36px] max-[720px]:grid-cols-[34px_minmax(0,1fr)_34px] items-center justify-self-center gap-3.5 max-[720px]:gap-1.5 w-[min(100%,600px)] text-[#89898e] [[data-theme=light]_&]:text-[#aaa]"
+      className="grid w-[min(100%,600px)] grid-cols-[44px_minmax(0,520px)_44px] items-center justify-self-center gap-3.5 text-[var(--text-muted)] max-[720px]:gap-1.5"
       aria-label="Lesson navigation"
     >
       <button type="button" className={navButtonClassName} disabled={!onPrevious} onClick={onPrevious} aria-label="Previous lesson step">
@@ -19,7 +19,7 @@ export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPreviou
       >
         {Array.from({ length: totalSteps }, (_, index) => (
           <span
-            className={index < currentStep ? filledClassName : 'h-2 rounded bg-[#404040] [[data-theme=light]_&]:bg-[#e1e1e1]'}
+            className={index < currentStep ? filledClassName : 'h-2 rounded bg-[var(--border-default)] [[data-theme=light]_&]:bg-[var(--border-default)]'}
             key={index}
           />
         ))}
@@ -30,4 +30,3 @@ export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPreviou
     </div>
   )
 }
-

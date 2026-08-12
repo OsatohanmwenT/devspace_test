@@ -42,8 +42,8 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
   return (
     <section className="grid gap-8 max-[720px]:gap-[30px]" aria-label="Settings">
       <header className="grid gap-[7px] max-w-[680px]">
-        <h1 className="text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Settings</h1>
-        <p className="text-[17px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Manage your account, appearance, and learning preferences.</p>
+        <h1 className="text-3xl font-medium text-[var(--text-primary)] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[var(--text-primary)]">Settings</h1>
+        <p className="text-[17px] leading-[1.5] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">Manage your account, appearance, and learning preferences.</p>
       </header>
 
       <div className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-10 max-[720px]:grid-cols-1 max-[720px]:gap-6">
@@ -52,7 +52,7 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#9a9a9d] hover:bg-[#262629] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-[#202020]"
+              className="rounded-lg px-3 py-2 text-[14px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-secondary)] [[data-theme=light]_&]:hover:bg-[var(--surface-subtle)] [[data-theme=light]_&]:hover:text-[var(--text-primary)]"
             >
               {item.label}
             </a>
@@ -62,12 +62,12 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
         <div className="grid gap-6 min-w-0">
           <SettingsSection id="account" title="Account" description="Your profile information as seen by other learners.">
             <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
-              <span className="grid size-12 flex-none place-items-center rounded-full bg-[#6f66ec] text-lg font-semibold text-white" aria-hidden="true">L</span>
+              <span className="grid size-12 flex-none place-items-center rounded-full bg-[var(--brand-cta)] text-lg font-semibold text-white" aria-hidden="true">L</span>
               <div className="grid min-w-0 flex-1 gap-0.5">
-                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Learner</strong>
-                <span className="truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{email}</span>
+                <strong className="text-[15px] font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">Learner</strong>
+                <span className="truncate text-[14px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{email}</span>
               </div>
-              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Profile editing is coming soon')}>
+              <ActionButton variant="secondary" className="text-sm" onClick={() => onNotice('Profile editing is coming soon')}>
                 Edit profile
               </ActionButton>
             </div>
@@ -76,7 +76,7 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
           <SettingsSection id="premium" title="Premium" description={progress?.isPremium ? 'Manage your plan and see what it unlocks.' : 'Status and safety nets for your streak and league.'}>
             <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
               <span className="flex items-center gap-1.5">
-                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+                <strong className="text-[15px] font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">
                   {progress?.isPremium ? 'Premium is active' : 'Not subscribed'}
                 </strong>
                 {!progress?.isPremium && (
@@ -85,19 +85,19 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
                   </InfoTooltip>
                 )}
               </span>
-              <ActionButton variant={progress?.isPremium ? 'neutral' : 'premium'} className="min-h-10 text-sm" onClick={() => onOpenPlans?.()}>
+              <ActionButton variant={progress?.isPremium ? 'secondary' : 'primary'} className="text-sm" onClick={() => onOpenPlans?.()}>
                 {progress?.isPremium ? 'Manage plan' : 'See plans'}
               </ActionButton>
             </div>
           </SettingsSection>
 
           <SettingsSection id="appearance" title="Appearance" description="Choose how Devspace looks on this device.">
-            <div className="flex gap-2 rounded-xl border border-[#404040] p-1 [[data-theme=light]_&]:border-[#d4d4d4]" role="radiogroup" aria-label="Theme">
+            <div className="flex gap-2 rounded-xl border border-[var(--border-default)] p-1 [[data-theme=light]_&]:border-[var(--border-default)]" role="radiogroup" aria-label="Theme">
               <button
                 type="button"
                 role="radio"
                 aria-checked={theme === 'dark'}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'bg-[#6f66ec] text-white' : 'text-[#9a9a9d] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]'}`}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'dark' ? 'bg-[var(--brand-cta)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-secondary)] [[data-theme=light]_&]:hover:text-[var(--text-primary)]'}`}
                 onClick={() => theme !== 'dark' && onToggleTheme()}
               >
                 Dark
@@ -106,7 +106,7 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
                 type="button"
                 role="radio"
                 aria-checked={theme === 'light'}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'light' ? 'bg-[#6f66ec] text-white' : 'text-[#9a9a9d] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-[#202020]'}`}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${theme === 'light' ? 'bg-[var(--brand-cta)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-secondary)] [[data-theme=light]_&]:hover:text-[var(--text-primary)]'}`}
                 onClick={() => theme !== 'light' && onToggleTheme()}
               >
                 Light
@@ -144,12 +144,12 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
                 <button
                   key={goal.id}
                   type="button"
-                  className={`grid gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${dailyGoal === goal.id ? 'border-[#6f66ec] bg-[#211f30] [[data-theme=light]_&]:bg-[#f1efff]' : 'border-[#404040] hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:hover:border-[#b8b2a8]'}`}
+                  className={`grid gap-1 rounded-[var(--radius-card)] border px-4 py-3 text-left transition-colors ${dailyGoal === goal.id ? 'border-[var(--brand-cta)] bg-[var(--surface-brand-tint)]' : 'border-[var(--border-default)] hover:border-[var(--border-interactive)]'}`}
                   aria-pressed={dailyGoal === goal.id}
                   onClick={() => selectDailyGoal(goal.id)}
                 >
-                  <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{goal.label}</strong>
-                  <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{goal.meta}</span>
+                  <strong className="text-[15px] font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{goal.label}</strong>
+                  <span className="text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{goal.meta}</span>
                 </button>
               ))}
             </div>
@@ -157,12 +157,12 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
 
           <SettingsSection id="danger" title="Account actions">
             <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
-              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Signed out')}>
+              <ActionButton variant="secondary" className="text-sm" onClick={() => onNotice('Signed out')}>
                 Sign out
               </ActionButton>
               <button
                 type="button"
-                className="text-sm font-medium text-[#e5636b] hover:underline"
+                className="text-sm font-medium text-[var(--accent-error)] hover:underline"
                 onClick={() => onNotice('Account deletion requires confirmation via email')}
               >
                 Delete account

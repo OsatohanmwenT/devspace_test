@@ -6,19 +6,19 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
   return (
     <article
       data-chapter={topic.id}
-      className="grid scroll-mt-8 gap-6 border-t border-[#2c2c30] pt-7 first:border-t-0 first:pt-0 [[data-theme=light]_&]:border-[#ececea]"
+      className="grid scroll-mt-8 gap-6 border-t border-[var(--surface-raised)] pt-7 first:border-t-0 first:pt-0 [[data-theme=light]_&]:border-[var(--border-hairline)]"
     >
       <header>
-        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Chapter {index + 1} · {topic.lessonTitle}</span>
-        <h2 className="mt-1.5 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(21px,2.2vw,25px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{topic.title}</h2>
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--border-focus)] [[data-theme=light]_&]:text-[var(--brand-cta)]">Chapter {index + 1} · {topic.lessonTitle}</span>
+        <h2 className="mt-1.5 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(21px,2.2vw,25px)] font-semibold text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{topic.title}</h2>
         {/* The chapters form a strict chain, so say what this one rests on. */}
         {builtOnTopic && (
-          <p className="mt-2 mb-0 text-[14px] text-[#8c8c91] [[data-theme=light]_&]:text-[#767674]">
+          <p className="mt-2 mb-0 text-[14px] text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
             Builds on{' '}
             <button
               type="button"
               onClick={() => onJump(builtOnTopic.id)}
-              className="border-0 bg-transparent p-0 font-semibold text-[#888df2] underline underline-offset-2 hover:text-[#a8abf7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:text-[#513deb]"
+              className="border-0 bg-transparent p-0 font-semibold text-[var(--brand-on-dark)] underline underline-offset-2 hover:text-[var(--text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)] [[data-theme=light]_&]:text-[var(--brand-base)]"
             >
               {builtOnTopic.title}
             </button>
@@ -28,30 +28,30 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
 
       <section>
         <SectionEyebrow section="mentalModel" />
-        <p className="m-0 max-w-[640px] text-[17px] leading-[1.7] text-[#b2b2b6] [[data-theme=light]_&]:text-[#626262]">{topic.guidebook.mentalModel}</p>
+        <p className="m-0 max-w-[640px] text-[17px] leading-[1.7] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--border-interactive)]">{topic.guidebook.mentalModel}</p>
       </section>
 
       <section>
         <SectionEyebrow section="example" />
-        <p className="mb-3 max-w-[640px] text-[17px] leading-[1.7] text-[#b2b2b6] [[data-theme=light]_&]:text-[#626262]">{topic.guidebook.walkthrough}</p>
-        <pre className="m-0 max-w-[700px] overflow-x-auto border-l-2 border-[#3f3b68] bg-[#1e1e1e] px-5 py-4 font-['JetBrains_Mono',ui-monospace,monospace] text-[14.5px] leading-[1.75] text-[#f4f4f2]"><code>{topic.guidebook.code}</code></pre>
+        <p className="mb-3 max-w-[640px] text-[17px] leading-[1.7] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--border-interactive)]">{topic.guidebook.walkthrough}</p>
+        <pre className="m-0 max-w-[700px] overflow-x-auto border-l-2 border-[var(--brand-cta)] bg-[var(--surface-default)] px-5 py-4 font-[var(--font-code)] text-[14.5px] leading-[1.75] text-[var(--text-primary)]"><code>{topic.guidebook.code}</code></pre>
       </section>
 
       <section>
         <SectionEyebrow section="why" />
-        <p className="m-0 max-w-[640px] text-[17px] leading-[1.7] text-[#b2b2b6] [[data-theme=light]_&]:text-[#626262]">{topic.guidebook.why}</p>
+        <p className="m-0 max-w-[640px] text-[17px] leading-[1.7] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--border-interactive)]">{topic.guidebook.why}</p>
       </section>
 
       <section>
-        <SectionEyebrow section="mistakes" accent="text-[#c9a227] [[data-theme=light]_&]:text-[#8a6d10]" />
-        <ul className="m-0 grid max-w-[640px] gap-2 pl-5 text-[16px] leading-[1.65] text-[#b2b2b6] marker:text-[#f0c964] [[data-theme=light]_&]:text-[#626262]">
+        <SectionEyebrow section="mistakes" accent="text-[var(--accent-progress)]" />
+        <ul className="m-0 grid max-w-[640px] gap-2 pl-5 text-[16px] leading-[1.65] text-[var(--text-secondary)] marker:text-[var(--accent-progress)] [[data-theme=light]_&]:text-[var(--border-interactive)]">
           {topic.guidebook.mistakes.map((mistake) => <li key={mistake}>{mistake}</li>)}
         </ul>
       </section>
 
-      <aside className="max-w-[700px] border-l-2 border-[#6f66ec] bg-[#211f30] px-5 py-4 [[data-theme=light]_&]:bg-[#f1efff]">
-        <strong className="block text-xs uppercase tracking-[0.08em] text-[#aaa7ff] [[data-theme=light]_&]:text-[#513deb]">Remember</strong>
-        <p className="mt-1.5 mb-0 max-w-[640px] text-[16px] leading-[1.65] text-[#d5d3ef] [[data-theme=light]_&]:text-[#37305e]">{topic.guidebook.takeaway}</p>
+      <aside className="max-w-[700px] border-l-2 border-[var(--brand-cta)] bg-[var(--surface-brand-tint)] px-5 py-4">
+        <strong className="block text-xs uppercase tracking-[0.08em] text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-base)]">Remember</strong>
+        <p className="mb-0 mt-1.5 max-w-[640px] text-[16px] leading-[1.65] text-[var(--text-primary)]">{topic.guidebook.takeaway}</p>
       </aside>
     </article>
   )
@@ -119,11 +119,11 @@ export function GuidebookView({ region, onBack }) {
   }
 
   return (
-    <section className="fixed inset-0 z-30 grid grid-rows-[64px_minmax(0,1fr)] overflow-hidden bg-[#121214] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-[#181818]" aria-label={`${region.title} guidebook`}>
-      <header className="flex items-center border-b border-[#404040] bg-[#1a1a1c] px-6 [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white max-[680px]:px-3.5">
+    <section className="fixed inset-0 z-30 grid grid-rows-[64px_minmax(0,1fr)] overflow-hidden bg-[var(--surface-canvas)] text-[var(--text-primary)] [[data-theme=light]_&]:bg-[var(--surface-canvas)] [[data-theme=light]_&]:text-[var(--text-primary)]" aria-label={`${region.title} guidebook`}>
+      <header className="flex items-center border-b border-[var(--border-default)] bg-[var(--surface-default)] px-6 max-[680px]:px-3.5">
         <button
           type="button"
-          className="min-h-11 rounded-lg border-0 bg-transparent px-3 text-sm font-semibold text-[#b2b2b6] hover:bg-[#262629] hover:text-white focus-visible:outline-3 focus-visible:outline-[#888df2] focus-visible:outline-offset-2 [[data-theme=light]_&]:text-[#626262] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-[#181818]"
+          className="min-h-11 rounded-lg border-0 bg-transparent px-3 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-white focus-visible:outline-3 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-2 [[data-theme=light]_&]:text-[var(--border-interactive)] [[data-theme=light]_&]:hover:bg-[var(--surface-subtle)] [[data-theme=light]_&]:hover:text-[var(--text-primary)]"
           onClick={onBack}
         >
           <span aria-hidden="true">←</span> Back to {region.title}
@@ -134,7 +134,7 @@ export function GuidebookView({ region, onBack }) {
         <div className="mx-auto grid w-[min(100%,1320px)] grid-cols-[260px_minmax(0,1fr)] items-start gap-16 px-10 pt-10 pb-16 max-[1100px]:gap-12 max-[900px]:grid-cols-1 max-[900px]:gap-8 max-[900px]:px-6 max-[680px]:px-4 max-[680px]:pt-7 max-[680px]:pb-10">
           {topics.length > 0 && (
             <nav className="sticky top-6 max-[900px]:static max-[900px]:hidden" aria-label="Chapters">
-              <span className="mb-4 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7d7d80] [[data-theme=light]_&]:text-[#8a8a88]">Chapters</span>
+              <span className="mb-4 block text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Chapters</span>
               <ul className="m-0 grid list-none gap-1 p-0">
                 {topics.map((topic, index) => {
                   const isActive = topic.id === activeId
@@ -144,10 +144,10 @@ export function GuidebookView({ region, onBack }) {
                         type="button"
                         onClick={() => jumpTo(topic.id)}
                         aria-current={isActive ? 'true' : undefined}
-                        className={`flex w-full gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#888df2] ${
+                        className={`flex w-full gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--border-focus)] ${
                           isActive
-                            ? 'border-[#6f66ec] bg-[#1e1c2c] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#181818]'
-                            : 'border-[#2c2c30] text-[#8c8c91] hover:border-[#5a5a60] hover:text-[#d4d4d7] [[data-theme=light]_&]:border-[#e5e5e3] [[data-theme=light]_&]:text-[#767674] [[data-theme=light]_&]:hover:text-[#181818]'
+                            ? 'border-[var(--brand-cta)] bg-[var(--surface-brand-tint)] font-semibold text-[var(--text-primary)]'
+                            : 'border-[var(--border-hairline)] text-[var(--text-muted)] hover:border-[var(--border-interactive)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         <span className="tabular-nums opacity-60">{index + 1}</span>
@@ -166,21 +166,21 @@ export function GuidebookView({ region, onBack }) {
             <header className="mb-10 flex items-start gap-5">
               {region.image && <img className="size-20 flex-none object-contain max-[680px]:size-14" src={region.image} alt="" />}
               <div className="min-w-0">
-                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Guidebook · {region.level}</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--border-focus)] [[data-theme=light]_&]:text-[var(--brand-cta)]">Guidebook · {region.level}</span>
                 <h1 ref={headingRef} tabIndex="-1" className="mt-1.5 mb-2 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.6vw,34px)] font-semibold leading-[1.1] outline-none">{region.title}</h1>
-                <p className="m-0 text-[15px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                <p className="m-0 text-[15px] leading-[1.6] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
                   {topics.length > 0 ? `${topics.length} chapters explaining how these ideas work.` : region.summary}
                 </p>
               </div>
             </header>
 
             {topics.length === 0 ? (
-              <div className="mx-auto grid max-w-[440px] justify-items-center gap-3 rounded-2xl border border-dashed border-[#404040] px-8 py-16 text-center [[data-theme=light]_&]:border-[#d8d8d4]">
+              <div className="mx-auto grid max-w-[440px] justify-items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--border-default)] px-8 py-16 text-center">
                 <img className="size-16 object-contain opacity-70" src="/assets/devy.svg" alt="" />
-                <p className="m-0 max-w-[36ch] text-[17px] font-medium leading-[1.5] text-[#d4d4d7] [[data-theme=light]_&]:text-[#3d3d3d]">
+                <p className="m-0 max-w-[36ch] text-[17px] font-medium leading-[1.5] text-[var(--text-secondary)]">
                   No chapters here yet
                 </p>
-                <p className="m-0 max-w-[34ch] text-[14.5px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                <p className="m-0 max-w-[34ch] text-[14.5px] leading-[1.6] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
                   This region's lesson is ready — reference chapters like this arrive once its content is written up in depth.
                 </p>
               </div>

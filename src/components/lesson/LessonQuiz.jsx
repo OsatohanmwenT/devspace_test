@@ -25,15 +25,15 @@ export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onCh
   }
 
   return (
-    <article className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-labelledby="lesson-quiz-title">
+    <article className="h-full overflow-auto bg-[var(--surface-default)] [[data-theme=light]_&]:bg-white" aria-labelledby="lesson-quiz-title">
       <div className="w-[min(100%,760px)] mx-auto pt-[clamp(24px,4vw,48px)] px-7 pb-10 max-[720px]:pt-6 max-[720px]:px-5 max-[720px]:pb-9">
         <h1
           id="lesson-quiz-title"
-          className="max-w-[22ch] mt-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold leading-[1.15]"
+          className="max-w-[22ch] mt-0 mb-2.5 text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3vw,34px)] max-[720px]:text-[28px] font-semibold leading-[1.15]"
         >
           {quiz.title}
         </h1>
-        <p className="max-w-[58ch] m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.55]">{quiz.intro}</p>
+        <p className="max-w-[58ch] m-0 text-[var(--text-secondary)] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.55]">{quiz.intro}</p>
 
         <div className="grid gap-7 max-[720px]:gap-6 mt-7 max-[720px]:mt-6 max-w-[62ch]">
           {quiz.questions.map((question, questionIndex) => (
@@ -58,9 +58,9 @@ export function LessonQuiz({ quiz, initialState, onStateChange, onComplete, onCh
           >
             Check answers
           </ActionButton>
-          {!canCheck && <span className="text-[#89898e] [[data-theme=light]_&]:text-[#aaa] text-[13px]" id="lesson-quiz-check-hint">Answer every question to unlock</span>}
+          {!canCheck && <span className="text-[var(--text-muted)] [[data-theme=light]_&]:text-[#aaa] text-[13px]" id="lesson-quiz-check-hint">Answer every question to unlock</span>}
           {checked && canCheck && (
-            <p className="m-0 text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] text-sm font-semibold" role="status">
+            <p className="m-0 text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)] text-sm font-semibold" role="status">
               {correctCount} of {quiz.questions.length} correct
             </p>
           )}

@@ -63,17 +63,17 @@ export function Drawer({ id, title, subtitle, onClose, children, labelledBy = 'd
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="relative grid h-full w-[min(100%,560px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[#404040] bg-[#151517] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[-8px_0_24px_rgba(20,20,20,0.08)]"
+        className="relative grid h-full w-[min(100%,560px)] grid-rows-[auto_minmax(0,1fr)] border-l border-[var(--border-default)] bg-[var(--surface-overlay)] shadow-[var(--shadow-overlay)]"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-[#404040] px-6 py-4 [[data-theme=light]_&]:border-[#e1e1e1] max-[680px]:px-4">
+        <header className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] px-6 py-4 [[data-theme=light]_&]:border-[var(--border-default)] max-[680px]:px-4">
           <div className="min-w-0">
-            <h2 id={labelledBy} className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{title}</h2>
-            {subtitle && <p className="mt-0.5 mb-0 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
+            <h2 id={labelledBy} className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-xl font-semibold text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{title}</h2>
+            {subtitle && <p className="mt-0.5 mb-0 text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{subtitle}</p>}
           </div>
           <button
             ref={closeRef}
             type="button"
-            className="grid size-9 flex-none place-items-center rounded-lg border-0 bg-transparent text-[#b2b2b6] hover:bg-[#262629] hover:text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-[#181818]"
+            className="grid size-9 flex-none place-items-center rounded-lg border-0 bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)] [[data-theme=light]_&]:text-[var(--text-secondary)] [[data-theme=light]_&]:hover:bg-[var(--surface-subtle)] [[data-theme=light]_&]:hover:text-[var(--text-primary)]"
             onClick={onClose}
             aria-label="Close"
           >

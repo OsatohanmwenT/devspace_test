@@ -1,11 +1,11 @@
-const FOCUS = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]'
+const FOCUS = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--border-focus)] [[data-theme=light]_&]:focus-visible:outline-[var(--brand-base)]'
 
 // A filled surface when unselected and a solid accent when selected, matching
 // the Practice topic pills — rather than a thin border on near-black.
 function surface(isSelected) {
   return isSelected
-    ? 'border border-[#513deb] bg-[#513deb] text-white'
-    : 'border border-transparent [[data-theme=light]_&]:border-[#d4d4d4] bg-neutral-700/80 [[data-theme=light]_&]:bg-white text-[#e4e4e6] [[data-theme=light]_&]:text-[#202020] hover:bg-neutral-600/80 [[data-theme=light]_&]:hover:border-[#737371]'
+    ? 'border border-[var(--brand-cta)] bg-[var(--brand-cta)] text-white'
+    : 'border border-[var(--border-default)] bg-[var(--surface-default)] text-[var(--text-primary)] hover:border-[var(--border-interactive)] hover:bg-[var(--surface-subtle)]'
 }
 
 function isChosen(value, optionValue) {
@@ -29,11 +29,11 @@ export function OptionList({ options, value, onSelect }) {
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{option.label}</span>
               {option.note && (
-                <span className={`block text-[13px] ${selected ? 'text-white/70' : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}>{option.note}</span>
+                <span className={`block text-[13px] ${selected ? 'text-white/70' : 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]'}`}>{option.note}</span>
               )}
             </span>
             {option.aside && (
-              <span className={`flex-none text-[13px] ${selected ? 'text-white/70' : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}>{option.aside}</span>
+              <span className={`flex-none text-[13px] ${selected ? 'text-white/70' : 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]'}`}>{option.aside}</span>
             )}
           </button>
         )
@@ -66,8 +66,8 @@ export function ChipList({ options, value, onSelect }) {
 export function StepHeading({ title, subtitle }) {
   return (
     <div className="grid content-start justify-items-center gap-2 text-center">
-      <h1 className="m-0 max-w-[20ch] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{title}</h1>
-      {subtitle && <p className="m-0 max-w-[46ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
+      <h1 className="m-0 max-w-[20ch] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.4vw,34px)] font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{title}</h1>
+      {subtitle && <p className="m-0 max-w-[46ch] text-[15px] leading-[1.5] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{subtitle}</p>}
     </div>
   )
 }

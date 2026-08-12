@@ -69,7 +69,7 @@ export const GUIDEBOOK_SECTIONS = {
   },
 }
 
-export function SectionEyebrow({ section, accent = 'text-[#8c8c91] [[data-theme=light]_&]:text-[#686968]' }) {
+export function SectionEyebrow({ section, accent = 'text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]' }) {
   const { label, icon } = GUIDEBOOK_SECTIONS[section]
   return (
     <div className={`mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.09em] ${accent}`}>

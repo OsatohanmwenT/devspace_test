@@ -28,15 +28,15 @@ const STARTING_POINT_LABELS = Object.fromEntries(
   Object.entries(startingPointOptions).map(([role, options]) => [role, labelMap(options)]),
 )
 
-const RULE = 'bg-[#333336] [[data-theme=light]_&]:bg-[#e6e6e2]'
-const HAIRLINE = 'border-[#333336] [[data-theme=light]_&]:border-[#e6e6e2]'
-const INK = 'text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]'
-const MUTED = 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
+const RULE = 'bg-[var(--border-hairline)]'
+const HAIRLINE = 'border-[var(--border-hairline)]'
+const INK = 'text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]'
+const MUTED = 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]'
 // Softening these greys for the premium pass dropped them to 4.19:1 (dark)
 // and 2.81:1 (light) at 12px. Dates and field labels are content, not
 // decoration, so they hold AA: 4.74:1 and 4.55:1 respectively.
-const FAINT = 'text-[#86868a] [[data-theme=light]_&]:text-[#767674]'
-const SURFACE = 'border border-[#333336] [[data-theme=light]_&]:border-[#e6e6e2] bg-[#1b1b1d] [[data-theme=light]_&]:bg-white'
+const FAINT = 'text-[var(--text-secondary)]'
+const SURFACE = 'border border-[var(--border-hairline)] bg-[var(--surface-default)]'
 
 // XP levels escalate so early levels arrive quickly and later ones mean
 // something — the same reasoning behind the streak milestone spacing.
@@ -101,7 +101,7 @@ function SectionCard({ title, children, className = '' }) {
 
 function Chip({ children }) {
   return (
-    <span className={`inline-flex rounded-md bg-[#262629] [[data-theme=light]_&]:bg-[#f4f4f1] px-2.5 py-1.5 text-[13px] ${INK}`}>
+    <span className={`inline-flex rounded-md bg-[var(--surface-subtle)] px-2.5 py-1.5 text-[13px] ${INK}`}>
       {children}
     </span>
   )
@@ -133,14 +133,14 @@ function ExperienceEntry({ region, pathTitle }) {
           {region.checkpointsTotal > 0 ? `  ·  ${region.checkpointsTotal} checkpoint${region.checkpointsTotal === 1 ? '' : 's'}` : ''}
         </p>
         {region.summary && (
-          <p className="m-0 max-w-[62ch] pt-2 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
+          <p className="m-0 max-w-[62ch] pt-2 text-[14px] leading-[1.65] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
             {region.summary}
           </p>
         )}
         {bullets.length > 0 && (
           <ul className="m-0 grid list-none gap-1.5 p-0 pt-2.5">
             {bullets.map((goal) => (
-              <li key={goal} className="flex gap-2.5 text-[14px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
+              <li key={goal} className="flex gap-2.5 text-[14px] leading-[1.55] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
                 <span className={`mt-[9px] size-1 flex-none rounded-full ${RULE}`} aria-hidden="true" />
                 {goal}
               </li>
@@ -160,8 +160,8 @@ function StreakBadge({ tier, earned, current }) {
       <span
         className={`grid size-12 place-items-center rounded-xl text-[13px] font-bold tabular-nums ${
           earned
-            ? 'bg-amber-400 text-amber-950 shadow-[0_0_0_3px_rgba(245,166,35,.18)]'
-            : `border ${HAIRLINE} bg-[#212124] [[data-theme=light]_&]:bg-[#f4f4f1] ${FAINT}`
+            ? 'bg-[var(--accent-progress)] text-[var(--surface-canvas)]'
+            : `border ${HAIRLINE} bg-[var(--surface-subtle)] ${FAINT}`
         }`}
         aria-hidden="true"
       >
@@ -179,7 +179,7 @@ function QuestRow({ label, complete }) {
     <li className="flex items-center gap-2.5">
       <span
         className={`grid size-5 flex-none place-items-center rounded-full ${
-          complete ? 'bg-[#6f66ec] text-white' : `border ${HAIRLINE}`
+          complete ? 'bg-[var(--brand-cta)] text-white' : `border ${HAIRLINE}`
         }`}
         aria-hidden="true"
       >
@@ -274,26 +274,17 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
     <div className="grid grid-cols-[minmax(0,1fr)_312px] items-start gap-5 max-[900px]:grid-cols-1" aria-label="Profile">
       <section className="grid gap-5">
         <header className={`grid overflow-hidden rounded-2xl ${SURFACE}`}>
-          {/* A fine diagonal rule field rather than a soft gradient wash —
-              closer to engraved stationery than to a hero banner. */}
-          <div
-            className="h-28 bg-[#6f66ec]/12 [[data-theme=light]_&]:bg-[#6f66ec]/8"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(135deg, rgba(111,102,236,.16) 0 1px, transparent 1px 9px)',
-            }}
-            aria-hidden="true"
-          />
+          <div className="h-28 bg-[var(--surface-brand-tint)]" aria-hidden="true" />
           <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
             <div className="relative -mt-11 w-[88px]">
               <span
-                className="grid size-[88px] place-items-center rounded-full bg-[#6f66ec] font-['Rethink_Sans',Arial,sans-serif] text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                className="grid size-[88px] place-items-center rounded-full bg-[var(--brand-cta)] font-['Rethink_Sans',Arial,sans-serif] text-[34px] font-medium text-white ring-4 ring-[var(--surface-default)] [[data-theme=light]_&]:ring-white"
                 aria-hidden="true"
               >
                 L
               </span>
               <span
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[var(--surface-default)] [[data-theme=light]_&]:ring-white"
                 aria-hidden="true"
               >
                 LV {levelInfo.level}
@@ -327,9 +318,9 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   {levelInfo.next === null ? `${xp} XP · max level` : `${levelInfo.remaining} XP to level ${levelInfo.level + 1}`}
                 </span>
               </div>
-              <div className={`h-2 w-full overflow-hidden rounded-full bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]`}>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-subtle)]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#6f66ec] to-[#8b7cf6] transition-[width] duration-500 ease-out"
+                  className="h-full rounded-full bg-[var(--brand-cta)] transition-[width] duration-500 ease-out"
                   style={{ width: `${levelInfo.percent}%` }}
                 />
               </div>
@@ -337,7 +328,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
 
             {onEditProfile && (
               <div className="flex flex-wrap gap-2">
-                <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={onEditProfile}>
+                <ActionButton variant="secondary" className="text-[var(--type-label)]" onClick={onEditProfile}>
                   Edit profile
                 </ActionButton>
               </div>
@@ -347,7 +338,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
 
         {about && (
           <SectionCard title="About">
-            <p className={`m-0 max-w-[68ch] text-[14px] leading-[1.75] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
+            <p className={`m-0 max-w-[68ch] text-[14px] leading-[1.75] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]`}>
               {about}
             </p>
           </SectionCard>
@@ -408,7 +399,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   {verifiedLessons} of {pathProgress?.lessonsTotal ?? 0} lessons · {certifications.length} of {pathProgress?.checkpointsTotal ?? 0} checkpoints
                 </p>
                 {startingPointLabel && (
-                  <p className={`m-0 pt-2 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
+                  <p className={`m-0 pt-2 text-[14px] leading-[1.65] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]`}>
                     Placed at {startingPointLabel}.
                   </p>
                 )}

@@ -20,8 +20,8 @@ function DayChip({ label, state }) {
   const tone = state === 'earned'
     ? 'border-amber-400 bg-amber-400 text-amber-950'
     : state === 'next'
-      ? 'border-[#6f66ec] bg-[#6f66ec] text-white'
-      : 'border-[#404040] bg-[#1f1f1f] text-[#7d7d80] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#9a9a9d]'
+      ? 'border-[var(--brand-cta)] bg-[var(--brand-cta)] text-white'
+      : 'border-[var(--border-default)] bg-[var(--surface-default)] text-[var(--text-muted)] [[data-theme=light]_&]:border-[var(--border-default)] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[var(--text-secondary)]'
 
   return (
     <span className={`relative z-[1] grid size-9 flex-none place-items-center rounded-lg border text-[11px] font-bold ${tone}`} aria-hidden="true">
@@ -53,10 +53,10 @@ export function StreakJourneyModal({
   const isAtRisk = currentStreak > 0 && !isActiveToday
 
   const status = isAtRisk
-    ? { text: `${getTimeUntilMidnight(clock)} left to keep your streak`, className: 'text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]' }
+    ? { text: `${getTimeUntilMidnight(clock)} left to keep your streak`, className: 'text-[var(--accent-error)] [[data-theme=light]_&]:text-[var(--accent-error)]' }
     : isActiveToday
-      ? { text: "You're covered for today — come back tomorrow.", className: 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' }
-      : { text: 'Finish a lesson or practice round to begin.', className: 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' }
+      ? { text: "You're covered for today — come back tomorrow.", className: 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]' }
+      : { text: 'Finish a lesson or practice round to begin.', className: 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]' }
 
   // `0d` anchors the timeline so a learner with no streak still sees where they
   // are on it, rather than a list that starts at a milestone they can't reach yet.
@@ -94,16 +94,16 @@ export function StreakJourneyModal({
       <div className="grid gap-7">
         <div className="grid gap-2">
           <div className="flex items-center gap-3">
-            <strong className="font-['Rethink_Sans',Arial,sans-serif] text-[44px] leading-none font-medium tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+            <strong className="font-['Rethink_Sans',Arial,sans-serif] text-[44px] leading-none font-medium tracking-[-.04em] text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">
               {currentStreak}
             </strong>
-            <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+            <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
               Day<br />streak
             </span>
           </div>
           <p className={`m-0 text-[13px] ${status.className}`} role="status">{status.text}</p>
           {lastProtection && (
-            <p className="m-0 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+            <p className="m-0 text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
               {lastProtection === 'shield' ? 'A Premium shield' : 'An earned restore'} covered your last missed day.
             </p>
           )}
@@ -118,8 +118,8 @@ export function StreakJourneyModal({
                   day.isActive
                     ? 'grid aspect-square place-items-center rounded-md bg-amber-400 text-amber-950'
                     : day.isToday
-                      ? 'grid aspect-square place-items-center rounded-md border border-dashed border-[#7d7d80] [[data-theme=light]_&]:border-[#9a9a9d]'
-                      : 'aspect-square rounded-md bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0]'
+                      ? 'grid aspect-square place-items-center rounded-md border border-dashed border-[var(--text-muted)] [[data-theme=light]_&]:border-[var(--text-secondary)]'
+                      : 'aspect-square rounded-md bg-[var(--surface-raised)] [[data-theme=light]_&]:bg-[var(--surface-subtle)]'
                 }
                 aria-label={`${day.key}: ${day.isActive ? 'active' : day.isToday ? 'today, not yet active' : 'no activity'}`}
                 aria-current={day.isToday ? 'date' : undefined}
@@ -128,28 +128,28 @@ export function StreakJourneyModal({
               </li>
             ))}
           </ol>
-          <div className="flex justify-between gap-3 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-            <span>Longest streak: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{longestStreak}</strong></span>
-            <span>Restores left: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{restoresLeft}</strong></span>
+          <div className="flex justify-between gap-3 text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
+            <span>Longest streak: <strong className="font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{longestStreak}</strong></span>
+            <span>Restores left: <strong className="font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{restoresLeft}</strong></span>
           </div>
         </div>
 
         <div className="grid gap-4">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.08em] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
             Milestones &amp; rewards
-            <span className="h-px flex-1 bg-[#404040] [[data-theme=light]_&]:bg-[#e1e1e1]" />
+            <span className="h-px flex-1 bg-[var(--border-default)] [[data-theme=light]_&]:bg-[var(--border-default)]" />
             <InfoTooltip label="How milestones work" align="end">
               Every milestone earns one permanent streak restore, so a single slip doesn&apos;t erase what you&apos;ve built.
             </InfoTooltip>
           </div>
 
-          <ol className="relative grid list-none gap-4 m-0 p-0 before:absolute before:left-[17px] before:top-4 before:bottom-4 before:w-px before:bg-[#404040] [[data-theme=light]_&]:before:bg-[#e1e1e1]">
+          <ol className="relative grid list-none gap-4 m-0 p-0 before:absolute before:left-[17px] before:top-4 before:bottom-4 before:w-px before:bg-[var(--border-default)] [[data-theme=light]_&]:before:bg-[var(--border-default)]">
             {steps.map((step) => (
               <li key={step.key} className="flex items-start gap-3">
                 <DayChip label={step.label} state={step.state} />
                 <div className="grid min-w-0 gap-0.5 pt-1">
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className={`flex items-center gap-1.5 text-sm font-semibold ${step.state === 'locked' ? 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]'}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-semibold ${step.state === 'locked' ? 'text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]' : 'text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]'}`}>
                       {step.state === 'locked' && <LockIcon className="size-3 flex-none" aria-hidden="true" />}
                       {step.title}
                       {step.state === 'earned' && <CheckIcon className="size-3.5 flex-none text-amber-400" aria-label="Earned" />}
@@ -159,15 +159,15 @@ export function StreakJourneyModal({
                         step.state === 'earned'
                           ? 'bg-amber-400/15 text-amber-300 [[data-theme=light]_&]:bg-amber-100 [[data-theme=light]_&]:text-amber-800'
                           : step.state === 'next'
-                            ? 'bg-[#6f66ec]/20 text-[#b8b3ff] [[data-theme=light]_&]:bg-[#f1efff] [[data-theme=light]_&]:text-[#513deb]'
-                            : 'bg-[#262626] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#f2f2f0] [[data-theme=light]_&]:text-[#686968]'
+                            ? 'bg-[var(--surface-brand-tint)] text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-base)]'
+                            : 'bg-[var(--surface-raised)] text-[var(--text-secondary)] [[data-theme=light]_&]:bg-[var(--surface-subtle)] [[data-theme=light]_&]:text-[var(--text-secondary)]'
                       }`}>
                         {step.reward}
                       </span>
                     )}
                   </span>
                   {step.detail && (
-                    <span className="text-[13px] leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{step.detail}</span>
+                    <span className="text-[13px] leading-[1.45] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{step.detail}</span>
                   )}
                 </div>
               </li>

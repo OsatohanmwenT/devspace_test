@@ -3,9 +3,9 @@ import { formatTimeRemaining, getTimeRemaining } from '../../lib/week'
 const HOUR_MS = 60 * 60 * 1000
 
 const TONES = {
-  calm: 'text-[#f5a623] [[data-theme=light]_&]:text-[#8a5a00]',
-  soon: 'text-[#f5a623] [[data-theme=light]_&]:text-[#8a5a00]',
-  urgent: 'text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]',
+  calm: 'text-[var(--accent-progress)]',
+  soon: 'text-[var(--accent-progress)]',
+  urgent: 'text-[var(--accent-error)] [[data-theme=light]_&]:text-[var(--accent-error)]',
 }
 
 // The deadline is what makes a weekly league a weekly league, so it stops being
