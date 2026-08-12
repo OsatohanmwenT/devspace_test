@@ -13,22 +13,22 @@ export function PlanCard({ plan, isSelected, onSelect }) {
       role="radio"
       aria-checked={isSelected}
       onClick={() => onSelect(plan.id)}
-      className={`relative grid content-start gap-1 rounded-2xl border p-5 text-left transition-colors focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#8d89ff] ${
+      className={`relative grid content-start gap-1 rounded-2xl border p-5 text-left transition-colors focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#89baff] ${
         isSelected
-          ? 'border-[#6f66ec] bg-[#6f66ec]/10 [[data-theme=light]_&]:bg-white'
+          ? 'border-[#6699ec] bg-[#6699ec]/10 [[data-theme=light]_&]:bg-white'
           : 'border-[#3a3a3e] bg-[#1d1d20] hover:border-[#5a5a61] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#b8b2a8]'
       }`}
     >
-      {isRecommended && <span className="absolute -top-3 right-4 rounded-full bg-[#6f66ec] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.06em] text-white">{plan.badge}</span>}
+      {isRecommended && <span className="absolute -top-3 right-4 rounded-full bg-[#6699ec] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.06em] text-white">{plan.badge}</span>}
       <span className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-[#181818]">{plan.name}</span>
+        <span className="text-sm font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-neutral-800">{plan.name}</span>
         {isSelected
-          ? <CheckIcon className="size-4 flex-none text-[#8d89ff] [[data-theme=light]_&]:text-[#513deb]" aria-hidden="true" />
+          ? <CheckIcon className="size-4 flex-none text-[#89baff] [[data-theme=light]_&]:text-[#3d77eb]" aria-hidden="true" />
           : null}
       </span>
 
       <span className="flex items-baseline gap-1.5">
-        <strong className="text-[32px] leading-none font-medium tracking-[-.03em] text-white [[data-theme=light]_&]:text-[#181818]">{plan.priceLabel}</strong>
+        <strong className="text-[32px] leading-none font-medium tracking-[-.03em] text-white [[data-theme=light]_&]:text-neutral-800">{plan.priceLabel}</strong>
         <span className="text-[13px] text-[#c3c3ca] [[data-theme=light]_&]:text-[#686968]">{plan.period}</span>
       </span>
 

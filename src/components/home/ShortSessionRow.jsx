@@ -9,13 +9,13 @@ export function ShortSessionRow({ sessions, completedSessions, onStartPractice, 
   return (
     <section className="mt-9" aria-labelledby="short-session-title">
       <div className="mb-4 flex items-baseline justify-between gap-4">
-        <h2 id="short-session-title" className="font-['Rethink_Sans',Arial,sans-serif] text-[20px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+        <h2 id="short-session-title" className="font-rethink-sans text-[20px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
           Short on time?
         </h2>
         <button
           type="button"
           onClick={onSeeAll}
-          className="inline-flex items-center gap-2 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#888df2] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#888df2] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#071d3a] [[data-theme=light]_&]:hover:text-[#070c72]"
+          className="inline-flex items-center gap-2 min-h-11 p-0 border-0 bg-transparent text-[15px] font-semibold text-[#f4f4f2] hover:text-[#88bdf2] focus-visible:rounded-lg focus-visible:outline-3 focus-visible:outline-[#88bdf2] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:text-[#073c72]"
         >
           <BoltIcon className="w-5 h-5" />
           <span>All practice</span>

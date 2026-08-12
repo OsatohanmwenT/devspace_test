@@ -15,7 +15,7 @@ export function PracticeCard({ session, onStart, completion }) {
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] transition-colors duration-150 hover:border-[#6f66ec] [[data-theme=light]_&]:hover:border-[#6f66ec]">
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] transition-colors duration-150 hover:border-[#6699ec] [[data-theme=light]_&]:hover:border-[#6699ec]">
       <div className="flex flex-col gap-3 p-5 pb-4">
         <div className="flex items-start justify-between gap-2">
           <Badge tone={TOPIC_TONES[session.topic]}>{session.topic}</Badge>
@@ -26,7 +26,7 @@ export function PracticeCard({ session, onStart, completion }) {
             </span>
           )}
         </div>
-        <h3 className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-lg font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{session.title}</h3>
+        <h3 className="m-0 font-rethink-sans text-lg font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{session.title}</h3>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] px-5 py-3.5">

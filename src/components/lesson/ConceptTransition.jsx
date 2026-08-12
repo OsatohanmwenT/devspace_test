@@ -12,12 +12,12 @@ export function ConceptTransition({ eyebrow, title, body }) {
             alt=""
             aria-hidden="true"
           />
-          <span className="mb-3 text-xs font-bold uppercase tracking-[0.11em] text-[#888df2] [[data-theme=light]_&]:text-[#19079b]">
+          <span className="mb-3 text-xs font-bold uppercase tracking-[0.11em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">
             {eyebrow}
           </span>
           <h1
             id="lesson-transition-title"
-            className="m-0 max-w-[20ch] text-balance font-['Rethink_Sans',Arial,sans-serif] text-[clamp(27px,3vw,38px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818] max-[720px]:text-[26px]"
+            className="m-0 max-w-[20ch] text-balance font-rethink-sans text-[clamp(27px,3vw,38px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[720px]:text-[26px]"
           >
             {title}
           </h1>

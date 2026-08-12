@@ -1,4 +1,4 @@
-const PALETTE = ['#6f66ec', '#04adc0', '#e08a3c', '#7fb069', '#e0607e', '#5fb8ff']
+const PALETTE = ['#6699ec', '#04adc0', '#e08a3c', '#7fb069', '#e0607e', '#5fb8ff']
 const SIZES = {
   sm: 'size-7 text-xs',
   md: 'size-10 text-[15px]',
@@ -14,7 +14,7 @@ export function Avatar({ name, size = 'md', className = '' }) {
   const initial = name?.trim()?.[0]?.toUpperCase() ?? '?'
 
   return (
-    <span className={`inline-grid shrink-0 place-items-center rounded-full font-['Rethink_Sans',Arial,sans-serif] font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
+    <span className={`inline-grid shrink-0 place-items-center rounded-full font-rethink-sans font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
       {initial}
     </span>
   )

@@ -1,4 +1,4 @@
-const navButtonClassName = "grid w-9 h-9 max-[720px]:w-[34px] place-items-center border-0 bg-transparent text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+const navButtonClassName = "grid w-9 h-9 max-[720px]:w-[34px] place-items-center border-0 bg-transparent text-[#89898e] [[data-theme=light]_&]:text-[#aaa] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]"
 
 export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPrevious, onNext, streaking = false }) {
   const filledClassName = streaking ? 'h-2 rounded bg-[#f0c964]' : 'h-2 rounded bg-[#2986f2]'

@@ -20,16 +20,16 @@ export function InfoTooltip({ label, children, align = 'center', tone = 'auto', 
 
   const iconTone = tone === 'dark'
     ? 'text-[#7d7d80] hover:text-[#f4f4f2]'
-    : 'text-[#7d7d80] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#9a9a9d] [[data-theme=light]_&]:hover:text-[#202020]'
+    : 'text-[#7d7d80] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#9a9a9d] [[data-theme=light]_&]:hover:text-neutral-700'
   const outlineTone = tone === 'dark'
-    ? 'focus-visible:outline-[#888df2]'
-    : 'focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]'
+    ? 'focus-visible:outline-[#88bdf2]'
+    : 'focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]'
   // Case, tracking and weight are pinned on the panel because these icons
   // usually sit inside uppercase tracked section headers, which the tooltip
   // would otherwise inherit and render as shouted small caps.
   const panelTone = tone === 'dark'
     ? 'border-[#404040] bg-[#262626] text-[#f4f4f2] shadow-[0_8px_24px_rgba(0,0,0,.3)]'
-    : 'border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#262626] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] shadow-[0_8px_24px_rgba(0,0,0,.3)] [[data-theme=light]_&]:shadow-[0_8px_24px_rgba(20,20,20,0.12)]'
+    : 'border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#262626] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 shadow-[0_8px_24px_rgba(0,0,0,.3)] [[data-theme=light]_&]:shadow-[0_8px_24px_rgba(20,20,20,0.12)]'
 
   return (
     <span className={`relative inline-flex ${className}`}>

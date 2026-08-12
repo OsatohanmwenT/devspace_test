@@ -9,8 +9,8 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
       className="grid scroll-mt-8 gap-6 border-t border-[#2c2c30] pt-7 first:border-t-0 first:pt-0 [[data-theme=light]_&]:border-[#ececea]"
     >
       <header>
-        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Chapter {index + 1} · {topic.lessonTitle}</span>
-        <h2 className="mt-1.5 mb-0 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(21px,2.2vw,25px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">{topic.title}</h2>
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#88bdf2] [[data-theme=light]_&]:text-[#3d77eb]">Chapter {index + 1} · {topic.lessonTitle}</span>
+        <h2 className="mt-1.5 mb-0 font-rethink-sans text-[clamp(21px,2.2vw,25px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{topic.title}</h2>
         {/* The chapters form a strict chain, so say what this one rests on. */}
         {builtOnTopic && (
           <p className="mt-2 mb-0 text-[14px] text-[#8c8c91] [[data-theme=light]_&]:text-[#767674]">
@@ -18,7 +18,7 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
             <button
               type="button"
               onClick={() => onJump(builtOnTopic.id)}
-              className="border-0 bg-transparent p-0 font-semibold text-[#888df2] underline underline-offset-2 hover:text-[#a8abf7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#888df2] [[data-theme=light]_&]:text-[#513deb]"
+              className="border-0 bg-transparent p-0 font-semibold text-[#88bdf2] underline underline-offset-2 hover:text-[#a8abf7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:text-[#3d77eb]"
             >
               {builtOnTopic.title}
             </button>
@@ -34,7 +34,7 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
       <section>
         <SectionEyebrow section="example" />
         <p className="mb-3 max-w-[640px] text-[17px] leading-[1.7] text-[#b2b2b6] [[data-theme=light]_&]:text-[#626262]">{topic.guidebook.walkthrough}</p>
-        <pre className="m-0 max-w-[700px] overflow-x-auto border-l-2 border-[#3f3b68] bg-[#1e1e1e] px-5 py-4 font-['JetBrains_Mono',ui-monospace,monospace] text-[14.5px] leading-[1.75] text-[#f4f4f2]"><code>{topic.guidebook.code}</code></pre>
+        <pre className="m-0 max-w-[700px] overflow-x-auto border-l-2 border-[#3f3b68] bg-[#1e1e1e] px-5 py-4 font-rubik text-[14.5px] leading-[1.75] text-[#f4f4f2]"><code>{topic.guidebook.code}</code></pre>
       </section>
 
       <section>
@@ -49,8 +49,8 @@ function GuidebookChapter({ topic, index, builtOnTopic, onJump }) {
         </ul>
       </section>
 
-      <aside className="max-w-[700px] border-l-2 border-[#6f66ec] bg-[#211f30] px-5 py-4 [[data-theme=light]_&]:bg-[#f1efff]">
-        <strong className="block text-xs uppercase tracking-[0.08em] text-[#aaa7ff] [[data-theme=light]_&]:text-[#513deb]">Remember</strong>
+      <aside className="max-w-[700px] border-l-2 border-[#6699ec] bg-[#211f30] px-5 py-4 [[data-theme=light]_&]:bg-[#eff4ff]">
+        <strong className="block text-xs uppercase tracking-[0.08em] text-[#aaa7ff] [[data-theme=light]_&]:text-[#3d77eb]">Remember</strong>
         <p className="mt-1.5 mb-0 max-w-[640px] text-[16px] leading-[1.65] text-[#d5d3ef] [[data-theme=light]_&]:text-[#37305e]">{topic.guidebook.takeaway}</p>
       </aside>
     </article>
@@ -119,11 +119,11 @@ export function GuidebookView({ region, onBack }) {
   }
 
   return (
-    <section className="fixed inset-0 z-30 grid grid-rows-[64px_minmax(0,1fr)] overflow-hidden bg-[#121214] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-[#181818]" aria-label={`${region.title} guidebook`}>
+    <section className="fixed inset-0 z-30 grid grid-rows-[64px_minmax(0,1fr)] overflow-hidden bg-[#121214] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800" aria-label={`${region.title} guidebook`}>
       <header className="flex items-center border-b border-[#404040] bg-[#1a1a1c] px-6 [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white max-[680px]:px-3.5">
         <button
           type="button"
-          className="min-h-11 rounded-lg border-0 bg-transparent px-3 text-sm font-semibold text-[#b2b2b6] hover:bg-[#262629] hover:text-white focus-visible:outline-3 focus-visible:outline-[#888df2] focus-visible:outline-offset-2 [[data-theme=light]_&]:text-[#626262] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-[#181818]"
+          className="min-h-11 rounded-lg border-0 bg-transparent px-3 text-sm font-semibold text-[#b2b2b6] hover:bg-[#262629] hover:text-white focus-visible:outline-3 focus-visible:outline-[#88bdf2] focus-visible:outline-offset-2 [[data-theme=light]_&]:text-[#626262] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-neutral-700"
           onClick={onBack}
         >
           <span aria-hidden="true">←</span> Back to {region.title}
@@ -144,10 +144,10 @@ export function GuidebookView({ region, onBack }) {
                         type="button"
                         onClick={() => jumpTo(topic.id)}
                         aria-current={isActive ? 'true' : undefined}
-                        className={`flex w-full gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#888df2] ${
+                        className={`flex w-full gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#88bdf2] ${
                           isActive
-                            ? 'border-[#6f66ec] bg-[#1e1c2c] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:bg-[#f1f0fd] [[data-theme=light]_&]:text-[#181818]'
-                            : 'border-[#2c2c30] text-[#8c8c91] hover:border-[#5a5a60] hover:text-[#d4d4d7] [[data-theme=light]_&]:border-[#e5e5e3] [[data-theme=light]_&]:text-[#767674] [[data-theme=light]_&]:hover:text-[#181818]'
+                            ? 'border-[#6699ec] bg-[#1e1c2c] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800'
+                            : 'border-[#2c2c30] text-[#8c8c91] hover:border-[#5a5a60] hover:text-[#d4d4d7] [[data-theme=light]_&]:border-[#e5e5e3] [[data-theme=light]_&]:text-[#767674] [[data-theme=light]_&]:hover:text-neutral-700'
                         }`}
                       >
                         <span className="tabular-nums opacity-60">{index + 1}</span>
@@ -166,8 +166,8 @@ export function GuidebookView({ region, onBack }) {
             <header className="mb-10 flex items-start gap-5">
               {region.image && <img className="size-20 flex-none object-contain max-[680px]:size-14" src={region.image} alt="" />}
               <div className="min-w-0">
-                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#888df2] [[data-theme=light]_&]:text-[#513deb]">Guidebook · {region.level}</span>
-                <h1 ref={headingRef} tabIndex="-1" className="mt-1.5 mb-2 font-['Rethink_Sans',Arial,sans-serif] text-[clamp(26px,3.6vw,34px)] font-semibold leading-[1.1] outline-none">{region.title}</h1>
+                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#88bdf2] [[data-theme=light]_&]:text-[#3d77eb]">Guidebook · {region.level}</span>
+                <h1 ref={headingRef} tabIndex="-1" className="mt-1.5 mb-2 font-rethink-sans text-[clamp(26px,3.6vw,34px)] font-semibold leading-[1.1] outline-none">{region.title}</h1>
                 <p className="m-0 text-[15px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
                   {topics.length > 0 ? `${topics.length} chapters explaining how these ideas work.` : region.summary}
                 </p>
