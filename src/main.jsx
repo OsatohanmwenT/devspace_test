@@ -33,9 +33,18 @@ import { LESSON_XP } from './lib/lessonMeta'
 import { practiceSessions } from './data/practice'
 import { ShortSessionRow } from './components/home/ShortSessionRow'
 import { InfoTooltip } from './components/ui/InfoTooltip'
+import BuildView from './components/build'
+import { Gear, Hammer, House, List, Moon, Path, Target, Trophy, UserCircle } from '@phosphor-icons/react'
 
 // Practice awards a flat rate on first completion, mirroring LESSON_XP.
 const PRACTICE_XP = 10
+
+const PRIMARY_DESTINATIONS = [
+  { label: 'Home', icon: House },
+  { label: 'Paths', icon: Path },
+  { label: 'Practice', icon: Target },
+  { label: 'Build', icon: Hammer },
+]
 
 function getInitialTheme() {
   const stored = window.localStorage.getItem('devspace-theme')
@@ -324,31 +333,30 @@ function App() {
   if (loadingLesson) return <LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />
 
   return (
-    <div className="min-h-screen bg-[#121214] font-['DM_Sans',Arial,sans-serif] [[data-theme=light]_&]:bg-[#fafaf8]">
+    <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       {active !== 'Plans' && !openLesson && (
-      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center border-b border-[var(--border-hairline)] bg-[var(--surface-canvas)]/95 px-[max(var(--space-6),calc((100vw-1160px)/2))] backdrop-blur-md max-[680px]:px-4">
         <button
-          className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
+          className="flex min-h-11 items-center rounded-[var(--radius-control)] border-0 bg-transparent p-0"
           onClick={() => setActive('Home')}
           aria-label="Devspace home"
         >
           <img className="block w-[129px] h-[19px] [[data-theme=light]_&]:brightness-0" src="/assets/logo.svg" alt="Devspace" />
         </button>
 
-        <nav className="flex gap-6 ml-12 mr-auto max-[680px]:hidden" aria-label="Primary navigation">
-          {['Home', 'Paths', 'Leaderboard', 'Practice'].map((item) => {
-            const isActive = active === item
+        <nav className="ml-12 mr-auto flex items-center gap-2 max-[680px]:hidden" aria-label="Primary navigation">
+          {PRIMARY_DESTINATIONS.map(({ label, icon: Icon }) => {
+            const isActive = active === label
             return (
               <button
-                key={item}
-                className={
-                  isActive
-                    ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6f66ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
-                    : "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
-                }
-                onClick={() => setActive(item)}
+                key={label}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${isActive ? 'border-[var(--brand-cta)] bg-[var(--brand-cta)] text-[var(--text-inverse)]' : 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]'}`}
+                onClick={() => setActive(label)}
+                aria-current={isActive ? 'page' : undefined}
               >
-                {item}
+                <Icon size={19} weight="regular" aria-hidden="true" />
+                {label}
               </button>
             )
           })}
@@ -359,7 +367,7 @@ function App() {
             <button
               ref={streakButtonRef}
               type="button"
-              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : 'border-[#404040] bg-[#262626] text-[#f4f4f2] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#202020] [[data-theme=light]_&]:hover:border-[#686968]'}`}
+              className={`relative inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-[var(--type-label)] font-semibold transition-colors ${streakAtRisk ? 'border-[var(--accent-error)] bg-[var(--surface-error-tint)] text-[var(--accent-error)]' : 'border-[var(--border-default)] bg-[var(--surface-default)] text-[var(--text-primary)] hover:border-[var(--border-interactive)]'}`}
               onClick={() => {
                 setActivePopover(null)
                 setStreakJourneyOpen(true)
@@ -371,7 +379,7 @@ function App() {
             >
               {streakAtRisk ? <SirenIcon className="size-4" /> : <BoltIcon className="size-4" />}
               <span aria-hidden="true">{streakDays}</span>
-              {streakAtRisk && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-[#121214] bg-red-400 motion-safe:animate-pulse [[data-theme=light]_&]:border-white" aria-hidden="true" />}
+              {streakAtRisk && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-[var(--surface-canvas)] bg-[var(--accent-error)] motion-safe:animate-pulse" aria-hidden="true" />}
             </button>
           </div>
 
@@ -379,12 +387,12 @@ function App() {
             <button
               ref={xpButtonRef}
               type="button"
-              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] ${activePopover === 'xp' ? 'border-[#6f66ec] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]' : 'border-[#404040] text-[#9a9a9d] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:border-[#686968]'} bg-[#262626] [[data-theme=light]_&]:bg-white`}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border bg-[var(--surface-default)] px-3 text-[var(--type-label)] font-semibold transition-colors ${activePopover === 'xp' ? 'border-[var(--brand-cta)] text-[var(--text-primary)]' : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--border-interactive)] hover:text-[var(--text-primary)]'}`}
               onClick={() => setActivePopover((current) => (current === 'xp' ? null : 'xp'))}
               aria-haspopup="dialog"
               aria-expanded={activePopover === 'xp'}
             >
-              <GemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6f66ec]" />
+              <GemIcon className="size-4 text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-base)]" />
               <span aria-hidden="true">{xp}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
@@ -398,29 +406,50 @@ function App() {
 
         <button
           ref={menuButtonRef}
-          className="min-w-11 min-h-11 max-[680px]:ml-auto p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]"
+          className="ml-2 grid size-11 place-items-center rounded-[var(--radius-control)] border-0 bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] max-[680px]:ml-auto"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
           aria-expanded={menuOpen}
         >
-          ☰
+          <List size={24} weight="regular" aria-hidden="true" />
         </button>
 
         {menuOpen && (
           <div
-            className="absolute z-[5] top-14 right-[max(22px,calc((100vw-1160px)/2))] max-[680px]:right-[18px] grid gap-[3px] min-w-[190px] p-2 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+            className="absolute right-[max(var(--space-6),calc((100vw-1160px)/2))] top-14 z-[5] grid min-w-56 gap-1 rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-overlay)] p-2 shadow-[var(--shadow-overlay)] max-[680px]:right-4"
             ref={menuRef}
             role="menu"
           >
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}>Profile</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-left hover:bg-[#272634] [[data-theme=light]_&]:hover:bg-[#f1f0fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
+            <button className="inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] border-0 bg-transparent px-3 text-start text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}><UserCircle size={20} aria-hidden="true" />Profile</button>
+            <button className="inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] border-0 bg-transparent px-3 text-start text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]" role="menuitem" onClick={() => { setActive('Leaderboard'); setMenuOpen(false) }}><Trophy size={20} aria-hidden="true" />Leaderboard</button>
+            <button className="inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] border-0 bg-transparent px-3 text-start text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}><Gear size={20} aria-hidden="true" />Settings</button>
+            <button className="inline-flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] border-0 bg-transparent px-3 text-start text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]" role="menuitem" onClick={toggleTheme}><Moon size={20} aria-hidden="true" />Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
           </div>
         )}
       </header>
       )}
 
-      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      {active !== 'Plans' && !openLesson && (
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[var(--border-hairline)] bg-[var(--surface-overlay)] px-2 pb-[max(var(--space-2),env(safe-area-inset-bottom))] pt-2 shadow-[var(--shadow-overlay)] min-[681px]:hidden" aria-label="Mobile primary navigation">
+          {PRIMARY_DESTINATIONS.map(({ label, icon: Icon }) => {
+            const isActive = active === label
+            return (
+              <button
+                key={label}
+                type="button"
+                className={`grid min-h-14 place-items-center gap-1 rounded-[var(--radius-control)] border-0 px-2 py-1 text-[var(--type-micro)] font-medium ${isActive ? 'bg-[var(--surface-brand-tint)] text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-base)]' : 'bg-transparent text-[var(--text-secondary)]'}`}
+                onClick={() => setActive(label)}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon size={22} weight={isActive ? 'fill' : 'regular'} aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      )}
+
+      <main id="main-content" className={active === 'Plans' ? 'min-h-screen' : active === 'Home' ? 'page-container grid grid-cols-[minmax(0,1fr)_320px] gap-6 max-[900px]:grid-cols-[minmax(0,1fr)_280px] max-[680px]:flex max-[680px]:flex-col' : 'page-container'}>
         {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
           <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
         ) : active === 'Profile' ? (
@@ -435,6 +464,8 @@ function App() {
           />
         ) : active === 'Plans' ? (
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
+        ) : active === 'Build' ? (
+          <BuildView onStartLearning={() => setActive('Paths')} />
         ) : active === 'Leaderboard' ? (
           <LeaderboardView
             weeklyXp={weeklyXp}
@@ -448,19 +479,20 @@ function App() {
           />
         ) : active === 'Practice' ? <PracticeView onStart={setOpenPractice} completedSessions={completedSessions} /> : (
           <>
-        <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px]">
+        <aside className="order-2" aria-label="Learner support">
+          <div className="surface-card overflow-hidden">
+          <section className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[38px] font-medium">{streakDays}</span>
-                <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
+                <span className="font-[var(--font-display)] text-[var(--type-display)] font-medium text-[var(--text-primary)]">{streakDays}</span>
+                <BoltIcon className="size-9 rounded-full bg-[var(--surface-progress-tint)] p-2 text-[var(--accent-progress)]" />
               </div>
-              <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
+              <button className="min-w-9 min-h-8 p-1 text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--border-focus)] [[data-theme=light]_&]:focus-visible:outline-[var(--brand-base)]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
             {/* Was the fixed string "Solve 3 problems to start a streak", which
                 contradicted the streak count rendered directly above it. */}
-            <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
-              {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">{streakMessage.emphasis} </strong>}
+            <p className="meta-copy mb-4 mt-3">
+              {streakMessage.emphasis && <strong className="font-medium text-[var(--text-primary)]">{streakMessage.emphasis} </strong>}
               {streakMessage.text}
             </p>
             {/* Seven fixed 40px circles overflow the 300px sidebar, so they size
@@ -470,16 +502,16 @@ function App() {
                 <div
                   className={
                     isActive
-                      ? 'flex flex-1 min-w-0 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
-                      : 'flex flex-1 min-w-0 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                      ? 'flex flex-1 min-w-0 flex-col items-center gap-[5px] font-medium text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]'
+                      : 'flex flex-1 min-w-0 flex-col items-center gap-[5px] text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]'
                   }
                   key={key}
                 >
                   <span
                     className={
                       isActive
-                        ? 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#f5a623] bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]'
-                        : 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
+                        ? 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[var(--accent-progress)] bg-[var(--accent-progress)] text-[var(--surface-canvas)]'
+                        : 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-hairline)] bg-[var(--surface-default)] [[data-theme=light]_&]:bg-white text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]'
                     }
                   >
                     <BoltIcon className="w-[18px] h-[18px]" />
@@ -490,56 +522,44 @@ function App() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f6eef7] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
-              <div className="grid gap-1">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-medium">Unlock all learning</strong>
-                <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Get smarter, faster with Premium.</span>
-              </div>
-            </div>
-            <ActionButton variant="premium" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => openPlans()}>
-              Explore Premium
-            </ActionButton>
-          </section>
-
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px] text-center">
+          <section className="border-t border-[var(--border-hairline)] p-6 text-center">
             <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
               <div className="grid gap-0.5">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[15px] font-semibold">{currentLeague.name}</strong>
-              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
+                <strong className="text-base font-semibold text-[var(--text-primary)]">{currentLeague.name}</strong>
+              <span className="meta-copy">{formatTimeRemaining(getTimeRemaining(now()))}</span>
               </div>
               <InfoTooltip label="How leagues work" align="end">
                 Earn XP this week to move up the leaderboard. Final standings update when the week ends.
               </InfoTooltip>
             </div>
             <div
-              className="flex w-full items-center justify-center py-8 my-2 rounded-lg border border-[#404040] bg-[#171717] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4]"
+              className="my-2 flex w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--surface-progress-tint)] py-8"
               aria-hidden="true"
             >
               <TierMedal league={currentLeague} state="current" size={64} />
             </div>
-            <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">
+            <p className="meta-copy m-0">
               {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} XP earned this week` : "Earn XP to join this week's league"}
             </p>
           </section>
+          </div>
 
         </aside>
 
-        <section className="min-w-0 max-[680px]:order-1">
-          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[30px] max-[680px]:text-[27px] font-medium">Your next mission</h1>
+        <section className="order-1 min-w-0">
+          <h1 className="page-title mb-6">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
-            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
+            <article className="surface-card relative z-[1] flex min-h-[530px] w-full flex-col items-center gap-6 overflow-hidden p-8 text-center max-[680px]:min-h-0 max-[680px]:p-6">
               <div className="w-full pt-1 text-center">
-                <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
-                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-['Rethink_Sans',Arial,sans-serif] text-[clamp(28px,4vw,42px)] max-[900px]:text-[clamp(30px,4.5vw,40px)] max-[680px]:text-[clamp(32px,10vw,42px)] font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
-                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.percent}% complete</p>
+                <Badge tone="brand">{currentPath.level}</Badge>
+                <h2 className="mx-auto mb-2 mt-4 max-w-[520px] text-balance font-[var(--font-display)] text-[clamp(31px,4vw,39px)] font-medium leading-[var(--leading-display)] text-[var(--text-primary)] [overflow-wrap:anywhere]">{currentPath.title}</h2>
+                <p className="meta-copy m-0 font-medium">{currentRegionCard.title} · {currentRegionCard.percent}% complete</p>
               </div>
 
               <div className="relative w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] max-[680px]:mx-auto flex-none">
                 <div className="relative grid place-items-center w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] overflow-visible">
-                  <div className="absolute z-0 right-[14%] bottom-[-2%] left-[14%] h-[28%] rounded-full bg-[#525252] blur-[18px] opacity-25" />
+                  <div className="absolute z-0 right-[14%] bottom-[-2%] left-[14%] h-[28%] rounded-full bg-[var(--border-interactive)] blur-[18px] opacity-25" />
                   <img className="relative z-[1] block w-full h-full object-contain" src={currentPath.emblem} alt="A colorful symbolic illustration for the current path" />
                 </div>
               </div>
@@ -547,13 +567,13 @@ function App() {
               <div className="w-full mt-auto">
                 <div className="flex items-center justify-center gap-1.5 mb-[9px]" role="img" aria-label={`Region ${currentStepIndex + 1} of ${derived.regionsTotal}`}>
                   {derived.regions.map((region, index) => (
-                    <span className={`w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={region.id} />
+                    <span className={`w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[var(--brand-on-dark)] [[data-theme=light]_&]:bg-[var(--brand-base)]' : 'bg-[var(--border-default)]'}`} key={region.id} />
                   ))}
                 </div>
                 {/* The dots count regions, so the label says so — "Step N of 6"
                     followed by a lesson title read as though the lesson were the step. */}
-                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
-                <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
+                <p className="max-w-full m-0 mb-[18px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)] text-xs leading-[1.5] text-center"><strong className="text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)] font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
+                <ActionButton variant="primary" className="w-full text-base" onClick={startMission}>
                   {started ? 'Continue mission' : 'Start mission'} <span aria-hidden="true">→</span>
                 </ActionButton>
               </div>
@@ -572,19 +592,19 @@ function App() {
       </main>
 
       {active === 'Home' && (
-        <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
+        <div className="fixed bottom-6 right-6 z-20 grid justify-items-end gap-3 max-[680px]:bottom-[calc(84px+env(safe-area-inset-bottom))] max-[680px]:right-4">
           {devyOpen && (
-            <section id="devy-hint" className="w-[min(320px,calc(100vw-36px))] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-4 shadow-[0_12px_30px_rgba(0,0,0,.24)] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]" role="status" aria-label="Devy hint">
+            <section id="devy-hint" className="surface-card w-[min(320px,calc(100vw-32px))] p-4" role="status" aria-label="Devy hint">
               <div className="flex items-start gap-3">
                 <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
                 <div>
-                  <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">Try this first</strong>
-                  <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{homeHint}</p>
+                  <strong className="text-sm font-semibold text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">Try this first</strong>
+                  <p className="mt-1 text-xs leading-[1.45] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{homeHint}</p>
                 </div>
               </div>
             </section>
           )}
-          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen((open) => !open)} aria-expanded={devyOpen} aria-controls="devy-hint" aria-label={devyOpen ? 'Close Devy hint' : 'Ask Devy'}>
+          <button type="button" className="grid size-16 place-items-center rounded-full border border-[var(--border-default)] bg-[var(--surface-default)] p-2 shadow-[var(--shadow-raised)] transition-transform hover:-translate-y-0.5 active:translate-y-0" onClick={() => setDevyOpen((open) => !open)} aria-expanded={devyOpen} aria-controls="devy-hint" aria-label={devyOpen ? 'Close Devy hint' : 'Ask Devy'}>
             <img className="size-full object-contain" src="/assets/devy.svg" alt="" />
           </button>
         </div>
@@ -607,7 +627,7 @@ function App() {
         />
       )}
 
-      {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] text-[13px]" role="status">{notice}</div>}
+      {notice && <div className="fixed bottom-6 right-6 z-40 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-overlay)] px-4 py-3 text-[var(--type-label)] text-[var(--text-primary)] shadow-[var(--shadow-overlay)] max-[680px]:inset-x-4 max-[680px]:bottom-[calc(84px+env(safe-area-inset-bottom))] max-[680px]:text-center" role="status">{notice}</div>}
 
       {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} />}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}

@@ -15,36 +15,34 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
   const filteredSessions = practiceSessions.filter(matchesSession)
 
   return (
-    <section className="grid gap-7 max-[720px]:gap-6" aria-label="Practice">
-      <header className="flex items-end justify-between gap-6 max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-2">
-        <div className="grid gap-2 max-w-[680px]">
-          <h1 className="m-0 text-3xl font-medium text-[#f4f4f2] font-['Rethink_Sans',Arial,sans-serif] [[data-theme=light]_&]:text-[#202020]">Practice</h1>
-          <p className="m-0 text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Keep your skills sharp with quick, repeatable knowledge checks. You earn XP for every round.</p>
+    <section className="grid gap-8" aria-labelledby="practice-title">
+      <header className="flex items-end justify-between gap-6 max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-3">
+        <div className="grid max-w-2xl gap-3">
+          <h1 id="practice-title" className="page-title">Practice</h1>
+          <p className="body-copy m-0">Keep your skills sharp with quick, repeatable knowledge checks. You earn XP for every round.</p>
         </div>
-        <span className="flex-none pb-1.5 text-[12px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] whitespace-nowrap" aria-live="polite" aria-atomic="true">
+        <span className="meta-copy flex-none whitespace-nowrap" aria-live="polite" aria-atomic="true">
           {filteredSessions.length} {filteredSessions.length === 1 ? 'session' : 'sessions'}
         </span>
       </header>
 
-      <div className="flex items-center gap-3 max-[900px]:flex-col max-[900px]:items-stretch" aria-label="Find a practice session">
-        <input
-          id="practice-search"
-          className="w-[280px] max-[900px]:w-full min-h-11 flex-none rounded-xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-2"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search practice sessions..."
-          aria-label="Search practice sessions"
-        />
-        <div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto py-0.5" role="group" aria-label="Practice topics">
+      <div className="grid gap-4 rounded-[var(--radius-card)] bg-[var(--surface-brand-tint)] p-4 md:grid-cols-[18rem_minmax(0,1fr)]" aria-label="Find a practice session">
+        <div>
+          <label className="sr-only" htmlFor="practice-search">Search practice sessions</label>
+          <input
+            id="practice-search"
+            className="form-control w-full px-4 text-sm"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search practice sessions..."
+          />
+        </div>
+        <div className="flex min-w-0 flex-wrap gap-2 py-0.5" role="group" aria-label="Practice topics">
           {practiceTopics.map((item) => {
             const isActive = topic === item
             return (
               <button
-                className={
-                  isActive
-                    ? 'min-h-10 flex-none rounded-md border border-[#291c87] [[data-theme=light]_&]:border-[#19079b] bg-[#291c87] [[data-theme=light]_&]:bg-[#19079b] py-[7px] px-[15px] text-[12px] text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
-                    : 'min-h-10 flex-none rounded-md [[data-theme=light]_&]:border-[#d4d4d4] bg-neutral-700/80 [[data-theme=light]_&]:bg-white py-[7px] px-[15px] text-[12px] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] hover:border-[#8a8a8e] [[data-theme=light]_&]:hover:border-[#737371] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#888df2] [[data-theme=light]_&]:focus-visible:outline-[#070c72] focus-visible:outline-offset-3'
-                }
+                className="control-pill flex-none px-4 text-[var(--type-label)] font-medium"
                 key={item}
                 type="button"
                 aria-pressed={isActive}
@@ -57,11 +55,18 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[680px]:grid-cols-1">
+      <div className="surface-card overflow-hidden">
         {filteredSessions.map((session) => (
           <PracticeCard key={session.id} session={session} onStart={onStart} completion={completedSessions[session.id]} />
         ))}
-        {filteredSessions.length === 0 && <p className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">No sessions match that search. Try a different topic.</p>}
+        {filteredSessions.length === 0 && (
+          <div className="grid min-h-64 place-items-center p-8 text-center">
+            <div className="grid max-w-md gap-2">
+              <h2 className="section-title">No practice sessions found</h2>
+              <p className="body-copy m-0">Try a different topic or clear your search to see every available session.</p>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

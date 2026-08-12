@@ -4,7 +4,7 @@ import { getFallbackResponse, getGreeting, getPrompts, getResponse, matchPrompt 
 
 function Bubble({ children }) {
   return (
-    <div className="rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-3.5 py-3 text-sm leading-[1.55] text-[#e4e4e6] [[data-theme=light]_&]:text-[#181818]">
+    <div className="rounded-[var(--radius-card)] rounded-tl-md border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3.5 py-3 text-sm leading-[1.55] text-[var(--text-primary)]">
       {children}
     </div>
   )
@@ -35,11 +35,11 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
 
   return (
     <>
-      <div className="flex items-center justify-between text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]">
+      <div className="flex items-center justify-between text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">
         <strong className="text-base">Devy</strong>
         <button
           type="button"
-          className={`grid w-9 h-9 place-items-center border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] ${focusRing}`}
+          className={`grid w-9 h-9 place-items-center border-0 rounded-lg bg-transparent text-[var(--text-secondary)] [[data-theme=light]_&]:text-[#777] hover:bg-[var(--surface-raised)] [[data-theme=light]_&]:hover:bg-[var(--surface-subtle)] ${focusRing}`}
           onClick={onClose}
           aria-label="Close Devy chat"
         >
@@ -53,13 +53,13 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
 
           {messages.map((message, index) => (
             <div className="grid gap-2" key={`${message.id}-${index}`}>
-              <p className="m-0 justify-self-end rounded-2xl rounded-tr-md bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e5e4f4] px-3.5 py-2 text-[13px] text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">
+              <p className="m-0 justify-self-end rounded-[var(--radius-card)] rounded-tr-md bg-[var(--surface-brand-tint)] px-3.5 py-2 text-[13px] text-[var(--text-primary)]">
                 {message.label}
               </p>
               <Bubble>
                 <RichText content={message.response.body} />
                 {message.response.code && (
-                  <pre className="mt-2.5 overflow-x-auto rounded-lg bg-[#1e1e1e] px-3 py-2.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[12px] leading-[1.7] text-[#d4d4d4]"><code>{message.response.code}</code></pre>
+                  <pre className="mt-2.5 overflow-x-auto rounded-lg bg-[var(--surface-default)] px-3 py-2.5 font-['JetBrains_Mono',ui-monospace,monospace] text-[12px] leading-[1.7] text-[var(--border-default)]"><code>{message.response.code}</code></pre>
                 )}
               </Bubble>
             </div>
@@ -72,26 +72,26 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
           <button
             key={id}
             type="button"
-            className={`rounded-full border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-4 py-2.5 text-left text-[13px] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] hover:border-[#8a8a8e] [[data-theme=light]_&]:hover:border-[#737371] ${focusRing}`}
+            className={`rounded-full border border-[var(--border-default)] bg-[var(--surface-default)] px-4 py-2.5 text-left text-[13px] text-[var(--text-secondary)] hover:border-[var(--border-interactive)] ${focusRing}`}
             onClick={() => ask(id, label)}
           >
             {label}
           </button>
         ))}
         {prompts.length === 0 && (
-          <p className="m-0 text-[13px] leading-[1.5] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
+          <p className="m-0 text-[13px] leading-[1.5] text-[var(--text-muted)] [[data-theme=light]_&]:text-[var(--text-secondary)]">
             That’s everything I can help with on this step. Keep going and I’ll have more on the next one.
           </p>
         )}
       </div>
 
       <form
-        className="mb-5 max-[720px]:mb-4 flex items-center gap-2 rounded-full border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white pr-1.5"
+        className="mb-5 max-[720px]:mb-4 flex items-center gap-2 rounded-full border border-[var(--border-interactive)] [[data-theme=light]_&]:border-[var(--border-default)] bg-[var(--surface-default)] [[data-theme=light]_&]:bg-white pr-1.5"
         onSubmit={submitDraft}
       >
         <input
           type="text"
-          className="h-12 min-w-0 flex-1 rounded-full border-0 bg-transparent px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus:outline-none font-[inherit]"
+          className="h-12 min-w-0 flex-1 rounded-full border-0 bg-transparent px-4 text-sm text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] [[data-theme=light]_&]:placeholder:text-[var(--text-secondary)] focus:outline-none font-[inherit]"
           placeholder="Ask Devy"
           aria-label="Ask Devy a question"
           value={draft}
@@ -99,7 +99,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
         />
         <button
           type="submit"
-          className={`grid h-9 w-9 flex-none place-items-center rounded-full border-0 bg-[#513deb] text-white disabled:opacity-40 ${focusRing}`}
+          className={`grid h-9 w-9 flex-none place-items-center rounded-full border-0 bg-[var(--brand-cta)] text-white disabled:opacity-40 ${focusRing}`}
           disabled={!draft.trim()}
           aria-label="Send message to Devy"
         >

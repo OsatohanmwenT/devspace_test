@@ -1,14 +1,16 @@
 const TONES = {
-  violet: 'bg-[rgba(111,102,236,0.22)] [[data-theme=light]_&]:bg-[#dde8f7] text-[#d8d3ff] [[data-theme=light]_&]:text-[#070c72]',
-  blue: 'bg-[#2f6fed] text-white',
-  teal: 'bg-[#04adc0] text-white',
-  orange: 'bg-[#f5a623] text-white',
-  pink: 'bg-[#e0507a] text-white',
+  brand: 'bg-[var(--surface-brand-tint)] text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-base)]',
+  data: 'bg-[var(--surface-data-tint)] text-[var(--accent-data)]',
+  progress: 'bg-[var(--surface-progress-tint)] text-[var(--accent-progress)]',
+  devy: 'bg-[var(--surface-devy-tint)] text-[var(--accent-devy)]',
+  success: 'bg-[var(--surface-success-tint)] text-[var(--accent-success)]',
+  error: 'bg-[var(--surface-error-tint)] text-[var(--accent-error)]',
+  neutral: 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]',
 }
 
-export function Badge({ children, tone = 'violet', className = '' }) {
+export function Badge({ children, tone = 'brand', className = '' }) {
   return (
-    <span className={`inline-flex rounded-full ${TONES[tone] ?? TONES.violet} px-[11px] py-1 text-[11px] font-medium capitalize ${className}`}>
+    <span className={`inline-flex rounded-full ${TONES[tone] ?? TONES.brand} px-3 py-1 text-[var(--type-label)] leading-[var(--leading-label)] font-medium capitalize ${className}`}>
       {children}
     </span>
   )

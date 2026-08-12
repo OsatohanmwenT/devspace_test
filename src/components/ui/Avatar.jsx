@@ -1,4 +1,4 @@
-const PALETTE = ['#6f66ec', '#04adc0', '#e08a3c', '#7fb069', '#e0607e', '#5fb8ff']
+const PALETTE = ['var(--brand-cta)', 'var(--accent-data)', '#e08a3c', '#7fb069', '#e0607e', '#5fb8ff']
 const SIZES = {
   sm: 'size-7 text-xs',
   md: 'size-10 text-[15px]',

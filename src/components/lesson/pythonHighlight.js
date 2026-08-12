@@ -14,7 +14,7 @@ export const TOKEN_CLASSES = {
   keyword: 'text-[#569cd6]',
   number: 'text-[#b5cea8]',
   function: 'text-[#dcdcaa]',
-  plain: 'text-[#d4d4d4]',
+  plain: 'text-[var(--border-default)]',
 }
 
 export function tokenizePython(code) {

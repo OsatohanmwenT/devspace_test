@@ -4,37 +4,36 @@ import { CheckIcon } from '../ui/icons'
 import { TopicIcon } from './TopicIcon'
 
 const TOPIC_TONES = {
-  Python: 'blue',
-  SQL: 'teal',
-  Git: 'orange',
-  Data: 'violet',
-  Theory: 'pink',
+  Python: 'brand',
+  SQL: 'data',
+  Git: 'progress',
+  Data: 'devy',
+  Theory: 'neutral',
 }
 
 export function PracticeCard({ session, onStart, completion }) {
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] transition-colors duration-150 hover:border-[#6f66ec] [[data-theme=light]_&]:hover:border-[#6f66ec]">
-      <div className="flex flex-col gap-3 p-5 pb-4">
-        <div className="flex items-start justify-between gap-2">
+    <article className="grid min-w-0 gap-4 border-b border-[var(--border-hairline)] p-5 transition-colors last:border-b-0 hover:bg-[var(--surface-subtle)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-6">
+      <div className="grid min-w-0 gap-3">
+        <div className="flex items-center gap-2">
           <Badge tone={TOPIC_TONES[session.topic]}>{session.topic}</Badge>
           {completion && (
-            <span className="flex flex-none items-center gap-1 rounded-full bg-[rgba(4,173,192,0.16)] [[data-theme=light]_&]:bg-[#cee9ed] px-2 py-1 text-[11px] font-bold text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]">
+            <span className="flex flex-none items-center gap-1 rounded-full bg-[var(--surface-data-tint)] px-2 py-1 text-[11px] font-bold text-[var(--accent-data)]">
               <CheckIcon className="w-3 h-3" />
               {completion.correctCount}/{completion.total}
             </span>
           )}
         </div>
-        <h3 className="m-0 font-['Rethink_Sans',Arial,sans-serif] text-lg font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{session.title}</h3>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] px-5 py-3.5">
-        <span className="flex min-w-0 items-center gap-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+        <h3 className="m-0 font-[var(--font-display)] text-[var(--type-subheading)] font-medium text-[var(--text-primary)]">{session.title}</h3>
+        <span className="flex min-w-0 items-center gap-2 text-[var(--text-secondary)]">
           <TopicIcon topic={session.topic} className="w-[18px] h-[18px] flex-none" />
-          <span className="truncate text-xs">{questionLabel} · {session.minutes} min</span>
+          <span className="meta-copy truncate">{questionLabel} · {session.minutes} min</span>
         </span>
-        <ActionButton variant="neutral" className="min-h-9 flex-none px-4 text-sm font-medium" onClick={() => onStart(session.id)}>
+      </div>
+      <div className="flex items-center justify-end">
+        <ActionButton variant="secondary" className="w-full px-5 text-sm md:w-auto" onClick={() => onStart(session.id)}>
           {completion ? 'Retry' : 'Start'}
         </ActionButton>
       </div>

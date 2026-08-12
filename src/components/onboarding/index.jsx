@@ -74,11 +74,11 @@ export default function OnboardingView({ onComplete }) {
   const onPrimary = isLast ? () => onComplete(buildProfile(answers)) : goNext
 
   return (
-    <section className="fixed inset-0 z-30 grid grid-rows-[56px_minmax(0,1fr)_96px] overflow-hidden bg-[#121214] [[data-theme=light]_&]:bg-[#fafaf8]" aria-label="Set up your learning">
+    <section className="fixed inset-0 z-30 grid grid-rows-[56px_minmax(0,1fr)_96px] overflow-hidden bg-[var(--surface-canvas)] [[data-theme=light]_&]:bg-[var(--surface-canvas)]" aria-label="Set up your learning">
       <header className="flex items-center gap-4 px-6 max-[680px]:px-4">
         <button
           type="button"
-          className="grid h-10 w-10 flex-none place-items-center rounded-lg border-0 bg-transparent text-[#9a9a9d] disabled:opacity-30 hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#202020] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+          className="grid h-10 w-10 flex-none place-items-center rounded-lg border-0 bg-transparent text-[var(--text-secondary)] disabled:opacity-30 hover:text-[var(--text-primary)] [[data-theme=light]_&]:hover:text-[var(--text-primary)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-cta)]"
           onClick={goBack}
           disabled={index === 0}
           aria-label="Previous step"
@@ -86,14 +86,14 @@ export default function OnboardingView({ onComplete }) {
           <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 6-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
         <div
-          className="h-2 flex-1 overflow-hidden rounded-full bg-[#262626] [[data-theme=light]_&]:bg-[#eeeeeb]"
+          className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface-raised)] [[data-theme=light]_&]:bg-[var(--border-hairline)]"
           role="progressbar"
           aria-label="Setup progress"
           aria-valuenow={index + 1}
           aria-valuemin={1}
           aria-valuemax={steps.length}
         >
-          <div className="h-full rounded-full bg-[#6f66ec] transition-[width] duration-200" style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-[var(--brand-cta)] transition-[width] duration-200" style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
         </div>
       </header>
 
@@ -117,7 +117,7 @@ export default function OnboardingView({ onComplete }) {
         {step.id === 'summary' && (
           <div className="grid w-full max-w-[460px] justify-items-center gap-5 self-center">
             <StepHeading title="You’re all set" subtitle="Here’s what we’ll start you with." />
-            <dl className="grid w-full gap-px overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]">
+            <dl className="grid w-full gap-px overflow-hidden rounded-2xl border border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-hairline)] bg-[var(--border-default)] [[data-theme=light]_&]:bg-[var(--border-hairline)]">
               <SummaryRow label="Path" value={getPath(buildProfile(answers).pathId).title} />
               {role && <SummaryRow label="Focus" value={roleLabel(branch, role)} />}
               {placement && <SummaryRow label="Starting at" value={placement.label} />}
@@ -157,9 +157,9 @@ export default function OnboardingView({ onComplete }) {
 
 function SummaryRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 py-3.5">
-      <dt className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{label}</dt>
-      <dd className="m-0 text-right text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020]">{value}</dd>
+    <div className="flex items-center justify-between gap-4 bg-[var(--surface-default)] [[data-theme=light]_&]:bg-white px-4 py-3.5">
+      <dt className="text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--text-secondary)]">{label}</dt>
+      <dd className="m-0 text-right text-sm font-medium text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{value}</dd>
     </div>
   )
 }

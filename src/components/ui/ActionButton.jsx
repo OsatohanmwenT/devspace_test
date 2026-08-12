@@ -1,14 +1,15 @@
 const variants = {
-  primary: 'rounded-xl border border-[#7c6ff1] bg-[#513deb] text-white! shadow-[0_4px_0_#19079b] hover:bg-[#624ff0] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none',
-  premium: 'rounded-[54px] bg-[linear-gradient(86deg,#748fff_0%,#ff90e0_44.8%,#f7c325_100%)] text-[#170b29] shadow-[inset_0_-4px_0_rgba(20,37,99,.3)] hover:brightness-105 active:translate-y-1 active:shadow-[inset_0_-1px_0_rgba(20,37,99,.3)]',
-  neutral: 'rounded-[14px] border border-[#666666] [[data-theme=light]_&]:border-[#b8b2a8] bg-[#262626] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#202020] shadow-[0_4px_0_#3d3d3d] [[data-theme=light]_&]:shadow-[0_4px_0_#d8d4cd] hover:brightness-110 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none',
+  primary: 'border border-[var(--brand-cta)] bg-[var(--brand-cta)] text-[var(--text-inverse)] shadow-[var(--shadow-cta)] hover:bg-[var(--brand-hover)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none',
+  secondary: 'border border-[var(--border-interactive)] bg-[var(--surface-default)] text-[var(--text-primary)] hover:border-[var(--brand-cta)] hover:text-[var(--brand-on-dark)]',
+  quiet: 'border border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]',
+  danger: 'border border-[var(--accent-error)] bg-[var(--surface-error-tint)] text-[var(--accent-error)] hover:brightness-95',
 }
 
 export function ActionButton({ variant = 'primary', className = '', children, type = 'button', ...props }) {
   return (
     <button
       type={type}
-      className={`relative px-4 transition-[transform,filter,box-shadow] duration-75 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 ${variants[variant] ?? variants.primary} ${className}`}
+      className={`relative min-h-11 rounded-[var(--radius-control)] px-4 font-medium transition-[transform,background-color,border-color,color,box-shadow] duration-100 focus-visible:outline-3 focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-3 ${variants[variant] ?? variants.primary} ${className}`}
       {...props}
     >
       {children}

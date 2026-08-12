@@ -16,7 +16,7 @@ export const leagues = [
   { id: 'sapphire', name: 'Sapphire League', color: '#5fb8ff', promoteCount: 7, demoteCount: 5, pace: 1.5 },
   { id: 'ruby', name: 'Ruby League', color: '#e0607e', promoteCount: 5, demoteCount: 5, pace: 1.85 },
   { id: 'emerald', name: 'Emerald League', color: '#7fb069', promoteCount: 3, demoteCount: 5, pace: 2.15 },
-  { id: 'diamond', name: 'Diamond League', color: '#04adc0', promoteCount: 0, demoteCount: 5, pace: 2.4 },
+  { id: 'diamond', name: 'Diamond League', color: 'var(--accent-data)', promoteCount: 0, demoteCount: 5, pace: 2.4 },
 ]
 
 export const COHORT_SIZE = 30

@@ -78,9 +78,9 @@ export function BookOpenIcon({ className }) {
 
 export function LessonPedestalIcon({ state, checkpoint = false, selected = false, className = '' }) {
   const palette = {
-    available: { base: '#35363b', rim: '#62636a', ring: '#c9c9cd', center: selected ? '#9f9dd7' : '#ececef', symbol: selected ? '#fff' : '#9f9dd7' },
-    current: { base: '#20366d', rim: '#2d4993', ring: '#9f9dd7', center: '#565581', symbol: '#fff' },
-    completed: { base: '#67658d', rim: '#9f9dd7', ring: '#c5c3eb', center: '#9f9dd7', symbol: '#172552' },
+    available: { base: '#35363b', rim: '#62636a', ring: '#c9c9cd', center: selected ? 'var(--brand-on-dark)' : '#ececef', symbol: selected ? '#fff' : 'var(--brand-on-dark)' },
+    current: { base: '#20366d', rim: '#2d4993', ring: 'var(--brand-on-dark)', center: '#565581', symbol: '#fff' },
+    completed: { base: '#67658d', rim: 'var(--brand-on-dark)', ring: '#c5c3eb', center: 'var(--brand-on-dark)', symbol: '#172552' },
     locked: { base: '#292a2e', rim: '#4c4d52', ring: '#74757b', center: '#a4a5aa', symbol: '#4b4c51' },
   }[state]
 

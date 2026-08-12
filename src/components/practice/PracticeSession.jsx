@@ -75,11 +75,11 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
     : { label: 'Check answer', onClick: checkQuestion, disabled: !canCheck }
 
   return (
-    <section className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-[#181818]" aria-label="Practice session">
-      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
+    <section className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[var(--surface-canvas)] [[data-theme=light]_&]:bg-white text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]" aria-label="Practice session">
+      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-default)] bg-[var(--surface-default)] [[data-theme=light]_&]:bg-[var(--surface-canvas)] px-5 max-[720px]:px-3.5">
         <button
           type="button"
-          className="grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-[#181818] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6f66ec]"
+          className="grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[var(--text-secondary)] [[data-theme=light]_&]:text-[#777] hover:bg-[var(--surface-raised)] [[data-theme=light]_&]:hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] [[data-theme=light]_&]:hover:text-[var(--text-primary)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-cta)]"
           onClick={onExit}
           aria-label="Exit practice session"
         >
@@ -101,7 +101,7 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
         <PracticeIntro session={session} completion={completion} onStart={() => setPhase('quiz')} />
       ) : (
         <>
-          <main className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white">
+          <main className="min-w-0 min-h-0 overflow-auto bg-[var(--surface-default)] [[data-theme=light]_&]:bg-white">
             <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
               <LessonQuestion
                 question={currentQuestion}
@@ -113,8 +113,8 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
             </div>
           </main>
 
-          <footer className="flex items-center justify-end gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] px-6 py-3 max-[720px]:px-3.5">
-            {checked && <span className={`mr-auto text-sm font-semibold ${isQuestionCorrect(currentQuestion, answer) ? 'text-[#04adc0]' : 'text-[#ff676d]'}`} role="status">
+          <footer className="flex items-center justify-end gap-4 border-t border-[var(--border-default)] [[data-theme=light]_&]:border-[var(--border-default)] px-6 py-3 max-[720px]:px-3.5">
+            {checked && <span className={`mr-auto text-sm font-semibold ${isQuestionCorrect(currentQuestion, answer) ? 'text-[var(--accent-data)]' : 'text-[var(--accent-error)]'}`} role="status">
               {isQuestionCorrect(currentQuestion, answer) ? 'Correct' : 'Review the explanation'}
             </span>}
             <ActionButton

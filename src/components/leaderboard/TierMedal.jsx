@@ -9,8 +9,8 @@ export function TierMedal({ league, state, size = 46 }) {
     <span
       className={
         isLocked
-          ? 'grid place-items-center rounded-full bg-[#262626] [[data-theme=light]_&]:bg-[#f0f0ee]'
-          : 'grid place-items-center rounded-full text-[#1a1a1a]'
+          ? 'grid place-items-center rounded-full bg-[var(--surface-raised)] [[data-theme=light]_&]:bg-[#f0f0ee]'
+          : 'grid place-items-center rounded-full text-[var(--surface-default)]'
       }
       style={{
         width: size,
@@ -22,7 +22,7 @@ export function TierMedal({ league, state, size = 46 }) {
     >
       <span className="grid place-items-center" style={{ width: size * 0.42, height: size * 0.42 }}>
         {isLocked
-          ? <LockIcon className="w-full h-full text-[#7d7d80] [[data-theme=light]_&]:text-[#b4b4b1]" />
+          ? <LockIcon className="w-full h-full text-[var(--text-muted)] [[data-theme=light]_&]:text-[#b4b4b1]" />
           : <TrophyIcon className="w-full h-full" />}
       </span>
     </span>

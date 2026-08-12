@@ -13,28 +13,28 @@ export function PlanCard({ plan, isSelected, onSelect }) {
       role="radio"
       aria-checked={isSelected}
       onClick={() => onSelect(plan.id)}
-      className={`relative grid content-start gap-1 rounded-2xl border p-5 text-left transition-colors focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#8d89ff] ${
+      className={`relative grid content-start gap-1 rounded-2xl border p-5 text-left transition-colors focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[var(--brand-on-dark)] ${
         isSelected
-          ? 'border-[#6f66ec] bg-[#6f66ec]/10 [[data-theme=light]_&]:bg-white'
-          : 'border-[#3a3a3e] bg-[#1d1d20] hover:border-[#5a5a61] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#b8b2a8]'
+          ? 'border-[var(--brand-cta)] bg-[var(--brand-cta)]/10 [[data-theme=light]_&]:bg-white'
+          : 'border-[var(--border-default)] bg-[var(--surface-default)] hover:border-[var(--border-interactive)]'
       }`}
     >
-      {isRecommended && <span className="absolute -top-3 right-4 rounded-full bg-[#6f66ec] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.06em] text-white">{plan.badge}</span>}
+      {isRecommended && <span className="absolute -top-3 right-4 rounded-full bg-[var(--brand-cta)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.06em] text-white">{plan.badge}</span>}
       <span className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-[#181818]">{plan.name}</span>
+        <span className="text-sm font-semibold text-[var(--text-primary)] [[data-theme=light]_&]:text-[var(--text-primary)]">{plan.name}</span>
         {isSelected
-          ? <CheckIcon className="size-4 flex-none text-[#8d89ff] [[data-theme=light]_&]:text-[#513deb]" aria-hidden="true" />
+          ? <CheckIcon className="size-4 flex-none text-[var(--brand-on-dark)] [[data-theme=light]_&]:text-[var(--brand-cta)]" aria-hidden="true" />
           : null}
       </span>
 
       <span className="flex items-baseline gap-1.5">
-        <strong className="text-[32px] leading-none font-medium tracking-[-.03em] text-white [[data-theme=light]_&]:text-[#181818]">{plan.priceLabel}</strong>
-        <span className="text-[13px] text-[#c3c3ca] [[data-theme=light]_&]:text-[#686968]">{plan.period}</span>
+        <strong className="text-[32px] leading-none font-medium tracking-[-.03em] text-white [[data-theme=light]_&]:text-[var(--text-primary)]">{plan.priceLabel}</strong>
+        <span className="text-[13px] text-[var(--text-secondary)]">{plan.period}</span>
       </span>
 
-      <span className="text-[13px] text-[#b8b8c0] [[data-theme=light]_&]:text-[#626262]">
+      <span className="text-[13px] text-[var(--text-secondary)] [[data-theme=light]_&]:text-[var(--border-interactive)]">
         {plan.billedLabel}
-        {plan.savingLabel && <span className="ml-1.5 font-semibold text-[#59d9eb] [[data-theme=light]_&]:text-[#04adc0]">{plan.savingLabel}</span>}
+        {plan.savingLabel && <span className="ml-1.5 font-semibold text-[var(--accent-data)]">{plan.savingLabel}</span>}
       </span>
     </button>
   )
