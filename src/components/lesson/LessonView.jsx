@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ActionButton } from '../ui/ActionButton'
-import { LessonNavigationPill } from './LessonNavigationPill'
-import { LessonProgressStrip } from './LessonProgressStrip'
-import { ConceptTransition } from './ConceptTransition'
-import { LessonArticle } from './LessonArticle'
-import { LessonQuestion } from './LessonQuestion'
-import { DevyAssistant } from './DevyAssistant'
-import { ChecklistIcon } from '../ui/icons'
-import { getLesson, writingProgramsLesson } from './lessonContent'
-import { buildLessonFlow } from './lessonFlow'
-import { isQuestionComplete, isQuestionCorrect } from './questionState'
-import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
-import { getLessonTopics } from '../../data/learningResources'
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { getLessonTopics } from '../../data/learningResources';
+import { CheatsheetDrawer } from '../paths/CheatsheetDrawer';
+import { ActionButton } from '../ui/ActionButton';
+import { ChecklistIcon } from '../ui/icons';
+import { ConceptTransition } from './ConceptTransition';
+import { DevyAssistant } from './DevyAssistant';
+import { LessonArticle } from './LessonArticle';
+import { getLesson, writingProgramsLesson } from './lessonContent';
+import { buildLessonFlow } from './lessonFlow';
+import { LessonNavigationPill } from './LessonNavigationPill';
+import { LessonProgressStrip } from './LessonProgressStrip';
+import { LessonQuestion } from './LessonQuestion';
+import { isQuestionComplete, isQuestionCorrect } from './questionState';
 
 const STREAK_THRESHOLD = 3
 

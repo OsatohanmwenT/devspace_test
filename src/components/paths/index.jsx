@@ -45,7 +45,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
           <div className="flex gap-2" role="group" aria-label="Path type">
             {[['all', 'All'], ['career', 'Career paths'], ['skill', 'Skill paths']].map(([value, label]) => {
               const isActive = type === value
-              return <button key={value} type="button" aria-pressed={isActive} onClick={() => setType(value)} className={isActive ? 'min-h-[52px] rounded-2xl border border-[#4169e1] bg-[#4169e1] px-5 text-[15px] font-semibold text-white focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3' : 'min-h-[52px] rounded-2xl border border-[#d4d4d4] bg-white px-5 text-[15px] text-[#525252] focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3'}>{label}</button>
+              return <button key={value} type="button" aria-pressed={isActive} onClick={() => setType(value)} className={isActive ? 'min-h-[52px] rounded-2xl border border-[#4169e1] bg-[#4169e1] px-5 text-[15px] font-semibold text-white focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3' : 'min-h-[52px] rounded-2xl border border-[#404040] bg-[#252525] px-5 text-[15px] text-[#f4f4f2] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#525252] focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3'}>{label}</button>
             })}
           </div>
           <input

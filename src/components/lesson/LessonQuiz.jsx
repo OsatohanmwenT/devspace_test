@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { ActionButton } from '../ui/ActionButton'
-import { LessonQuestion } from './LessonQuestion'
-import { isQuestionComplete, isQuestionCorrect } from './questionState'
+import { useState } from 'react';
+import { ActionButton } from '../ui/ActionButton';
+import { LessonQuestion } from './LessonQuestion';
+import { isQuestionComplete, isQuestionCorrect } from './questionState';
 
 // Multi-question page used by Practice sessions. The lesson flow renders one
 // question per screen instead — see LessonView.
