@@ -326,7 +326,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
       {active !== 'Plans' && !openLesson && (
-      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-[#fafaf8]/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setActive('Home')}
@@ -452,7 +452,7 @@ function App() {
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800font-rethink-sans text-[38px] font-medium">{streakDays}</span>
+                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[38px] font-medium">{streakDays}</span>
                 <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
               </div>
               <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>

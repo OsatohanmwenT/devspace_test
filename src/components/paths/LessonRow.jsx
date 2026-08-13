@@ -23,7 +23,7 @@ export function LessonRow({ lesson, index, isSelected, onSelect }) {
         aria-label={`${lesson.title}, ${stateLabel}${lesson.checkpoint ? ', checkpoint' : ''}`}
         onClick={() => onSelect(lesson)}
       >
-        <LessonPedestalIcon className="group-hover:-translate-y-1 group-active:translate-y-0.5" state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
+        <LessonPedestalIcon className="group-hover:-translate-y-1 group-hover:scale-105 group-active:translate-y-0.5 group-active:scale-100" state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
         <span className="grid min-w-0 gap-[5px]">
           <span className={`text-[10px] font-bold tracking-[.08em] uppercase ${isCurrent || isSelected ? 'text-[#4169e1]' : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}>{stateLabel}</span>
           <strong className="text-[15px] leading-[1.35] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{lesson.title}</strong>

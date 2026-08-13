@@ -144,7 +144,7 @@ export function GuidebookView({ region, onBack }) {
                         type="button"
                         onClick={() => jumpTo(topic.id)}
                         aria-current={isActive ? 'true' : undefined}
-                        className={`flex w-full gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#88bdf2] ${
+                        className={`flex w-full origin-left scale-100 gap-2.5 border-l-2 py-2 pl-4 pr-2 text-left text-[15px] leading-[1.45] transition-[color,border-color,transform] duration-150 hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#88bdf2] ${
                           isActive
                             ? 'border-[#6699ec] bg-[#1e1c2c] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800'
                             : 'border-[#2c2c30] text-[#8c8c91] hover:border-[#5a5a60] hover:text-[#d4d4d7] [[data-theme=light]_&]:border-[#e5e5e3] [[data-theme=light]_&]:text-[#767674] [[data-theme=light]_&]:hover:text-neutral-700'

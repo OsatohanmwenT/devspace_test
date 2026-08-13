@@ -15,7 +15,7 @@ export function PracticeCard({ session, onStart, completion }) {
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none transition-colors duration-150 hover:border-[#6699ec] [[data-theme=light]_&]:hover:border-[#6699ec]">
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-none transition-colors duration-150 hover:border-[#6699ec] [[data-theme=light]_&]:hover:border-[#6699ec]">
       <div className="flex flex-col gap-3 p-5 pb-4">
         <div className="flex items-start justify-between gap-2">
           <Badge tone={TOPIC_TONES[session.topic]}>{session.topic}</Badge>

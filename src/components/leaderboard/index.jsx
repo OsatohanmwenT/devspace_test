@@ -182,7 +182,7 @@ export default function LeaderboardView({
           {tab === 'All time' && !hasAllTime ? (
             <AllTimePreview rows={allTime.slice(0, ALL_TIME_PREVIEW_ROWS)} onOpenPlans={onOpenPlans} />
           ) : (
-            <ol className="grid list-none m-0 overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] p-1.5" aria-label={`${league.name} standings`}>
+            <ol className="grid list-none m-0 overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-1.5" aria-label={`${league.name} standings`}>
               <li className="grid grid-cols-[minmax(0,1fr)_auto_44px] max-[680px]:grid-cols-[minmax(0,1fr)_auto_34px] gap-3.5 max-[680px]:gap-2.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Learner</span>
                 <span>px</span>

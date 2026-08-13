@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
-import { ActionButton } from '../ui/ActionButton'
-import { BookOpenIcon, ChecklistIcon } from '../ui/icons'
-import { FAMILY_ACCENTS } from './ExplorePathCard'
-import { LessonRow } from './LessonRow'
-import { CheatsheetDrawer } from './CheatsheetDrawer'
-import { GuidebookView } from './GuidebookView'
-import { getRegionTopics } from '../../data/learningResources'
+import { useEffect, useState } from 'react';
+import { getRegionTopics } from '../../data/learningResources';
+import { ActionButton } from '../ui/ActionButton';
+import { BookOpenIcon, ChecklistIcon } from '../ui/icons';
+import { CheatsheetDrawer } from './CheatsheetDrawer';
+import { FAMILY_ACCENTS } from './ExplorePathCard';
+import { GuidebookView } from './GuidebookView';
+import { LessonRow } from './LessonRow';
 
 export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack }) {
   const regions = path.cards
@@ -61,7 +61,6 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span>My learning</span>
-        <BookOpenIcon className="w-5 h-5" />
       </button>
       <div className="grid grid-cols-[minmax(340px,420px)_minmax(0,700px)] justify-between items-start gap-14 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[680px]:gap-6">
         <aside className="sticky top-[22px] grid grid-cols-1 gap-3.5 pt-[26px] px-7 pb-7 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[900px]:static max-[900px]:grid-cols-[120px_minmax(0,1fr)_auto] max-[900px]:items-center max-[900px]:p-[22px] max-[680px]:grid-cols-[92px_minmax(0,1fr)] max-[680px]:gap-x-4 max-[680px]:gap-y-3 max-[680px]:p-4.5">

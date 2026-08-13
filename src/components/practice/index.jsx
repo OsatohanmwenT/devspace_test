@@ -26,15 +26,7 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
         </span>
       </header>
 
-      <div className="flex items-center gap-3 max-[900px]:flex-col max-[900px]:items-stretch" aria-label="Find a practice session">
-        <input
-          id="practice-search"
-          className="w-[280px] max-[900px]:w-full min-h-11 flex-none rounded-xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] focus-visible:outline-offset-2"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search practice sessions..."
-          aria-label="Search practice sessions"
-        />
+      <div className="flex items-center justify-between gap-3 max-[900px]:flex-col max-[900px]:items-stretch" aria-label="Find a practice session">
         <div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto py-0.5" role="group" aria-label="Practice topics">
           {practiceTopics.map((item) => {
             const isActive = topic === item
@@ -55,6 +47,14 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
             )
           })}
         </div>
+        <input
+          id="practice-search"
+          className="w-[320px] max-[900px]:w-full min-h-[52px] flex-none rounded-2xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-5 text-[15px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] focus-visible:outline-offset-2"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search practice sessions..."
+          aria-label="Search practice sessions"
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[680px]:grid-cols-1">

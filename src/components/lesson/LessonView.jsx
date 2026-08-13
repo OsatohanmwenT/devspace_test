@@ -245,7 +245,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       </main>
 
       {!isMilestone && <aside
-        className={`absolute z-[1] top-16 bottom-0 left-0 flex w-[var(--devy-panel-width)] max-[720px]:w-full max-[720px]:min-w-0 flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`absolute z-[1] top-16 bottom-0 left-0 flex w-[var(--devy-panel-width)] max-[720px]:w-full max-[720px]:min-w-0 flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] max-[720px]:bottom-auto max-[720px]:h-[min(42vh,340px)] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
         <div
