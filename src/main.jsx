@@ -326,7 +326,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
       {active !== 'Plans' && !openLesson && (
-      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-[#fafaf8]/95 backdrop-blur-md">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setActive('Home')}
@@ -449,7 +449,7 @@ function App() {
         ) : active === 'Practice' ? <PracticeView onStart={setOpenPractice} completedSessions={completedSessions} /> : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px]">
+          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800font-rethink-sans text-[38px] font-medium">{streakDays}</span>
@@ -490,7 +490,7 @@ function App() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f6eef7] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
+          <section className="overflow-hidden rounded-3xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f5edf4] border border-[#404040] [[data-theme=light]_&]:border-[#eadfea] [[data-theme=light]_&]:shadow-none">
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
               <div className="grid gap-1">
@@ -503,7 +503,7 @@ function App() {
             </ActionButton>
           </section>
 
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] p-[22px] text-center">
+          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f1f5ef] [[data-theme=light]_&]:shadow-none p-[22px] text-center">
             <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
               <div className="grid gap-0.5">
                 <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-semibold">{currentLeague.name}</strong>
@@ -530,7 +530,7 @@ function App() {
           <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-[30px] max-[680px]:text-[27px] font-semibold">Your next mission</h1>
 
           <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
-            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-2xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-white! border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
+            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-3xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-[#f4f7fc]! border border-[#404040] [[data-theme=light]_&]:border-[#e3e9f2] [[data-theme=light]_&]:shadow-none">
               <div className="w-full pt-1 text-center">
                 <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
                 <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-3xl sm:text-3xl lg:text-4xl font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>

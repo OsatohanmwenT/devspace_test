@@ -137,16 +137,16 @@ export default function LeaderboardView({
   })()
 
   return (
-    <section className="grid gap-9" aria-label="Leaderboard">
+    <section className="grid gap-8" aria-label="Leaderboard">
       {lastLeagueResult && (
         <LeagueResultBanner result={lastLeagueResult} progress={progress} onDismiss={onDismissResult} onOpenPlans={onOpenPlans} />
       )}
 
       {/* The header explains the league; the compact target strip below tells
           the learner what their next useful move is before they scan the rows. */}
-      <div className="grid justify-items-center gap-3 text-center max-w-[640px] mx-auto">
+      <div className="grid justify-items-center gap-3 text-center max-w-[680px] mx-auto rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e3e9f2] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f1f5fb] px-6 py-5 max-[680px]:px-4">
         <LeagueLadder leagueIndex={leagueIndex} />
-        <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[clamp(26px,3.2vw,32px)] font-medium leading-tight">{league.name}</h1>
+        <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-3xl font-semibold leading-tight">{league.name}</h1>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">
           {league.promoteCount > 0 && league.demoteCount > 0
             ? `Top ${league.promoteCount} advance · bottom ${league.demoteCount} drop`
@@ -160,7 +160,7 @@ export default function LeaderboardView({
         <LockedLeaderboard league={league} pxToJoin={PX_TO_JOIN} onStartPractice={onStartPractice} />
       ) : (
         <div className="grid w-full max-w-[680px] mx-auto gap-6">
-          <div className="flex items-center justify-between gap-4 border-y border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] px-2 py-3" role="status">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] px-4 py-3" role="status">
             <div className="flex items-center gap-3">
               <span className="rounded-full border border-[#57575d] [[data-theme=light]_&]:border-[#d4d4d4] px-2.5 py-1 text-[11px] font-bold tabular-nums text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">#{summary.user.rank}</span>
               <div className="grid gap-0.5">
@@ -182,7 +182,7 @@ export default function LeaderboardView({
           {tab === 'All time' && !hasAllTime ? (
             <AllTimePreview rows={allTime.slice(0, ALL_TIME_PREVIEW_ROWS)} onOpenPlans={onOpenPlans} />
           ) : (
-            <ol className="grid list-none m-0 p-0 border-y border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]" aria-label={`${league.name} standings`}>
+            <ol className="grid list-none m-0 overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] p-1.5" aria-label={`${league.name} standings`}>
               <li className="grid grid-cols-[minmax(0,1fr)_auto_44px] max-[680px]:grid-cols-[minmax(0,1fr)_auto_34px] gap-3.5 max-[680px]:gap-2.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Learner</span>
                 <span>px</span>
@@ -210,7 +210,7 @@ export default function LeaderboardView({
                   return <li key="demotion-line"><ZoneDivider label="Demotion zone starts" color="#ff676d" /></li>
                 }
                 return (
-                  <li key={item.entry.id} className="border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
+                <li key={item.entry.id} className="border-t border-[#404040] first:border-t-0 [[data-theme=light]_&]:border-[#ebe9e4]">
                     <LeaderboardRow entry={item.entry} isCurrentUser={item.entry.id === USER_ID} />
                   </li>
                 )

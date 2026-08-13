@@ -9,12 +9,12 @@ export function ExplorePathCard({ path, onSelect }) {
   const family = FAMILY_ACCENTS[path.family] ?? FAMILY_ACCENTS.backend
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]">
+    <article className="min-w-0 overflow-hidden rounded-3xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-none">
       <button type="button" className="flex h-full w-full flex-col text-left" onClick={() => onSelect(path)} aria-label={`Open ${path.title} path`}>
-        <div className={`grid min-h-40 place-items-center overflow-hidden [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_42%,#ffffff)]`}>
+        <div className={`grid min-h-40 place-items-center overflow-hidden [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_70%,#fafaf8)]`}>
           <img className="block h-32 w-[min(66%,180px)] object-contain" src={path.image} alt="" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col border-t border-neutral-800 bg-neutral-800 p-[18px] [[data-theme=light]_&]:border-[#e5e5e5] [[data-theme=light]_&]:bg-[#f5f5f4] max-[680px]:p-4">
+        <div className="flex min-w-0 flex-1 flex-col border-t border-neutral-800 bg-neutral-800 p-[18px] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-[#fdfcf9] max-[680px]:p-4">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[11px] font-bold tracking-[.08em] text-neutral-300 uppercase [[data-theme=light]_&]:text-[#525252]">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
           {path.recommended && <span className="rounded-full bg-[#4169e1]/15 px-2 py-1 text-[10px] font-bold tracking-[.06em] text-[#84a5ff] uppercase [[data-theme=light]_&]:text-[#4169e1]">Recommended</span>}
@@ -22,7 +22,7 @@ export function ExplorePathCard({ path, onSelect }) {
         <h3 className="mt-2 text-xl leading-[1.15] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800 max-[680px]:text-lg">{path.title}</h3>
         <p className="mt-2 text-sm leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.description}</p>
         <div className="mt-4 border-t border-[#404040] pt-3 [[data-theme=light]_&]:border-[#dededb]">
-          <div className="flex flex-wrap gap-1.5">{path.tools.map((tool) => <span key={tool} className="rounded-full bg-[#363636] px-2 py-1 text-[11px] text-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#525252]">{tool}</span>)}</div>
+          <div className="flex flex-wrap gap-1.5">{path.tools.map((tool) => <span key={tool} className="rounded-full bg-[#363636] px-2.5 py-1 text-[11px] text-[#d4d4d4] [[data-theme=light]_&]:bg-[#f1efe9] [[data-theme=light]_&]:text-[#525252]">{tool}</span>)}</div>
         </div>
         </div>
       </button>

@@ -11,13 +11,13 @@ export function LeaderboardTabs({ tabs, active, onSelect, lockedTabs = [], onLoc
 
   return (
     <div
-      className="relative grid w-[324px] max-w-full grid-cols-3 mx-auto rounded-xl bg-[#171717] [[data-theme=light]_&]:bg-[#f2f2f0] p-1"
+      className="relative grid w-[324px] max-w-full grid-cols-3 mx-auto rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#171717] [[data-theme=light]_&]:bg-[#f1efe9] p-1"
       role="group"
       aria-label="Leaderboard range"
     >
       <span
         aria-hidden="true"
-        className="absolute inset-y-1 left-1 w-[calc((100%_-_8px)_/_3)] rounded-lg bg-[#262626] [[data-theme=light]_&]:bg-white transition-transform duration-200 ease-out motion-reduce:transition-none"
+        className="absolute inset-y-1 left-1 w-[calc((100%_-_8px)_/_3)] rounded-full bg-[#262626] [[data-theme=light]_&]:bg-white transition-transform duration-200 ease-out motion-reduce:transition-none"
         style={{ transform: `translateX(${activeIndex * 100}%)` }}
       />
       {tabs.map((tab) => {

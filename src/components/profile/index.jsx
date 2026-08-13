@@ -1,4 +1,4 @@
-import { CheckIcon } from '../ui/icons'
+import { BookOpenIcon, BoltIcon, ChecklistIcon, CheckIcon, InfoIcon, TrophyIcon } from '../ui/icons'
 import { ActionButton } from '../ui/ActionButton'
 import {
   roleOptions,
@@ -83,14 +83,75 @@ function regionDateRange(region) {
   return first === last ? first : `${first} – ${last}`
 }
 
+function BriefcaseIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="8" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3 13h18" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  )
+}
+
+function LayersIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m12 3 9 5-9 5-9-5 9-5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="m3 13 9 5 9-5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function HeartIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 20s-7-4.35-9.5-8.5C.5 8 2 4.5 5.5 4.5 8 4.5 9.5 6 12 8.5c2.5-2.5 4-4 6.5-4 3.5 0 5 3.5 3 7-2.5 4.15-9.5 8.5-9.5 8.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function BarChartIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 20V12M11 20V6M17 20v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function TrendingUpIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m3 17 6-6 4 4 8-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 7h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function FlagIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 3v18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M6 4h11l-3 4 3 4H6" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 // The eyebrow-and-rule header is the streak journey drawer's idiom, borrowed
 // here on purpose: a section label should recede and let the record itself
 // carry the page, which is also what makes a document read as considered
-// rather than as a stack of equally loud dashboard cards.
-function SectionCard({ title, children, className = '' }) {
+// rather than as a stack of equally loud dashboard cards. The icon badge is
+// the one repeated spot of color — enough to keep eleven grey cards from
+// blurring together, not enough to compete with the record itself.
+function SectionCard({ title, icon: Icon, children, className = '' }) {
   return (
-    <section className={`grid gap-5 rounded-2xl ${SURFACE} p-7 max-[480px]:p-5 ${className}`}>
+    <section className={`grid gap-5 rounded-2xl ${SURFACE} p-7 shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)] max-[480px]:p-5 ${className}`}>
       <div className="flex items-center gap-3">
+        {Icon && (
+          <span className="grid size-7 flex-none place-items-center rounded-lg bg-[#1c2a4d] text-[#88bdf2] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-[#2563eb]" aria-hidden="true">
+            <Icon className="size-[15px]" />
+          </span>
+        )}
         <h2 className={`m-0 text-[11px] font-bold uppercase tracking-[.09em] ${MUTED}`}>{title}</h2>
         <span className={`h-px flex-1 ${RULE}`} />
       </div>
@@ -273,7 +334,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_312px] items-start gap-5 max-[900px]:grid-cols-1" aria-label="Profile">
       <section className="grid gap-5">
-        <header className={`grid overflow-hidden rounded-2xl ${SURFACE}`}>
+        <header className={`grid overflow-hidden rounded-2xl ${SURFACE} shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)]`}>
           {/* A fine diagonal rule field rather than a soft gradient wash —
               closer to engraved stationery than to a hero banner. */}
           <div
@@ -329,7 +390,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               </div>
               <div className={`h-2 w-full overflow-hidden rounded-full bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]`}>
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#6699ec] to-[#8b7cf6] transition-[width] duration-500 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-[#6699ec] to-[#2563eb] transition-[width] duration-500 ease-out"
                   style={{ width: `${levelInfo.percent}%` }}
                 />
               </div>
@@ -346,7 +407,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         </header>
 
         {about && (
-          <SectionCard title="About">
+          <SectionCard title="About" icon={InfoIcon}>
             <p className={`m-0 max-w-[68ch] text-[14px] leading-[1.75] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
               {about}
             </p>
@@ -354,14 +415,14 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         )}
 
         {experienceRegions.length === 0 ? (
-          <SectionCard title="Experience">
+          <SectionCard title="Experience" icon={BriefcaseIcon}>
             <p className={`m-0 max-w-[60ch] text-[14px] leading-[1.7] ${MUTED}`}>
               Nothing here yet. Finish a lesson and the region it belongs to appears as an
               entry, with the dates you worked through it and what it demonstrates.
             </p>
           </SectionCard>
         ) : (
-          <SectionCard title="Experience">
+          <SectionCard title="Experience" icon={BriefcaseIcon}>
             <ol className="m-0 grid list-none gap-8 p-0">
               {experienceRegions.map((region) => (
                 <ExperienceEntry key={region.id ?? region.title} region={region} pathTitle={currentPath?.title ?? ''} />
@@ -371,7 +432,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         )}
 
         {certifications.length > 0 && (
-          <SectionCard title="Achievements">
+          <SectionCard title="Achievements" icon={TrophyIcon}>
             <ul className="m-0 grid list-none gap-5 p-0">
               {certifications.map((lesson) => (
                 <li key={lesson.id} className={DATED_ROW}>
@@ -390,7 +451,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         )}
 
         {skills.length > 0 && (
-          <SectionCard title="Skills">
+          <SectionCard title="Skills" icon={LayersIcon}>
             <div className="flex flex-wrap gap-1.5">
               {skills.map((skill) => <Chip key={skill}>{skill}</Chip>)}
             </div>
@@ -398,7 +459,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         )}
 
         {currentPath && (
-          <SectionCard title="Education">
+          <SectionCard title="Education" icon={BookOpenIcon}>
             <div className={DATED_ROW}>
               <DateCell>{joinedYear ? `${joinedYear} – Present` : 'Present'}</DateCell>
               <div className="grid gap-1.5">
@@ -418,7 +479,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         )}
 
         {(interestLabels.length > 0 || needLabels.length > 0) && (
-          <SectionCard title="Interests">
+          <SectionCard title="Interests" icon={HeartIcon}>
             <div className="grid gap-5">
               {interestLabels.length > 0 && (
                 <div className="grid gap-2.5">
@@ -442,7 +503,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
       </section>
 
       <aside className="grid gap-5">
-        <SectionCard title="Learning record">
+        <SectionCard title="Learning record" icon={BarChartIcon}>
           <dl className="m-0 grid gap-3">
             {record.map((item, index) => (
               <RecordRow key={item.label} label={item.label} value={item.value} isLast={index === record.length - 1} />
@@ -450,7 +511,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
           </dl>
         </SectionCard>
 
-        <SectionCard title="Streak badges">
+        <SectionCard title="Streak badges" icon={BoltIcon}>
           <div className="grid grid-cols-3 gap-3">
             {STREAK_MILESTONES.map((tier) => (
               <StreakBadge
@@ -464,7 +525,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         </SectionCard>
 
         {league && (
-          <SectionCard title="Standing">
+          <SectionCard title="Standing" icon={TrendingUpIcon}>
             <div className="flex items-center gap-3">
               <TierMedal league={league} state="current" size={44} />
               <div className="grid gap-0.5">
@@ -475,7 +536,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
           </SectionCard>
         )}
 
-        <SectionCard title="Profile quests">
+        <SectionCard title="Profile quests" icon={ChecklistIcon}>
           <div className="grid gap-3">
             <div className="flex items-baseline justify-between gap-3">
               <span className={`text-[13px] ${MUTED}`}>{profileQuests.percent}% complete</span>
@@ -492,7 +553,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         </SectionCard>
 
         {pathProgress?.nextCheckpoint && (
-          <SectionCard title="Next checkpoint">
+          <SectionCard title="Next checkpoint" icon={FlagIcon}>
             <div className="grid gap-1">
               <span className={`text-[15px] font-medium ${INK}`}>{pathProgress.nextCheckpoint.lesson.title}</span>
               <span className={`text-[13px] ${MUTED}`}>

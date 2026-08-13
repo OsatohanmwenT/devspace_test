@@ -12,6 +12,7 @@
 @layer base {
   body {
     font-family: var(--font-rethink-sans);
+    background: #fafaf8;
   }
 
   h1,
@@ -33,6 +34,14 @@
   input {
     font: inherit;
   }
+}
+
+/* Calm, warm light-mode foundation: surfaces are separated with tint and
+   spacing first, then a hairline border—rather than heavy shadows. */
+[data-theme='light'] {
+  --app-canvas: #fafaf8;
+  --app-surface: #ffffff;
+  --app-border: #e8e6e1;
 }
 
 /* Preserve scrolling in compact panels without exposing a distracting rail. */

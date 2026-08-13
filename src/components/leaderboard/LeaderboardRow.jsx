@@ -34,7 +34,7 @@ export function LeaderboardRow({ entry, isCurrentUser }) {
   const tier = MEDALS[entry.rank]
 
   return (
-    <div className={isCurrentUser ? `${ROW_GRID} rounded-xl border border-[#6699ec] bg-[#2a293c] shadow-[0_0_0_1px_rgba(141,137,255,0.35)] [[data-theme=light]_&]:bg-[#f0f5fd]` : `${ROW_GRID} rounded-none border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f7f7f5]`}>
+    <div className={isCurrentUser ? `${ROW_GRID} my-1 rounded-2xl border border-[#8bb5f5] bg-[#2a293c] [[data-theme=light]_&]:border-[#b9d4f7] [[data-theme=light]_&]:bg-[#e9f2ff]` : `${ROW_GRID} rounded-xl border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f3f1ec]`}>
       <span className={`grid place-items-center text-[13px] text-center ${tier ? TIER_RANK_COLOR[tier] : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'}`}>
         <span aria-hidden="true">{tier ? <TrophyIcon className="w-[18px] h-[18px]" /> : entry.rank}</span>
         <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">Rank {entry.rank}</span>
