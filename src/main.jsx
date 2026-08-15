@@ -4,7 +4,6 @@ import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
 import { ShortSessionRow } from './components/home/ShortSessionRow';
 import LeaderboardView from './components/leaderboard';
-import { TierMedal } from './components/leaderboard/TierMedal';
 import { getLesson } from './components/lesson/lessonContent';
 import { LessonLoading } from './components/lesson/LessonLoading';
 import LessonView from './components/lesson/LessonView';
@@ -20,12 +19,13 @@ import { ActionButton } from './components/ui/ActionButton';
 import { Badge } from './components/ui/Badge';
 import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
+import { DevyDrawer } from './components/ui/DevyDrawer';
 import { getLeague } from './data/leagues';
 import { getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
 import { activatePremium, applyActivity, deactivatePremium, loadProgress, saveProgress } from './data/progress';
 import { can, CAPABILITIES } from './lib/entitlements';
-import { resolveWeek } from './lib/leagueSim';
+import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
 import { derivePathProgress } from './lib/pathProgress';
@@ -58,6 +58,8 @@ function App() {
   const [streakJourneyOpen, setStreakJourneyOpen] = useState(false)
   const [progress, setProgress] = useState(loadProgress)
   const [plansHighlight, setPlansHighlight] = useState(null)
+  const [publicProfileView, setPublicProfileView] = useState(false)
+  const [pathsInitialView, setPathsInitialView] = useState(null)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -308,6 +310,12 @@ function App() {
   const activeToday = isActiveToday(lastActiveDate)
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
+  const homeStandings = useMemo(() => {
+    const standings = getStandings(getWeekIndex(now()), leagueIndex, weeklyXp, now())
+    const leaders = standings.slice(0, 3)
+    const learner = standings.find((entry) => entry.id === USER_ID)
+    return leaders.some((entry) => entry.id === USER_ID) ? leaders : [...leaders, learner]
+  }, [leagueIndex, weeklyXp])
 
   // Two or three unfinished sessions for the row under the mission card.
   const homePracticeSessions = useMemo(() => {
@@ -346,7 +354,7 @@ function App() {
                     ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6699ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
                     : "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
                 }
-                onClick={() => setActive(item)}
+                onClick={() => { setActive(item); setPathsInitialView(null) }}
               >
                 {item}
               </button>
@@ -408,20 +416,26 @@ function App() {
 
         {menuOpen && (
           <div
-            className="absolute z-[5] top-14 right-[max(22px,calc((100vw-1160px)/2))] max-[680px]:right-[18px] grid gap-[3px] min-w-[190px] p-2 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+            className="account-menu absolute z-[5] top-14 right-[max(22px,calc((100vw-1160px)/2))] max-[680px]:right-[18px] grid min-w-[216px] gap-0.5 p-2 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[14px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white shadow-[0_18px_44px_rgba(0,0,0,.42)] [[data-theme=light]_&]:shadow-[0_18px_44px_rgba(20,20,20,.14)]"
             ref={menuRef}
             role="menu"
           >
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Profile'); setMenuOpen(false) }}>Profile</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}>Settings</button>
-            <button className="border-0 rounded-lg bg-transparent p-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-left hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={toggleTheme}>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</button>
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Profile'); setPublicProfileView(false); setMenuOpen(false) }}><span className="grid size-5 place-items-center text-[17px]" aria-hidden="true">♙</span>Profile</button>
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Profile'); setPublicProfileView(true); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" /></svg>Public profile</button>
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { openPlans(); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v6M12 15v6M3 12h6M15 12h6M6.5 6.5 9 9M15 15l2.5 2.5M17.5 6.5 15 9M9 15l-2.5 2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Devspace Pro</button>
+            <div className="my-1 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]" role="separator" />
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { setActive('Settings'); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" /><path d="M12 3v2M12 19v2M21 12h-2M5 12H3M18.4 5.6 17 7M7 17l-1.4 1.4M18.4 18.4 17 17M7 7 5.6 5.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Settings</button>
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { toggleTheme(); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</button>
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { showNotice('Support is coming soon'); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" /><path d="M9.8 9a2.3 2.3 0 1 1 3.9 1.7c-.9.8-1.7 1.2-1.7 2.5M12 16.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Help / Report a problem</button>
+            <div className="my-1 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]" role="separator" />
+            <button className="flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-3 text-left text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:bg-[#262b34] [[data-theme=light]_&]:hover:bg-[#f0f5fd]" role="menuitem" onClick={() => { showNotice('Signed out'); setMenuOpen(false) }}><svg className="size-[17px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M9 12h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Sign out</button>
           </div>
         )}
       </header>
       )}
 
       <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} /> : active === 'Settings' ? (
+        {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} initialView={pathsInitialView} /> : active === 'Settings' ? (
           <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
         ) : active === 'Profile' ? (
           <ProfileView
@@ -430,8 +444,10 @@ function App() {
             currentPath={currentPath}
             pathProgress={derived}
             onSaveProfile={saveProfileFields}
-            onStartLearning={() => setActive('Paths')}
+            onStartLearning={() => { setActive('Paths'); setPathsInitialView(null) }}
             isLoading={profileLoading}
+            isPublicView={publicProfileView}
+            onTogglePublicView={setPublicProfileView}
           />
         ) : active === 'Plans' ? (
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
@@ -503,7 +519,7 @@ function App() {
             </ActionButton>
           </section>
 
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f1f5ef] [[data-theme=light]_&]:shadow-none p-[22px] text-center">
+          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
             <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
               <div className="grid gap-0.5">
                 <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-semibold">{currentLeague.name}</strong>
@@ -513,15 +529,19 @@ function App() {
                 Earn XP this week to move up the leaderboard. Final standings update when the week ends.
               </InfoTooltip>
             </div>
-            <div
-              className="flex w-full items-center justify-center py-8 my-2 rounded-lg border border-[#404040] bg-[#171717] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4]"
-              aria-hidden="true"
-            >
-              <TierMedal league={currentLeague} state="current" size={64} />
-            </div>
-            <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px] leading-[1.4]">
-              {weeklyXp > 0 ? `${weeklyXp.toLocaleString()} XP earned this week` : "Earn XP to join this week's league"}
-            </p>
+            <button type="button" className="grid w-full gap-2 rounded-2xl border border-[#404040] bg-[#171717] p-3.5 text-left transition-colors hover:border-[#5a5a60] hover:bg-[#1c1c1e] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:hover:border-[#d4d4d4]" onClick={() => setActive('Leaderboard')} aria-label="Open leaderboard">
+              <span className="flex items-center justify-between px-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
+                <span>Standings</span>
+                <span>XP</span>
+              </span>
+              {homeStandings.map((entry) => (
+                <span key={entry.id} className={`grid min-h-8 grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-[13px] ${entry.id === USER_ID ? 'bg-[#2a293c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#e9f2ff] [[data-theme=light]_&]:text-neutral-800' : ''}`}>
+                  <span className="text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{entry.rank}</span>
+                  <span className="truncate font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{entry.id === USER_ID ? 'You' : entry.name}</span>
+                  <strong className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] tabular-nums">{entry.score.toLocaleString()}</strong>
+                </span>
+              ))}
+            </button>
           </section>
 
         </aside>
@@ -560,6 +580,18 @@ function App() {
             </article>
           </div>
 
+          <section className="mt-8" aria-labelledby="also-learning-title">
+            <p id="also-learning-title" className="m-0 text-[11px] font-semibold tracking-[0.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">ALSO LEARNING</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button type="button" className="min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => { setActive('Paths'); setPathsInitialView(null) }}>
+                {currentPath.title} · {currentRegionCard.percent}%
+              </button>
+              <button type="button" className="min-h-11 rounded-full border border-transparent bg-[#1c2a4d] [[data-theme=light]_&]:bg-[#f0f5fd] px-4 text-sm font-medium text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] hover:bg-[#213762] [[data-theme=light]_&]:hover:bg-[#e2edfc]" onClick={() => { setPathsInitialView('custom'); setActive('Paths') }}>
+                <span aria-hidden="true">＋</span> Create another
+              </button>
+            </div>
+          </section>
+
           <ShortSessionRow
             sessions={homePracticeSessions}
             completedSessions={completedSessions}
@@ -571,24 +603,18 @@ function App() {
         )}
       </main>
 
-      {active === 'Home' && (
+      {!openLesson && active !== 'Plans' && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
-          {devyOpen && (
-            <section id="devy-hint" className="w-[min(320px,calc(100vw-36px))] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-4 shadow-[0_12px_30px_rgba(0,0,0,.24)] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]" role="status" aria-label="Devy hint">
-              <div className="flex items-start gap-3">
-                <img className="size-12 flex-none object-contain" src="/assets/devy.svg" alt="" />
-                <div>
-                  <strong className="text-sm font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Try this first</strong>
-                  <p className="mt-1 text-xs leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{homeHint}</p>
-                </div>
-              </div>
-            </section>
-          )}
-          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen((open) => !open)} aria-expanded={devyOpen} aria-controls="devy-hint" aria-label={devyOpen ? 'Close Devy hint' : 'Ask Devy'}>
+          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
             <img className="size-full object-contain" src="/assets/devy.svg" alt="" />
           </button>
         </div>
       )}
+
+      {devyOpen && <>
+        <button type="button" className="fixed inset-0 z-40 cursor-default bg-black/30" onClick={() => setDevyOpen(false)} aria-label="Close Devy" />
+        <DevyDrawer page={active} pathTitle={currentPath.title} nextLesson={nextLesson?.title} onClose={() => setDevyOpen(false)} />
+      </>}
 
       {streakJourneyOpen && (
         <StreakJourneyModal
@@ -609,7 +635,7 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} />}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )

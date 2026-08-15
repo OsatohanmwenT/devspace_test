@@ -15,8 +15,8 @@ export function PracticeCard({ session, onStart, completion }) {
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-none transition-colors duration-150 hover:border-[#6699ec] [[data-theme=light]_&]:hover:border-[#6699ec]">
-      <div className="flex flex-col gap-3 p-5 pb-4">
+    <article className="flex min-h-[180px] min-w-0 flex-col rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-5 shadow-[0_8px_20px_rgba(0,0,0,.08)] [[data-theme=light]_&]:shadow-[0_4px_14px_rgba(20,20,20,.08)] transition-transform duration-150 hover:-translate-y-0.5">
+      <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <Badge tone={TOPIC_TONES[session.topic]}>{session.topic}</Badge>
           {completion && (
@@ -29,7 +29,7 @@ export function PracticeCard({ session, onStart, completion }) {
         <h3 className="m-0 font-rethink-sans text-lg font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{session.title}</h3>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] px-5 py-3.5">
+      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
         <span className="flex min-w-0 items-center gap-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
           <TopicIcon topic={session.topic} className="w-[18px] h-[18px] flex-none" />
           <span className="truncate text-xs">{questionLabel} · {session.minutes} min</span>

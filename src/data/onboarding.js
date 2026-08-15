@@ -237,11 +237,11 @@ export const branchTriage = {
 }
 
 export const motivationOptions = [
-  { value: 'professional_developer', label: 'I want to build a professional career', icon: '🧑‍💻' },
-  { value: 'advance_career', label: 'To advance my current career', icon: '💼' },
-  { value: 'build_things', label: 'To create useful work and real projects', icon: '🧱' },
-  { value: 'for_fun', label: 'Just to have fun', icon: '🎉' },
-  { value: 'different_reason', label: 'I have a different reason', icon: '❓' },
+  { value: 'professional_developer', label: 'I want to build a professional career', icon: 'code' },
+  { value: 'advance_career', label: 'To advance my current career', icon: 'briefcase' },
+  { value: 'build_things', label: 'To create useful work and real projects', icon: 'blocks' },
+  { value: 'for_fun', label: 'Just to have fun', icon: 'sparkles' },
+  { value: 'different_reason', label: 'I have a different reason', icon: 'help' },
 ]
 
 // `rung` is explicit so placement never has to infer an ordering across what
@@ -274,13 +274,14 @@ export const projectInterestOptions = [
 ]
 
 export const immediateNeedOptions = [
-  { value: 'career_path', label: 'Pick the right career path' },
-  { value: 'choose_stack', label: 'Choose the right tools' },
-  { value: 'learn_basics', label: 'Learn the basics from scratch' },
-  { value: 'build_projects', label: 'Build projects' },
-  { value: 'improve_portfolio', label: 'Improve my portfolio' },
-  { value: 'fix_gaps', label: 'Fix gaps in my knowledge' },
-  { value: 'interview_prep', label: 'Prepare for interviews' },
+  { value: 'career_path', label: 'Find the right career path', icon: 'compass' },
+  { value: 'choose_stack', label: 'Learn a specific skill', icon: 'target' },
+  { value: 'learn_basics', label: 'Learn from scratch', icon: 'sprout' },
+  { value: 'fix_gaps', label: 'Fill gaps in what I know', icon: 'puzzle' },
+  { value: 'build_projects', label: 'Build stronger projects', icon: 'pencil' },
+  { value: 'improve_portfolio', label: 'Improve my portfolio', icon: 'ribbon' },
+  { value: 'interview_prep', label: 'Prepare for interviews', icon: 'message' },
+  { value: 'something_specific', label: 'Something specific', icon: 'sparkle' },
 ]
 
 export const dailyTimeOptions = [

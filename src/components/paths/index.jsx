@@ -1,14 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { currentPath, explorePaths, getPath, pathShelves } from '../../data/paths'
 import { CurrentPathCard } from './CurrentPathCard'
+import { CustomPathCard } from './CustomPathCard'
+import { CustomPathBuilder } from './CustomPathBuilder'
 import { ExplorePathCard, PathPreview } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson }) {
-  const [view, setView] = useState('overview')
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView }) {
+  const [view, setView] = useState(initialView ?? 'overview')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
   const [selectedPath, setSelectedPath] = useState(null)
+  const [customPath, setCustomPath] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('devspace-custom-path'))
+    } catch {
+      return null
+    }
+  })
+  const [selectedCustomPath, setSelectedCustomPath] = useState(null)
+
+  useEffect(() => {
+    if (customPath) localStorage.setItem('devspace-custom-path', JSON.stringify(customPath))
+  }, [customPath])
   const paths = (type === 'all' ? explorePaths : explorePaths.filter((path) => path.type === type)).filter((path) => {
     const term = query.trim().toLowerCase()
     return !term || [path.title, path.description, ...path.tools].join(' ').toLowerCase().includes(term)
@@ -26,6 +40,14 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
 
   if (view === 'detail') return <LearningPathDetail path={selectedPath ? getPath(selectedPath.id) : currentPath} completedLessons={completedLessons} onOpenLesson={onOpenLesson} onBack={() => setView('overview')} />
   if (view === 'preview' && selectedPath) return <PathPreview path={selectedPath} onBack={() => setView('overview')} />
+  if (view === 'custom') return (
+    <CustomPathBuilder
+      key={selectedCustomPath?.id ?? 'new-custom-path'}
+      existingPath={selectedCustomPath}
+      onBack={() => { setSelectedCustomPath(null); setView('overview') }}
+      onStart={(path) => { setCustomPath(path); setSelectedCustomPath(null); setView('overview') }}
+    />
+  )
 
   return (
     <section className="grid gap-8 max-[720px]:gap-[30px]" aria-label="Learning paths">
@@ -35,6 +57,23 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
       </header>
 
       <CurrentPathCard path={currentLearnerPath} onOpenDetail={() => { setSelectedPath(null); setView('detail') }} />
+
+      {customPath && (
+        <section className="grid gap-4" aria-labelledby="custom-paths-title">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="custom-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Custom paths</h2>
+            <span className="text-[13px] text-[#8b7cf6]">Made with Devy</span>
+          </div>
+          <article className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-2xl border border-[#6c8ee8] bg-[#1d2f5d] px-6 py-5 [[data-theme=light]_&]:border-[#cbd8ff] [[data-theme=light]_&]:bg-[#eff4ff] max-[720px]:grid-cols-1 max-[720px]:px-5">
+            <div className="min-w-0">
+              <span className="text-[12px] font-semibold uppercase tracking-[.1em] text-[#a9c4ff] [[data-theme=light]_&]:text-[#315bb5]">Start here</span>
+              <h3 className="mt-1 mb-1 font-rethink-sans text-[21px] font-semibold text-white [[data-theme=light]_&]:text-[#1f3c7c]">{customPath.title}</h3>
+              <p className="m-0 text-[14px] leading-[1.5] text-[#dbe6ff] [[data-theme=light]_&]:text-[#3a568d]">{customPath.stages?.[0]?.title} · {customPath.project}</p>
+            </div>
+            <button type="button" className="min-h-11 rounded-xl border border-white/30 bg-white px-5 text-sm font-semibold text-[#1f3c7c] shadow-[0_3px_0_rgba(24,55,116,0.25)] hover:bg-[#f5f8ff] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 max-[720px]:w-full" onClick={() => { setSelectedCustomPath(customPath); setView('custom') }}>Continue</button>
+          </article>
+        </section>
+      )}
 
       <section className="grid gap-5 border-t border-[#404040] pt-7 [[data-theme=light]_&]:border-[#eeeeeb]" aria-labelledby="explore-paths-title">
         <div className="flex items-center justify-between gap-4">
@@ -61,6 +100,8 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
           {paths.map((path) => <ExplorePathCard key={path.id} path={path} onSelect={selectPath} />)}
         </div>
       </section>
+
+      <CustomPathCard onCreatePath={() => { setSelectedCustomPath(null); setView('custom') }} />
     </section>
   )
 }

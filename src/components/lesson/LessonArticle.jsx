@@ -1,24 +1,32 @@
-import { RichText } from './RichText'
+import { RichText } from './RichText';
 
-export function LessonArticle({ article }) {
+export function LessonArticle({ article, lessonTitle, conceptTitle, step, totalSteps, isNarrating, onToggleNarration }) {
   return (
     <article
-      className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+      className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fafaf8]"
       aria-labelledby="lesson-article-title"
     >
-      <div className="max-w-[62ch] mx-auto pt-[clamp(24px,4vw,48px)] px-7 pb-10 max-[720px]:pt-6 max-[720px]:px-5 max-[720px]:pb-9">
+      <div className="max-w-[72ch] mx-auto pt-[clamp(24px,4vw,48px)] px-7 pb-10 max-[720px]:pt-6 max-[720px]:px-5 max-[720px]:pb-9">
+        <p className="m-0 mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]">{lessonTitle}</p>
         <h1
           id="lesson-article-title"
-          className="m-0 mb-2.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[clamp(26px,2.8vw,34px)] max-[720px]:text-[25px] font-semibold leading-[1.16]"
+          className="m-0 mb-3 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[27px] max-[720px]:text-[25px] font-semibold leading-[1.16]"
         >
           {article.title}
         </h1>
-        <p className="max-w-[60ch] m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.55]">
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-[15px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#777]">
+          <button type="button" className="inline-flex py-1.5  items-center gap-2 rounded-full border border-[#e8e6e1] bg-white px-3 text-[15px] text-[#686968] hover:bg-[#f5f5f4] [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:text-[#b2b2b6]" onClick={onToggleNarration} aria-pressed={isNarrating}>
+            <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4M17 9a4 4 0 0 1 0 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {isNarrating ? 'Listening…' : 'Listen'}
+          </button>
+          <span>{conceptTitle} · Step {step} of {totalSteps}</span>
+        </div>
+        <p className="max-w-[72ch] m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[16px] leading-[1.55]">
           {article.intro}
         </p>
 
         {article.video && (
-          <div className="relative flex overflow-hidden flex-col items-center justify-center gap-6 mt-[22px] rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] max-w-[62ch] text-center">
+          <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 mt-[22px] rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] max-w-[82ch] text-center">
             <div className="grid gap-2">
               <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
               <p className="m-0 text-[rgba(244,244,242,0.55)] text-xs font-bold tracking-[0.14em] uppercase">{article.video.subtitle}</p>
@@ -46,9 +54,9 @@ export function LessonArticle({ article }) {
         )}
 
         {article.sections.map((section) => (
-          <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6" key={section.title}>
+          <section className="max-w-[72ch] mt-[26px] max-[720px]:mt-6" key={section.title}>
             <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-xl font-semibold">{section.title}</h2>
-            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[17px] max-[720px]:text-base leading-[1.6]"><RichText content={section.body} /></p>
+            <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[15px] leading-[1.6]"><RichText content={section.body} /></p>
           </section>
         ))}
 

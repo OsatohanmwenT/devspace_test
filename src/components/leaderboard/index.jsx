@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
-import { getLeague, leagues } from '../../data/leagues'
-import { getAllTimeStandings, getBoardWindow, getStandings, getZoneSummary, USER_ID } from '../../lib/leagueSim'
-import { getWeekIndex, now } from '../../lib/week'
-import { can, CAPABILITIES } from '../../lib/entitlements'
-import { LeagueLadder } from './LeagueLadder'
-import { LeaderboardRow } from './LeaderboardRow'
-import { LeaderboardTabs } from './LeaderboardTabs'
-import { LeagueResultBanner } from './LeagueResultBanner'
-import { LockedLeaderboard } from './LockedLeaderboard'
-import { WeekDeadline } from './WeekDeadline'
+import { useEffect, useState } from 'react';
+import { getLeague } from '../../data/leagues';
+import { can, CAPABILITIES } from '../../lib/entitlements';
+import { getAllTimeStandings, getBoardWindow, getStandings, getZoneSummary, USER_ID } from '../../lib/leagueSim';
+import { getWeekIndex, now } from '../../lib/week';
+import { InfoTooltip } from '../ui/InfoTooltip';
+import { LeaderboardRow } from './LeaderboardRow';
+import { LeaderboardTabs } from './LeaderboardTabs';
+import { LeagueLadder } from './LeagueLadder';
+import { LeagueResultBanner } from './LeagueResultBanner';
+import { LockedLeaderboard } from './LockedLeaderboard';
 
 const TABS = ['This week', 'All time', 'By path']
 const TICK_MS = 60 * 1000
@@ -144,9 +144,18 @@ export default function LeaderboardView({
 
       {/* The header explains the league; the compact target strip below tells
           the learner what their next useful move is before they scan the rows. */}
-      <div className="grid justify-items-center gap-3 text-center max-w-[680px] mx-auto rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e3e9f2] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f1f5fb] px-6 py-5 max-[680px]:px-4">
+      <div className="grid w-full justify-items-center gap-3 text-center max-w-[860px] mx-auto rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] px-6 py-5 max-[680px]:px-4">
         <LeagueLadder leagueIndex={leagueIndex} />
-        <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-3xl font-semibold leading-tight">{league.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-3xl font-semibold leading-tight">{league.name}</h1>
+          <InfoTooltip label="How the leaderboard works" align="center">
+            Everyone in your league is ranked by XP earned this week — practice, lessons, and streaks all count.
+            Standings reset every Monday.{' '}
+            {league.promoteCount > 0 ? `Finish in the top ${league.promoteCount} to move up a league.` : 'This is the top league, so there’s nowhere higher to climb.'}
+            {' '}
+            {league.demoteCount > 0 ? `Finish in the bottom ${league.demoteCount} and you’ll drop one.` : 'You can’t drop below this league.'}
+          </InfoTooltip>
+        </div>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">
           {league.promoteCount > 0 && league.demoteCount > 0
             ? `Top ${league.promoteCount} advance · bottom ${league.demoteCount} drop`
@@ -159,18 +168,7 @@ export default function LeaderboardView({
       {!hasJoined ? (
         <LockedLeaderboard league={league} pxToJoin={PX_TO_JOIN} onStartPractice={onStartPractice} />
       ) : (
-        <div className="grid w-full max-w-[680px] mx-auto gap-6">
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] px-4 py-3" role="status">
-            <div className="flex items-center gap-3">
-              <span className="rounded-full border border-[#57575d] [[data-theme=light]_&]:border-[#d4d4d4] px-2.5 py-1 text-[11px] font-bold tabular-nums text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">#{summary.user.rank}</span>
-              <div className="grid gap-0.5">
-                <span className="text-[11px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Next target</span>
-                <strong className={`text-sm font-semibold ${progressStatus.tone}`}>{progressStatus.label}</strong>
-              </div>
-            </div>
-            <WeekDeadline timestamp={clock} />
-          </div>
-
+        <div className="grid w-full max-w-[860px] mx-auto gap-6">
           <LeaderboardTabs
             tabs={TABS}
             active={tab}
@@ -182,11 +180,10 @@ export default function LeaderboardView({
           {tab === 'All time' && !hasAllTime ? (
             <AllTimePreview rows={allTime.slice(0, ALL_TIME_PREVIEW_ROWS)} onOpenPlans={onOpenPlans} />
           ) : (
-            <ol className="grid list-none m-0 overflow-hidden rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-1.5" aria-label={`${league.name} standings`}>
-              <li className="grid grid-cols-[minmax(0,1fr)_auto_44px] max-[680px]:grid-cols-[minmax(0,1fr)_auto_34px] gap-3.5 max-[680px]:gap-2.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
+            <ol className="grid list-none m-0 overflow-hidden rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] p-1.5" aria-label={`${league.name} standings`}>
+              <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-3.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Learner</span>
                 <span>px</span>
-                <span className="text-right">24h</span>
               </li>
               {(tab === 'This week' ? rendered
                 : tab === 'By path' ? byPath.map((entry) => ({ type: 'row', entry }))

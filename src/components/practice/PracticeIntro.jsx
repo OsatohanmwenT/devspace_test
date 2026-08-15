@@ -6,9 +6,9 @@ export function PracticeIntro({ session, completion, onStart }) {
   return (
     <>
       <main className="min-w-0 min-h-0 overflow-auto bg-[#161616] [[data-theme=light]_&]:bg-[#f6f6fb]">
-        <div className="grid min-h-full place-items-center px-6 py-10 max-[680px]:place-items-start max-[680px]:px-4 max-[680px]:py-5">
+        <div className="grid min-h-full place-items-center px-6 py-12 max-[680px]:place-items-start max-[680px]:px-4 max-[680px]:py-5">
           <section
-            className="w-[min(100%,1050px)] rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#dedee5] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-[clamp(24px,5vw,64px)] py-[clamp(30px,5vw,54px)] shadow-[0_18px_55px_rgba(0,0,0,.18)] [[data-theme=light]_&]:shadow-[0_18px_55px_rgba(31,31,51,.08)]"
+            className="w-[min(100%,1120px)] rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#dedee5] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-[clamp(24px,5vw,72px)] py-[clamp(36px,5vw,60px)] shadow-[0_18px_55px_rgba(0,0,0,.18)] [[data-theme=light]_&]:shadow-[0_18px_55px_rgba(31,31,51,.08)]"
             aria-labelledby="practice-intro-title"
           >
             <header className="text-center">
@@ -21,8 +21,8 @@ export function PracticeIntro({ session, completion, onStart }) {
               </h1>
             </header>
 
-            <div className="mt-11 grid grid-cols-3 gap-8 max-[680px]:mt-7 max-[680px]:grid-cols-1 max-[680px]:gap-4">
-              <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
+            <div className="mt-12 grid grid-cols-3 divide-x divide-[#353535] [[data-theme=light]_&]:divide-[#e8e8e4] max-[680px]:mt-8 max-[680px]:grid-cols-1 max-[680px]:divide-x-0 max-[680px]:divide-y max-[680px]:gap-0">
+              <section className="grid justify-items-center px-8 text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:px-0 max-[680px]:py-4 max-[680px]:text-left">
                 <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <rect x="9" y="7" width="30" height="34" rx="5" stroke="currentColor" strokeWidth="2.5" />
@@ -37,7 +37,7 @@ export function PracticeIntro({ session, completion, onStart }) {
                 </div>
               </section>
 
-              <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
+              <section className="grid justify-items-center px-8 text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:px-0 max-[680px]:py-4 max-[680px]:text-left">
                 <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <circle cx="24" cy="25" r="15" stroke="currentColor" strokeWidth="2.5" />
@@ -50,7 +50,7 @@ export function PracticeIntro({ session, completion, onStart }) {
                 </div>
               </section>
 
-              <section className="grid justify-items-center text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:text-left">
+              <section className="grid justify-items-center px-8 text-center max-[680px]:grid-cols-[58px_minmax(0,1fr)] max-[680px]:items-center max-[680px]:justify-items-start max-[680px]:gap-4 max-[680px]:px-0 max-[680px]:pt-4 max-[680px]:text-left">
                 <span className="grid size-[88px] place-items-center rounded-2xl bg-[#272e3b] text-[#88bdf2] [[data-theme=light]_&]:bg-[#edf4ff] [[data-theme=light]_&]:text-[#3d77eb] max-[680px]:size-[58px]" aria-hidden="true">
                   <svg className="size-11 max-[680px]:size-8" viewBox="0 0 48 48" fill="none">
                     <path d="M27 5 12 27h11l-2 16 15-23H25l2-15Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -73,7 +73,7 @@ export function PracticeIntro({ session, completion, onStart }) {
       </main>
 
       <footer className="flex items-center justify-center border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-6 py-3 max-[680px]:px-4">
-        <div className="flex w-[min(100%,1050px)] items-center justify-end gap-5 max-[680px]:block">
+        <div className="flex w-[min(100%,1120px)] items-center justify-end gap-5 max-[680px]:block">
           <span className="text-sm font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968] max-[680px]:hidden">Press Enter to start</span>
           <ActionButton
             variant="primary"

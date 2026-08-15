@@ -1,5 +1,5 @@
-import { leagues } from '../../data/leagues'
-import { TierMedal } from './TierMedal'
+import { leagues } from '../../data/leagues';
+import { TierMedal } from './TierMedal';
 
 // Tiers shrink and fade with distance from the current one, so the ladder reads
 // as a road ahead rather than a row of equal chips.

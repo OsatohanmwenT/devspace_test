@@ -9,7 +9,13 @@ const TIER_RANK_COLOR = { gold: 'text-[#ffcf8b] [[data-theme=light]_&]:text-[#b8
 // measure against — that is different from having held your place, so it reads
 // as blank rather than as a dash.
 function RankDelta({ delta }) {
-  if (delta === null || delta === undefined) return <span aria-hidden="true" />
+  if (delta === null || delta === undefined) {
+    return (
+      <span className="text-right text-[11px] text-[#5a5a5e] [[data-theme=light]_&]:text-[#a8a8a4]" aria-hidden="true">
+        —
+      </span>
+    )
+  }
 
   if (delta === 0) {
     return (
@@ -48,7 +54,6 @@ export function LeaderboardRow({ entry, isCurrentUser }) {
         <span className="overflow-hidden text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs text-ellipsis whitespace-nowrap">{entry.role}</span>
       </div>
       <span className={`text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm tabular-nums whitespace-nowrap ${isCurrentUser ? 'font-semibold' : ''}`}>{entry.score.toLocaleString()}</span>
-      <RankDelta delta={entry.delta} />
     </div>
   )
 }

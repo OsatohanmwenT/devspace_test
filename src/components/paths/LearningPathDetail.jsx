@@ -15,6 +15,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   const [startedLessonIds, setStartedLessonIds] = useState([])
   const [pinnedRegionId, setPinnedRegionId] = useState(null)
   const [openResource, setOpenResource] = useState(null)
+  const [showLessonPreview, setShowLessonPreview] = useState(false)
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId)
   const selectedRegion = regions.find((region) => region.lessons.some((lesson) => lesson.id === selectedLessonId)) ?? regions[0]
   const selectedLessonStarted = selectedLesson && startedLessonIds.includes(selectedLesson.id)
@@ -23,11 +24,12 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && !openResource) onBack()
+        if (event.key === 'Escape' && showLessonPreview) setShowLessonPreview(false)
+        else if (event.key === 'Escape' && !openResource) onBack()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onBack, openResource])
+  }, [onBack, openResource, showLessonPreview])
 
   useEffect(() => {
     const updatePinnedRegion = () => {
@@ -130,6 +132,9 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                   {selectedLessonStarted ? 'Continue' : 'Start lesson'}
                 </ActionButton>
               )}
+              {!canOpenLesson && selectedLesson.state === 'available' && (
+                <ActionButton variant="neutral" className="min-h-11 w-fit! px-5 whitespace-nowrap" onClick={() => setShowLessonPreview(true)}>Lesson details</ActionButton>
+              )}
             </aside>
           )}
         </div>
@@ -148,6 +153,22 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           region={selectedRegion}
           onBack={() => setOpenResource(null)}
         />
+      )}
+      {showLessonPreview && selectedLesson && (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/65 p-5 backdrop-blur-sm" role="presentation" onMouseDown={() => setShowLessonPreview(false)}>
+          <section className="w-full max-w-[560px] rounded-3xl border border-[#404040] bg-[#1f1f1f] p-6 shadow-[0_24px_60px_rgba(0,0,0,.45)] [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white max-[680px]:p-5" role="dialog" aria-modal="true" aria-labelledby="lesson-preview-title" onMouseDown={(event) => event.stopPropagation()}>
+            <p className="m-0 text-[11px] font-semibold uppercase tracking-[.1em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Lesson preview</p>
+            <h2 id="lesson-preview-title" className="mt-2 font-rethink-sans text-[26px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{selectedLesson.title}</h2>
+            <p className="mt-3 text-[15px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">This lesson is next in your route, but it is not ready to start yet. Complete your current lesson first and we’ll unlock it when it becomes available.</p>
+            <div className="mt-6 flex justify-end gap-3 max-[680px]:flex-col-reverse">
+              <ActionButton variant="neutral" className="min-h-11 px-5" onClick={() => setShowLessonPreview(false)}>Back to path</ActionButton>
+              <ActionButton variant="primary" className="min-h-11 px-5" onClick={() => {
+                setShowLessonPreview(false)
+                setSelectedLessonId(currentLesson.id)
+              }}>Continue current lesson</ActionButton>
+            </div>
+          </section>
+        </div>
       )}
     </section>
   )

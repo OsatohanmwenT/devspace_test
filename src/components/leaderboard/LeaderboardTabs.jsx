@@ -11,7 +11,7 @@ export function LeaderboardTabs({ tabs, active, onSelect, lockedTabs = [], onLoc
 
   return (
     <div
-      className="relative grid w-[324px] max-w-full grid-cols-3 mx-auto rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#171717] [[data-theme=light]_&]:bg-[#f1efe9] p-1"
+      className="relative grid w-[324px] max-w-full grid-cols-3 mx-auto rounded-full bg-[#1e1e1e] [[data-theme=light]_&]:bg-[#f1efe9] p-1"
       role="group"
       aria-label="Leaderboard range"
     >

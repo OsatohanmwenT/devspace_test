@@ -6,7 +6,7 @@ function Bubble({ children, talking = false }) {
   return (
     <div className="flex items-start gap-2.5">
       <img className={`mt-0.5 size-6 flex-none object-contain ${talking ? 'devy-talking-avatar' : ''}`} src="/assets/devy.svg" alt="" />
-      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-3.5 text-base leading-[1.6] text-[#e4e4e6] [[data-theme=light]_&]:text-neutral-800">
+      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-3.5 py-3 text-[15px] leading-[1.55] text-[#e4e4e6] [[data-theme=light]_&]:text-neutral-800">
         {children}
       </div>
     </div>
@@ -70,7 +70,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
   return (
     <>
       <div className="flex items-center justify-between text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-        <strong className="text-xl">Devy</strong>
+        <strong className="text-lg">Devy</strong>
         <button
           type="button"
           className={`grid w-9 h-9 place-items-center border-0 rounded-lg bg-transparent text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] ${focusRing}`}
@@ -106,22 +106,17 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
         </div>
       </div>
 
-      <div className="devy-composer-in mt-4 mb-5 max-[720px]:mb-4 grid gap-2" role="group" aria-label="Ask Devy">
+      <div className="devy-composer-in mt-4 mb-5 flex flex-wrap gap-2 max-[720px]:mb-4" role="group" aria-label="Ask Devy">
         {prompts.map(({ id, label }) => (
           <button
             key={id}
             type="button"
-            className={`rounded-full border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-4 py-3 text-left text-sm text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-px hover:border-[#8a8a8e] hover:bg-[#222225] [[data-theme=light]_&]:hover:border-[#737371] [[data-theme=light]_&]:hover:bg-[#fafafa] active:translate-y-0 ${focusRing}`}
+            className={`min-h-10 rounded-full border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white px-3.5 py-2 text-left text-[14px] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-px hover:border-[#8a8a8e] hover:bg-[#222225] [[data-theme=light]_&]:hover:border-[#737371] [[data-theme=light]_&]:hover:bg-[#fafafa] active:translate-y-0 ${focusRing}`}
             onClick={() => ask(id, label)}
           >
             {label}
           </button>
         ))}
-        {prompts.length === 0 && (
-          <p className="m-0 text-[13px] leading-[1.5] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
-            That’s everything I can help with on this step. Keep going and I’ll have more on the next one.
-          </p>
-        )}
       </div>
 
       <form
@@ -130,7 +125,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
       >
         <input
           type="text"
-          className="h-14 min-w-0 flex-1 rounded-full border-0 bg-transparent px-5 text-base text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus:outline-none font-[inherit]"
+          className="h-12 min-w-0 flex-1 rounded-full border-0 bg-transparent px-4 text-[15px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 placeholder:text-[#b8b8bb] [[data-theme=light]_&]:placeholder:text-[#686968] focus:outline-none font-[inherit]"
           placeholder="Ask Devy"
           aria-label="Ask Devy a question"
           value={draft}
@@ -138,7 +133,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
         />
         <button
           type="submit"
-          className={`grid h-11 w-11 flex-none place-items-center rounded-full border-0 bg-[#2563eb] text-white transition-[transform,background-color] duration-150 enabled:hover:-translate-y-px enabled:hover:bg-[#3b82f6] enabled:active:translate-y-0 disabled:opacity-40 ${focusRing}`}
+          className={`grid size-10 flex-none place-items-center rounded-full border-0 bg-[#2563eb] text-white transition-[transform,background-color] duration-150 enabled:hover:-translate-y-px enabled:hover:bg-[#3b82f6] enabled:active:translate-y-0 disabled:opacity-40 ${focusRing}`}
           disabled={!draft.trim()}
           aria-label="Send message to Devy"
         >
