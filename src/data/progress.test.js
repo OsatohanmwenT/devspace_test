@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, migrateProgress } from './progress.js'
+import { activatePremium, applyActivity, deactivatePremium, getDailyXp, markPageIntroductionSeen, migrateProgress } from './progress.js'
 
 const TODAY = 'Fri Aug 07 2026'
 const YESTERDAY = 'Thu Aug 06 2026'
@@ -78,6 +78,16 @@ test('a payload saved before Premium existed gets the free default', () => {
 test('a first-ever run adopts the current week', () => {
   assert.equal(migrateProgress({}, 20).weekIndex, 20)
   assert.equal(migrateProgress({ weekIndex: 5 }, 20).weekIndex, 5)
+})
+
+test('saved progress without page introductions migrates safely', () => {
+  assert.deepEqual(migrateProgress({ weekIndex: 20 }, 20).seenPageIntroductions, {})
+})
+
+test('marking an introduction as seen preserves other page introductions', () => {
+  const next = markPageIntroductionSeen({ ...base, seenPageIntroductions: { leaderboard: true } }, 'custom-path')
+
+  assert.deepEqual(next.seenPageIntroductions, { leaderboard: true, 'custom-path': true })
 })
 
 test('activating premium sets the plan and starts tenure', () => {

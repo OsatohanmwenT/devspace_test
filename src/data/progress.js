@@ -38,6 +38,16 @@ const defaultProgress = {
   // The weekIndex a streak shield was last spent, so it can be spent at most
   // once a week.
   streakShieldWeek: null,
+  // Learner-generated project/topic paths, keyed by id, shaped like an
+  // authored path (see data/paths.js buildCustomPathRecord) so any of them
+  // can become `profile.pathId` and flow through Home/Paths/Profile exactly
+  // like a career path.
+  customPaths: {},
+  seenPageIntroductions: {},
+  // Path ids the learner has made primary before switching away. A path
+  // that stops being primary isn't lost — it's pushed here so "Also
+  // learning" can offer it back rather than silently dropping it.
+  pathHistory: [],
 }
 
 // The pure half of loading: merge a stored payload onto the defaults and adopt
@@ -49,7 +59,36 @@ export function migrateProgress(stored, weekIndex) {
   if (!Array.isArray(merged.earnedStreakMilestones)) merged.earnedStreakMilestones = []
   if (!Array.isArray(merged.streakActivityDates)) merged.streakActivityDates = []
   if (merged.longestStreak < merged.streakDays) merged.longestStreak = merged.streakDays
+  if (merged.customPaths == null || typeof merged.customPaths !== 'object') merged.customPaths = {}
+  if (merged.seenPageIntroductions == null || typeof merged.seenPageIntroductions !== 'object') merged.seenPageIntroductions = {}
+  if (!Array.isArray(merged.pathHistory)) merged.pathHistory = []
   return merged
+}
+
+// Adds or updates a learner-generated path record. Kept separate from
+// switchPrimaryPath so building a route and making it primary are two
+// explicit steps, not one hidden inside the other.
+export function saveCustomPath(current, pathRecord) {
+  return { ...current, customPaths: { ...current.customPaths, [pathRecord.id]: pathRecord } }
+}
+
+export function markPageIntroductionSeen(current, introductionId) {
+  return { ...current, seenPageIntroductions: { ...current.seenPageIntroductions, [introductionId]: true } }
+}
+
+// Makes `pathId` the primary path (`profile.pathId`). The path it replaces
+// isn't lost — it's pushed onto history so "Also learning" can offer it
+// back, deduped so switching back and forth doesn't pile up repeats.
+export function switchPrimaryPath(current, pathId) {
+  const previousPathId = current.profile?.pathId
+  const history = previousPathId && previousPathId !== pathId
+    ? [previousPathId, ...current.pathHistory.filter((id) => id !== previousPathId && id !== pathId)]
+    : current.pathHistory.filter((id) => id !== pathId)
+  return {
+    ...current,
+    pathHistory: history.slice(0, 5),
+    profile: { ...current.profile, pathId },
+  }
 }
 
 export function loadProgress() {

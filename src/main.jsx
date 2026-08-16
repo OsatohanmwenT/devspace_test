@@ -21,9 +21,9 @@ import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { getLeague } from './data/leagues';
-import { getPath } from './data/paths';
+import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
-import { activatePremium, applyActivity, deactivatePremium, loadProgress, saveProgress } from './data/progress';
+import { activatePremium, applyActivity, deactivatePremium, getDailyXp, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { can, CAPABILITIES } from './lib/entitlements';
 import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
@@ -223,6 +223,14 @@ function App() {
     })
   }
 
+  const dismissPageIntroduction = (introductionId) => {
+    setProgress((current) => {
+      const next = markPageIntroductionSeen(current, introductionId)
+      saveProgress(next)
+      return next
+    })
+  }
+
   const startPremium = (planId) => {
     setProgress((current) => {
       const next = activatePremium(current, planId)
@@ -244,6 +252,33 @@ function App() {
   const openPlans = (perkId = null) => {
     setPlansHighlight(perkId)
     setActive('Plans')
+  }
+
+  // Promotes a freshly generated route to the primary path — it becomes
+  // `profile.pathId`, so Home's mission card, Paths and Profile all pick it
+  // up the same way they already do for any career path. Whatever was
+  // primary before is paused, not lost (see switchPrimaryPath).
+  const createCustomPath = (route) => {
+    const record = buildCustomPathRecord(route)
+    setProgress((current) => {
+      const next = switchPrimaryPath(saveCustomPath(current, record), record.id)
+      saveProgress(next)
+      return next
+    })
+    setActive('Home')
+    showNotice(`${record.title} is now your focus`)
+  }
+
+  // Resumes a paused path (authored or custom) as primary.
+  const resumePath = (pathId) => {
+    const targetPath = customPaths?.[pathId] ?? getPath(pathId, customPaths)
+    setProgress((current) => {
+      const next = switchPrimaryPath(current, pathId)
+      saveProgress(next)
+      return next
+    })
+    setActive('Home')
+    showNotice(`Switched active mission to ${targetPath?.title ?? 'new path'}`)
   }
 
   // The learner's own words and links, layered onto the onboarding-derived
@@ -293,9 +328,10 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile } = progress
+  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile, customPaths, pathHistory, seenPageIntroductions } = progress
   // Onboarding picks the path; before that, the default shelf is the spine.
-  const currentPath = getPath(profile?.pathId)
+  // A learner-generated custom path takes priority when it's the primary one.
+  const currentPath = customPaths?.[profile?.pathId] ?? getPath(profile?.pathId)
   const currentLeague = getLeague(leagueIndex)
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
@@ -317,11 +353,50 @@ function App() {
     return leaders.some((entry) => entry.id === USER_ID) ? leaders : [...leaders, learner]
   }, [leagueIndex, weeklyXp])
 
-  // Two or three unfinished sessions for the row under the mission card.
+  // Paths the learner paused to focus on the current primary one — offered
+  // back on Home so switching is a click, not a rebuild. If history is empty,
+  // surface popular alternative catalog paths.
+  const otherPaths = useMemo(() => {
+    const historical = (pathHistory ?? [])
+      .filter((id) => id !== profile?.pathId)
+      .slice(0, 2)
+      .map((id) => customPaths?.[id] ?? getPath(id, customPaths))
+      .filter(Boolean)
+
+    if (historical.length > 0) return historical
+
+    const fallbacks = ['fullstack-developer', 'frontend-developer', 'machine-learning-specialist', 'backend-developer']
+      .filter((id) => id !== profile?.pathId)
+      .slice(0, 2)
+    return fallbacks.map((id) => getPath(id, customPaths)).filter(Boolean)
+  }, [pathHistory, customPaths, profile?.pathId])
+
+  // Unfinished sessions prioritizing the learner's active path topic and tools
   const homePracticeSessions = useMemo(() => {
-    const unfinished = practiceSessions.filter((session) => !completedSessions[session.id])
-    return (unfinished.length > 0 ? unfinished : practiceSessions).slice(0, 3)
-  }, [completedSessions])
+    const activeTools = (currentPath?.tools ?? []).map((t) => t.toLowerCase())
+    const pathTitle = (currentPath?.title ?? '').toLowerCase()
+
+    const isRecommended = (session) => {
+      const topicLower = session.topic.toLowerCase()
+      return activeTools.some((tool) => tool.includes(topicLower) || topicLower.includes(tool))
+        || pathTitle.includes(topicLower)
+        || (topicLower === 'python' && pathTitle.includes('learning'))
+        || (topicLower === 'data' && pathTitle.includes('data'))
+    }
+
+    const scored = practiceSessions.map((session) => {
+      const recommended = isRecommended(session)
+      const completed = Boolean(completedSessions[session.id])
+      return {
+        ...session,
+        isRecommended: recommended,
+        score: (recommended ? 2 : 0) + (completed ? 0 : 1),
+      }
+    })
+
+    scored.sort((a, b) => b.score - a.score)
+    return scored.slice(0, 2)
+  }, [completedSessions, currentPath])
   // Reflects what the learner actually onboarded as, rather than ML for everyone.
   const homeHint = nextLesson
     ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
@@ -398,7 +473,7 @@ function App() {
             </button>
             {activePopover === 'xp' && (
               <div ref={popoverRef}>
-                <XpPopover earnedToday={xp} />
+                <XpPopover earnedToday={getDailyXp(progress)} xpGoal={xpGoal} />
               </div>
             )}
           </div>
@@ -435,8 +510,29 @@ function App() {
       )}
 
       <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
-        {active === 'Paths' ? <PathsView currentLearnerPath={currentPath} completedLessons={completedLessons} onOpenLesson={launchLesson} initialView={pathsInitialView} /> : active === 'Settings' ? (
-          <SettingsView theme={theme} onToggleTheme={toggleTheme} onNotice={showNotice} email="devspaceglobal@gmail.com" progress={progress} onOpenPlans={openPlans} />
+        {active === 'Paths' ? (
+          <PathsView
+            currentLearnerPath={currentPath}
+            completedLessons={completedLessons}
+            onOpenLesson={launchLesson}
+            initialView={pathsInitialView}
+            customPaths={customPaths}
+            primaryPathId={profile?.pathId}
+            onCreateCustomPath={createCustomPath}
+            onSwitchPrimaryPath={resumePath}
+            hasSeenCustomPathIntroduction={Boolean(seenPageIntroductions?.['custom-path'])}
+            onDismissCustomPathIntroduction={() => dismissPageIntroduction('custom-path')}
+          />
+        ) : active === 'Settings' ? (
+          <SettingsView
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onNotice={showNotice}
+            email="devspaceglobal@gmail.com"
+            progress={progress}
+            onOpenPlans={openPlans}
+            onUpdateDailyMinutes={(minutes) => saveProfileFields({ dailyMinutes: minutes })}
+          />
         ) : active === 'Profile' ? (
           <ProfileView
             profile={profile}
@@ -461,8 +557,16 @@ function App() {
             onDismissResult={dismissLeagueResult}
             onStartPractice={() => setActive('Practice')}
             onOpenPlans={openPlans}
+            hasSeenIntroduction={Boolean(seenPageIntroductions?.leaderboard)}
+            onDismissIntroduction={() => dismissPageIntroduction('leaderboard')}
           />
-        ) : active === 'Practice' ? <PracticeView onStart={setOpenPractice} completedSessions={completedSessions} /> : (
+        ) : active === 'Practice' ? (
+          <PracticeView
+            onStart={setOpenPractice}
+            completedSessions={completedSessions}
+            currentPath={currentPath}
+          />
+        ) : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
           <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
@@ -583,9 +687,11 @@ function App() {
           <section className="mt-8" aria-labelledby="also-learning-title">
             <p id="also-learning-title" className="m-0 text-[11px] font-semibold tracking-[0.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">ALSO LEARNING</p>
             <div className="mt-3 flex flex-wrap gap-3">
-              <button type="button" className="min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => { setActive('Paths'); setPathsInitialView(null) }}>
-                {currentPath.title} · {currentRegionCard.percent}%
-              </button>
+              {otherPaths.map((path) => (
+                <button key={path.id} type="button" className="min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => resumePath(path.id)}>
+                  Resume {path.title}
+                </button>
+              ))}
               <button type="button" className="min-h-11 rounded-full border border-transparent bg-[#1c2a4d] [[data-theme=light]_&]:bg-[#f0f5fd] px-4 text-sm font-medium text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] hover:bg-[#213762] [[data-theme=light]_&]:hover:bg-[#e2edfc]" onClick={() => { setPathsInitialView('custom'); setActive('Paths') }}>
                 <span aria-hidden="true">＋</span> Create another
               </button>

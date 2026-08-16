@@ -336,15 +336,15 @@ export const breakPrompts = {
 // What the answers actually produce. v2 declared nothing here at all.
 export const outcomes = {
   roleToPath: {
-    frontend_developer: 'backend-developer', fullstack_developer: 'backend-developer', ui_ux_developer: 'backend-developer',
-    ios_developer: 'backend-developer', android_developer: 'backend-developer', cross_platform_developer: 'backend-developer',
-    backend_developer: 'backend-developer', database_developer: 'learn-sql', api_systems_engineer: 'backend-developer',
+    frontend_developer: 'frontend-developer', fullstack_developer: 'fullstack-developer', ui_ux_developer: 'ui-engineer',
+    ios_developer: 'ios-developer', android_developer: 'android-developer', cross_platform_developer: 'cross-platform-developer',
+    backend_developer: 'backend-developer', database_developer: 'learn-sql', api_systems_engineer: 'api-systems-engineer',
     data_analyst: 'data-analyst', data_engineer: 'data-scientist', business_intelligence: 'learn-sql', data_scientist: 'data-scientist',
     ml_engineer: 'machine-learning', ai_app_developer: 'ai-engineer', automation_developer: 'learn-python',
     product_manager: 'data-scientist', business_analyst: 'data-scientist', technical_project_coordinator: 'technical-project-coordinator',
     digital_marketer: 'digital-marketing', social_media_manager: 'social-media-manager',
     video_editor: 'video-editor', content_creator: 'content-creator',
-    ui_ux_designer: 'backend-developer', product_designer: 'backend-developer', design_systems_specialist: 'backend-developer', graphic_designer: 'graphic-designer',
+    ui_ux_designer: 'ui-ux-designer', product_designer: 'product-designer', design_systems_specialist: 'design-systems-specialist', graphic_designer: 'graphic-designer',
     devops_engineer: 'learn-docker', cloud_engineer: 'learn-docker', cybersecurity_specialist: 'ai-engineer',
   },
   // Minutes a day at roughly one lesson per five minutes, over a week.

@@ -1,3 +1,5 @@
+import { lessonsById } from '../components/lesson/lessonContent.js'
+
 const upcomingRegion = (id, level, title, summary, lessonTitle, image) => ({
   id,
   level,
@@ -356,7 +358,8 @@ export const pathShelves = [
 // keep that path's own identity — title, description, emblem — and borrow the
 // authored region structure, so a user who picks Backend Developer sees Backend
 // Developer rather than silently being shown ML.
-export function getPath(pathId) {
+export function getPath(pathId, customPaths = {}) {
+  if (customPaths && customPaths[pathId]) return customPaths[pathId]
   const authored = pathShelves.find((path) => path.id === pathId)
   if (authored) return authored
 
@@ -371,6 +374,94 @@ export function getPath(pathId) {
     emblem: stub.image,
     level: stub.type === 'skill' ? 'Skill path' : 'Career path',
     family: stub.family,
+  }
+}
+
+// The authored lesson pool is thin (most topics only have one real, fully
+// written lesson), so a custom path's stages borrow from it by keyword
+// match rather than getting bespoke content — the same trade-off getPath
+// above already makes for every unauthored career path.
+const REAL_LESSON_POOL = Object.values(lessonsById).map((lesson) => ({ id: lesson.id, title: lesson.title }))
+
+const TOPIC_KEYWORDS = {
+  'data-analysis-basics': /\bdata\b|analy|dataset|insight|sql/i,
+  'digital-marketing-basics': /market|campaign|audience|brand(?!.*design)/i,
+  'social-media-basics': /social media|community|content calendar/i,
+  'video-editing-basics': /video|edit(?!or.*code)|footage|film/i,
+  'content-creation-basics': /content creat|writing|publish|blog/i,
+  'graphic-design-basics': /graphic|visual design|design system/i,
+  'technical-teams-basics': /coordinat|project plan|stakeholder/i,
+  'data-types': /python|code|program|javascript|api|backend|developer|docker|sql|software|react|app/i,
+}
+
+function pickLessonForGoal(goal, index) {
+  const matched = REAL_LESSON_POOL.find(({ id }) => TOPIC_KEYWORDS[id]?.test(goal))
+  return matched ?? REAL_LESSON_POOL[index % REAL_LESSON_POOL.length]
+}
+
+// Turns a goal string into a short, distinct title so several custom paths
+// don't all read as "Your custom learning route" in Home, Paths and Profile.
+export function deriveCustomTitle(goal) {
+  const cleaned = goal.trim().replace(/^i(?:'d| would)? (?:want|like) to\s+/i, '')
+  const firstClause = cleaned.split(/[.,;]/)[0].trim()
+  if (!firstClause) return 'Your custom learning route'
+  const capped = firstClause.charAt(0).toUpperCase() + firstClause.slice(1)
+  return capped.length > 60 ? `${capped.slice(0, 57)}…` : capped
+}
+
+// Turns a generated CustomPathBuilder route into a path shaped exactly like
+// an authored one (see pathShelves) — real `cards`/`lessons` with launchable
+// ids — so it can become `profile.pathId` and flow through Home, Paths and
+// Profile the same way any career path does, project-payoff included.
+export function buildCustomPathRecord(route) {
+  const stageCards = route.stages.map((stage, index) => {
+    const lesson = pickLessonForGoal(route.goal, index)
+    return {
+      id: `${route.id}-stage-${index}`,
+      level: `Region ${index + 1}`,
+      title: stage.title,
+      summary: stage.description,
+      reason: stage.description,
+      goals: [],
+      state: index === 0 ? 'current' : 'locked',
+      progress: '0%',
+      progressValue: 0,
+      image: '/assets/thinking-in-code.png',
+      lessons: [{ id: lesson.id, title: lesson.title, state: index === 0 ? 'current' : 'locked', description: stage.description }],
+    }
+  })
+
+  const projectLesson = pickLessonForGoal(route.goal, route.stages.length)
+  const projectCard = {
+    id: `${route.id}-project`,
+    level: `Region ${route.stages.length + 1}`,
+    title: 'Ship the project',
+    summary: route.project,
+    reason: route.project,
+    goals: [],
+    state: 'locked',
+    progress: '0%',
+    progressValue: 0,
+    image: '/assets/thinking-in-code.png',
+    capstone: true,
+    lessons: [{ id: projectLesson.id, title: projectLesson.title, state: 'locked', checkpoint: true, description: route.project }],
+  }
+
+  return {
+    id: route.id,
+    family: 'custom',
+    level: 'Custom path',
+    title: route.title,
+    description: route.goal,
+    progressValue: 0,
+    emblem: '/assets/thinking-in-code.png',
+    isCustom: true,
+    goal: route.goal,
+    project: route.project,
+    stages: route.stages,
+    sections: route.sections,
+    startingPoint: route.startingPoint,
+    cards: [...stageCards, projectCard],
   }
 }
 

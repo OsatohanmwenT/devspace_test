@@ -129,7 +129,7 @@ test('help_me_choose writes back and yields a valid ladder key', () => {
   const decided = { ...undecided, roleFromSubQuiz: 'fullstack_developer', experience: 'built_small_projects' }
   assert.equal(resolveRole(decided), 'fullstack_developer')
   assert.ok(getStepOptions('starting_point', decided).length > 0)
-  assert.equal(resolvePath(decided), 'backend-developer')
+  assert.equal(resolvePath(decided), 'fullstack-developer')
 })
 
 test('placement question appears only from rung 2 upward', () => {

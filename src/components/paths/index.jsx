@@ -1,28 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { currentPath, explorePaths, getPath, pathShelves } from '../../data/paths'
 import { CurrentPathCard } from './CurrentPathCard'
 import { CustomPathCard } from './CustomPathCard'
 import { CustomPathBuilder } from './CustomPathBuilder'
 import { ExplorePathCard, PathPreview } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
+import { PageArrival } from '../ui/PageArrival'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView }) {
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction }) {
   const [view, setView] = useState(initialView ?? 'overview')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
   const [selectedPath, setSelectedPath] = useState(null)
-  const [customPath, setCustomPath] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('devspace-custom-path'))
-    } catch {
-      return null
-    }
-  })
   const [selectedCustomPath, setSelectedCustomPath] = useState(null)
+  const customPathList = Object.values(customPaths)
+  const pausedCustomPaths = customPathList.filter((path) => path.id !== primaryPathId)
 
-  useEffect(() => {
-    if (customPath) localStorage.setItem('devspace-custom-path', JSON.stringify(customPath))
-  }, [customPath])
   const paths = (type === 'all' ? explorePaths : explorePaths.filter((path) => path.type === type)).filter((path) => {
     const term = query.trim().toLowerCase()
     return !term || [path.title, path.description, ...path.tools].join(' ').toLowerCase().includes(term)
@@ -38,14 +31,47 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
     setView('preview')
   }
 
-  if (view === 'detail') return <LearningPathDetail path={selectedPath ? getPath(selectedPath.id) : currentPath} completedLessons={completedLessons} onOpenLesson={onOpenLesson} onBack={() => setView('overview')} />
-  if (view === 'preview' && selectedPath) return <PathPreview path={selectedPath} onBack={() => setView('overview')} />
+  const activeTargetId = selectedPath ? selectedPath.id : currentLearnerPath.id
+  const isSelectedCurrent = activeTargetId === primaryPathId
+
+  if (view === 'detail') {
+    return (
+      <LearningPathDetail
+        path={selectedPath ? getPath(selectedPath.id, customPaths) : currentLearnerPath}
+        completedLessons={completedLessons}
+        onOpenLesson={onOpenLesson}
+        onBack={() => setView('overview')}
+        isCurrentPath={isSelectedCurrent}
+        onSwitchPrimaryPath={onSwitchPrimaryPath}
+      />
+    )
+  }
+  if (view === 'preview' && selectedPath) {
+    return (
+      <PathPreview
+        path={selectedPath}
+        onBack={() => setView('overview')}
+        isCurrentPath={isSelectedCurrent}
+        onSwitchPrimaryPath={onSwitchPrimaryPath}
+      />
+    )
+  }
+  if (view === 'custom' && !selectedCustomPath && !hasSeenCustomPathIntroduction) return <PageArrival
+    ariaLabel="About custom paths"
+    eyebrow="Your learning route"
+    title="Build a path around your goal"
+    body="Tell Devy what you want to learn, build, or prepare for. You will get a focused route with practice and a project."
+    actionLabel="Build my path"
+    onContinue={onDismissCustomPathIntroduction}
+  />
   if (view === 'custom') return (
     <CustomPathBuilder
       key={selectedCustomPath?.id ?? 'new-custom-path'}
       existingPath={selectedCustomPath}
+      isPrimary={selectedCustomPath?.id === primaryPathId}
+      onMakePrimary={(path) => { onSwitchPrimaryPath(path.id); setSelectedCustomPath(null); setView('overview') }}
       onBack={() => { setSelectedCustomPath(null); setView('overview') }}
-      onStart={(path) => { setCustomPath(path); setSelectedCustomPath(null); setView('overview') }}
+      onStart={(route) => { onCreateCustomPath(route); setSelectedCustomPath(null); setView('overview') }}
     />
   )
 
@@ -58,20 +84,29 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
 
       <CurrentPathCard path={currentLearnerPath} onOpenDetail={() => { setSelectedPath(null); setView('detail') }} />
 
-      {customPath && (
+      {pausedCustomPaths.length > 0 && (
         <section className="grid gap-4" aria-labelledby="custom-paths-title">
           <div className="flex items-center justify-between gap-4">
-            <h2 id="custom-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Custom paths</h2>
-            <span className="text-[13px] text-[#8b7cf6]">Made with Devy</span>
+            <h2 id="custom-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Your custom paths</h2>
+            <span className="text-[13px] text-[#8b7cf6]">{pausedCustomPaths.length} made with Devy</span>
           </div>
-          <article className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 rounded-2xl border border-[#6c8ee8] bg-[#1d2f5d] px-6 py-5 [[data-theme=light]_&]:border-[#cbd8ff] [[data-theme=light]_&]:bg-[#eff4ff] max-[720px]:grid-cols-1 max-[720px]:px-5">
-            <div className="min-w-0">
-              <span className="text-[12px] font-semibold uppercase tracking-[.1em] text-[#a9c4ff] [[data-theme=light]_&]:text-[#315bb5]">Start here</span>
-              <h3 className="mt-1 mb-1 font-rethink-sans text-[21px] font-semibold text-white [[data-theme=light]_&]:text-[#1f3c7c]">{customPath.title}</h3>
-              <p className="m-0 text-[14px] leading-[1.5] text-[#dbe6ff] [[data-theme=light]_&]:text-[#3a568d]">{customPath.stages?.[0]?.title} · {customPath.project}</p>
-            </div>
-            <button type="button" className="min-h-11 rounded-xl border border-white/30 bg-white px-5 text-sm font-semibold text-[#1f3c7c] shadow-[0_3px_0_rgba(24,55,116,0.25)] hover:bg-[#f5f8ff] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 max-[720px]:w-full" onClick={() => { setSelectedCustomPath(customPath); setView('custom') }}>Continue</button>
-          </article>
+          <div className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1">
+            {pausedCustomPaths.map((path) => {
+              return (
+                <article key={path.id} className="grid min-h-[196px] content-between gap-5 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-5 transition-colors hover:border-[#5a5a60] hover:bg-[#252525] [&_p]:text-[#9a9a9d] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#bfc7d8] [[data-theme=light]_&]:hover:bg-[#f8faff] [[data-theme=light]_&]:[&_p]:text-[#686968]">
+                  <div className="min-w-0">
+                    <span className="text-[12px] font-semibold uppercase tracking-[.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Paused</span>
+                    <h3 className="mt-1 mb-2 font-rethink-sans text-[19px] font-semibold leading-[1.25] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{path.title}</h3>
+                    <p className="m-0 text-[14px] leading-[1.5] text-[#dbe6ff] [[data-theme=light]_&]:text-[#3a568d]">{path.stages?.[0]?.title} · {path.project}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 max-[720px]:w-full">
+                    <button type="button" className="min-h-11 rounded-xl border border-[#404040] bg-transparent px-4 text-sm font-semibold text-[#f4f4f2] hover:border-[#77777b] hover:bg-[#262626] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5]" onClick={() => { setSelectedCustomPath(path); setView('custom') }}>View path</button>
+                    <button type="button" className="min-h-11 rounded-xl border-0 bg-transparent px-3 text-sm font-semibold text-[#8b7cf6] hover:bg-[#2a264c] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:hover:bg-[#eeebff]" onClick={() => onSwitchPrimaryPath(path.id)}>Make primary</button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
         </section>
       )}
 

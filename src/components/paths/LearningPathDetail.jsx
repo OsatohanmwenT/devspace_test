@@ -7,7 +7,7 @@ import { FAMILY_ACCENTS } from './ExplorePathCard';
 import { GuidebookView } from './GuidebookView';
 import { LessonRow } from './LessonRow';
 
-export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack }) {
+export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath }) {
   const regions = path.cards
   const lessons = regions.flatMap((region) => region.lessons)
   const currentLesson = lessons.find((lesson) => lesson.state === 'current')
@@ -24,8 +24,8 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-        if (event.key === 'Escape' && showLessonPreview) setShowLessonPreview(false)
-        else if (event.key === 'Escape' && !openResource) onBack()
+      if (event.key === 'Escape' && showLessonPreview) setShowLessonPreview(false)
+      else if (event.key === 'Escape' && !openResource) onBack()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
@@ -64,6 +64,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
         </svg>
         <span>My learning</span>
       </button>
+
       <div className="grid grid-cols-[minmax(340px,420px)_minmax(0,700px)] justify-between items-start gap-14 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[680px]:gap-6">
         <aside className="sticky top-[22px] grid grid-cols-1 gap-3.5 pt-[26px] px-7 pb-7 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[900px]:static max-[900px]:grid-cols-[120px_minmax(0,1fr)_auto] max-[900px]:items-center max-[900px]:p-[22px] max-[680px]:grid-cols-[92px_minmax(0,1fr)] max-[680px]:gap-x-4 max-[680px]:gap-y-3 max-[680px]:p-4.5">
           <div className="relative grid min-h-[178px] place-items-center -mt-1.5 mb-1 after:content-[''] after:absolute after:bottom-[15px] after:left-1/2 after:-translate-x-1/2 after:w-[166px] after:h-3.5 after:rounded-full after:bg-black/50 [[data-theme=light]_&]:after:bg-black/[0.12] max-[900px]:row-span-3 max-[900px]:min-h-[120px] max-[900px]:m-0 max-[900px]:after:bottom-[5px] max-[900px]:after:w-[106px] max-[900px]:after:h-2.5 max-[680px]:min-h-[92px] max-[680px]:after:bottom-[2px] max-[680px]:after:w-[80px] max-[680px]:after:h-2">
@@ -83,6 +84,18 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
             <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('cheatsheet')}><ChecklistIcon className="size-4" />Cheatsheet</ActionButton>
             <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('guidebook')}><BookOpenIcon className="size-4" />Guidebook</ActionButton>
           </div>
+          {!isCurrentPath && onSwitchPrimaryPath && (
+            <ActionButton
+              variant="primary"
+              className="w-full min-h-[46px] mt-2 text-sm font-semibold max-[900px]:col-span-full"
+              onClick={() => {
+                onSwitchPrimaryPath(path.id)
+                onBack()
+              }}
+            >
+              Make active mission path →
+            </ActionButton>
+          )}
         </aside>
 
         <div className="grid w-[min(100%,700px)] min-w-0 gap-12 mx-auto">

@@ -15,28 +15,29 @@ const navItems = [
 ]
 
 const dailyGoals = [
-  { id: 'casual', label: 'Casual', meta: '5 XP / day' },
-  { id: 'regular', label: 'Regular', meta: '10 XP / day' },
-  { id: 'serious', label: 'Serious', meta: '20 XP / day' },
-  { id: 'intense', label: 'Intense', meta: '30 XP / day' },
+  { id: 'casual', label: 'Casual', minutes: 5, meta: '5 min / day · 25 XP' },
+  { id: 'regular', label: 'Regular', minutes: 10, meta: '10 min / day · 50 XP' },
+  { id: 'serious', label: 'Serious', minutes: 15, meta: '15 min / day · 75 XP' },
+  { id: 'intense', label: 'Intense', minutes: 20, meta: '20 min / day · 100 XP' },
 ]
 
-export default function SettingsView({ theme, onToggleTheme, onNotice, email, progress, onOpenPlans }) {
+export default function SettingsView({ theme, onToggleTheme, onNotice, email, progress, onOpenPlans, onUpdateDailyMinutes }) {
   const [notifications, setNotifications] = useState({
     reminders: true,
     streak: true,
     weeklyEmail: false,
   })
-  const [dailyGoal, setDailyGoal] = useState('regular')
+  const currentMinutes = progress?.profile?.dailyMinutes ?? 10
+  const activeGoal = dailyGoals.find((g) => g.minutes === currentMinutes) ?? dailyGoals[1]
 
   const updateNotification = (key, value) => {
     setNotifications((current) => ({ ...current, [key]: value }))
     onNotice(`${value ? 'Enabled' : 'Disabled'} ${key === 'weeklyEmail' ? 'weekly progress email' : key === 'reminders' ? 'daily reminders' : 'streak alerts'}`)
   }
 
-  const selectDailyGoal = (id) => {
-    setDailyGoal(id)
-    onNotice(`Daily goal set to ${dailyGoals.find((goal) => goal.id === id).label}`)
+  const selectDailyGoal = (goal) => {
+    onUpdateDailyMinutes?.(goal.minutes)
+    onNotice(`Daily goal set to ${goal.label} (${goal.meta})`)
   }
 
   return (
@@ -144,9 +145,9 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
                 <button
                   key={goal.id}
                   type="button"
-                  className={`grid gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${dailyGoal === goal.id ? 'border-[#6699ec] bg-[#211f30] [[data-theme=light]_&]:bg-[#eff4ff]' : 'border-[#404040] hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:hover:border-[#b8b2a8]'}`}
-                  aria-pressed={dailyGoal === goal.id}
-                  onClick={() => selectDailyGoal(goal.id)}
+                  className={`grid gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${activeGoal.id === goal.id ? 'border-[#6699ec] bg-[#211f30] [[data-theme=light]_&]:bg-[#eff4ff]' : 'border-[#404040] hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:hover:border-[#b8b2a8]'}`}
+                  aria-pressed={activeGoal.id === goal.id}
+                  onClick={() => selectDailyGoal(goal)}
                 >
                   <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{goal.label}</strong>
                   <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{goal.meta}</span>

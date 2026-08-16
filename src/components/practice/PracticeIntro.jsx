@@ -5,7 +5,7 @@ export function PracticeIntro({ session, completion, onStart }) {
 
   return (
     <>
-      <main className="min-w-0 min-h-0 overflow-auto bg-[#161616] [[data-theme=light]_&]:bg-[#f6f6fb]">
+      <main className="min-w-0 min-h-0 overflow-auto bg-[#161616] [[data-theme=light]_&]:bg-[#fafaf8]">
         <div className="grid min-h-full place-items-center px-6 py-12 max-[680px]:place-items-start max-[680px]:px-4 max-[680px]:py-5">
           <section
             className="w-[min(100%,1120px)] rounded-3xl border border-[#404040] [[data-theme=light]_&]:border-[#dedee5] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-[clamp(24px,5vw,72px)] py-[clamp(36px,5vw,60px)] shadow-[0_18px_55px_rgba(0,0,0,.18)] [[data-theme=light]_&]:shadow-[0_18px_55px_rgba(31,31,51,.08)]"

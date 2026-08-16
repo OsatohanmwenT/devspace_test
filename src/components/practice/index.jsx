@@ -2,9 +2,20 @@ import { useState } from 'react'
 import { practiceSessions, practiceTopics } from '../../data/practice'
 import { PracticeCard } from './PracticeCard'
 
-export default function PracticeView({ onStart, completedSessions = {} }) {
+export default function PracticeView({ onStart, completedSessions = {}, currentPath }) {
   const [topic, setTopic] = useState('All')
   const [search, setSearch] = useState('')
+
+  const activeTools = (currentPath?.tools ?? []).map((t) => t.toLowerCase())
+  const pathTitle = currentPath?.title?.toLowerCase() ?? ''
+
+  const isRecommendedSession = (session) => {
+    const topicLower = session.topic.toLowerCase()
+    return activeTools.some((tool) => tool.includes(topicLower) || topicLower.includes(tool))
+      || pathTitle.includes(topicLower)
+      || (topicLower === 'python' && pathTitle.includes('learning'))
+      || (topicLower === 'data' && pathTitle.includes('data'))
+  }
 
   const matchesSession = (session) => {
     const query = search.trim().toLowerCase()
@@ -59,7 +70,13 @@ export default function PracticeView({ onStart, completedSessions = {} }) {
 
       <div className="grid grid-cols-3 gap-4 max-[900px]:grid-cols-2 max-[680px]:grid-cols-1">
         {filteredSessions.map((session) => (
-          <PracticeCard key={session.id} session={session} onStart={onStart} completion={completedSessions[session.id]} />
+          <PracticeCard
+            key={session.id}
+            session={session}
+            onStart={onStart}
+            completion={completedSessions[session.id]}
+            isRecommended={isRecommendedSession(session)}
+          />
         ))}
         {filteredSessions.length === 0 && <p className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">No sessions match that search. Try a different topic.</p>}
       </div>

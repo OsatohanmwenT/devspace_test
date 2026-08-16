@@ -3,7 +3,7 @@ import { PracticeCard } from '../practice/PracticeCard'
 // Home's second reason to exist: something worth doing when there isn't time
 // for a full lesson. Every card here is backed by real data.
 export function ShortSessionRow({ sessions, completedSessions, onStartPractice, onSeeAll }) {
-  if (sessions.length === 0) return null
+  if (!sessions || sessions.length === 0) return null
 
   return (
     <section className="mt-9" aria-labelledby="short-session-title">
@@ -29,6 +29,7 @@ export function ShortSessionRow({ sessions, completedSessions, onStartPractice, 
               session={session}
               completion={completedSessions[session.id]}
               onStart={onStartPractice}
+              isRecommended={session.isRecommended}
             />
           </div>
         ))}

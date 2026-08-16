@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { deriveCustomTitle } from '../../data/paths'
 import GeneratingPath from '../onboarding/GeneratingPath'
 import { ActionButton } from '../ui/ActionButton'
 
@@ -11,7 +12,7 @@ function StatusIcon({ type }) {
     : <svg className="size-4 flex-none text-[#8b8b8b]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
 }
 
-function RouteStory({ route, onStart, onAdjust, readOnly }) {
+function RouteStory({ route, onStart, onAdjust, readOnly, isPrimary, onMakePrimary }) {
   return (
     <section className="mx-auto grid min-h-[calc(100vh-160px)] w-full max-w-[760px] content-center justify-items-center gap-6 pb-10" aria-labelledby="custom-path-ready-title">
       <div className="grid justify-items-center gap-2 text-center">
@@ -21,10 +22,17 @@ function RouteStory({ route, onStart, onAdjust, readOnly }) {
 
       <article className="grid w-full gap-6 rounded-3xl border border-[#404040] bg-[#1f1f1f] p-7 [[data-theme=light]_&]:border-[#e7e5e0] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_10px_rgba(20,20,20,0.06)]">
         <div>
-          <span className="rounded-full bg-[#eeebff] px-3 py-1 text-[13px] font-medium text-[#4936d7]">Custom path</span>
+          <span className="rounded-full bg-[#eeebff] px-3 py-1 text-[13px] font-medium text-[#4936d7]">Custom path{isPrimary ? ' · Primary' : ''}</span>
           <h2 className="mt-4 mb-2 font-rethink-sans text-[27px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{route.title}</h2>
           <p className="m-0 text-[16px] leading-[1.6] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{route.goal}</p>
         </div>
+
+        {/* The project is the actual deliverable of a project-based path, so
+            it leads the card rather than sitting after the lesson count. */}
+        <aside className="rounded-2xl border border-[#2f6b53] bg-[#132a22] px-5 py-4 [[data-theme=light]_&]:border-[#b7e6d3] [[data-theme=light]_&]:bg-[#e7f8f0]" aria-label="Project payoff">
+          <span className="text-[12px] font-semibold uppercase tracking-[.1em] text-[#7fe0b8] [[data-theme=light]_&]:text-[#008a62]">You’ll build</span>
+          <p className="mt-1 mb-0 text-[15px] leading-[1.55] text-[#d3f3e5] [[data-theme=light]_&]:text-[#046648]">{route.project}</p>
+        </aside>
 
         <div className="flex flex-wrap gap-2" aria-label="Route facts">
           {[[route.sections.length, 'sections'], [15, 'lessons'], [15, 'practice steps'], [1, 'project']].map(([value, label]) => <span key={label} className="rounded-full bg-[#27272a] px-3 py-1.5 text-[13px] text-[#c9c9cc] [[data-theme=light]_&]:bg-[#f3f2ef] [[data-theme=light]_&]:text-[#686968]"><strong className="mr-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{value}</strong>{label}</span>)}
@@ -45,19 +53,19 @@ function RouteStory({ route, onStart, onAdjust, readOnly }) {
             </li>)}
           </ol>
         </section>
-
-        <aside className="rounded-2xl border border-[#b7e6d3] bg-[#e7f8f0] px-5 py-4 text-[#008a62]">
-          <span className="text-[12px] font-semibold uppercase tracking-[.1em]">Your project payoff</span>
-          <p className="mt-1 mb-0 text-[15px] leading-[1.55]">{route.project}</p>
-        </aside>
       </article>
 
-      {readOnly ? <button type="button" onClick={onAdjust} className="border-0 bg-transparent text-[15px] text-[#777] underline underline-offset-4 hover:text-[#2f6fed]">Back to paths</button> : <div className="grid w-[min(100%,500px)] gap-4"><ActionButton variant="primary" className="min-h-[52px] text-[16px] font-semibold" onClick={() => onStart(route)}>Start learning</ActionButton><button type="button" onClick={onAdjust} className="justify-self-center border-0 bg-transparent text-[15px] text-[#777] underline underline-offset-4 hover:text-[#2f6fed]">Adjust route</button></div>}
+      {readOnly
+        ? <div className="grid w-[min(100%,500px)] gap-4">
+            {!isPrimary && <ActionButton variant="primary" className="min-h-[52px] text-[16px] font-semibold" onClick={() => onMakePrimary(route)}>Make this my primary path</ActionButton>}
+            <button type="button" onClick={onAdjust} className="justify-self-center border-0 bg-transparent text-[15px] text-[#777] underline underline-offset-4 hover:text-[#2f6fed]">Back to paths</button>
+          </div>
+        : <div className="grid w-[min(100%,500px)] gap-4"><ActionButton variant="primary" className="min-h-[52px] text-[16px] font-semibold" onClick={() => onStart(route)}>Start learning</ActionButton><button type="button" onClick={onAdjust} className="justify-self-center border-0 bg-transparent text-[15px] text-[#777] underline underline-offset-4 hover:text-[#2f6fed]">Adjust route</button></div>}
     </section>
   )
 }
 
-export function CustomPathBuilder({ onBack, onStart, existingPath }) {
+export function CustomPathBuilder({ onBack, onStart, existingPath, isPrimary, onMakePrimary }) {
   const [goal, setGoal] = useState(existingPath?.goal ?? '')
   const [stage, setStage] = useState(existingPath ? 'ready' : 'brief')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -79,7 +87,7 @@ export function CustomPathBuilder({ onBack, onStart, existingPath }) {
         project: outcome === 'Prepare for interviews' ? 'Explain and defend the state choices in a React Native app during technical interviews.' : outcome === 'Understand state deeply' ? 'Build a state architecture you can explain, test, and evolve with confidence.' : outcome === 'Build a new app' ? 'Create a polished mobile app with a reliable state foundation.' : 'Refactor an existing React Native app into a clearer, more reliable state system.',
       }
     : {
-        id: `custom-${goal.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'route'}`, title: 'Your custom learning route', goal, experience, outcome,
+        id: `custom-${goal.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'route'}`, title: deriveCustomTitle(goal), goal, experience, outcome,
         startingPoint: experience === 'I’m completely new' ? 'We’ll begin with the practical foundations, then build momentum quickly.' : 'We’ll begin from the experience you already have and avoid repeated basics.',
         comfort: 'How familiar are you with this topic?', comfortOptions: ['I’m completely new', 'I know the basics', 'I’ve built small projects', 'I use it but want depth'],
         outcomeQuestion: 'What do you want to be able to do?', outcomeOptions: ['Build a new project', 'Improve an existing project', 'Prepare for interviews', 'Understand it deeply'],
@@ -98,7 +106,7 @@ export function CustomPathBuilder({ onBack, onStart, existingPath }) {
   }
 
   if (isGenerating) return <section className="mx-auto grid min-h-[calc(100vh-160px)] w-full max-w-[720px] content-center justify-items-center" aria-label="Building your custom path"><GeneratingPath lines={GENERATING_LINES} durationMs={2300} onDone={() => {}} /></section>
-  if (existingPath) return <RouteStory route={existingPath} readOnly onAdjust={onBack} />
+  if (existingPath) return <RouteStory route={existingPath} readOnly isPrimary={isPrimary} onMakePrimary={onMakePrimary} onAdjust={onBack} />
   if (stage === 'ready') return <RouteStory route={route} onStart={onStart} onAdjust={() => setStage('details')} />
 
   if (stage === 'details') return (
