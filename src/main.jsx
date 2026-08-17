@@ -365,7 +365,7 @@ function App() {
 
     if (historical.length > 0) return historical
 
-    const fallbacks = ['fullstack-developer', 'frontend-developer', 'machine-learning-specialist', 'backend-developer']
+    const fallbacks = ['fullstack-developer', 'frontend-developer', 'machine-learning', 'backend-developer']
       .filter((id) => id !== profile?.pathId)
       .slice(0, 2)
     return fallbacks.map((id) => getPath(id, customPaths)).filter(Boolean)

@@ -88,24 +88,31 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
         <section className="grid gap-4" aria-labelledby="custom-paths-title">
           <div className="flex items-center justify-between gap-4">
             <h2 id="custom-paths-title" className="text-[24px] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">Your custom paths</h2>
-            <span className="text-[13px] text-[#8b7cf6]">{pausedCustomPaths.length} made with Devy</span>
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#8b7cf6]">
+              <img className="size-4 object-contain" src="/assets/devy.svg" alt="" />
+              Made with Devy
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1">
-            {pausedCustomPaths.map((path) => {
-              return (
-                <article key={path.id} className="grid min-h-[196px] content-between gap-5 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-5 transition-colors hover:border-[#5a5a60] hover:bg-[#252525] [&_p]:text-[#9a9a9d] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#bfc7d8] [[data-theme=light]_&]:hover:bg-[#f8faff] [[data-theme=light]_&]:[&_p]:text-[#686968]">
-                  <div className="min-w-0">
-                    <span className="text-[12px] font-semibold uppercase tracking-[.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Paused</span>
-                    <h3 className="mt-1 mb-2 font-rethink-sans text-[19px] font-semibold leading-[1.25] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{path.title}</h3>
-                    <p className="m-0 text-[14px] leading-[1.5] text-[#dbe6ff] [[data-theme=light]_&]:text-[#3a568d]">{path.stages?.[0]?.title} · {path.project}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 max-[720px]:w-full">
-                    <button type="button" className="min-h-11 rounded-xl border border-[#404040] bg-transparent px-4 text-sm font-semibold text-[#f4f4f2] hover:border-[#77777b] hover:bg-[#262626] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5]" onClick={() => { setSelectedCustomPath(path); setView('custom') }}>View path</button>
-                    <button type="button" className="min-h-11 rounded-xl border-0 bg-transparent px-3 text-sm font-semibold text-[#8b7cf6] hover:bg-[#2a264c] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:hover:bg-[#eeebff]" onClick={() => onSwitchPrimaryPath(path.id)}>Make primary</button>
-                  </div>
-                </article>
-              )
-            })}
+          <div className="grid gap-2.5">
+            {pausedCustomPaths.map((path) => (
+              <article key={path.id} className="flex items-center gap-4 rounded-2xl border border-[#404040] bg-[#1f1f1f] py-4 pl-4 pr-4 transition-colors hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#bfc7d8] max-[560px]:flex-col max-[560px]:items-stretch">
+                <span className="grid size-10 flex-none place-items-center rounded-full bg-[#2a264c] [[data-theme=light]_&]:bg-[#eeebff]" aria-hidden="true">
+                  <img className="size-5 object-contain" src="/assets/devy.svg" alt="" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                    <span className="size-1.5 rounded-full bg-[#9a9a9d] [[data-theme=light]_&]:bg-[#a8a8a5]" aria-hidden="true" />
+                    Paused
+                  </span>
+                  <h3 className="mt-1 truncate font-rethink-sans text-[16px] font-semibold leading-[1.3] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{path.title}</h3>
+                  <p className="m-0 mt-0.5 truncate text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Building: {path.project}</p>
+                </div>
+                <div className="flex flex-none items-center gap-2 max-[560px]:w-full">
+                  <button type="button" className="min-h-11 flex-none rounded-xl border border-[#404040] bg-transparent px-4 text-sm font-semibold text-[#f4f4f2] hover:border-[#77777b] hover:bg-[#262626] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5] max-[560px]:flex-1" onClick={() => { setSelectedCustomPath(path); setView('custom') }}>View</button>
+                  <button type="button" className="min-h-11 flex-none rounded-xl border border-[#8b7cf6] bg-[#8b7cf6] px-4 text-sm font-semibold text-white hover:bg-[#7c6bf0] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 max-[560px]:flex-1" onClick={() => onSwitchPrimaryPath(path.id)}>Make primary</button>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       )}
