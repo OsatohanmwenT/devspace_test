@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { practiceSessions, practiceTopics } from '../../data/practice'
 import { PracticeCard } from './PracticeCard'
+import { DevyMood } from '../ui/DevyMood'
 
 export default function PracticeView({ onStart, completedSessions = {}, currentPath }) {
   const [topic, setTopic] = useState('All')
@@ -78,7 +79,24 @@ export default function PracticeView({ onStart, completedSessions = {}, currentP
             isRecommended={isRecommendedSession(session)}
           />
         ))}
-        {filteredSessions.length === 0 && <p className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">No sessions match that search. Try a different topic.</p>}
+        {/* An empty grid used to be one grey sentence wedged in a three-column
+            layout. Devy takes the dead end personally and gives the reset a home. */}
+        {filteredSessions.length === 0 && (
+          <div className="col-span-full grid justify-items-center gap-3 py-10 text-center">
+            <DevyMood mood="annoyed" className="size-[124px]" />
+            <p className="m-0 text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Nothing matches that.</p>
+            <p className="m-0 max-w-[38ch] text-[13px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+              Devy came up empty on “{search.trim() || topic}”. Try another topic or clear the search.
+            </p>
+            <button
+              type="button"
+              className="mt-1 min-h-11 rounded-xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-transparent px-4 text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:border-[#6699ec] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]"
+              onClick={() => { setSearch(''); setTopic('All') }}
+            >
+              Show every session
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

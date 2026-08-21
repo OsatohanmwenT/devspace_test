@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ActionButton } from '../ui/ActionButton'
+import { DevyMood } from '../ui/DevyMood'
 
 export function FirstLessonWelcome({ path, lesson, onBegin }) {
   const welcomeRef = useRef(null)
@@ -22,7 +23,15 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
       aria-label="Your first lesson"
     >
       <main ref={welcomeRef} className="grid w-full max-w-[520px] justify-items-center text-center">
-        <img data-welcome-devy className="mb-7 h-28 w-28 object-contain max-[680px]:mb-6 max-[680px]:h-24 max-[680px]:w-24" src="/assets/devy.svg" alt="Devy" />
+        {/* The route just finished generating — Devy is pleased with it. The
+            GSAP entrance below owns the reveal, so the mood art skips its own. */}
+        <DevyMood
+          data-welcome-devy
+          mood="celebrating"
+          animate={false}
+          alt="Devy"
+          className="mb-7 h-28 w-28 max-[680px]:mb-6 max-[680px]:h-24 max-[680px]:w-24"
+        />
         <p data-welcome-step className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">Your learning path</p>
         <h1 data-welcome-step className="mt-3 mb-2 font-rethink-sans text-[clamp(28px,4vw,38px)] font-semibold leading-[1.14]">
           Your first lesson is ready

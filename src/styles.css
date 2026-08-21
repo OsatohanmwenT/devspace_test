@@ -73,6 +73,52 @@
     animation-duration: 360ms, 2.8s;
   }
 
+  /* Celebration arrives, then keeps cheering — a two-beat hop rather than a
+     single pop, so it still reads as joy a second after the screen settles. */
+  @keyframes devy-celebrate-in {
+    0% { transform: scale(0.72) rotate(-8deg); opacity: 0; }
+    58% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  @keyframes devy-celebrate-cheer {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    12% { transform: translateY(-11px) rotate(-3deg); }
+    24% { transform: translateY(0) rotate(0deg); }
+    36% { transform: translateY(-7px) rotate(2.5deg); }
+    48% { transform: translateY(0) rotate(0deg); }
+  }
+
+  .devy-celebrate {
+    animation:
+      devy-celebrate-in 520ms cubic-bezier(0.22, 1.4, 0.36, 1) both,
+      devy-celebrate-cheer 2.6s 520ms ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+
+  /* Annoyed is mostly stillness with a twitch — the impatience reads because
+     Devy holds the pose and then can't help itself, not because it wobbles
+     constantly. */
+  @keyframes devy-annoyed-in {
+    0% { transform: translateY(6px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  @keyframes devy-annoyed-tap {
+    0%, 62%, 100% { transform: rotate(0deg) translateX(0); }
+    68% { transform: rotate(-2.5deg) translateX(-2px); }
+    74% { transform: rotate(2deg) translateX(2px); }
+    80% { transform: rotate(-1.5deg) translateX(-1px); }
+    86% { transform: rotate(0deg) translateX(0); }
+  }
+
+  .devy-annoyed {
+    animation:
+      devy-annoyed-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both,
+      devy-annoyed-tap 4.2s 420ms ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+
   @keyframes custom-path-example-out {
     to { opacity: 0; transform: translateY(-0.7em); }
   }

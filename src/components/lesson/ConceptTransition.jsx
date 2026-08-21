@@ -1,4 +1,9 @@
-export function ConceptTransition({ eyebrow, title, body }) {
+import { DevyMood } from '../ui/DevyMood'
+
+// Shared by the mid-lesson concept hand-off and the end-of-lesson screen. They
+// look alike but are not the same event, so the mood is the caller's call:
+// finishing a lesson is worth a celebration, moving between concepts is not.
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral' }) {
   return (
     <section
       className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
@@ -6,22 +11,20 @@ export function ConceptTransition({ eyebrow, title, body }) {
     >
       <div className="grid min-h-full place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
         <div className="grid w-[min(100%,720px)] justify-items-center text-center">
-          <img
-            className="mb-5 size-[210px] object-contain max-[720px]:mb-3 max-[720px]:size-[148px]"
-            src="/assets/devy.svg"
-            alt=""
-            aria-hidden="true"
+          <DevyMood
+            mood={mood}
+            className="mb-5 size-[140px] max-[720px]:mb-3 max-[720px]:size-[104px]"
           />
-          <span className="mb-3 text-xs font-bold uppercase tracking-[0.11em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">
+          <span className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">
             {eyebrow}
           </span>
           <h1
             id="lesson-transition-title"
-            className="m-0 max-w-[20ch] text-balance font-rethink-sans text-[clamp(27px,3vw,38px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[720px]:text-[26px]"
+            className="m-0 max-w-[20ch] text-balance font-rethink-sans text-[clamp(25px,2.7vw,34px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[720px]:text-[24px]"
           >
             {title}
           </h1>
-          <p className="mt-4 mb-0 max-w-[48ch] text-balance text-[17px] leading-[1.6] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968] max-[720px]:mt-3 max-[720px]:text-base">
+          <p className="mt-4 mb-0 max-w-[48ch] text-balance text-base leading-[1.6] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968] max-[720px]:mt-3 max-[720px]:text-[15px]">
             {body}
           </p>
         </div>

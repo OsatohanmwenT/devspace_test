@@ -5,12 +5,17 @@ import { LessonProgressStrip } from '../lesson/LessonProgressStrip'
 import { LessonQuestion } from '../lesson/LessonQuestion'
 import { isQuestionComplete, isQuestionCorrect } from '../lesson/questionState'
 import { PracticeIntro } from './PracticeIntro'
+import { PracticeResult } from './PracticeResult'
 
-export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
+export function PracticeSession({ sessionId, completion, xpAward = 0, onExit, onComplete }) {
   const session = practiceSessions.find((item) => item.id === sessionId)
   const [phase, setPhase] = useState('intro')
   const [questionIndex, setQuestionIndex] = useState(0)
   const [questionStates, setQuestionStates] = useState({})
+  // Captured when the round ends rather than read from the prop at render time:
+  // completing the session is what makes the next replay worth less, so the
+  // prop has already moved on by the time this screen paints.
+  const [result, setResult] = useState(null)
 
   const currentQuestion = session?.questions[questionIndex]
   const currentState = currentQuestion ? questionStates[currentQuestion.id] : undefined
@@ -59,10 +64,20 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
     }))
   }
 
+  // Ends the round on a results screen instead of closing outright. The record
+  // is still written here, so nothing depends on the learner reading it.
   const finishPractice = () => {
     const correctCount = session.questions.filter((question) => isQuestionCorrect(question, questionStates[question.id]?.answer)).length
+    setResult({ correctCount, total: session.questions.length, xpAward, isReplay: Boolean(completion) })
     onComplete?.(session.id, correctCount, session.questions.length)
-    onExit()
+    setPhase('result')
+  }
+
+  const retryPractice = () => {
+    setQuestionStates({})
+    setQuestionIndex(0)
+    setResult(null)
+    setPhase('quiz')
   }
 
   const continueQuestion = () => {
@@ -74,8 +89,11 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
     ? { label: isLastQuestion ? 'Finish practice' : 'Continue', onClick: continueQuestion }
     : { label: 'Check answer', onClick: checkQuestion, disabled: !canCheck }
 
+  // Only the quiz has a footer. Reserving its 84px on the intro and results
+  // screens too left a dead band under the content and pushed both of them
+  // visibly above centre.
   return (
-    <section className="fixed inset-0 z-20 grid grid-rows-[56px_minmax(0,1fr)_84px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" aria-label="Practice session">
+    <section className={`fixed inset-0 z-20 grid ${phase === 'quiz' ? 'grid-rows-[56px_minmax(0,1fr)_84px]' : 'grid-rows-[56px_minmax(0,1fr)]'} overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`} aria-label="Practice session">
       <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fafaf8] px-5 max-[720px]:px-3.5">
         <button
           type="button"
@@ -94,11 +112,21 @@ export function PracticeSession({ sessionId, completion, onExit, onComplete }) {
             onNext={!isLastQuestion && checked ? continueQuestion : undefined}
           />
         )}
-        {phase === 'intro' && <span className="ml-3 text-sm font-semibold">{session.title}</span>}
+        {(phase === 'intro' || phase === 'result') && <span className="ml-3 text-sm font-semibold">{session.title}</span>}
       </header>
 
       {phase === 'intro' ? (
         <PracticeIntro session={session} completion={completion} onStart={() => setPhase('quiz')} />
+      ) : phase === 'result' && result ? (
+        <PracticeResult
+          session={session}
+          correctCount={result.correctCount}
+          total={result.total}
+          xpAward={result.xpAward}
+          isReplay={result.isReplay}
+          onRetry={retryPractice}
+          onDone={onExit}
+        />
       ) : (
         <>
           <main className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white">

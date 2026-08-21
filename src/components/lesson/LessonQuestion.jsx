@@ -1,3 +1,4 @@
+import { DevyMood } from '../ui/DevyMood'
 import { RichText } from './RichText'
 import { tokenizePython, TOKEN_CLASSES } from './pythonHighlight'
 import { clearBlank, fillNextBlank, isFillType, isQuestionCorrect } from './questionState'
@@ -172,11 +173,14 @@ export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy,
             <p className="m-0 mt-2 text-[15px] leading-[1.55] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"><RichText content={question.explanation} /></p>
           </div>
 
+          {/* The same flat "Still confused?" ran after a win and a miss alike.
+              Devy takes the miss personally — at the question, not the learner —
+              which is what makes the offer of help land instead of nag. */}
           {onAskDevy && <aside className="flex items-center gap-3 rounded-xl border border-[#404040] bg-[#262626] px-4 py-2.5 [[data-theme=light]_&]:border-[#e7e7e7] [[data-theme=light]_&]:bg-white max-[720px]:items-start" aria-label="Get help from Devy">
-            <img className="size-8 flex-none object-contain" src="/assets/devy.svg" alt="" />
+            <DevyMood mood={correct ? 'neutral' : 'annoyed'} className="size-9 flex-none" />
             <div className="min-w-0 flex-1">
-              <strong className="block text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Still confused?</strong>
-              <p className="m-0 mt-0.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Devy can explain this answer.</p>
+              <strong className="block text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{correct ? 'Want the why?' : 'That one catches people out.'}</strong>
+              <p className="m-0 mt-0.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{correct ? 'Devy can unpack why this answer works.' : 'Devy can walk you through it.'}</p>
             </div>
             <button type="button" className="min-h-9 flex-none rounded-lg border border-[#5c5c60] bg-transparent px-3.5 text-sm font-semibold text-[#f4f4f2] hover:border-[#6699ec] hover:bg-[#303030] [[data-theme=light]_&]:border-[#e5e5e5] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#fafafa]" onClick={onAskDevy}>Ask Devy</button>
           </aside>}

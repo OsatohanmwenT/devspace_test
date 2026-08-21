@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Drawer } from '../ui/Drawer'
-import { TopicGlyph } from './ReferenceIcons'
+import { useState } from 'react';
+import { Drawer } from '../ui/Drawer';
+import { TopicGlyph } from './ReferenceIcons';
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -45,8 +45,11 @@ function ChevronIcon({ className }) {
 }
 
 // Code first, prose second — you open a cheatsheet to see the shape of the
-// syntax, not to read a paragraph about it.
-function CheatsheetEntry({ topic }) {
+// syntax, not to read a paragraph about it. Rule and syntax are the one
+// baseline every learner gets, unconditionally; personalization only ever
+// adds framing on top (a mental-model line for beginners) or changes what
+// starts open (examples, for anyone who's said they want depth or speed).
+function CheatsheetEntry({ topic, personalization }) {
   return (
     <article className="grid gap-3 border-b border-[#2c2c30] pb-7 last:border-b-0 last:pb-0 [[data-theme=light]_&]:border-[#ececea]">
       <h3 className="m-0 flex items-center gap-2.5 font-rethink-sans text-[19px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
@@ -56,11 +59,15 @@ function CheatsheetEntry({ topic }) {
         {topic.title}
       </h3>
 
+      {personalization?.wantsMentalModel && topic.guidebook?.mentalModel && (
+        <p className="m-0 text-[14px] italic leading-[1.6] text-[#8b7cf6]">{topic.guidebook.mentalModel}</p>
+      )}
+
       <Snippet code={topic.cheatsheet.syntax} />
 
       <p className="m-0 text-[14px] leading-[1.6] text-[#a8a8ac] [[data-theme=light]_&]:text-[#5c5c5c]">{topic.cheatsheet.rule}</p>
 
-      <details className="group/details">
+      <details className="group/details" open={personalization?.wantsExamplesUpFront}>
         <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg text-[13px] font-semibold text-[#88bdf2] marker:hidden hover:text-[#a8cbf7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] [[data-theme=light]_&]:hover:text-[#1d4ed8]">
           <ChevronIcon className="size-4 flex-none transition-transform group-open/details:rotate-180" />
           Example and common mistake
@@ -77,7 +84,7 @@ function CheatsheetEntry({ topic }) {
   )
 }
 
-export function CheatsheetDrawer({ title, subtitle, topics, onClose }) {
+export function CheatsheetDrawer({ title, subtitle, topics, onClose, personalization }) {
   return (
     <Drawer title={title} subtitle={subtitle} onClose={onClose} labelledBy="cheatsheet-title">
       {topics.length === 0 ? (
@@ -88,8 +95,16 @@ export function CheatsheetDrawer({ title, subtitle, topics, onClose }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-7">
-          {topics.map((topic) => <CheatsheetEntry key={topic.id} topic={topic} />)}
+        <div className="grid gap-5">
+          {personalization?.reason && (
+            <p className="m-0 inline-flex items-center gap-2 self-start rounded-full bg-[#211a2b] px-3 py-1.5 text-[12px] font-medium text-[#c4b5fd] [[data-theme=light]_&]:bg-[#f5edf4] [[data-theme=light]_&]:text-[#6d28d9]">
+              <span aria-hidden="true">✦</span>
+              {personalization.reason}
+            </p>
+          )}
+          <div className="grid gap-7">
+            {topics.map((topic) => <CheatsheetEntry key={topic.id} topic={topic} personalization={personalization} />)}
+          </div>
         </div>
       )}
     </Drawer>

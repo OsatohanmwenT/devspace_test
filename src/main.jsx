@@ -20,11 +20,11 @@ import { Badge } from './components/ui/Badge';
 import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { DevyDrawer } from './components/ui/DevyDrawer';
+import { DevyMood } from './components/ui/DevyMood';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
-import { can, CAPABILITIES } from './lib/entitlements';
+import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
@@ -33,9 +33,6 @@ import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './l
 import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week';
 import './styles.css';
 import './tailwind.css';
-
-// Practice awards a flat rate on first completion, mirroring LESSON_XP.
-const PRACTICE_XP = 10
 
 function getInitialTheme() {
   const stored = window.localStorage.getItem('devspace-theme')
@@ -179,17 +176,11 @@ function App() {
   const recordPracticeCompletion = (sessionId, correctCount, total) => {
     setProgress((current) => {
       const today = new Date().toDateString()
-      const priorCompletion = current.completedSessions?.[sessionId]
-      // Free learners only earn XP the first time. Premium also earns it on a
-      // replay, but only once per day — completedAt is overwritten every time,
-      // so a same-day retry can never be double-counted.
-      const isFirstAttempt = !priorCompletion
-      const isFreshPremiumReplay = Boolean(priorCompletion) && priorCompletion.completedAt !== today
-        && can(current, CAPABILITIES.REPLAY_XP)
-      const earnsXp = isFirstAttempt || isFreshPremiumReplay
-
+      // The award rule lives in data/progress so the results screen can state
+      // the same number this banks — completedAt is overwritten every time, so
+      // a same-day retry can never be double-counted.
       const next = {
-        ...applyActivity(current, earnsXp ? PRACTICE_XP : 0, today),
+        ...applyActivity(current, getPracticeXpAward(current, sessionId, today), today),
         completedSessions: {
           ...current.completedSessions,
           [sessionId]: { correctCount, total, completedAt: today },
@@ -408,7 +399,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
-      {active !== 'Plans' && !openLesson && (
+      {active !== 'Plans' && !openLesson && !openPractice && (
       <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
@@ -518,6 +509,7 @@ function App() {
             initialView={pathsInitialView}
             customPaths={customPaths}
             primaryPathId={profile?.pathId}
+            profile={profile}
             onCreateCustomPath={createCustomPath}
             onSwitchPrimaryPath={resumePath}
             hasSeenCustomPathIntroduction={Boolean(seenPageIntroductions?.['custom-path'])}
@@ -579,10 +571,16 @@ function App() {
             </div>
             {/* Was the fixed string "Solve 3 problems to start a streak", which
                 contradicted the streak count rendered directly above it. */}
-            <p className="mt-3.5 mb-4 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
-              {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">{streakMessage.emphasis} </strong>}
-              {streakMessage.text}
-            </p>
+            {/* Devy shows up here only when the streak is actually at risk.
+                Making it the one thing on the card that changes is what turns
+                a line of grey text into something the eye catches. */}
+            <div className="mt-3.5 mb-4 flex items-center gap-3">
+              {streakAtRisk && <DevyMood mood="annoyed" className="size-[52px] flex-none max-[900px]:size-11" />}
+              <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
+                {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">{streakMessage.emphasis} </strong>}
+                {streakMessage.text}
+              </p>
+            </div>
             {/* Seven fixed 40px circles overflow the 300px sidebar, so they size
                 themselves from the space available and cap at the original 40px. */}
             <div className="flex justify-between gap-1.5" role="img" aria-label={`Activity for the last ${WEEK_LENGTH} days: ${streakWeek.filter((day) => day.isActive).length} active`}>
@@ -742,7 +740,7 @@ function App() {
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
       {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} />}
-      {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )
 }

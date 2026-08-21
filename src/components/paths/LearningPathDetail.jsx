@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRegionTopics } from '../../data/learningResources';
+import { getCheatsheetPersonalization } from '../../lib/personalization';
 import { ActionButton } from '../ui/ActionButton';
 import { BookOpenIcon, ChecklistIcon } from '../ui/icons';
 import { CheatsheetDrawer } from './CheatsheetDrawer';
@@ -7,7 +8,8 @@ import { FAMILY_ACCENTS } from './ExplorePathCard';
 import { GuidebookView } from './GuidebookView';
 import { LessonRow } from './LessonRow';
 
-export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath }) {
+export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath, profile }) {
+  const cheatsheetPersonalization = getCheatsheetPersonalization(profile)
   const regions = path.cards
   const lessons = regions.flatMap((region) => region.lessons)
   const currentLesson = lessons.find((lesson) => lesson.state === 'current')
@@ -158,6 +160,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           subtitle={selectedRegion.title}
           topics={getRegionTopics(selectedRegion.id)}
           onClose={() => setOpenResource(null)}
+          personalization={cheatsheetPersonalization}
         />
       )}
       {openResource === 'guidebook' && (

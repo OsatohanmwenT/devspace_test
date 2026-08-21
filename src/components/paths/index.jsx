@@ -7,7 +7,7 @@ import { ExplorePathCard, PathPreview } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
 import { PageArrival } from '../ui/PageArrival'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction }) {
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile }) {
   const [view, setView] = useState(initialView ?? 'overview')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
@@ -43,6 +43,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
         onBack={() => setView('overview')}
         isCurrentPath={isSelectedCurrent}
         onSwitchPrimaryPath={onSwitchPrimaryPath}
+        profile={profile}
       />
     )
   }

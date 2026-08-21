@@ -7,6 +7,7 @@ import { LessonArticle } from './LessonArticle'
 import { LessonQuestion } from './LessonQuestion'
 import { DevyAssistant } from './DevyAssistant'
 import { GemIcon } from '../ui/icons'
+import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
 import { isQuestionComplete, isQuestionCorrect } from './questionState'
@@ -35,7 +36,10 @@ function loadLessonSession(storageKey, flowLength) {
 function UnavailableLesson({ lessonId }) {
   return (
     <div className="grid h-full place-items-center px-6 text-center">
-      <div className="grid max-w-[42ch] gap-2">
+      <div className="grid max-w-[42ch] justify-items-center gap-2">
+        {/* A dead end is Devy's problem, not the learner's — the annoyance is
+            pointed at the missing content. */}
+        <DevyMood mood="annoyed" className="mb-2 size-[132px]" />
         <h1 className="m-0 font-rethink-sans text-[clamp(24px,3vw,30px)] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
           This lesson isn’t written yet
         </h1>
@@ -278,7 +282,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           </div>
         )}
         {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} />}
-        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} />}
+        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} mood="celebrating" />}
       </main>
 
       {!isMilestone && <aside
@@ -315,7 +319,13 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           aria-label="Open Devy chat"
           aria-expanded={isDevyOpen}
         >
-          <img className="devy-idle w-full h-full object-contain" src="/assets/devy.svg" alt="" />
+          {/* Three right in a row already lights a ring here; letting Devy react
+              too is what makes the streak feel noticed rather than counted. */}
+          <DevyMood
+            key={showStreak ? 'streaking' : 'idle'}
+            mood={showStreak ? 'celebrating' : 'neutral'}
+            className={showStreak ? 'w-full h-full' : 'devy-idle w-full h-full'}
+          />
           {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
         </button>}
 

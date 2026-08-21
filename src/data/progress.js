@@ -136,6 +136,20 @@ export function applyActivity(current, xpGain, today = new Date().toDateString()
   }
 }
 
+// Practice awards a flat rate, mirroring LESSON_XP.
+export const PRACTICE_XP = 10
+
+// Free learners only earn XP the first time a session is completed. Premium
+// also earns it on a replay, but only once per day. The results screen has to
+// state the award before it is banked, and `recordPracticeCompletion` has to
+// bank exactly that amount — so the rule lives here rather than in either.
+export function getPracticeXpAward(progress, sessionId, today = new Date().toDateString()) {
+  const priorCompletion = progress.completedSessions?.[sessionId]
+  if (!priorCompletion) return PRACTICE_XP
+  if (priorCompletion.completedAt !== today && can(progress, CAPABILITIES.REPLAY_XP)) return PRACTICE_XP
+  return 0
+}
+
 // Today's XP is stale once the date rolls over, so reading it has to check the
 // stamp rather than trusting the stored number.
 export function getDailyXp(progress, today = new Date().toDateString()) {

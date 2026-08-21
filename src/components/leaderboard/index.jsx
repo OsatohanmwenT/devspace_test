@@ -8,7 +8,7 @@ import { LeaderboardRow } from './LeaderboardRow';
 import { LeaderboardTabs } from './LeaderboardTabs';
 import { LeagueLadder } from './LeagueLadder';
 import { LeagueResultBanner } from './LeagueResultBanner';
-import { LockedLeaderboard } from './LockedLeaderboard';
+import { LeagueJoinPrompt, LockedBoardSkeleton } from './LockedLeaderboard';
 import { PageArrival } from '../ui/PageArrival';
 
 const TABS = ['This week', 'All time', 'By path']
@@ -175,10 +175,11 @@ export default function LeaderboardView({
               ? `Top ${league.promoteCount} advance to ${getLeague(leagueIndex + 1).name}`
               : `Hold your place · bottom ${league.demoteCount} drop`}
         </p>
+        {!hasJoined && <LeagueJoinPrompt pxToJoin={PX_TO_JOIN} onStartPractice={onStartPractice} />}
       </div>
 
       {!hasJoined ? (
-        <LockedLeaderboard league={league} pxToJoin={PX_TO_JOIN} onStartPractice={onStartPractice} />
+        <LockedBoardSkeleton />
       ) : (
         <div className="grid w-full max-w-[860px] mx-auto gap-6">
           <LeaderboardTabs

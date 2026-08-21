@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, markPageIntroductionSeen, migrateProgress } from './progress.js'
+import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, markPageIntroductionSeen, migrateProgress, PRACTICE_XP } from './progress.js'
 
 const TODAY = 'Fri Aug 07 2026'
 const YESTERDAY = 'Thu Aug 06 2026'
@@ -195,4 +195,30 @@ test('earning XP does not disturb premium status', () => {
 
   assert.equal(next.isPremium, true)
   assert.equal(next.premiumPlanId, 'annual')
+})
+
+// The practice results screen states the award before it is banked, so the two
+// have to agree — these pin the rule they now share.
+test('a session never completed before pays the full practice rate', () => {
+  assert.equal(getPracticeXpAward({ completedSessions: {} }, 'python-basics', TODAY), PRACTICE_XP)
+})
+
+test('a free learner replaying an already-completed session earns nothing', () => {
+  const progress = { isPremium: false, completedSessions: { 'python-basics': { completedAt: YESTERDAY } } }
+
+  assert.equal(getPracticeXpAward(progress, 'python-basics', TODAY), 0)
+})
+
+test('a premium learner earns again on a replay, but only on a new day', () => {
+  const completedYesterday = { isPremium: true, completedSessions: { 'python-basics': { completedAt: YESTERDAY } } }
+  const completedToday = { isPremium: true, completedSessions: { 'python-basics': { completedAt: TODAY } } }
+
+  assert.equal(getPracticeXpAward(completedYesterday, 'python-basics', TODAY), PRACTICE_XP)
+  assert.equal(getPracticeXpAward(completedToday, 'python-basics', TODAY), 0)
+})
+
+test('completing one session says nothing about another', () => {
+  const progress = { isPremium: false, completedSessions: { 'python-basics': { completedAt: TODAY } } }
+
+  assert.equal(getPracticeXpAward(progress, 'sql-select', TODAY), PRACTICE_XP)
 })

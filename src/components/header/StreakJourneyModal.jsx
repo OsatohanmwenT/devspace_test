@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CheckIcon, LockIcon } from '../ui/icons'
 import { Drawer } from '../ui/Drawer'
+import { DevyMood } from '../ui/DevyMood'
 import { InfoTooltip } from '../ui/InfoTooltip'
 import { getStreakHistory, getTimeUntilMidnight, STREAK_MILESTONES } from '../../lib/streak'
 
@@ -100,6 +101,14 @@ export function StreakJourneyModal({
             <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
               Day<br />streak
             </span>
+            {/* The status line below already says whether today is covered, but
+                it says it in 13px grey. Devy says it at a glance. */}
+            {(isAtRisk || isActiveToday) && (
+              <DevyMood
+                mood={isAtRisk ? 'annoyed' : 'celebrating'}
+                className="ml-auto -my-2 size-[72px] flex-none"
+              />
+            )}
           </div>
           <p className={`m-0 text-[13px] ${status.className}`} role="status">{status.text}</p>
           {lastProtection && (
