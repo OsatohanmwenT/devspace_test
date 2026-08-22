@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
 import { BRANCHES, branchTriage, roleSubQuiz, startingPointOptions } from '../../data/onboarding';
 import { getPath } from '../../data/paths';
 import {
     buildProfile,
+    computeLessonsPerWeek,
     getBreakContent,
+    getStageGroups,
     getStepOptions,
     getVisibleSteps,
     isMultiSelectStep,
@@ -13,8 +16,47 @@ import {
     STEP_ANSWER_KEY,
 } from '../../lib/onboarding';
 import { ActionButton } from '../ui/ActionButton';
+import { DevyMood } from '../ui/DevyMood';
 import GeneratingPath from './GeneratingPath';
-import { ChipList, OptionIcon, OptionList, StepHeading } from './OnboardingStep';
+import { ChipList, MiniIcon, OptionIcon, OptionList, StepHeading } from './OnboardingStep';
+
+// Joins answer labels the way the break-screen copy already does — "X", "X and Y", "X, Y and Z".
+function joinLabels(labels) {
+  return labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}` : labels[0]
+}
+
+// Lowercases only the leading character, so folding a label into a sentence
+// doesn't also mangle a mid-string capital like the "I" in "Fill gaps in what I know".
+function lowerFirst(text) {
+  return text.charAt(0).toLowerCase() + text.slice(1)
+}
+
+// Screens whose option set is long enough to benefit from a 2-column icon
+// grid instead of a scanning a straight vertical list.
+const GRID_LAYOUT_STEPS = new Set(['branch'])
+
+// Matches a stage's id against the tech it actually teaches, so the path
+// preview can show a real HTML/JS/React mark instead of a bare number.
+// Falls back to the number when a stage (e.g. "DOM manipulation") doesn't
+// map cleanly to one icon — better a blank than a wrong mark.
+function stageIcon(stageValue) {
+  const tokens = stageValue.split('_')
+  const has = (...keywords) => keywords.some((keyword) => tokens.includes(keyword))
+
+  if (has('react')) return 'react'
+  if (has('html', 'css')) return 'markup'
+  if (has('js', 'javascript')) return 'js'
+  if (has('python')) return 'python'
+  if (has('swift')) return 'swift'
+  if (has('kotlin')) return 'kotlin'
+  if (has('sql', 'database', 'databases')) return 'database'
+  if (has('docker', 'containers')) return 'docker'
+  if (has('cloud')) return 'cloud'
+  if (has('git')) return 'git'
+  if (has('figma', 'design')) return 'design'
+  if (has('api', 'apis', 'rest', 'graphql', 'networking')) return 'api'
+  return null
+}
 
 const COPY = {
   motivation: { title: 'What brings you here?', subtitle: 'This shapes the examples we use, not what you can access.' },
@@ -150,30 +192,34 @@ export default function OnboardingView({ onComplete }) {
         )}
 
         {isBreak && breakContent && !isPathPreview && !isPlacementRecommendation && (
-          <div className="grid w-full max-w-[520px] justify-items-center gap-5 self-center text-center">
-            <img className="h-24 w-24 object-contain" src="/assets/devy.svg" alt="" />
-            <StepHeading title={breakContent.message} subtitle={breakContent.insight} />
-          </div>
+          <BreakScreen key={step.id} message={breakContent.message} insight={breakContent.insight} />
         )}
 
         {!isGenerating && step.id === 'summary' && (
-          <div className="grid w-full max-w-[460px] justify-items-center gap-5 self-center text-center">
-            <span className="grid size-14 place-items-center rounded-full bg-[#1e3a2a] text-[#4ade80] [[data-theme=light]_&]:bg-[#e3f6e9] [[data-theme=light]_&]:text-[#1a8a4c]" aria-hidden="true">
-              <svg className="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5 9.5 17 19 7" /></svg>
-            </span>
-            <StepHeading title="You’re all set" />
-            <dl className="grid w-full gap-px overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]">
-              <SummaryRow icon="compass" label="Path" value={getPath(buildProfile(answers).pathId).title} />
-              {role && <SummaryRow icon="target" label="Focus" value={roleLabel(branch, role)} />}
-              {placement && <SummaryRow icon="sprout" label="Starting at" value={placement.label} />}
-              <SummaryRow icon="clock" label="Daily goal" value={`${answers.dailyMinutes ?? 10} min`} />
-            </dl>
-            <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={changePath}>Change career</button>
-          </div>
+          <SummaryPreview
+            pathTitle={getPath(buildProfile(answers).pathId).title}
+            placement={placement}
+            dailyMinutes={answers.dailyMinutes ?? 10}
+            immediateNeedLabels={getStepOptions('immediate_need', answers)
+              .filter((option) => (answers.immediateNeed ?? []).includes(option.value))
+              .map((option) => option.label)}
+            projectInterestLabels={getStepOptions('project_interest', answers)
+              .filter((option) => (answers.projectInterest ?? []).includes(option.value))
+              .map((option) => option.label)}
+            onChangeCareer={changePath}
+          />
         )}
 
         {step.id === 'starting_point' && (
-          <RouteReview options={options} value={value} placement={placement} onSelect={select} isTesting={isRouteAssessment} onTestingChange={setIsRouteAssessment} />
+          <RouteReview
+            groups={getStageGroups(options)}
+            notSureOption={options.find((option) => option.value === 'not_sure')}
+            value={value}
+            placement={placement}
+            onSelect={select}
+            isTesting={isRouteAssessment}
+            onTestingChange={setIsRouteAssessment}
+          />
         )}
 
         {isChoice && step.id !== 'starting_point' && (
@@ -186,7 +232,7 @@ export default function OnboardingView({ onComplete }) {
             />
             {step.id === 'project_interest'
               ? <ChipList options={options} value={value} onSelect={select} />
-              : <OptionList options={options} value={value} onSelect={select} />}
+              : <OptionList options={options} value={value} onSelect={select} layout={GRID_LAYOUT_STEPS.has(step.id) ? 'grid' : 'list'} />}
           </>
         )}
       </main>
@@ -202,6 +248,30 @@ export default function OnboardingView({ onComplete }) {
         </ActionButton>
       </footer>}
     </section>
+  )
+}
+
+function BreakScreen({ message, insight }) {
+  const rootRef = useRef(null)
+
+  useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+
+    const context = gsap.context(() => {
+      gsap.from('[data-break-devy]', { autoAlpha: 0, scale: 0.86, duration: 0.55, ease: 'power2.out' })
+      gsap.from('[data-break-copy]', { autoAlpha: 0, y: 18, duration: 0.45, ease: 'power2.out', delay: 0.16 })
+    }, rootRef)
+
+    return () => context.revert()
+  }, [])
+
+  return (
+    <div ref={rootRef} className="grid w-full max-w-[520px] justify-items-center gap-5 self-center text-center">
+      <DevyMood data-break-devy mood="neutral" animate={false} alt="" className="h-24 w-24 object-contain" />
+      <div data-break-copy>
+        <StepHeading title={message} subtitle={insight} />
+      </div>
+    </div>
   )
 }
 
@@ -250,22 +320,29 @@ const ROUTE_TEST_QUESTIONS = [
   },
 ]
 
-function RouteReview({ options, value, placement, onSelect, isTesting, onTestingChange }) {
-  const [testOption, setTestOption] = useState(null)
+function RouteReview({ groups, notSureOption, value, placement, onSelect, isTesting, onTestingChange }) {
+  const [testGroup, setTestGroup] = useState(null)
   const [testAnswers, setTestAnswers] = useState([])
   const [testResult, setTestResult] = useState(null)
   const [testQuestionIndex, setTestQuestionIndex] = useState(0)
 
+  // A group is selected either because the experience-based placement lands
+  // inside it, or because the learner picked it directly — in which case
+  // they start at that group's first stage rather than a stage they never saw.
+  const selectGroup = (group) => {
+    const withinPlacement = placement && group.stages.some((stage) => stage.value === placement.value)
+    onSelect(withinPlacement ? placement.value : group.stages[0].value)
+  }
+
   const finishTest = () => {
     const score = ROUTE_TEST_QUESTIONS.reduce((total, question, index) => total + Number(testAnswers[index] === question.answer), 0)
-    const routeOptions = options.filter((option) => option.value !== 'not_sure')
-    const currentIndex = Math.max(0, routeOptions.findIndex((option) => option.value === testOption?.value))
+    const currentIndex = Math.max(0, groups.findIndex((group) => group.id === testGroup?.id))
     const resultIndex = score === 3
-      ? Math.min(currentIndex + 1, routeOptions.length - 1)
+      ? Math.min(currentIndex + 1, groups.length - 1)
       : score < 2
         ? Math.max(currentIndex - 1, 0)
         : currentIndex
-    setTestResult({ score, option: routeOptions[resultIndex] })
+    setTestResult({ score, group: groups[resultIndex] })
   }
 
   if (isTesting) {
@@ -273,7 +350,7 @@ function RouteReview({ options, value, placement, onSelect, isTesting, onTesting
       <section className="grid w-full max-w-[620px] justify-items-center gap-5 self-center" aria-labelledby="route-test-title">
         <div className="grid justify-items-center gap-2 text-center">
           <p className="m-0 text-sm font-medium text-[#6699ec]">{testResult ? 'Route placement' : 'Route assessment'}</p>
-          <h1 id="route-test-title" className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{testResult ? 'Your recommended starting point' : `Test out of ${testOption?.label ?? 'this route'}`}</h1>
+          <h1 id="route-test-title" className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{testResult ? 'Your recommended starting point' : `Test out of ${testGroup?.label ?? 'this phase'}`}</h1>
           <p className="m-0 max-w-[48ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{testResult ? 'Based on your answers, this is the best place to begin.' : 'Answer three questions and we will place you at the right point in this route.'}</p>
         </div>
         {!testResult ? (
@@ -301,9 +378,10 @@ function RouteReview({ options, value, placement, onSelect, isTesting, onTesting
             <p className="m-0 text-sm text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">You got {testResult.score} of {ROUTE_TEST_QUESTIONS.length} correct.</p>
             <div>
               <p className="m-0 text-[11px] font-semibold uppercase tracking-[.08em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Recommended start</p>
-              <strong className="mt-1 block text-xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{testResult.option.label}</strong>
+              <strong className="mt-1 block text-xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{testResult.group.label}</strong>
+              <p className="m-0 mt-1 text-sm text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{testResult.group.stages.map((stage) => stage.label).join(' · ')}</p>
             </div>
-            <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => { onSelect(testResult.option.value); onTestingChange(false) }}>Use this starting point</ActionButton>
+            <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => { onSelect(testResult.group.stages[0].value); onTestingChange(false) }}>Use this starting point</ActionButton>
             <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={() => { setTestResult(null); setTestAnswers([]); setTestQuestionIndex(0) }}>Take the assessment again</button>
           </div>
         )}
@@ -316,27 +394,81 @@ function RouteReview({ options, value, placement, onSelect, isTesting, onTesting
       <div className="grid justify-items-center gap-2">
         <p className="m-0 text-sm font-medium text-[#6699ec]">Your learning route</p>
         <h1 className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Review your starting route</h1>
-        <p className="m-0 max-w-[48ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Choose where to begin. You can always return to earlier lessons later.</p>
+        <p className="m-0 max-w-[48ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Choose which phase to begin in. You can always return to earlier lessons later.</p>
       </div>
-      <div className="grid w-full gap-2.5" role="group" aria-label="Choose your starting point">
-        {options.map((option) => {
-          const selected = option.value === value
+      <div className="grid w-full gap-2.5" role="group" aria-label="Choose your starting phase">
+        {groups.map((group) => {
+          const selected = group.stages.some((stage) => stage.value === value)
+          const isRecommended = placement && group.stages.some((stage) => stage.value === placement.value)
           return (
             <div
-              key={option.value}
+              key={group.id}
               className={`flex min-h-14 w-full items-center gap-3 rounded-xl border p-1.5 text-left transition-colors ${selected ? 'border-[#5c49c9] bg-[#2a264c] text-white [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]' : 'border-[#404040] [[data-theme=light]_&]:border-[#e0e0dc] bg-[#1c1c1e] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:border-[#6699ec]'}`}
             >
-              <button type="button" className="min-h-11 min-w-0 flex-1 rounded-lg px-3 text-left font-medium focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]" aria-pressed={selected} onClick={() => onSelect(option.value)}>{option.label}</button>
-              {option.value !== 'not_sure' && <button type="button" className="min-h-11 rounded-lg border border-current/25 px-3 text-sm font-medium text-[#b9afff] [[data-theme=light]_&]:text-[#5c49c9] hover:bg-white/10 [[data-theme=light]_&]:hover:bg-[#e8e4ff] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]" onClick={() => { setTestOption(option); setTestAnswers([]); setTestResult(null); setTestQuestionIndex(0); onTestingChange(true) }}>Test out</button>}
-              <span className={`ml-auto rounded-full px-3 py-1 text-[13px] ${selected ? 'bg-white/15 [[data-theme=light]_&]:bg-[#dcd5ff]' : 'bg-[#262626] [[data-theme=light]_&]:bg-[#f2f3f5] text-[#9a9a9d]'}`}>{selected ? 'Starting here' : 'Start here'}</span>
+              <button type="button" className="min-h-11 min-w-0 flex-1 rounded-lg px-3 py-1.5 text-left focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]" aria-pressed={selected} onClick={() => selectGroup(group)}>
+                <span className="flex items-center gap-2">
+                  <span className="font-medium">{group.label}</span>
+                  {isRecommended && <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${selected ? 'bg-white/20' : 'bg-[#8b7cf6]/15 text-[#8b7cf6]'}`}>Recommended</span>}
+                </span>
+                <span className={`mt-0.5 block text-[13px] ${selected ? 'text-white/70' : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}`}>{group.stages.map((stage) => stage.label).join(' · ')}</span>
+              </button>
+              <button type="button" className="min-h-11 flex-none rounded-lg border border-current/25 px-3 text-sm font-medium text-[#b9afff] [[data-theme=light]_&]:text-[#5c49c9] hover:bg-white/10 [[data-theme=light]_&]:hover:bg-[#e8e4ff] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]" onClick={() => { setTestGroup(group); setTestAnswers([]); setTestResult(null); setTestQuestionIndex(0); onTestingChange(true) }}>Test out</button>
+              <span className={`ml-auto flex-none rounded-full px-3 py-1 text-[13px] ${selected ? 'bg-white/15 [[data-theme=light]_&]:bg-[#dcd5ff]' : 'bg-[#262626] [[data-theme=light]_&]:bg-[#f2f3f5] text-[#9a9a9d]'}`}>{selected ? 'Starting here' : 'Start here'}</span>
             </div>
           )
         })}
+        {notSureOption && (
+          <button
+            type="button"
+            className={`min-h-14 w-full rounded-xl border px-4 text-left text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec] ${value === notSureOption.value ? 'border-[#5c49c9] bg-[#2a264c] text-white [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]' : 'border-[#404040] [[data-theme=light]_&]:border-[#e0e0dc] bg-[#1c1c1e] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:border-[#6699ec]'}`}
+            aria-pressed={value === notSureOption.value}
+            onClick={() => onSelect(notSureOption.value)}
+          >
+            {notSureOption.label}
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
+
+// Shared by PathPreview (role break) and SummaryPreview (final screen) so the
+// two "here's your route" moments render the exact same visual language.
+function StageStrip({ stages, highlightValue, label }) {
+  return (
+    <ol className="m-0 flex max-w-[560px] flex-wrap items-center justify-center gap-y-3 p-0" aria-label={label}>
+      {stages.map((stage, index) => {
+        const isHighlighted = stage.value === highlightValue
+        const icon = stageIcon(stage.value)
+        return (
+          <li key={stage.value} className="flex list-none items-center">
+            {index > 0 && (
+              <span className="mx-1.5 h-px w-5 bg-[#404040] [[data-theme=light]_&]:bg-[#d4d4d4]" aria-hidden="true" />
+            )}
+            <span
+              className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[13px] font-medium ${
+                isHighlighted
+                  ? 'bg-[#2a264c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]'
+                  : 'bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f2f3f5] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
+              }`}
+            >
+              <span
+                className={`grid size-5 flex-none place-items-center rounded-full text-[11px] font-semibold ${
+                  isHighlighted ? 'bg-[#5c49c9] text-white' : 'bg-[#3a3a3a] [[data-theme=light]_&]:bg-[#e0e0dc] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
+                }`}
+                aria-hidden="true"
+              >
+                {icon ? <MiniIcon name={icon} className="size-3" /> : index + 1}
+              </span>
+              {stage.label}
+            </span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
 
 function PathPreview({ role, stages }) {
   return (
@@ -346,46 +478,40 @@ function PathPreview({ role, stages }) {
         <h1 className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{role} it is.</h1>
         <p className="m-0 max-w-[48ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Here’s a quick view of the skills you’ll build, step by step.</p>
       </div>
-      <ol className="m-0 flex max-w-[560px] flex-wrap items-center justify-center gap-y-3 p-0" aria-label={`${role} learning path`}>
-        {stages.map((stage, index) => {
-          const isFirst = index === 0
-          return (
-            <li key={stage.value} className="flex list-none items-center">
-              {index > 0 && (
-                <span className="mx-1.5 h-px w-5 bg-[#404040] [[data-theme=light]_&]:bg-[#d4d4d4]" aria-hidden="true" />
-              )}
-              <span
-                className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[13px] font-medium ${
-                  isFirst
-                    ? 'bg-[#2a264c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]'
-                    : 'bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f2f3f5] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
-                }`}
-              >
-                <span
-                  className={`grid size-5 flex-none place-items-center rounded-full text-[11px] font-semibold ${
-                    isFirst ? 'bg-[#5c49c9] text-white' : 'bg-[#3a3a3a] [[data-theme=light]_&]:bg-[#e0e0dc] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
-                  }`}
-                  aria-hidden="true"
-                >
-                  {index + 1}
-                </span>
-                {stage.label}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+      <StageStrip stages={stages} highlightValue={stages[0]?.value} label={`${role} learning path`} />
       <p className="m-0 text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">You’ll gain practical foundations and a clear route to portfolio ready work.</p>
     </div>
   )
 }
 
-function SummaryRow({ icon, label, value }) {
+// The closing screen — what the learner is about to get and why it fits what
+// they told us, not a repeat of the stage strip they just saw on the role
+// break, and not a bare recap of their own answers.
+function SummaryPreview({ pathTitle, placement, dailyMinutes, immediateNeedLabels, projectInterestLabels, onChangeCareer }) {
+  const lessonsPerWeek = computeLessonsPerWeek(dailyMinutes)
+
+  const benefits = [
+    placement && { key: 'placement', icon: 'sprout', text: `Starts right at ${placement.label} — no time spent on what you already know.` },
+    immediateNeedLabels.length > 0 && { key: 'need', icon: 'target', text: `Prioritized around ${lowerFirst(joinLabels(immediateNeedLabels))}.` },
+    projectInterestLabels.length > 0 && { key: 'interest', icon: 'blocks', text: `Projects built around ${joinLabels(projectInterestLabels)}.` },
+    { key: 'pace', icon: 'clock', text: `${dailyMinutes} min a day — about ${lessonsPerWeek} lessons a week.` },
+  ].filter(Boolean)
+
   return (
-    <div className="flex items-center gap-3 bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 py-3.5">
-      <OptionIcon name={icon} selected={false} />
-      <dt className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{label}</dt>
-      <dd className="m-0 ml-auto text-right text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{value}</dd>
+    <div className="grid w-full max-w-[480px] justify-items-center gap-5 self-center text-center">
+      <span className="grid size-14 place-items-center rounded-full bg-[#1e3a2a] text-[#4ade80] [[data-theme=light]_&]:bg-[#e3f6e9] [[data-theme=light]_&]:text-[#1a8a4c]" aria-hidden="true">
+        <svg className="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5 9.5 17 19 7" /></svg>
+      </span>
+      <StepHeading title="You’re all set" subtitle={`Your ${pathTitle} path is ready — here’s what makes it yours.`} />
+      <ul className="m-0 grid w-full list-none gap-2.5 p-0 text-left">
+        {benefits.map((benefit) => (
+          <li key={benefit.key} className="flex items-center gap-3 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-3.5 py-3">
+            <OptionIcon name={benefit.icon} selected={false} />
+            <span className="text-sm leading-[1.4] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{benefit.text}</span>
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={onChangeCareer}>Change career</button>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getLessonTopics, getRegionTopics, learningResources } from './learningResources.js'
+import { getGuidebookEntries } from './guidebookEntries.js'
 
 test('every topic carries the fields both surfaces render', () => {
   const topics = Object.values(learningResources).flatMap((resource) => resource.topics)
@@ -73,4 +74,22 @@ test('a lesson with no authored reference returns empty, so the button stays hid
 test('reference is never gated — every authored topic is returned', () => {
   const region = learningResources['python-foundations']
   assert.equal(getRegionTopics('python-foundations').length, region.topics.length)
+})
+
+test('guidebook entries provide full reference material and valid related links', () => {
+  const entries = getGuidebookEntries('python-foundations')
+  const ids = new Set(entries.map((entry) => entry.id))
+
+  assert.ok(entries.length > 0)
+  for (const entry of entries) {
+    assert.ok(entry.definition, `${entry.id} needs a definition`)
+    assert.ok(entry.mentalModel, `${entry.id} needs a mental model`)
+    assert.ok(entry.syntax, `${entry.id} needs syntax`)
+    assert.ok(entry.howItWorks, `${entry.id} needs an explanation`)
+    assert.ok(entry.whenToUse.length > 0, `${entry.id} needs use cases`)
+    assert.ok(entry.examples.length > 0, `${entry.id} needs examples`)
+    assert.ok(entry.mistakes.length > 0, `${entry.id} needs mistakes`)
+    assert.ok(entry.remember.length > 0, `${entry.id} needs reminders`)
+    entry.related.forEach((relatedId) => assert.ok(ids.has(relatedId), `${entry.id} has missing related entry ${relatedId}`))
+  }
 })

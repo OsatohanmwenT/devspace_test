@@ -44,11 +44,6 @@ function ChevronIcon({ className }) {
   )
 }
 
-// Code first, prose second — you open a cheatsheet to see the shape of the
-// syntax, not to read a paragraph about it. Rule and syntax are the one
-// baseline every learner gets, unconditionally; personalization only ever
-// adds framing on top (a mental-model line for beginners) or changes what
-// starts open (examples, for anyone who's said they want depth or speed).
 function CheatsheetEntry({ topic, personalization }) {
   return (
     <article className="grid gap-3 border-b border-[#2c2c30] pb-7 last:border-b-0 last:pb-0 [[data-theme=light]_&]:border-[#ececea]">

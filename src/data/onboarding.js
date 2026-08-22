@@ -11,16 +11,16 @@
 // - An `outcomes` block finally says what the answers produce.
 
 export const BRANCHES = [
-  { value: 'web', label: 'Websites & Interfaces' },
-  { value: 'mobile', label: 'Apps for Phones' },
-  { value: 'backend', label: 'Servers & Databases' },
-  { value: 'data', label: 'Data & Insights' },
-  { value: 'ai', label: 'AI & Automation' },
-  { value: 'product', label: 'Product & Business' },
-  { value: 'marketing', label: 'Marketing & Growth' },
-  { value: 'content_media', label: 'Content & Media' },
-  { value: 'design', label: 'Design & User Experience' },
-  { value: 'cloud', label: 'Cloud, Security & Deployment' },
+  { value: 'web', label: 'Websites & Interfaces', icon: 'web' },
+  { value: 'mobile', label: 'Apps for Phones', icon: 'mobile' },
+  { value: 'backend', label: 'Servers & Databases', icon: 'backend' },
+  { value: 'data', label: 'Data & Insights', icon: 'data' },
+  { value: 'ai', label: 'AI & Automation', icon: 'ai' },
+  { value: 'product', label: 'Product & Business', icon: 'target' },
+  { value: 'marketing', label: 'Marketing & Growth', icon: 'marketing' },
+  { value: 'content_media', label: 'Content & Media', icon: 'media' },
+  { value: 'design', label: 'Design & User Experience', icon: 'design' },
+  { value: 'cloud', label: 'Cloud, Security & Deployment', icon: 'cloud' },
 ]
 
 export const roleOptions = {
@@ -329,7 +329,9 @@ export const breakPrompts = {
   experience: { message: () => 'We’ll start at your level.', insight: 'The right starting level keeps challenge productive.' },
   starting_point: { message: () => 'That’s where your path will begin.', insight: 'You can revisit earlier lessons whenever you need.' },
   project_interest: { message: (answer, labels) => labels.length > 1 ? 'Nice mix. Your projects will feel familiar.' : `Projects inspired by ${answer}.`, insight: 'Relevant projects make new skills stick.' },
-  immediate_need: { message: (answer, labels) => labels.length > 1 ? 'We’ll put those goals first.' : `We’ll focus on ${answer.toLowerCase()} first.`, insight: 'A clear priority keeps learning focused.' },
+  // Lowercases only the first character — a blanket toLowerCase() mangled the
+  // capital "I" mid-sentence in labels like "Fill gaps in what I know".
+  immediate_need: { message: (answer, labels) => labels.length > 1 ? 'We’ll put those goals first.' : `We’ll focus on ${answer.charAt(0).toLowerCase()}${answer.slice(1)} first.`, insight: 'A clear priority keeps learning focused.' },
   daily_time: { message: (answer) => `${answer} a day. You’ve got this.`, insight: 'Short daily practice beats occasional long sessions.' },
 }
 

@@ -97,7 +97,7 @@ export function getStepOptions(stepId, answers = {}) {
     case 'motivation': return motivationOptions
     // The escape hatch has to exist as a selectable option, not just as a
     // branch the resolver knows how to handle.
-    case 'branch': return [...BRANCHES, { value: 'not_sure', label: 'I’m not sure yet' }]
+    case 'branch': return [...BRANCHES, { value: 'not_sure', label: 'I’m not sure yet', icon: 'help' }]
     case 'branch_triage': return branchTriage.options
     case 'role': return branch ? roleOptions[branch] ?? [] : []
     case 'role_sub_quiz': return branch ? roleSubQuiz[branch]?.options ?? [] : []
@@ -136,6 +136,25 @@ export function isMultiSelectStep(stepId) {
 function toArray(value) {
   if (Array.isArray(value)) return value
   return value === undefined || value === null ? [] : [value]
+}
+
+// Groups a role's stage ladder into named phases instead of a flat list, so
+// route review is a choice between 2-3 concepts rather than a scan of every
+// individual stage. Works for any ladder length — every ladder here happens
+// to be 5 stages, splitting into roughly Foundations / Core skills / Advanced.
+const STAGE_GROUP_LABELS = ['Foundations', 'Core skills', 'Advanced']
+
+export function getStageGroups(ladderOptions) {
+  const stages = ladderOptions.filter((option) => option.value !== 'not_sure')
+  const bandSize = Math.ceil(stages.length / STAGE_GROUP_LABELS.length)
+
+  return STAGE_GROUP_LABELS
+    .map((label, index) => ({
+      id: label.toLowerCase().replace(/\s+/g, '_'),
+      label,
+      stages: stages.slice(index * bandSize, index * bandSize + bandSize),
+    }))
+    .filter((group) => group.stages.length > 0)
 }
 
 export function resolvePlacement(answers = {}) {
