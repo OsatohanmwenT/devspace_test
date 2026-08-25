@@ -3,12 +3,12 @@ import { RichText } from './RichText'
 import { tokenizePython, TOKEN_CLASSES } from './pythonHighlight'
 import { clearBlank, fillNextBlank, isFillType, isQuestionCorrect } from './questionState'
 
-const BLANK_BASE = 'inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38px] max-[720px]:min-h-9 items-center justify-center mx-[3px] rounded-lg px-2.5 max-[720px]:px-2 py-[3px] font-jetbrains-mono text-[14px] font-medium leading-[1.2] align-middle focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6699ec]'
+const BLANK_BASE = 'lesson-blank inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38px] max-[720px]:min-h-9 items-center justify-center mx-[3px] rounded-lg px-2.5 max-[720px]:px-2 py-[3px] font-jetbrains-mono text-[14px] font-medium leading-[1.2] align-middle focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6699ec]'
 
 function blankClassName(checked, selected, correct) {
-  if (checked && selected && correct) return `${BLANK_BASE} border border-solid cursor-pointer border-[#04adc0] bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
-  if (checked && selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
-  if (selected) return `${BLANK_BASE} border border-solid cursor-pointer border-[#6699ec] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
+  if (checked && selected && correct) return `${BLANK_BASE} lesson-blank-correct border border-solid cursor-pointer border-[#04adc0] bg-[#213c3f] [[data-theme=light]_&]:bg-[#cee9ed] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
+  if (checked && selected) return `${BLANK_BASE} lesson-blank-error border border-solid cursor-pointer border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:bg-[#f6e1e2] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
+  if (selected) return `${BLANK_BASE} lesson-blank-selected border border-solid cursor-pointer border-[#6699ec] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
   return `${BLANK_BASE} border border-dashed cursor-default border-[#515151] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
 }
 
@@ -46,7 +46,7 @@ function TokenBank({ question, answer, checked, onAnswer }) {
         <button
           type="button"
           key={optionIndex}
-          className="min-h-11 rounded-[10px] border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white px-4 font-jetbrains-mono text-[14px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[border-color,background] duration-[120ms] enabled:hover:border-[#6699ec] enabled:hover:bg-[#393747] [[data-theme=light]_&]:enabled:hover:bg-[#f0f5fd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6699ec]"
+          className="lesson-token min-h-11 rounded-[10px] border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white px-4 font-jetbrains-mono text-[14px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[border-color,background] duration-[120ms] enabled:hover:border-[#6699ec] enabled:hover:bg-[#393747] [[data-theme=light]_&]:enabled:hover:bg-[#f0f5fd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6699ec]"
           disabled={used.includes(optionIndex) || checked}
           draggable={!used.includes(optionIndex) && !checked}
           onDragStart={(event) => {
@@ -123,7 +123,7 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
           <button
             type="button"
             key={optionIndex}
-            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left text-[15px] leading-[1.5] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[border-color,background] duration-[120ms] ${optionClassName}`}
+            className={`lesson-answer ${checked && isCorrectOption ? 'lesson-answer-correct' : isIncorrectSelection ? 'lesson-answer-error' : isSelected ? 'lesson-answer-selected' : ''} flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left text-[15px] leading-[1.5] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[border-color,background] duration-[120ms] ${optionClassName}`}
             aria-pressed={isSelected}
             aria-invalid={isIncorrectSelection}
             disabled={checked}
@@ -168,7 +168,7 @@ export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy,
 
       {checked && (
         <div className="grid gap-3">
-          <div className={`rounded-2xl border px-5 py-3.5 ${correct ? 'border-[#2b5540] bg-[#16281f] [[data-theme=light]_&]:border-[#b6e3ca] [[data-theme=light]_&]:bg-[#e7f6ee]' : 'border-[#5c2f2b] bg-[#2a1817] [[data-theme=light]_&]:border-[#f5c6c2] [[data-theme=light]_&]:bg-[#fdecea]'}`}>
+          <div className={`lesson-answer-feedback ${correct ? 'lesson-answer-feedback-correct' : 'lesson-answer-feedback-error'} rounded-2xl border px-5 py-3.5 ${correct ? 'border-[#2b5540] bg-[#16281f] [[data-theme=light]_&]:border-[#b6e3ca] [[data-theme=light]_&]:bg-[#e7f6ee]' : 'border-[#5c2f2b] bg-[#2a1817] [[data-theme=light]_&]:border-[#f5c6c2] [[data-theme=light]_&]:bg-[#fdecea]'}`}>
             <strong className={`block text-sm ${correct ? 'text-[#6ee7a8] [[data-theme=light]_&]:text-[#197a4b]' : 'text-[#ffa8a2] [[data-theme=light]_&]:text-[#b3261e]'}`}>{correct ? 'Correct' : 'Not quite'}</strong>
             <p className="m-0 mt-2 text-[15px] leading-[1.55] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"><RichText content={question.explanation} /></p>
           </div>

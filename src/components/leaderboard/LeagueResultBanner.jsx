@@ -5,9 +5,9 @@ import { ordinal } from '../../lib/ordinal'
 import { can, CAPABILITIES } from '../../lib/entitlements'
 
 const TONE = {
-  promoted: { accent: '#04adc0', surface: 'border-l-[#04adc0]' },
-  demoted: { accent: '#ff676d', surface: 'border-l-[#ff676d]' },
-  stayed: { accent: '#6699ec', surface: 'border-l-[#6699ec]' },
+  promoted: { accent: '#04adc0', ring: 'border-[#04adc0]/25' },
+  demoted: { accent: '#ff676d', ring: 'border-[#ff676d]/25' },
+  stayed: { accent: '#6699ec', ring: 'border-[#6699ec]/25' },
 }
 
 export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans }) {
@@ -34,7 +34,7 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans })
   // single line it can be read and dismissed from.
   if (!isPromoted && !isDemoted) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border-l-4 bg-[#1a1a1c] py-2.5 pl-4 pr-2 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] border-l-[#6699ec]" role="status">
+      <div className="flex w-full max-w-[860px] mx-auto items-center gap-3 rounded-xl border bg-[#1a1a1c] py-2.5 pl-4 pr-2 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] border-white/5 [[data-theme=light]_&]:border-black/[0.06]" role="status">
         {/* Built from the parts rather than trimmed out of `message`, which
             would leave its full stop stranded mid-line. */}
         <span className="min-w-0 flex-1 truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
@@ -54,8 +54,8 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans })
   }
 
   return (
-    <div className={`grid gap-4 rounded-2xl border-l-4 bg-[#1a1a1c] p-5 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] ${tone.surface}`} role="status">
-      <div className="flex items-start justify-between gap-4">
+    <div className={`grid w-full max-w-[860px] mx-auto gap-4 rounded-2xl border bg-[#1a1a1c] p-5 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] ${tone.ring}`} role="status">
+      <div className="flex items-start gap-4">
         {/* A promotion and a demotion otherwise differ only by an accent stripe
             and one word. A neutral week gets no mascot — nothing happened that
             is worth a reaction. */}
@@ -65,7 +65,7 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans })
             className="-my-1 size-16 flex-none max-[680px]:size-14"
           />
         )}
-        <div className="grid min-w-0 gap-1">
+        <div className="grid min-w-0 flex-1 gap-1">
           <strong className="text-[13px] font-semibold uppercase tracking-[.08em]" style={{ color: tone.accent }}>Last week's result</strong>
           <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px]">{message}</span>
           <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{result.score.toLocaleString()} px earned</span>

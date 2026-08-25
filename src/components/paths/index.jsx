@@ -1,18 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { currentPath, explorePaths, getPath, pathShelves } from '../../data/paths'
 import { CurrentPathCard } from './CurrentPathCard'
 import { CustomPathCard } from './CustomPathCard'
 import { CustomPathBuilder } from './CustomPathBuilder'
+import { CustomPathIntroduction } from './CustomPathIntroduction'
 import { ExplorePathCard, PathPreview } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
-import { PageArrival } from '../ui/PageArrival'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile }) {
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, onChooseFramework, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile, onFullScreenChange }) {
   const [view, setView] = useState(initialView ?? 'overview')
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
   const [selectedPath, setSelectedPath] = useState(null)
   const [selectedCustomPath, setSelectedCustomPath] = useState(null)
+
+  // Custom path building is its own focused surface, not just another Paths
+  // subview — the chrome-free callback lets the shell drop the top nav for it.
+  useEffect(() => {
+    onFullScreenChange?.(view === 'custom')
+    return () => onFullScreenChange?.(false)
+  }, [view, onFullScreenChange])
   const customPathList = Object.values(customPaths)
   const pausedCustomPaths = customPathList.filter((path) => path.id !== primaryPathId)
 
@@ -43,6 +50,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
         onBack={() => setView('overview')}
         isCurrentPath={isSelectedCurrent}
         onSwitchPrimaryPath={onSwitchPrimaryPath}
+        onChooseFramework={onChooseFramework}
         profile={profile}
       />
     )
@@ -57,14 +65,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
       />
     )
   }
-  if (view === 'custom' && !selectedCustomPath && !hasSeenCustomPathIntroduction) return <PageArrival
-    ariaLabel="About custom paths"
-    eyebrow="Your learning route"
-    title="Build a path around your goal"
-    body="Tell Devy what you want to learn, build, or prepare for. You will get a focused route with practice and a project."
-    actionLabel="Build my path"
-    onContinue={onDismissCustomPathIntroduction}
-  />
+  if (view === 'custom' && !selectedCustomPath && !hasSeenCustomPathIntroduction) return <CustomPathIntroduction onComplete={onDismissCustomPathIntroduction} />
   if (view === 'custom') return (
     <CustomPathBuilder
       key={selectedCustomPath?.id ?? 'new-custom-path'}

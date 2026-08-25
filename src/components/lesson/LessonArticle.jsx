@@ -1,6 +1,6 @@
 import { RichText } from './RichText';
 
-export function LessonArticle({ article, lessonTitle, conceptTitle, step, totalSteps, isNarrating, onToggleNarration }) {
+export function LessonArticle({ article, lessonTitle }) {
   return (
     <article
       className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fafaf8]"
@@ -14,13 +14,6 @@ export function LessonArticle({ article, lessonTitle, conceptTitle, step, totalS
         >
           {article.title}
         </h1>
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-[15px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#777]">
-          <button type="button" className="inline-flex py-1.5  items-center gap-2 rounded-full border border-[#e8e6e1] bg-white px-3 text-[15px] text-[#686968] hover:bg-[#f5f5f4] [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:text-[#b2b2b6]" onClick={onToggleNarration} aria-pressed={isNarrating}>
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4M17 9a4 4 0 0 1 0 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            {isNarrating ? 'Listening…' : 'Listen'}
-          </button>
-          <span>{conceptTitle} · Step {step} of {totalSteps}</span>
-        </div>
         <p className="max-w-[72ch] m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[16px] leading-[1.55]">
           {article.intro}
         </p>

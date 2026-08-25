@@ -92,7 +92,14 @@ const ladder = (...steps) => [
 ]
 
 export const startingPointOptions = {
-  frontend_developer: ladder(['html_css_basics', 'HTML & CSS basics'], ['js_fundamentals', 'JavaScript fundamentals'], ['dom_interactivity', 'DOM manipulation / interactivity'], ['react_basics', 'React basics'], ['react_routing_apis', 'React with routing & APIs']),
+  // frontend_developer and backend_developer have no bare entry — both are
+  // STACK_ROLES, so their real ladder always comes from the `${role}_${stack}`
+  // keys below (see stackOptions / resolveLadderKey). A bare entry would just
+  // be dead code once the stack question exists.
+  frontend_developer_react: ladder(['html_css_basics', 'HTML & CSS basics'], ['js_fundamentals', 'JavaScript fundamentals'], ['dom_interactivity', 'DOM manipulation / interactivity'], ['react_basics', 'React basics'], ['react_routing_apis', 'React with routing & APIs']),
+  frontend_developer_vue: ladder(['html_css_basics', 'HTML & CSS basics'], ['js_fundamentals', 'JavaScript fundamentals'], ['vue_basics', 'Vue basics'], ['vue_composition_state', 'Vue composition & state'], ['vue_routing_apis', 'Vue with routing & APIs']),
+  frontend_developer_angular: ladder(['html_css_basics', 'HTML & CSS basics'], ['js_fundamentals', 'JavaScript fundamentals'], ['typescript_basics', 'TypeScript basics'], ['angular_basics', 'Angular basics'], ['angular_routing_state', 'Angular routing & state']),
+  frontend_developer_foundations: ladder(['html_css_basics', 'HTML & CSS basics'], ['js_fundamentals', 'JavaScript fundamentals'], ['dom_interactivity', 'DOM manipulation / interactivity']),
   fullstack_developer: ladder(['html_css_js_basics', 'HTML, CSS & JavaScript basics'], ['frontend_framework_basics', 'Frontend framework basics'], ['backend_fundamentals', 'Backend fundamentals'], ['databases_apis', 'Databases & APIs'], ['fullstack_integration', 'Connecting frontend, backend & database']),
   ui_ux_developer: ladder(['design_fundamentals', 'Design fundamentals'], ['figma_basics', 'Figma / prototyping basics'], ['html_css_for_designers', 'HTML & CSS for designers'], ['design_handoff', 'Prototyping & developer handoff'], ['basic_frontend_implementation', 'Implementing designs in code']),
 
@@ -100,7 +107,10 @@ export const startingPointOptions = {
   android_developer: ladder(['kotlin_basics', 'Kotlin basics'], ['jetpack_compose_basics', 'Jetpack Compose / UI basics'], ['navigation_state', 'Navigation & app state'], ['networking_apis', 'Networking & APIs'], ['play_store_deployment', 'Play Store deployment']),
   cross_platform_developer: ladder(['js_dart_basics', 'JavaScript / Dart basics'], ['component_widget_basics', 'Component & widget basics'], ['navigation_state', 'Navigation & app state'], ['native_device_features', 'Native APIs & device features'], ['publishing_both_stores', 'Publishing to app stores']),
 
-  backend_developer: ladder(['language_fundamentals', 'Language fundamentals'], ['http_rest_basics', 'HTTP & REST basics'], ['databases_queries', 'Databases & queries'], ['auth_security', 'Authentication & security'], ['api_design_scaling', 'API design & scaling']),
+  backend_developer_node: ladder(['js_fundamentals', 'JavaScript fundamentals'], ['http_rest_basics', 'HTTP & REST basics'], ['databases_queries', 'Databases & queries'], ['auth_security', 'Authentication & security'], ['api_design_scaling', 'API design & scaling']),
+  backend_developer_python: ladder(['python_fundamentals', 'Python fundamentals'], ['http_rest_basics', 'HTTP & REST basics'], ['databases_queries', 'Databases & queries'], ['auth_security', 'Authentication & security'], ['api_design_scaling', 'API design & scaling']),
+  backend_developer_java: ladder(['java_fundamentals', 'Java fundamentals'], ['http_rest_basics', 'HTTP & REST basics'], ['databases_queries', 'Databases & queries'], ['auth_security', 'Authentication & security'], ['api_design_scaling', 'API design & scaling']),
+  backend_developer_csharp: ladder(['csharp_fundamentals', 'C# fundamentals'], ['http_rest_basics', 'HTTP & REST basics'], ['databases_queries', 'Databases & queries'], ['auth_security', 'Authentication & security'], ['api_design_scaling', 'API design & scaling']),
   database_developer: ladder(['sql_fundamentals', 'SQL fundamentals'], ['schema_design', 'Schema design & normalization'], ['indexing_optimization', 'Indexing & query optimization'], ['nosql_basics', 'NoSQL basics'], ['migrations_backups', 'Migrations & backups']),
   api_systems_engineer: ladder(['networking_fundamentals', 'HTTP & networking fundamentals'], ['rest_graphql_design', 'REST / GraphQL API design'], ['authn_authz', 'Authentication & authorization'], ['caching_performance', 'Caching & performance'], ['microservices_design', 'Microservices & system design']),
 
@@ -217,6 +227,49 @@ export const roleSubQuiz = {
   },
 }
 
+// Roles broad enough to cover several real tech stacks get one more question
+// before experience/placement — the ladder above already has a `${role}_${stack}`
+// entry for each option here (see resolveLadderKey in lib/onboarding.js).
+export const stackOptions = {
+  frontend_developer: [
+    { value: 'help_me_choose', label: 'Help me choose' },
+    { value: 'react', label: 'React', icon: 'react' },
+    { value: 'vue', label: 'Vue', icon: 'vue' },
+    { value: 'angular', label: 'Angular', icon: 'angular' },
+  ],
+  backend_developer: [
+    { value: 'help_me_choose', label: 'Help me choose' },
+    { value: 'node', label: 'Node.js', icon: 'js' },
+    { value: 'python', label: 'Python', icon: 'python' },
+    { value: 'java', label: 'Java', icon: 'java' },
+    { value: 'csharp', label: 'C#', icon: 'csharp' },
+  ],
+}
+
+export const STACK_ROLES = new Set(Object.keys(stackOptions))
+
+// Mirrors roleSubQuiz's approach: ask about a preference someone can actually
+// answer without knowing the tech yet, not "which stack sounds cooler".
+export const stackSubQuiz = {
+  frontend_developer: {
+    prompt: 'Which of these matters more to you right now?',
+    options: [
+      { value: 'react', label: 'The biggest ecosystem and job market' },
+      { value: 'vue', label: 'A gentle learning curve with clear structure' },
+      { value: 'angular', label: 'Built-in structure for larger teams' },
+    ],
+  },
+  backend_developer: {
+    prompt: 'Which of these sounds most like you?',
+    options: [
+      { value: 'node', label: 'I’d rather use JavaScript everywhere' },
+      { value: 'python', label: 'I want the simplest syntax to start with' },
+      { value: 'java', label: 'I want skills common at large companies' },
+      { value: 'csharp', label: 'I’m interested in the Microsoft / .NET world' },
+    ],
+  },
+}
+
 // The "I'm not sure" destination at q1 — resolves a branch from what someone
 // enjoys, then rejoins the normal flow.
 export const branchTriage = {
@@ -254,6 +307,14 @@ export const experienceOptions = [
   { value: 'pushed_to_platform', label: 'I’ve shared work on GitHub, Figma, Power BI, YouTube, Vimeo or similar', rung: 3 },
   { value: 'built_used_by_others', label: 'I’ve built something people used', rung: 4 },
   { value: 'worked_clients_teams', label: 'I’ve worked with clients or teams', rung: 4 },
+]
+
+// General experience can come from any area. Frontend framework choice needs
+// a separate signal because someone can have shipped work without JavaScript.
+export const javascriptExperienceOptions = [
+  { value: 'new_to_javascript', label: 'I have not used JavaScript yet', rung: 1 },
+  { value: 'javascript_basics', label: 'I know the JavaScript basics', rung: 2 },
+  { value: 'interactive_pages', label: 'I have built interactive pages with JavaScript', rung: 3 },
 ]
 
 export const projectInterestOptions = [
@@ -326,7 +387,10 @@ export const breakPrompts = {
   branch_triage: { message: (answer) => `${answer} fits you well.`, insight: (branch) => branchInsights[branch] ?? branchInsights.not_sure },
   role: { message: (answer, _, values) => values.includes('help_me_choose') ? 'I’ll help you find the right fit.' : `${answer} it is.`, insight: (branch) => roleInsights[branch] ?? 'Every role grows from strong foundations.' },
   role_sub_quiz: { message: (answer) => `${answer} sounds right.`, insight: (branch) => roleInsights[branch] ?? 'Every role grows from strong foundations.' },
+  stack: { message: (answer, _, values) => values.includes('help_me_choose') ? 'We’ll help you pick the right one.' : `${answer} it is.`, insight: 'Every option here leads to real, hireable skills.' },
+  stack_sub_quiz: { message: (answer) => `${answer} sounds right.`, insight: 'Every option here leads to real, hireable skills.' },
   experience: { message: () => 'We’ll start at your level.', insight: 'The right starting level keeps challenge productive.' },
+  javascript_experience: { message: () => 'That gives us the right next step.', insight: 'Frameworks make more sense once JavaScript feels familiar.' },
   starting_point: { message: () => 'That’s where your path will begin.', insight: 'You can revisit earlier lessons whenever you need.' },
   project_interest: { message: (answer, labels) => labels.length > 1 ? 'Nice mix. Your projects will feel familiar.' : `Projects inspired by ${answer}.`, insight: 'Relevant projects make new skills stick.' },
   // Lowercases only the first character — a blanket toLowerCase() mangled the

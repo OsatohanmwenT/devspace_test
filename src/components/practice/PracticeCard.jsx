@@ -15,7 +15,7 @@ export function PracticeCard({ session, onStart, completion, isRecommended = fal
   const questionLabel = `${session.questions.length} ${session.questions.length === 1 ? 'question' : 'questions'}`
 
   return (
-    <article className="flex min-h-[180px] min-w-0 flex-col rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-5 shadow-[0_8px_20px_rgba(0,0,0,.08)] [[data-theme=light]_&]:shadow-[0_4px_14px_rgba(20,20,20,.08)] transition-transform duration-150 hover:-translate-y-0.5">
+    <article className="flex min-h-[180px] min-w-0 flex-col rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white p-5 shadow-[0_8px_20px_rgba(0,0,0,.08)] [[data-theme=light]_&]:shadow-[0_4px_14px_rgba(20,20,20,.08)]">
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">

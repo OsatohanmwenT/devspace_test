@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { getRegionTopics } from '../../data/learningResources';
+import { getLesson } from '../lesson/lessonContent';
+import { LessonPodcastModal } from '../lesson/LessonPodcastModal';
 import { getCheatsheetPersonalization } from '../../lib/personalization';
+import { isFrameworkCheckpointReady } from '../../lib/onboarding';
 import { ActionButton } from '../ui/ActionButton';
-import { BookOpenIcon, ChecklistIcon } from '../ui/icons';
+import { BookOpenIcon, ChecklistIcon, HeadphonesIcon } from '../ui/icons';
 import { CheatsheetDrawer } from './CheatsheetDrawer';
 import { FAMILY_ACCENTS } from './ExplorePathCard';
 import { GuidebookView } from './GuidebookView';
 import { LessonRow } from './LessonRow';
 
-export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath, profile }) {
+export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath, onChooseFramework, profile }) {
   const cheatsheetPersonalization = getCheatsheetPersonalization(profile)
   const regions = path.cards
   const lessons = regions.flatMap((region) => region.lessons)
@@ -18,20 +21,26 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   const [pinnedRegionId, setPinnedRegionId] = useState(null)
   const [openResource, setOpenResource] = useState(null)
   const [showLessonPreview, setShowLessonPreview] = useState(false)
+  const [showPodcast, setShowPodcast] = useState(false)
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId)
+  const podcastLesson = selectedLesson ? getLesson(selectedLesson.id) : null
+  const hasPodcastContent = Boolean(podcastLesson?.concepts?.some((concept) => concept.activities.some((activity) => activity.type === 'article')))
   const selectedRegion = regions.find((region) => region.lessons.some((lesson) => lesson.id === selectedLessonId)) ?? regions[0]
   const selectedLessonStarted = selectedLesson && startedLessonIds.includes(selectedLesson.id)
   const canOpenLesson = selectedLesson?.state === 'current'
   const familyAccent = (FAMILY_ACCENTS[path.family] ?? FAMILY_ACCENTS.backend).accent
+  const frameworkCheckpointReady = isFrameworkCheckpointReady(profile, completedLessons)
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && showLessonPreview) setShowLessonPreview(false)
-      else if (event.key === 'Escape' && !openResource) onBack()
+      if (event.key !== 'Escape') return
+      if (showPodcast) setShowPodcast(false)
+      else if (showLessonPreview) setShowLessonPreview(false)
+      else if (!openResource) onBack()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onBack, openResource, showLessonPreview])
+  }, [onBack, openResource, showLessonPreview, showPodcast])
 
   useEffect(() => {
     const updatePinnedRegion = () => {
@@ -101,6 +110,20 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
         </aside>
 
         <div className="grid w-[min(100%,700px)] min-w-0 gap-12 mx-auto">
+          {frameworkCheckpointReady && (
+            <section className="grid gap-4 rounded-2xl border border-[#4169e1] bg-[#18284d] p-6 [[data-theme=light]_&]:bg-[#eff4ff]" aria-labelledby="framework-checkpoint-title">
+              <div className="grid gap-1">
+                <p className="m-0 text-[11px] font-semibold uppercase tracking-[.1em] text-[#88bdf2] [[data-theme=light]_&]:text-[#315bb5]">Next decision</p>
+                <h2 id="framework-checkpoint-title" className="m-0 font-rethink-sans text-[24px] font-semibold text-white [[data-theme=light]_&]:text-neutral-800">Choose your frontend framework</h2>
+                <p className="m-0 text-[15px] leading-[1.55] text-[#c8d8f4] [[data-theme=light]_&]:text-[#52657f]">You have finished the JavaScript foundations. Pick the framework you want to focus on next.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3 max-[560px]:grid-cols-1">
+                {['react', 'vue', 'angular'].map((framework) => (
+                  <ActionButton key={framework} variant="neutral" className="min-h-11 capitalize" onClick={() => onChooseFramework?.(framework)}>{framework}</ActionButton>
+                ))}
+              </div>
+            </section>
+          )}
           {regions.map((region) => {
             return (
               <section className="relative grid" key={region.id} aria-labelledby={`${region.id}-title`}>
@@ -137,6 +160,16 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                 <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
                 {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
               </div>
+              {hasPodcastContent && (
+                <button
+                  type="button"
+                  onClick={() => setShowPodcast(true)}
+                  aria-label={`Listen to ${selectedLesson.title}`}
+                  className="grid size-11 flex-none place-items-center rounded-full border border-[#404040] bg-transparent text-[#9a9a9d] transition-colors hover:border-[#6699ec] hover:text-[#f4f4f2] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-neutral-800 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#6699ec]"
+                >
+                  <HeadphonesIcon className="size-5" />
+                </button>
+              )}
               {canOpenLesson && (
                 <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap" onClick={() => {
                   setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
@@ -185,6 +218,9 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
             </div>
           </section>
         </div>
+      )}
+      {showPodcast && podcastLesson && (
+        <LessonPodcastModal lesson={podcastLesson} onClose={() => setShowPodcast(false)} />
       )}
     </section>
   )

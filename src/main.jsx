@@ -17,7 +17,8 @@ import ProfileView from './components/profile';
 import SettingsView from './components/settings';
 import { ActionButton } from './components/ui/ActionButton';
 import { Badge } from './components/ui/Badge';
-import { BoltIcon, GemIcon, SirenIcon } from './components/ui/icons';
+import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
+import { BoltIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyMood } from './components/ui/DevyMood';
@@ -57,6 +58,7 @@ function App() {
   const [plansHighlight, setPlansHighlight] = useState(null)
   const [publicProfileView, setPublicProfileView] = useState(false)
   const [pathsInitialView, setPathsInitialView] = useState(null)
+  const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -256,8 +258,8 @@ function App() {
       saveProgress(next)
       return next
     })
-    setActive('Home')
-    showNotice(`${record.title} is now your focus`)
+    launchLesson(record.cards[0]?.lessons[0]?.id)
+    showNotice(`${record.title} is ready to start`)
   }
 
   // Resumes a paused path (authored or custom) as primary.
@@ -282,6 +284,15 @@ function App() {
       return next
     })
     showNotice('Profile updated')
+  }
+
+  const chooseFrontendFramework = (stack) => {
+    setProgress((current) => {
+      const next = { ...current, profile: { ...current.profile, stack, frameworkDecision: 'complete' } }
+      saveProgress(next)
+      return next
+    })
+    showNotice(`${stack === 'vue' ? 'Vue' : stack === 'angular' ? 'Angular' : 'React'} is now your frontend focus`)
   }
 
   const completeOnboarding = (nextProfile) => {
@@ -399,7 +410,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
-      {active !== 'Plans' && !openLesson && !openPractice && (
+      {active !== 'Plans' && !openLesson && !openPractice && !customPathFullScreen && (
       <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
@@ -443,7 +454,7 @@ function App() {
               aria-controls="streak-journey-dialog"
               aria-label={streakAtRisk ? `Open streak journey. ${streakDays} day streak. Activity required today.` : activeToday ? `Open streak journey. ${streakDays} day streak. Today complete.` : 'Open streak journey and start your streak.'}
             >
-              {streakAtRisk ? <SirenIcon className="size-4" /> : <BoltIcon className="size-4" />}
+              {streakAtRisk ? <SirenIcon className="size-4" /> : <AnimatedBoltIcon className="size-4 text-[#f5a623]" />}
               <span aria-hidden="true">{streakDays}</span>
               {streakAtRisk && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-[#121214] bg-red-400 motion-safe:animate-pulse [[data-theme=light]_&]:border-white" aria-hidden="true" />}
             </button>
@@ -458,7 +469,7 @@ function App() {
               aria-haspopup="dialog"
               aria-expanded={activePopover === 'xp'}
             >
-              <GemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
+              <AnimatedGemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
               <span aria-hidden="true">{xp}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
@@ -506,6 +517,7 @@ function App() {
             currentLearnerPath={currentPath}
             completedLessons={completedLessons}
             onOpenLesson={launchLesson}
+            onChooseFramework={chooseFrontendFramework}
             initialView={pathsInitialView}
             customPaths={customPaths}
             primaryPathId={profile?.pathId}
@@ -514,6 +526,7 @@ function App() {
             onSwitchPrimaryPath={resumePath}
             hasSeenCustomPathIntroduction={Boolean(seenPageIntroductions?.['custom-path'])}
             onDismissCustomPathIntroduction={() => dismissPageIntroduction('custom-path')}
+            onFullScreenChange={setCustomPathFullScreen}
           />
         ) : active === 'Settings' ? (
           <SettingsView
@@ -595,8 +608,8 @@ function App() {
                 >
                   <span
                     className={
-                      isActive
-                        ? 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#f5a623] bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]'
+                    isActive
+                      ? 'home-streak-day grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#f5a623] bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]'
                         : 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
                     }
                   >
@@ -669,14 +682,14 @@ function App() {
               <div className="w-full mt-auto">
                 <div className="flex items-center justify-center gap-1.5 mb-[9px]" role="img" aria-label={`Region ${currentStepIndex + 1} of ${derived.regionsTotal}`}>
                   {derived.regions.map((region, index) => (
-                    <span className={`w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={region.id} />
+                    <span className={`home-progress-dot w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={region.id} />
                   ))}
                 </div>
                 {/* The dots count regions, so the label says so — "Step N of 6"
                     followed by a lesson title read as though the lesson were the step. */}
                 <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
-                <ActionButton variant="primary" className="w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
-                  {started ? 'Continue mission' : 'Start mission'} <span aria-hidden="true">→</span>
+                <ActionButton variant="primary" className="cta-idle w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
+                  {started ? 'Continue mission' : 'Start mission'} <span className="cta-idle-arrow" aria-hidden="true">→</span>
                 </ActionButton>
               </div>
             </article>
@@ -686,11 +699,11 @@ function App() {
             <p id="also-learning-title" className="m-0 text-[11px] font-semibold tracking-[0.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">ALSO LEARNING</p>
             <div className="mt-3 flex flex-wrap gap-3">
               {otherPaths.map((path) => (
-                <button key={path.id} type="button" className="min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => resumePath(path.id)}>
+                <button key={path.id} type="button" className="home-path-pill min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => resumePath(path.id)}>
                   Resume {path.title}
                 </button>
               ))}
-              <button type="button" className="min-h-11 rounded-full border border-transparent bg-[#1c2a4d] [[data-theme=light]_&]:bg-[#f0f5fd] px-4 text-sm font-medium text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] hover:bg-[#213762] [[data-theme=light]_&]:hover:bg-[#e2edfc]" onClick={() => { setPathsInitialView('custom'); setActive('Paths') }}>
+              <button type="button" className="home-path-pill min-h-11 rounded-full border border-transparent bg-[#1c2a4d] [[data-theme=light]_&]:bg-[#f0f5fd] px-4 text-sm font-medium text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] hover:bg-[#213762] [[data-theme=light]_&]:hover:bg-[#e2edfc]" onClick={() => { setPathsInitialView('custom'); setActive('Paths') }}>
                 <span aria-hidden="true">＋</span> Create another
               </button>
             </div>
@@ -707,7 +720,7 @@ function App() {
         )}
       </main>
 
-      {!openLesson && active !== 'Plans' && (
+      {!openLesson && active !== 'Plans' && !customPathFullScreen && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
           <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
             <img className="size-full object-contain" src="/assets/devy.svg" alt="" />

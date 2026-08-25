@@ -1,11 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ALL_ROLES, BRANCHES, roleOptions, roleSubQuiz, startingPointOptions, branchTriage } from '../data/onboarding.js'
+import { ALL_ROLES, BRANCHES, roleOptions, roleSubQuiz, stackOptions, STACK_ROLES, startingPointOptions, branchTriage } from '../data/onboarding.js'
 import {
   buildProfile,
   getBreakContent,
   getVisibleSteps,
   getStepOptions,
+  isFrameworkCheckpointReady,
   resolveBranch,
   resolvePath,
   resolvePlacement,
@@ -25,6 +26,16 @@ test('every branch has roles, a sub-quiz, and reachable ladders', () => {
     assert.ok(roleSubQuiz[branch]?.options?.length, `${branch} has no sub-quiz`)
 
     for (const option of options.slice(1)) {
+      // STACK_ROLES roles (frontend_developer, backend_developer) have no bare
+      // ladder — their ladder always lives under `${role}_${stack}` instead,
+      // one per stackOptions entry.
+      if (STACK_ROLES.has(option.value)) {
+        assert.ok(stackOptions[option.value]?.length, `${option.value} has no stack options`)
+        for (const stack of stackOptions[option.value].slice(1)) {
+          assert.ok(startingPointOptions[`${option.value}_${stack.value}`]?.length, `${option.value}_${stack.value} has no ladder`)
+        }
+        continue
+      }
       assert.ok(startingPointOptions[option.value]?.length, `${option.value} has no ladder`)
     }
     // Every sub-quiz answer must be a real role in that same branch.
@@ -132,26 +143,89 @@ test('help_me_choose writes back and yields a valid ladder key', () => {
   assert.equal(resolvePath(decided), 'fullstack-developer')
 })
 
-test('placement question appears only from rung 2 upward', () => {
+test('frontend placement follows JavaScript readiness, not general experience', () => {
   const base = { branch: 'web', role: 'frontend_developer' }
-  assert.ok(!ids({ ...base, experience: 'complete_beginner' }).includes('starting_point'))
-  assert.ok(!ids({ ...base, experience: 'watched_tutorials' }).includes('starting_point'))
-  assert.ok(ids({ ...base, experience: 'tried_small_exercises' }).includes('starting_point'))
-  assert.ok(ids({ ...base, experience: 'worked_clients_teams' }).includes('starting_point'))
+  assert.ok(!ids({ ...base, experience: 'worked_clients_teams', javascriptExperience: 'new_to_javascript' }).includes('starting_point'))
+  assert.ok(ids({ ...base, experience: 'complete_beginner', javascriptExperience: 'javascript_basics', stack: 'react' }).includes('starting_point'))
+  assert.ok(ids({ ...base, experience: 'complete_beginner', javascriptExperience: 'interactive_pages', stack: 'react' }).includes('starting_point'))
 })
 
-test('low-experience learners are still placed, by rung', () => {
-  const beginner = { branch: 'web', role: 'frontend_developer', experience: 'complete_beginner' }
+test('every direct and guided role route has answerable steps', () => {
+  for (const { value: branch } of BRANCHES) {
+    for (const [routeType, roles] of [['direct', roleOptions[branch].slice(1).map((option) => option.value)], ['guided', roleSubQuiz[branch].options.map((option) => option.value)]]) {
+      for (const role of roles) {
+        const answers = {
+          branch,
+          role: routeType === 'direct' ? role : 'help_me_choose',
+          ...(routeType === 'guided' ? { roleFromSubQuiz: role } : {}),
+          experience: 'tried_small_exercises',
+          projectInterest: ['games'],
+          immediateNeed: ['build_projects'],
+          dailyMinutes: 10,
+        }
+        if (role === 'frontend_developer') Object.assign(answers, { javascriptExperience: 'interactive_pages', stack: 'react' })
+        if (role === 'backend_developer') Object.assign(answers, { stack: 'node' })
+
+        for (const step of getVisibleSteps(answers)) {
+          if (!STEP_ANSWER_KEY[step.id]) continue
+          assert.ok(getStepOptions(step.id, answers).length > 0, `${branch}/${routeType}/${role}/${step.id} has no options`)
+        }
+      }
+    }
+  }
+})
+
+test('frontend placement follows JavaScript readiness', () => {
+  const beginner = { branch: 'web', role: 'frontend_developer', experience: 'worked_clients_teams', javascriptExperience: 'new_to_javascript' }
   assert.equal(resolvePlacement(beginner).value, 'html_css_basics')
 
-  const shipped = { branch: 'web', role: 'frontend_developer', experience: 'built_used_by_others' }
-  assert.equal(resolvePlacement(shipped).value, 'react_basics')
+  const shipped = { branch: 'web', role: 'frontend_developer', experience: 'complete_beginner', javascriptExperience: 'interactive_pages', stack: 'react' }
+  assert.equal(resolvePlacement(shipped).value, 'dom_interactivity')
 })
 
-test('an explicit starting point wins over the rung, and "not sure" falls back', () => {
-  const base = { branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' }
+test('new JavaScript learners defer framework choice', () => {
+  const answers = { branch: 'web', role: 'frontend_developer', experience: 'complete_beginner', javascriptExperience: 'new_to_javascript' }
+  const steps = ids(answers)
+  assert.ok(!steps.includes('stack'))
+  assert.equal(buildProfile(answers).stack, null)
+  assert.equal(buildProfile(answers).frameworkDecision, 'pending')
+})
+
+test('JavaScript-ready frontend learners choose a framework before placement', () => {
+  const answers = { branch: 'web', role: 'frontend_developer', experience: 'complete_beginner', javascriptExperience: 'interactive_pages', stack: 'react' }
+  const steps = ids(answers)
+  assert.ok(steps.indexOf('javascript_experience') < steps.indexOf('stack'))
+  assert.ok(steps.indexOf('stack') < steps.indexOf('starting_point'))
+  assert.equal(buildProfile(answers).frameworkDecision, 'complete')
+})
+
+test('backend language selection remains independent of experience', () => {
+  const base = { branch: 'backend', role: 'backend_developer' }
+  assert.ok(ids({ ...base, experience: 'complete_beginner' }).includes('stack'))
+  assert.ok(ids({ ...base, experience: 'worked_clients_teams' }).includes('stack'))
+})
+
+test('legacy frontend profiles do not gain a deferred framework decision', () => {
+  const legacy = buildProfile({ branch: 'web', role: 'frontend_developer', experience: 'complete_beginner' })
+  assert.equal(legacy.frameworkDecision, null)
+})
+
+test('the framework checkpoint opens only after pending learners finish foundations', () => {
+  const profile = { role: 'frontend_developer', frameworkDecision: 'pending' }
+  assert.equal(isFrameworkCheckpointReady(profile, {}), false)
+  assert.equal(isFrameworkCheckpointReady(profile, { 'program-flow': { completedAt: 'today' } }), true)
+  assert.equal(isFrameworkCheckpointReady({ ...profile, frameworkDecision: 'complete' }, { 'program-flow': { completedAt: 'today' } }), false)
+})
+
+test('an explicit starting point wins over JavaScript placement', () => {
+  const base = { branch: 'web', role: 'frontend_developer', experience: 'built_small_projects', javascriptExperience: 'interactive_pages', stack: 'react' }
   assert.equal(resolvePlacement({ ...base, startingPoint: 'react_routing_apis' }).value, 'react_routing_apis')
   assert.equal(resolvePlacement({ ...base, startingPoint: 'not_sure' }).value, 'dom_interactivity')
+})
+
+test('low-experience backend learners are still placed by general experience', () => {
+  const shipped = { branch: 'backend', role: 'backend_developer', experience: 'built_used_by_others', stack: 'node' }
+  assert.equal(resolvePlacement(shipped).value, 'auth_security')
 })
 
 test('visible steps grow and shrink with the answers', () => {

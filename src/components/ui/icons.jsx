@@ -102,6 +102,16 @@ export function BookOpenIcon({ className }) {
   )
 }
 
+export function HeadphonesIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 13v-1a8 8 0 0 1 16 0v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="3" y="13" width="4.5" height="7" rx="2" fill="currentColor" />
+      <rect x="16.5" y="13" width="4.5" height="7" rx="2" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function LessonPedestalIcon({ state, checkpoint = false, selected = false, className = '' }) {
   const palette = {
     available: { base: '#35363b', rim: '#62636a', ring: '#c9c9cd', center: selected ? '#9db5d7' : '#ececef', symbol: selected ? '#fff' : '#9db5d7' },

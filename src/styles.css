@@ -100,6 +100,15 @@
     animation: devy-talking 700ms ease-in-out 2;
   }
 
+  @keyframes devy-bubble-in {
+    0% { transform: translateY(6px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .devy-bubble-in {
+    animation: devy-bubble-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
   .devy-idle {
     animation: devy-wake 480ms cubic-bezier(0.16, 1, 0.3, 1) both, devy-idle 4.8s 700ms ease-in-out infinite;
     transform-origin: center bottom;
@@ -129,6 +138,14 @@
     animation:
       devy-celebrate-in 520ms cubic-bezier(0.22, 1.4, 0.36, 1) both,
       devy-celebrate-cheer 2.6s 520ms ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+
+  /* Same cheer, no entrance — for callers (like the concept-break screen)
+     whose own tween already handled arriving, and would otherwise fight
+     .devy-celebrate's entrance keyframe for the same transform/opacity. */
+  .devy-cheer-loop {
+    animation: devy-celebrate-cheer 2.6s ease-in-out infinite;
     transform-origin: center bottom;
   }
 
@@ -214,4 +231,153 @@
   [data-theme=light] .lesson-error-glow {
     box-shadow: inset 0 0 0 2px #b3261e, inset 0 0 46px -8px #ff676d;
   }
+
+  /* Home and lesson motion stays intentionally quiet. The only repeated cue is
+     attached to a current learning state; every other effect is a short reply
+     to a learner's action. */
+  .motion-button,
+  .home-path-pill,
+  .lesson-answer,
+  .lesson-token,
+  .lesson-blank {
+    will-change: transform;
+  }
+
+  .motion-button:hover:not(:disabled),
+  .home-path-pill:hover {
+    transform: translateY(-2px);
+  }
+
+  .motion-button:active:not(:disabled),
+  .home-path-pill:active,
+  .lesson-answer:active:not(:disabled),
+  .lesson-token:active:not(:disabled),
+  .lesson-blank:active:not(:disabled) {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* The one repeated cue the note above allows for: the mission CTA is the
+     current learning state, so it gets a slow sheen with a long pause between
+     passes. Lives on ::after and on the arrow span rather than the button, so
+     it never fights the hover/active transforms declared above. */
+  @keyframes cta-sheen {
+    0% { transform: translateX(-140%) skewX(-18deg); }
+    22% { transform: translateX(240%) skewX(-18deg); }
+    100% { transform: translateX(240%) skewX(-18deg); }
+  }
+
+  @keyframes cta-arrow-nudge {
+    0%, 10%, 100% { transform: translateX(0); }
+    5% { transform: translateX(3px); }
+  }
+
+  .cta-idle {
+    overflow: hidden;
+  }
+
+  .cta-idle::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 42%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.26), transparent);
+    animation: cta-sheen 5s ease-in-out 1.4s infinite;
+  }
+
+  .cta-idle-arrow {
+    display: inline-block;
+    animation: cta-arrow-nudge 5s ease-in-out 1.4s infinite;
+  }
+
+  @keyframes home-dot-in {
+    from { transform: scale(0.45); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes streak-day-in {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .home-progress-dot {
+    animation: home-dot-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .home-progress-dot:nth-child(2) { animation-delay: 40ms; }
+  .home-progress-dot:nth-child(3) { animation-delay: 80ms; }
+  .home-progress-dot:nth-child(4) { animation-delay: 120ms; }
+  .home-progress-dot:nth-child(5) { animation-delay: 160ms; }
+  .home-progress-dot:nth-child(6) { animation-delay: 200ms; }
+
+  .home-streak-day {
+    animation: streak-day-in 300ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+  }
+
+  .home-streak-day { animation-delay: 45ms; }
+  div:nth-child(2) > .home-streak-day { animation-delay: 90ms; }
+  div:nth-child(3) > .home-streak-day { animation-delay: 135ms; }
+  div:nth-child(4) > .home-streak-day { animation-delay: 180ms; }
+  div:nth-child(5) > .home-streak-day { animation-delay: 225ms; }
+  div:nth-child(6) > .home-streak-day { animation-delay: 270ms; }
+  div:nth-child(7) > .home-streak-day { animation-delay: 315ms; }
+
+  @keyframes lesson-choice-in {
+    from { transform: scale(0.985); }
+    to { transform: scale(1); }
+  }
+
+  @keyframes lesson-correct {
+    0% { transform: scale(0.98); }
+    58% { transform: scale(1.012); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes lesson-error {
+    0%, 100% { transform: translateX(0); }
+    28% { transform: translateX(-3px); }
+    56% { transform: translateX(3px); }
+    76% { transform: translateX(-1px); }
+  }
+
+  @keyframes lesson-progress-in {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  .lesson-answer-selected,
+  .lesson-blank-selected,
+  .lesson-token:not(:disabled):active {
+    animation: lesson-choice-in 140ms ease-out both;
+  }
+
+  .lesson-answer-correct,
+  .lesson-blank-correct,
+  .lesson-answer-feedback-correct {
+    animation: lesson-correct 260ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+  }
+
+  .lesson-answer-error,
+  .lesson-blank-error,
+  .lesson-answer-feedback-error {
+    animation: lesson-error 260ms ease-out both;
+  }
+
+  .lesson-progress-segment {
+    animation: lesson-progress-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    transform-origin: left;
+  }
+}
+
+@keyframes lesson-options-nudge {
+  0%, 30%, 100% { transform: rotate(0deg); box-shadow: 0 0 0 0 rgba(102, 153, 236, 0); }
+  8% { transform: rotate(-10deg); box-shadow: 0 0 0 4px rgba(102, 153, 236, 0.16); }
+  16% { transform: rotate(10deg); box-shadow: 0 0 0 7px rgba(102, 153, 236, 0.04); }
+  24% { transform: rotate(-10deg); box-shadow: 0 0 0 3px rgba(102, 153, 236, 0.1); }
+}
+
+.lesson-options-nudge {
+  animation: lesson-options-nudge 3.6s 500ms ease-in-out infinite;
+  transform-origin: center;
 }

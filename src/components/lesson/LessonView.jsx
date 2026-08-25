@@ -4,13 +4,17 @@ import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
 import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
+import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
 import { DevyAssistant } from './DevyAssistant'
+import { DevySpeechBubble } from './DevySpeechBubble'
 import { GemIcon } from '../ui/icons'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
 import { isQuestionComplete, isQuestionCorrect } from './questionState'
+import { getDevyLine } from '../../lib/devy'
+import { LESSON_XP } from '../../lib/lessonMeta'
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
 import { getLessonTopics } from '../../data/learningResources'
@@ -65,10 +69,18 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [isNotesOpen, setIsNotesOpen] = useState(false)
   const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
   const [isLessonMenuOpen, setIsLessonMenuOpen] = useState(false)
+  const [isExitDialogOpen, setIsExitDialogOpen] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const [isNarrating, setIsNarrating] = useState(false)
   const [successPulse, setSuccessPulse] = useState(0)
   const [errorPulse, setErrorPulse] = useState(0)
+  const [audioReadyForNext, setAudioReadyForNext] = useState(false)
+  const [devyLine, setDevyLine] = useState(null)
+  const [isDevyTalking, setIsDevyTalking] = useState(false)
+  const devyLineTimerRef = useRef(null)
+  const devyTalkTimerRef = useRef(null)
+  const exitButtonRef = useRef(null)
+  const stayButtonRef = useRef(null)
+  const exitDialogRef = useRef(null)
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
 
   const currentStep = lessonFlow[session.stepIndex]
@@ -80,6 +92,31 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const isChecked = questionState?.checked ?? false
   const canCheck = isQuestion && isQuestionComplete(currentStep.question, answer)
   const isLastStep = session.stepIndex === lessonFlow.length - 1
+
+  useEffect(() => {
+    setAudioReadyForNext(false)
+  }, [currentStep?.id])
+
+  // Real tallies for the break-screen recap strip — never invented copy. Scoped
+  // to one concept for a mid-lesson hand-off, to the whole flow for the finish.
+  const questionRecap = (concept) => {
+    // Transition/complete steps don't carry a conceptIndex the way activity
+    // steps do (see buildLessonFlow) — match by the concept object itself.
+    const questions = lessonFlow.filter((step) => step.type === 'question' && (concept === undefined || step.concept === concept))
+    const correct = questions.filter((step) => {
+      const state = session.activityStates[step.id]
+      return state?.checked && isQuestionCorrect(step.question, state.answer)
+    }).length
+    return { correct, total: questions.length }
+  }
+
+  const recapStats = (concept) => {
+    const { correct, total } = questionRecap(concept)
+    const stats = []
+    if (total > 0) stats.push({ value: `${correct}/${total}`, label: 'correct' })
+    if (session.streak >= STREAK_THRESHOLD) stats.push({ value: `${session.streak}`, label: 'in a row' })
+    return stats
+  }
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(session))
@@ -101,6 +138,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setIsDevyOpen(false)
     setSuccessPulse(0)
     setErrorPulse(0)
+    setDevyLine(null)
   }
 
   const goPrevious = () => {
@@ -108,6 +146,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setIsDevyOpen(false)
     setSuccessPulse(0)
     setErrorPulse(0)
+    setDevyLine(null)
   }
 
   const answerQuestion = (nextAnswer) => {
@@ -117,14 +156,37 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
+  // Devy "says" a line above the footer avatar for a few seconds, with a
+  // matching bounce on the mascot itself — an ambient reaction, not the
+  // full chat panel. Each call replaces whatever was showing before it.
+  const sayDevyLine = (text) => {
+    clearTimeout(devyLineTimerRef.current)
+    clearTimeout(devyTalkTimerRef.current)
+    setDevyLine({ id: Date.now(), text })
+    setIsDevyTalking(true)
+    devyTalkTimerRef.current = window.setTimeout(() => setIsDevyTalking(false), 1400)
+    devyLineTimerRef.current = window.setTimeout(() => setDevyLine(null), 4200)
+  }
+
+  useEffect(() => () => {
+    clearTimeout(devyLineTimerRef.current)
+    clearTimeout(devyTalkTimerRef.current)
+  }, [])
+
   const checkQuestion = () => {
     const correct = isQuestionCorrect(currentStep.question, answer)
     if (correct) setSuccessPulse((current) => current + 1)
     else setErrorPulse((current) => current + 1)
+    const nextStreak = correct ? session.streak + 1 : 0
+    sayDevyLine(
+      correct && nextStreak >= STREAK_THRESHOLD
+        ? getDevyLine({ event: 'streak', streak: nextStreak })
+        : getDevyLine({ event: correct ? 'correct' : 'incorrect' }),
+    )
     setSession((current) => ({
       ...current,
       activityStates: { ...current.activityStates, [currentStep.id]: { answer, checked: true } },
-      streak: correct ? current.streak + 1 : 0,
+      streak: nextStreak,
     }))
   }
 
@@ -134,6 +196,50 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     onExit()
   }
 
+  const requestExit = () => {
+    setIsLessonMenuOpen(false)
+    setIsExitDialogOpen(true)
+  }
+
+  const stayInLesson = () => {
+    setIsExitDialogOpen(false)
+    window.setTimeout(() => exitButtonRef.current?.focus())
+  }
+
+  const leaveLesson = () => {
+    localStorage.removeItem(storageKey)
+    onExit()
+  }
+
+  useEffect(() => {
+    if (!isExitDialogOpen) return undefined
+
+    stayButtonRef.current?.focus()
+    const handleDialogKeys = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        stayInLesson()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const buttons = exitDialogRef.current?.querySelectorAll('button')
+      if (!buttons?.length) return
+      const firstButton = buttons[0]
+      const lastButton = buttons[buttons.length - 1]
+      if (event.shiftKey && document.activeElement === firstButton) {
+        event.preventDefault()
+        lastButton.focus()
+      } else if (!event.shiftKey && document.activeElement === lastButton) {
+        event.preventDefault()
+        firstButton.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleDialogKeys)
+    return () => document.removeEventListener('keydown', handleDialogKeys)
+  }, [isExitDialogOpen])
+
   const footerAction = !currentStep
     ? null
     : currentStep.kind === 'transition'
@@ -141,7 +247,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       : currentStep.kind === 'complete'
         ? { label: 'Return to path', onClick: finishLesson }
         : currentStep.type === 'article'
-          ? { label: 'Continue', onClick: goNext }
+          ? {
+              label: audioReadyForNext
+                ? (lessonFlow[session.stepIndex + 1]?.type === 'question' ? 'Start quick check' : 'Continue lesson')
+                : 'Continue',
+              onClick: goNext,
+            }
           : isQuestion
             ? (isChecked
               ? { label: 'Continue', onClick: goNext }
@@ -151,10 +262,11 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
   useEffect(() => {
     const handleKeyDown = (event) => {
+      if (isExitDialogOpen) return
       // The drawer owns the keyboard while it's open.
       if (isNotesOpen || isCheatsheetOpen) return
       if (event.key === 'Escape') {
-        onExit()
+        requestExit()
         return
       }
       if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -208,11 +320,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     >
       {successPulse > 0 && <div key={successPulse} className="lesson-success-glow" aria-hidden="true" />}
       {errorPulse > 0 && <div key={errorPulse} className="lesson-error-glow" aria-hidden="true" />}
-      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
+      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
         <button
+          ref={exitButtonRef}
           type="button"
           className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 max-[720px]:invisible ${focusRing}`}
-          onClick={onExit}
+          onClick={requestExit}
           aria-label="Exit lesson"
         >
           <svg className="w-[21px] h-[21px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -230,19 +343,28 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           )}
         </div>
 
-        <div className="justify-self-center min-[721px]:absolute min-[721px]:right-20">
+        <div className="justify-self-center min-[721px]:absolute min-[721px]:right-[196px]">
           <span className="flex h-9 items-center gap-1.5 rounded-full border border-[#e1e1e1] bg-white px-2.5 text-sm font-medium text-neutral-800 [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:text-[#f4f4f2]" aria-label={`${xp} XP`}>
             <GemIcon className="size-[14px] text-[#513dec]" />
             {xp}
           </span>
         </div>
 
-        {/* Reference belongs where the work happens — this is the moment you
-            actually need to look up syntax. */}
-        <div className="relative justify-self-end">
+        <div className="flex items-center gap-2 justify-self-end">
+          {currentStep?.type === 'article' && (
+            <NarrationControl
+              article={currentStep.content}
+              onNarrationStart={() => setAudioReadyForNext(false)}
+              onNarrationEnd={() => setAudioReadyForNext(true)}
+            />
+          )}
+
+          {/* Reference belongs where the work happens — this is the moment you
+              actually need to look up syntax. */}
+          <div className="relative">
           <button
             type="button"
-            className={`grid size-10 place-items-center rounded-[10px] border-0 bg-[#f5f5f5] text-neutral-800 hover:bg-[#eeeeeb] [[data-theme=dark]_&]:bg-[#262626] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#303030] ${focusRing}`}
+            className={`grid size-10 place-items-center rounded-[10px] border-0 bg-[#f5f5f5] text-neutral-800 hover:bg-[#eeeeeb] [[data-theme=dark]_&]:bg-[#262626] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#303030] ${isLessonMenuOpen ? '' : 'lesson-options-nudge'} ${focusRing}`}
             onClick={() => setIsLessonMenuOpen((open) => !open)}
             aria-expanded={isLessonMenuOpen}
             aria-label="Lesson options"
@@ -254,12 +376,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsSaved((saved) => !saved)}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.2l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>{isSaved ? 'Saved' : 'Save this lesson'}</button>
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsNotesOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Notes</button>
               {lessonTopics.length > 0 && <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsCheatsheetOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Cheatsheet</button>}
-              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsLessonMenuOpen(false)}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4M17 9a4 4 0 0 1 0 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Narrate this step</button>
               <div className="my-1 border-t border-[#eeeeeb] [[data-theme=dark]_&]:border-[#404040]" role="separator" />
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsLessonMenuOpen(false)}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 21V4h12v11H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Report a problem</button>
-              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={onExit}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Exit lesson</button>
+              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={requestExit}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Exit lesson</button>
             </div>
           )}
+          </div>
         </div>
       </header>
 
@@ -267,7 +389,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
       >
         {!lesson && <UnavailableLesson lessonId={activeLessonId} />}
-        {currentStep?.type === 'article' && <LessonArticle article={currentStep.content} lessonTitle={lesson?.title} conceptTitle={currentStep.concept?.title} step={session.stepIndex + 1} totalSteps={lessonFlow.length} isNarrating={isNarrating} onToggleNarration={() => setIsNarrating((narrating) => !narrating)} />}
+        {currentStep?.type === 'article' && <LessonArticle
+          article={currentStep.content}
+          lessonTitle={lesson?.title}
+        />}
         {isQuestion && (
           <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
             <LessonQuestion
@@ -281,8 +406,14 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             />
           </div>
         )}
-        {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} />}
-        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} mood="celebrating" />}
+        {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} stats={recapStats(currentStep.concept)} />}
+        {currentStep?.kind === 'complete' && (
+          <ConceptTransition
+            {...currentStep.completion}
+            mood="celebrating"
+            stats={[{ value: `+${LESSON_XP}`, label: 'XP' }, ...recapStats()]}
+          />
+        )}
       </main>
 
       {!isMilestone && <aside
@@ -312,32 +443,39 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       <footer
         className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] py-2 px-6 max-[720px]:px-3.5 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0' : 'ml-0'}`}
       >
-        {!isMilestone && <button
-          type="button"
-          className={`relative grid size-[54px] max-[720px]:size-12 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
-          onClick={() => setIsDevyOpen(true)}
-          aria-label="Open Devy chat"
-          aria-expanded={isDevyOpen}
-        >
-          {/* Three right in a row already lights a ring here; letting Devy react
-              too is what makes the streak feel noticed rather than counted. */}
-          <DevyMood
-            key={showStreak ? 'streaking' : 'idle'}
-            mood={showStreak ? 'celebrating' : 'neutral'}
-            className={showStreak ? 'w-full h-full' : 'devy-idle w-full h-full'}
-          />
-          {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
-        </button>}
+        {!isMilestone && (
+          <div className="relative">
+            <button
+              type="button"
+              className={`relative grid size-[54px] max-[720px]:size-12 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
+              onClick={() => setIsDevyOpen(true)}
+              aria-label="Open Devy chat"
+              aria-expanded={isDevyOpen}
+            >
+              {/* Three right in a row already lights a ring here; letting Devy react
+                  too is what makes the streak feel noticed rather than counted. */}
+              <DevyMood
+                key={showStreak ? 'streaking' : 'idle'}
+                mood={showStreak ? 'celebrating' : 'neutral'}
+                className={showStreak ? 'w-full h-full' : `w-full h-full ${isDevyTalking ? 'devy-talking-avatar' : 'devy-idle'}`}
+              />
+              {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
+            </button>
+            <DevySpeechBubble key={devyLine?.id} text={devyLine?.text} />
+          </div>
+        )}
 
         {!isMilestone && (
-          <p className="m-0 min-w-0 text-[13px] leading-[1.4] text-[#f0c964]" role="status" aria-live="polite">
-            {showStreak ? `${session.streak} correct answers in a row!` : ''}
-          </p>
+          <div className="min-w-0" aria-live="polite">
+            {audioReadyForNext && currentStep?.type === 'article' && (
+              <p className="m-0 text-[13px] font-medium text-[#72d69a] [[data-theme=light]_&]:text-[#18794e]">Audio complete</p>
+            )}
+          </div>
         )}
 
         {footerAction && <ActionButton
           variant="primary"
-          className={`${isMilestone ? 'w-[min(100%,640px)]' : 'min-w-[200px] max-[720px]:min-w-[140px]'} min-h-11 text-[15px] font-semibold`}
+          className={`${isMilestone ? 'min-w-[240px] max-[720px]:w-full px-10' : 'min-w-[200px] max-[720px]:min-w-[140px]'} min-h-11 text-[15px] font-semibold`}
           onClick={footerAction.onClick}
           disabled={footerAction.disabled}
         >
@@ -360,6 +498,24 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           topics={lessonTopics}
           onClose={() => setIsCheatsheetOpen(false)}
         />
+      )}
+      {isExitDialogOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 px-5">
+          <div
+            ref={exitDialogRef}
+            className="grid w-full max-w-[440px] justify-items-center rounded-3xl bg-[#14252c] px-7 py-7 text-center shadow-[0_18px_48px_rgba(0,0,0,.45)] [[data-theme=light]_&]:bg-white max-[520px]:px-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exit-lesson-title"
+          >
+            <DevyMood mood="annoyed" className="mb-4 h-[102px] w-[90px] object-contain" />
+            <h2 id="exit-lesson-title" className="m-0 max-w-[18ch] font-rethink-sans text-[24px] font-semibold leading-[1.35] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Wait, don’t go! You’ll lose your progress and XP if you leave now.</h2>
+            <div className="mt-7 grid w-full gap-3">
+              <button ref={stayButtonRef} type="button" className={`min-h-14 rounded-2xl bg-[#2563eb] px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_5px_0_#1d4ed8] hover:bg-[#3b82f6] active:translate-y-1 active:shadow-none ${focusRing}`} onClick={stayInLesson}>Keep learning</button>
+              <button type="button" className={`min-h-11 px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-[#ff6262] hover:text-[#ff8585] [[data-theme=light]_&]:text-[#d92d2d] ${focusRing}`} onClick={leaveLesson}>Leave lesson</button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   )

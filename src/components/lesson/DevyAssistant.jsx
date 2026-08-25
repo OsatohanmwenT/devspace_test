@@ -2,26 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { RichText } from './RichText'
 import { getFallbackResponse, getGreeting, getPrompts, getResponse, matchPrompt } from '../../lib/devy'
 
-function Bubble({ children, talking = false }) {
+function Bubble({ children }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <img className={`mt-0.5 size-6 flex-none object-contain ${talking ? 'devy-talking-avatar' : ''}`} src="/assets/devy.svg" alt="" />
-      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-3.5 py-3 text-[15px] leading-[1.55] text-[#e4e4e6] [[data-theme=light]_&]:text-neutral-800">
-        {children}
-      </div>
+    <div className="min-w-0 rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-3.5 py-3 text-[15px] leading-[1.55] text-[#e4e4e6] [[data-theme=light]_&]:text-neutral-800">
+      {children}
     </div>
   )
 }
 
 function ThinkingBubble() {
   return (
-    <div className="devy-message-in flex items-center gap-2.5" aria-label="Devy is thinking" role="status">
-      <img className="devy-talking-avatar size-6 flex-none object-contain" src="/assets/devy.svg" alt="" />
-      <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-3.5" aria-hidden="true">
-        <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" />
-        <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" />
-        <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" />
-      </div>
+    <div className="devy-message-in flex items-center gap-1.5 justify-self-start rounded-2xl rounded-tl-md border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-3.5" aria-label="Devy is thinking" role="status">
+      <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" aria-hidden="true" />
+      <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" aria-hidden="true" />
+      <span className="devy-thinking-dot size-1.5 rounded-full bg-[#9a9a9d]" aria-hidden="true" />
     </div>
   )
 }
@@ -93,7 +87,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
                 {message.label}
               </p>
               <div className={`transition-[filter,opacity] duration-300 ${index === messages.length - 1 ? '' : 'blur-[2px] opacity-35'}`}>
-                <Bubble talking={index === messages.length - 1}>
+                <Bubble>
                   <RichText content={message.response.body} />
                   {message.response.code && (
                     <pre className="mt-2.5 overflow-x-auto rounded-lg bg-[#1e1e1e] px-3.5 py-3 font-rubik text-sm leading-[1.7] text-[#d4d4d4]"><code>{message.response.code}</code></pre>

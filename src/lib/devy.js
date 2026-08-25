@@ -34,6 +34,22 @@ function prompt(id) {
   return { id, label: PROMPT_LABELS[id] }
 }
 
+// The one-liner Devy "says" from the footer avatar — an ambient reaction to
+// what just happened, not a substitute for the chat panel's real answers.
+// Picked at random within the matching pool so the same moment doesn't read
+// the same line twice in a row.
+const LINES = {
+  correct: ['Nice — that’s it.', 'Exactly right.', 'Yep, that’s the one.', 'Clean answer.'],
+  incorrect: ['Not quite — check the hint if you want.', 'Close, but not that one.', 'Not this time. I’m right here if you need me.'],
+}
+
+export function getDevyLine({ event, streak }) {
+  if (event === 'streak') return `${streak} correct in a row — you’re finding a rhythm.`
+  const pool = LINES[event]
+  if (!pool) return null
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
 export function getGreeting(profile) {
   const roleLabel = profile?.role ? ROLE_LABELS[profile.role] : null
   if (roleLabel) {

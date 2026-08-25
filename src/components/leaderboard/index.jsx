@@ -9,7 +9,6 @@ import { LeaderboardTabs } from './LeaderboardTabs';
 import { LeagueLadder } from './LeagueLadder';
 import { LeagueResultBanner } from './LeagueResultBanner';
 import { LeagueJoinPrompt, LockedBoardSkeleton } from './LockedLeaderboard';
-import { PageArrival } from '../ui/PageArrival';
 
 const TABS = ['This week', 'All time', 'By path']
 const TICK_MS = 60 * 1000
@@ -84,8 +83,6 @@ export default function LeaderboardView({
   onDismissResult,
   onStartPractice,
   onOpenPlans,
-  hasSeenIntroduction,
-  onDismissIntroduction,
 }) {
   const [tab, setTab] = useState(TABS[0])
   const [expanded, setExpanded] = useState(false)
@@ -138,15 +135,6 @@ export default function LeaderboardView({
     if (!hasJoined || tab !== 'This week') return []
     return getBoardWindow(weekly, summary, { expanded: expanded && hasFullCohort })
   })()
-
-  if (!hasSeenIntroduction) return <PageArrival
-    ariaLabel="About the leaderboard"
-    eyebrow="Your weekly league"
-    title="See how your effort stacks up"
-    body="Lessons and practice earn XP. Climb the standings each week to move up your league."
-    actionLabel="View leaderboard"
-    onContinue={onDismissIntroduction}
-  />
 
   return (
     <section className="grid gap-8" aria-label="Leaderboard">

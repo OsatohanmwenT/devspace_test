@@ -1,14 +1,7 @@
 import { leagues } from '../../data/leagues';
 import { TierMedal } from './TierMedal';
 
-// Tiers shrink and fade with distance from the current one, so the ladder reads
-// as a road ahead rather than a row of equal chips.
-//
-// The ladder is the page's identity — Duolingo and Uxcel both lead with it — so
-// the current tier stays prominent while the locked ones recede hard. 92px was
-// too much (it pushed the first row to 68% of the viewport); 46px read as a
-// footnote. This keeps the hero without burying the board.
-const SIZE_BY_DISTANCE = [76, 44, 32, 26]
+const SIZE_BY_DISTANCE = [88, 52, 38, 30]
 const OPACITY_BY_DISTANCE = [1, 0.68, 0.42, 0.24]
 
 function at(scale, distance) {
@@ -16,25 +9,41 @@ function at(scale, distance) {
 }
 
 export function LeagueLadder({ leagueIndex }) {
-  return (
-    <ul className="flex items-center justify-center gap-4 max-[680px]:gap-2 m-0 px-2 py-3 list-none overflow-x-auto" aria-label="League progression">
-      {leagues.map((league, index) => {
-        const distance = Math.abs(index - leagueIndex)
-        const state = index === leagueIndex ? 'current' : index < leagueIndex ? 'unlocked' : 'locked'
-        const shortName = league.name.replace(' League', '')
+  const currentLeague = leagues[leagueIndex]
 
-        return (
-          <li className="grid justify-items-center gap-2 flex-none" key={league.id} style={{ opacity: at(OPACITY_BY_DISTANCE, distance) }}>
-            <TierMedal league={league} state={state} size={at(SIZE_BY_DISTANCE, distance)} />
-            {state === 'current' && (
-              <small className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[11px] font-semibold tracking-[.06em] uppercase">{shortName}</small>
-            )}
-            <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">
-              {shortName}{state === 'current' ? ' — your league' : state === 'locked' ? ' — locked' : ' — unlocked'}
-            </span>
-          </li>
-        )
-      })}
-    </ul>
+  return (
+    <div className="flex w-full items-center py-3 overflow-hidden" aria-label="League progression" role="list">
+      <div className="flex min-w-0 flex-1 justify-end gap-4 max-[680px]:gap-2">
+        {leagues.slice(0, leagueIndex).map((league, index) => {
+          const distance = leagueIndex - index
+          const shortName = league.name.replace(' League', '')
+
+          return (
+            <div className="grid w-[76px] flex-none justify-items-center gap-2" key={league.id} role="listitem" style={{ opacity: at(OPACITY_BY_DISTANCE, distance) }}>
+              <TierMedal league={league} state="unlocked" size={at(SIZE_BY_DISTANCE, distance)} />
+              <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{shortName} — unlocked</span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="grid w-[88px] flex-none justify-items-center gap-2" role="listitem">
+        <TierMedal league={currentLeague} state="current" size={SIZE_BY_DISTANCE[0]} />
+        <small className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[11px] font-semibold tracking-[.06em] uppercase">{currentLeague.name.replace(' League', '')}</small>
+        <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{currentLeague.name} — your league</span>
+      </div>
+      <div className="flex min-w-0 flex-1 gap-4 max-[680px]:gap-2">
+        {leagues.slice(leagueIndex + 1).map((league, offset) => {
+          const distance = offset + 1
+          const shortName = league.name.replace(' League', '')
+
+          return (
+            <div className="grid w-[76px] flex-none justify-items-center gap-2" key={league.id} role="listitem" style={{ opacity: at(OPACITY_BY_DISTANCE, distance) }}>
+              <TierMedal league={league} state="locked" size={at(SIZE_BY_DISTANCE, distance)} />
+              <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{shortName} — locked</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }

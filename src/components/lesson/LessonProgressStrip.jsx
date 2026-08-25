@@ -19,7 +19,7 @@ export function LessonProgressStrip({ currentStep = 1, totalSteps = 2, onPreviou
       >
         {Array.from({ length: totalSteps }, (_, index) => (
           <span
-            className={index < currentStep ? filledClassName : 'h-2 rounded bg-[#404040] [[data-theme=light]_&]:bg-[#e1e1e1]'}
+            className={index < currentStep ? `lesson-progress-segment ${filledClassName}` : 'h-2 rounded bg-[#404040] [[data-theme=light]_&]:bg-[#e1e1e1]'}
             key={index}
           />
         ))}

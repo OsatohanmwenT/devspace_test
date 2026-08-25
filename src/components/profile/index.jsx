@@ -8,6 +8,7 @@ import {
   motivationOptions,
   experienceOptions,
   immediateNeedOptions,
+  stackOptions,
   startingPointOptions,
 } from '../../data/onboarding'
 import { explorePaths } from '../../data/paths'
@@ -24,6 +25,7 @@ const INTEREST_LABELS = labelMap(projectInterestOptions)
 const MOTIVATION_LABELS = labelMap(motivationOptions)
 const EXPERIENCE_LABELS = labelMap(experienceOptions)
 const NEED_LABELS = labelMap(immediateNeedOptions)
+const STACK_LABELS = labelMap(Object.values(stackOptions).flat())
 // Keyed by role, since each role ladders through its own starting points.
 const STARTING_POINT_LABELS = Object.fromEntries(
   Object.entries(startingPointOptions).map(([role, options]) => [role, labelMap(options)]),
@@ -396,7 +398,17 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
   const needLabels = (profile?.immediateNeed ?? []).map((value) => NEED_LABELS[value]).filter(Boolean)
   const joinedDate = formatLongMonth(profile?.completedAt)
   const joinedYear = profile?.completedAt ? new Date(profile.completedAt).getFullYear() : null
-  const startingPointLabel = STARTING_POINT_LABELS[profile?.role]?.[profile?.startingPoint]
+  const startingPointLadder = profile?.role === 'frontend_developer'
+    ? `frontend_developer_${profile.stack ?? 'foundations'}`
+    : profile?.role === 'backend_developer'
+      ? `backend_developer_${profile.stack ?? 'node'}`
+      : profile?.role
+  const startingPointLabel = STARTING_POINT_LABELS[startingPointLadder]?.[profile?.startingPoint]
+  const frameworkStatus = profile?.role === 'frontend_developer'
+    ? profile.frameworkDecision === 'pending'
+      ? 'Choose your framework after JavaScript foundations.'
+      : profile.stack ? `Framework focus: ${STACK_LABELS[profile.stack]}.` : null
+    : null
 
   const completedLessons = progress.completedLessons ?? {}
   const isVerified = (lesson) => Boolean(completedLessons[lesson.id])
@@ -603,6 +615,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                       Placed at {startingPointLabel}.
                     </p>
                   )}
+                  {frameworkStatus && <p className={`m-0 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>{frameworkStatus}</p>}
                 </div>
               </div>
             </SectionCard>
@@ -809,6 +822,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                         Placed at {startingPointLabel}.
                       </p>
                     )}
+                    {frameworkStatus && <p className={`m-0 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>{frameworkStatus}</p>}
                   </div>
                 </div>
               </SectionCard>
