@@ -90,6 +90,12 @@ export function StreakJourneyModal({
     }),
   ]
 
+  // How far the timeline's spine should paint amber before fading to grey —
+  // the last earned step's position, not just a count, so a fresh 0-day
+  // streak doesn't show a sliver of "progress" it hasn't made.
+  const lastEarnedIndex = steps.reduce((last, step, index) => (step.state === 'earned' ? index : last), -1)
+  const timelineProgress = lastEarnedIndex <= 0 ? 0 : (lastEarnedIndex / (steps.length - 1)) * 100
+
   return (
     <Drawer id="streak-journey-dialog" title="Streak journey" onClose={onClose} labelledBy="streak-journey-title">
       <div className="grid gap-7">
@@ -153,6 +159,11 @@ export function StreakJourneyModal({
           </div>
 
           <ol className="relative grid list-none gap-4 m-0 p-0 before:absolute before:left-[17px] before:top-4 before:bottom-4 before:w-px before:bg-[#404040] [[data-theme=light]_&]:before:bg-[#e1e1e1]">
+            <div
+              aria-hidden="true"
+              className="absolute left-[17px] top-4 bottom-4 w-px"
+              style={{ background: `linear-gradient(to bottom, #fbbf24 ${timelineProgress}%, transparent ${timelineProgress}%)` }}
+            />
             {steps.map((step) => (
               <li key={step.key} className="flex items-start gap-3">
                 <DayChip label={step.label} state={step.state} />

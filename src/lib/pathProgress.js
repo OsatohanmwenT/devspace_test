@@ -9,6 +9,8 @@
 
 /** @typedef {'completed'|'current'|'available'|'locked'} LessonState */
 
+import { getLesson } from '../components/lesson/lessonContent.js'
+
 // Authored `state: 'completed'` in data/paths.js is seed data: it places a new
 // learner partway along the spine so the current lesson lands on one that has
 // authored content. It unions with real completions rather than being replaced,
@@ -142,5 +144,51 @@ export function derivePathProgress(path, completedLessons = {}) {
         }
       : null,
     isComplete: allLessons.length > 0 && currentIndex === -1,
+  }
+}
+
+// Compares a path's derived progress before and after a lesson completion to
+// decide whether that completion crossed a region boundary — the moment the
+// roadmap transition screen exists for. A completion that finishes a lesson
+// without finishing its region returns no transition; the learner just goes
+// back to the roadmap they were already on.
+export function deriveLessonCompletionTransition(path, previousCompletedLessons = {}, nextCompletedLessons = {}) {
+  const before = derivePathProgress(path, previousCompletedLessons)
+  const after = derivePathProgress(path, nextCompletedLessons)
+
+  const completedRegion = after.regions.find(
+    (region, index) => region.state === 'completed' && before.regions[index]?.state !== 'completed',
+  )
+  if (!completedRegion) return null
+
+  const nextRegion = after.regions[completedRegion.index + 1] ?? null
+
+  if (!nextRegion) {
+    return {
+      type: 'roadmap-complete',
+      pathId: after.pathId,
+      pathTitle: after.title,
+      completedRegion,
+      regionsCompleted: after.regionsCompleted,
+      regionsTotal: after.regionsTotal,
+      lessonsCompleted: after.lessonsCompleted,
+      lessonsTotal: after.lessonsTotal,
+    }
+  }
+
+  // A region can have authored cards but a first lesson with no authored
+  // content yet (LessonView falls back to `UnavailableLesson` for those) — so
+  // "launchable" checks the lesson itself, not just its region.
+  const firstLesson = nextRegion.lessons[0] ?? null
+  const launchable = Boolean(nextRegion.hasAuthoredContent && firstLesson && getLesson(firstLesson.id))
+
+  return {
+    type: 'next-region',
+    pathId: after.pathId,
+    pathTitle: after.title,
+    completedRegion,
+    nextRegion,
+    firstLesson: launchable ? firstLesson : null,
+    launchable,
   }
 }

@@ -1,4 +1,5 @@
 import { lessonsById } from '../components/lesson/lessonContent.js'
+import { startingPointOptions } from './onboarding.js'
 
 const upcomingRegion = (id, level, title, summary, lessonTitle, image) => ({
   id,
@@ -589,8 +590,52 @@ const pathDescriptions = {
   'learn-docker': 'Package and run projects consistently, so your development environment works wherever it needs to.',
 }
 
+// Onboarding already promises a skill ladder per role — reusing it here
+// (rather than authoring separate "what you'll learn" copy) means the explore
+// preview and the onboarding recommendation can never say different things.
+// A handful of ids don't share their role's exact name (the onboarding role
+// graph is many-roles-to-one-path in places) or belong to a stack-specific
+// role with no bare ladder, so those get an explicit or a default pick; skill
+// paths (learn-*) have no ladder at all — their one-line description already
+// says everything there is to say about them.
+const pathLadderKeys = {
+  'machine-learning': 'ml_engineer',
+  'data-scientist': 'data_scientist',
+  'backend-developer': 'backend_developer_python',
+  'ai-engineer': 'ai_app_developer',
+  'frontend-developer': 'frontend_developer_foundations',
+  'fullstack-developer': 'fullstack_developer',
+  'ui-engineer': 'ui_ux_developer',
+  'ios-developer': 'ios_developer',
+  'android-developer': 'android_developer',
+  'cross-platform-developer': 'cross_platform_developer',
+  'database-developer': 'database_developer',
+  'api-systems-engineer': 'api_systems_engineer',
+  'data-analyst': 'data_analyst',
+  'data-engineer': 'data_engineer',
+  'business-intelligence': 'business_intelligence',
+  'ai-application-developer': 'ai_app_developer',
+  'automation-developer': 'automation_developer',
+  'product-manager': 'product_manager',
+  'business-analyst': 'business_analyst',
+  'technical-project-coordinator': 'technical_project_coordinator',
+  'digital-marketing': 'digital_marketer',
+  'social-media-manager': 'social_media_manager',
+  'video-editor': 'video_editor',
+  'content-creator': 'content_creator',
+  'ui-ux-designer': 'ui_ux_designer',
+  'product-designer': 'product_designer',
+  'design-systems-specialist': 'design_systems_specialist',
+  'graphic-designer': 'graphic_designer',
+  'devops-engineer': 'devops_engineer',
+  'cloud-engineer': 'cloud_engineer',
+  'cybersecurity-specialist': 'cybersecurity_specialist',
+}
+
 explorePaths.forEach((path) => {
   path.tools = pathTools[path.id]
   path.description = pathDescriptions[path.id]
   path.recommended = path.id === 'ai-engineer'
+  const ladder = startingPointOptions[pathLadderKeys[path.id]]
+  path.learningSteps = ladder ? ladder.filter((step) => step.value !== 'not_sure').map((step) => step.label) : null
 })

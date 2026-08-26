@@ -69,8 +69,19 @@ test('expands a multi-question quiz into one step per question', () => {
     'concept-1-check-c1-q2',
     'concept-1-check-c1-q3',
   ])
-  // article + 3 questions + complete
-  assert.equal(flow.length, 5)
+  // article + skill-check screen + 3 questions + complete — 3 questions meets
+  // SKILL_CHECK_SCREEN_THRESHOLD, so the run earns its own screen before the
+  // first question rather than appearing as a bare question.
+  assert.equal(flow.length, 6)
+  assert.equal(flow[1].kind, 'skill-check')
+})
+
+test('a quiz below the skill-check threshold gets no dedicated screen', () => {
+  const flow = buildLessonFlow(makeLesson(1, 2))
+
+  assert.equal(flow.filter((step) => step.kind === 'skill-check').length, 0)
+  // article + 2 questions + complete
+  assert.equal(flow.length, 4)
 })
 
 test('carries the question payload and its owning quiz onto each step', () => {

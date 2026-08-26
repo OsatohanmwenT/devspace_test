@@ -11,6 +11,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: latest
         version: 6.0.5(vite@8.2.0(jiti@2.7.0))
+      canvas-confetti:
+        specifier: ^1.9.4
+        version: 1.9.4
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
@@ -244,6 +247,9 @@ packages:
         optional: true
       babel-plugin-react-compiler:
         optional: true
+
+  canvas-confetti@1.9.4:
+    resolution: {integrity: sha512-yxQbJkAVrFXWNbTUjPqjF7G+g6pDotOUHGbkZq2NELZUMDpiJ85rIEazVb8GTaAptNW2miJAXbs1BtioA251Pw==}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -681,6 +687,8 @@ snapshots:
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.2.0(jiti@2.7.0)
+
+  canvas-confetti@1.9.4: {}
 
   detect-libc@2.1.2: {}
 

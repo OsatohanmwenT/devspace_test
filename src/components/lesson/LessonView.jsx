@@ -8,7 +8,7 @@ import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
-import { GemIcon } from '../ui/icons'
+import { ChecklistIcon, GemIcon } from '../ui/icons'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
@@ -84,7 +84,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
 
   const currentStep = lessonFlow[session.stepIndex]
-  const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete'
+  const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete' || currentStep?.kind === 'skill-check'
   const isQuestion = currentStep?.type === 'question'
 
   const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
@@ -246,7 +246,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       ? { label: `Continue to ${currentStep.nextConcept.title}`, onClick: goNext }
       : currentStep.kind === 'complete'
         ? { label: 'Return to path', onClick: finishLesson }
-        : currentStep.type === 'article'
+        : currentStep.kind === 'skill-check'
+          ? { label: 'Start skill check', onClick: goNext }
+          : currentStep.type === 'article'
           ? {
               label: audioReadyForNext
                 ? (lessonFlow[session.stepIndex + 1]?.type === 'question' ? 'Start quick check' : 'Continue lesson')
@@ -407,6 +409,14 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           </div>
         )}
         {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} stats={recapStats(currentStep.concept)} />}
+        {currentStep?.kind === 'skill-check' && (
+          <ConceptTransition
+            eyebrow="Skill check"
+            title={currentStep.quizTitle ?? 'Let’s check what you’ve learned'}
+            body={currentStep.quizIntro ?? 'A few quick questions to make sure it’s sticking.'}
+            badge={<ChecklistIcon className="size-5" />}
+          />
+        )}
         {currentStep?.kind === 'complete' && (
           <ConceptTransition
             {...currentStep.completion}

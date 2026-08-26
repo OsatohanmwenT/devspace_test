@@ -1,3 +1,6 @@
+import { useEffect } from 'react'
+import { ActionButton } from '../ui/ActionButton'
+
 export const FAMILY_ACCENTS = {
   ml: { accent: '#4169e1', soft: 'rgba(65,105,225,0.16)' },
   data: { accent: '#04adc0', soft: 'rgba(4,173,192,0.16)' },
@@ -30,38 +33,90 @@ export function ExplorePathCard({ path, onSelect }) {
   )
 }
 
-export function PathPreview({ path, onBack, onSwitchPrimaryPath, isCurrentPath }) {
+// A dialog rather than a page: it's a confirm-before-committing step, not a
+// destination, so it opens over the explore grid instead of costing a
+// navigation round-trip and the grid's scroll position. The point of the
+// dialog is to answer "what am I getting into" — a title and one line never
+// did that, so the meat of it is the actual skill ladder onboarding would
+// walk this same path through (see `learningSteps` in data/paths.js).
+export function PathPreviewModal({ path, onClose, onSwitchPrimaryPath, isCurrentPath }) {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <section className="grid gap-5" aria-labelledby="path-preview-title">
-      <button className="min-h-11 justify-self-start py-2 text-[13px] text-[#9a9a9d] hover:text-[#f4f4f2] focus-visible:rounded focus-visible:outline-3 focus-visible:outline-[#4169e1] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-neutral-700" onClick={onBack}>← Back to paths</button>
-      <article className="grid overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
-        <div className="grid min-h-56 place-items-center bg-[#303030] [[data-theme=light]_&]:bg-[#f5f5f4]"><img className="h-44 w-[min(78%,260px)] object-contain" src={path.image} alt="" /></div>
-        <div className="grid content-center gap-3 p-[clamp(28px,5vw,60px)]">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-bold tracking-[.08em] text-[#4169e1] uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
-            {isCurrentPath && <span className="rounded-full bg-[#168a46]/20 px-2.5 py-0.5 text-[11px] font-semibold text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">Active mission</span>}
+    <div className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-black/65 p-5 backdrop-blur-sm" role="presentation" onMouseDown={onClose}>
+      <article
+        className="relative grid w-full max-w-[600px] max-h-[88vh] overflow-y-auto rounded-3xl border border-[#404040] bg-[#1f1f1f] shadow-[0_24px_60px_rgba(0,0,0,.45)] [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="path-preview-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 z-[1] grid size-9 place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-2 [[data-theme=light]_&]:bg-white/80 [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white"
+        >
+          ×
+        </button>
+        <div className="grid min-h-36 place-items-center bg-[#303030] [[data-theme=light]_&]:bg-[#f5f5f4]">
+          <img className="h-24 w-[min(50%,150px)] object-contain" src={path.image} alt="" />
+        </div>
+        <div className="grid gap-4 p-[clamp(22px,4vw,36px)]">
+          <div className="grid gap-1.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] font-bold tracking-[.08em] text-[#4169e1] uppercase">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
+              {isCurrentPath && <span className="rounded-full bg-[#168a46]/20 px-2.5 py-0.5 text-[11px] font-semibold text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">Active mission</span>}
+            </div>
+            <h2 id="path-preview-title" className="text-[clamp(24px,3.2vw,32px)] leading-[1.15] font-semibold text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">{path.title}</h2>
+            <p className="text-[15px] leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.reason}</p>
           </div>
-          <h1 id="path-preview-title" className="text-[clamp(32px,4vw,48px)] leading-[1.05] font-semibold text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800">{path.title}</h1>
-          <p className="max-w-[48ch] text-base leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{path.reason}</p>
-          <p className="text-sm text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{path.meta} · {path.tools?.join(' · ')}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-3 pt-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb]">
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[#363636] px-2.5 py-1 text-[11px] font-medium text-[#d4d4d4] [[data-theme=light]_&]:bg-[#f1efe9] [[data-theme=light]_&]:text-[#525252]">{path.meta}</span>
+            {path.tools?.map((tool) => (
+              <span key={tool} className="rounded-full bg-[#363636] px-2.5 py-1 text-[11px] text-[#d4d4d4] [[data-theme=light]_&]:bg-[#f1efe9] [[data-theme=light]_&]:text-[#525252]">{tool}</span>
+            ))}
+          </div>
+
+          {path.learningSteps && (
+            <div className="grid gap-2.5 border-t border-[#404040] pt-4 [[data-theme=light]_&]:border-[#eeeeeb]">
+              <h3 className="text-[11px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">What you'll learn</h3>
+              <ol className="m-0 grid list-none gap-2 p-0">
+                {path.learningSteps.map((step, index) => (
+                  <li key={step} className="flex items-center gap-2.5 text-[14px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+                    <span className="grid size-6 flex-none place-items-center rounded-full border border-[#404040] bg-[#262626] text-[11px] font-bold text-[#9a9a9d] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:text-[#686968]">{index + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#404040] pt-4 [[data-theme=light]_&]:border-[#eeeeeb]">
             {!isCurrentPath && onSwitchPrimaryPath ? (
-              <button
-                type="button"
-                className="min-h-11 rounded-xl border border-[#3b82f6] bg-[#2563eb] px-6 text-sm font-semibold text-white shadow-[0_3px_0_#1d4ed8] hover:bg-[#3b82f6] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd]"
+              <ActionButton
+                className="min-h-11 px-6 text-sm font-semibold"
                 onClick={() => {
                   onSwitchPrimaryPath(path.id)
-                  onBack()
+                  onClose()
                 }}
+                autoFocus
               >
                 Set as active path →
-              </button>
+              </ActionButton>
             ) : (
               <span className="text-sm font-medium text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">✓ This is your active mission path</span>
             )}
           </div>
         </div>
       </article>
-    </section>
+    </div>
   )
 }

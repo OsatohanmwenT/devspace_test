@@ -4,6 +4,7 @@ import { can, CAPABILITIES } from '../../lib/entitlements';
 import { getAllTimeStandings, getBoardWindow, getStandings, getZoneSummary, USER_ID } from '../../lib/leagueSim';
 import { getWeekIndex, now } from '../../lib/week';
 import { InfoTooltip } from '../ui/InfoTooltip';
+import { LeaderboardIntroduction } from './LeaderboardIntroduction';
 import { LeaderboardRow } from './LeaderboardRow';
 import { LeaderboardTabs } from './LeaderboardTabs';
 import { LeagueLadder } from './LeagueLadder';
@@ -83,6 +84,8 @@ export default function LeaderboardView({
   onDismissResult,
   onStartPractice,
   onOpenPlans,
+  hasSeenIntroduction = true,
+  onDismissIntroduction,
 }) {
   const [tab, setTab] = useState(TABS[0])
   const [expanded, setExpanded] = useState(false)
@@ -135,6 +138,10 @@ export default function LeaderboardView({
     if (!hasJoined || tab !== 'This week') return []
     return getBoardWindow(weekly, summary, { expanded: expanded && hasFullCohort })
   })()
+
+  // Gated after the hooks above so the board's timer/derivations keep their
+  // stable hook order regardless of whether the intro is showing.
+  if (!hasSeenIntroduction) return <LeaderboardIntroduction onComplete={onDismissIntroduction} />
 
   return (
     <section className="grid gap-8" aria-label="Leaderboard">

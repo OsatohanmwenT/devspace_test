@@ -1,3 +1,5 @@
+import { motion } from 'motion/react'
+
 export function BoltIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -112,6 +114,8 @@ export function HeadphonesIcon({ className }) {
   )
 }
 
+const PEDESTAL_TRANSITION = { duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }
+
 export function LessonPedestalIcon({ state, checkpoint = false, selected = false, className = '' }) {
   const palette = {
     available: { base: '#35363b', rim: '#62636a', ring: '#c9c9cd', center: selected ? '#9db5d7' : '#ececef', symbol: selected ? '#fff' : '#9db5d7' },
@@ -128,10 +132,25 @@ export function LessonPedestalIcon({ state, checkpoint = false, selected = false
       aria-hidden="true"
     >
       <ellipse cx="64" cy="116" rx="45" ry="12" fill="#09090b" opacity=".72" />
-      <path fill={palette.base} d="M22 90c0-13 19-24 42-24s42 11 42 24v21c0 13-19 23-42 23s-42-10-42-23V90Z" />
-      <ellipse fill={palette.rim} cx="64" cy="90" rx="42" ry="24" />
-      <ellipse fill={palette.ring} cx="64" cy="89" rx="31" ry="17" />
-      <ellipse fill={palette.center} cx="64" cy="88" rx="21" ry="11" />
+      {/* Colors are animated rather than swapped — a lesson moving from
+          available → current → completed morphs through its palette instead
+          of snapping, so the tile it just left and the one it just entered
+          both read as one continuous change. */}
+      <motion.path animate={{ fill: palette.base }} transition={PEDESTAL_TRANSITION} d="M22 90c0-13 19-24 42-24s42 11 42 24v21c0 13-19 23-42 23s-42-10-42-23V90Z" />
+      <motion.ellipse animate={{ fill: palette.rim }} transition={PEDESTAL_TRANSITION} cx="64" cy="90" rx="42" ry="24" />
+      <motion.ellipse animate={{ fill: palette.ring }} transition={PEDESTAL_TRANSITION} cx="64" cy="89" rx="31" ry="17" />
+      <motion.ellipse animate={{ fill: palette.center }} transition={PEDESTAL_TRANSITION} cx="64" cy="88" rx="21" ry="11" />
+
+      {/* A gentle, quiet pulse for "available" — present and tappable, but
+          nowhere near as loud as the current tile's beacon (that one lives
+          around the whole icon, in LessonRow). */}
+      {state === 'available' && (
+        <motion.ellipse
+          cx="64" cy="89" rx="31" ry="17" fill="none" stroke={palette.ring} strokeWidth="1.5"
+          animate={{ opacity: [0.25, 0.6, 0.25] }}
+          transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
 
       {checkpoint && (
         <g fill={palette.symbol}>
@@ -140,8 +159,16 @@ export function LessonPedestalIcon({ state, checkpoint = false, selected = false
         </g>
       )}
 
+      {/* Only mounts the instant a lesson becomes completed — that first
+          mount is exactly when initial→animate should play, so the check
+          draws in and settles rather than just appearing. */}
       {state === 'completed' && (
-        <path d="m54 87 7 7 15-16" stroke={palette.symbol} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <motion.g style={{ transformOrigin: '64px 88px' }} initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 14 }}>
+          <motion.path
+            d="m54 87 7 7 15-16" stroke={palette.symbol} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+          />
+        </motion.g>
       )}
       {state === 'locked' && (
         <g fill={palette.symbol}>
@@ -149,6 +176,11 @@ export function LessonPedestalIcon({ state, checkpoint = false, selected = false
           <path d="M59 82v-4a5 5 0 0 1 10 0v4" stroke={palette.symbol} strokeWidth="4" />
         </g>
       )}
+      {/* Plain, not animated — Framer Motion's `r` (a length-only SVG
+          attribute) resolves to the literal string "undefined" on first
+          paint when mixed with `animate`, even with a static fallback prop,
+          and the browser throws on that specific attribute type. Not worth
+          fighting for one small interior dot. */}
       {(state === 'current' || state === 'available') && (
         <circle cx="64" cy="88" r={state === 'current' ? 6 : 4} fill={palette.symbol} />
       )}

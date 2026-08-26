@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getPath, pathShelves } from '../data/paths.js'
 import {
+  deriveLessonCompletionTransition,
   derivePathProgress,
   deriveRegionProgress,
   flattenLessons,
@@ -160,6 +161,60 @@ test('every authored path derives without blowing up', () => {
 test('an unauthored path is flagged as such', () => {
   assert.equal(derivePathProgress(ml, {}).authored, true)
   assert.equal(derivePathProgress({ ...ml, authored: false }, {}).authored, false)
+})
+
+test('completing a lesson that does not finish its region has no transition', () => {
+  const transition = deriveLessonCompletionTransition(
+    ml,
+    {},
+    completedMap('writing-programs'),
+  )
+  assert.equal(transition, null)
+})
+
+test('finishing a region with a launchable next region returns a next-region transition', () => {
+  const transition = deriveLessonCompletionTransition(
+    ml,
+    completedMap('writing-programs', 'using-variables', 'input-output'),
+    completedMap('writing-programs', 'using-variables', 'input-output', 'program-flow'),
+  )
+
+  assert.equal(transition.type, 'next-region')
+  assert.equal(transition.completedRegion.id, 'python-foundations')
+  assert.equal(transition.nextRegion.id, 'data-math-foundations')
+  assert.equal(transition.launchable, true)
+  assert.equal(transition.firstLesson.id, 'data-types')
+})
+
+test('finishing a region before a preview-only region returns a non-launchable transition', () => {
+  const analyst = getPath('data-analyst')
+  const transition = deriveLessonCompletionTransition(
+    analyst,
+    {},
+    completedMap('data-analysis-basics'),
+  )
+
+  assert.equal(transition.type, 'next-region')
+  assert.equal(transition.completedRegion.id, 'data-analysis-foundations')
+  assert.equal(transition.nextRegion.id, 'data-analyst-spreadsheets')
+  assert.equal(transition.launchable, false)
+  assert.equal(transition.firstLesson, null)
+})
+
+test('finishing the final region returns a roadmap-complete transition', () => {
+  const ids = lessonIds(ml)
+  const allButLast = ids.slice(0, -1)
+  const transition = deriveLessonCompletionTransition(
+    ml,
+    completedMap(...allButLast),
+    completedMap(...ids),
+  )
+
+  assert.equal(transition.type, 'roadmap-complete')
+  assert.equal(transition.completedRegion.id, 'ml-career-capstone')
+  assert.equal(transition.regionsCompleted, 6)
+  assert.equal(transition.regionsTotal, 6)
+  assert.equal(transition.lessonsCompleted, transition.lessonsTotal)
 })
 
 test('an empty path degrades instead of throwing', () => {

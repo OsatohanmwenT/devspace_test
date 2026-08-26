@@ -1,27 +1,30 @@
+import { MotionConfig } from 'motion/react';
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
 import { ShortSessionRow } from './components/home/ShortSessionRow';
 import LeaderboardView from './components/leaderboard';
+import { LeagueQualifiedCelebration } from './components/leaderboard/LeagueQualifiedCelebration';
 import { getLesson } from './components/lesson/lessonContent';
 import { LessonLoading } from './components/lesson/LessonLoading';
 import LessonView from './components/lesson/LessonView';
 import OnboardingView from './components/onboarding';
 import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome';
 import PathsView from './components/paths';
+import { RoadmapTransition } from './components/paths/RoadmapTransition';
 import PlansView from './components/plans';
 import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
 import ProfileView from './components/profile';
 import SettingsView from './components/settings';
 import { ActionButton } from './components/ui/ActionButton';
-import { Badge } from './components/ui/Badge';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
-import { BoltIcon, SirenIcon } from './components/ui/icons';
-import { InfoTooltip } from './components/ui/InfoTooltip';
+import { Badge } from './components/ui/Badge';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyMood } from './components/ui/DevyMood';
+import { BoltIcon, SirenIcon } from './components/ui/icons';
+import { InfoTooltip } from './components/ui/InfoTooltip';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
@@ -29,7 +32,7 @@ import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPract
 import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
-import { derivePathProgress } from './lib/pathProgress';
+import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
 import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
 import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week';
 import './styles.css';
@@ -59,6 +62,8 @@ function App() {
   const [publicProfileView, setPublicProfileView] = useState(false)
   const [pathsInitialView, setPathsInitialView] = useState(null)
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
+  const [leagueCelebration, setLeagueCelebration] = useState(null)
+  const [roadmapTransition, setRoadmapTransition] = useState(null)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -70,6 +75,9 @@ function App() {
   const xpButtonRef = useRef(null)
   const popoverRef = useRef(null)
   const lessonLaunchTimerRef = useRef(null)
+  // A league celebration that qualifies while a roadmap transition is on
+  // screen waits here rather than firing underneath it.
+  const pendingLeagueCelebrationRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -202,10 +210,81 @@ function App() {
         ...applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today),
         completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
       }
+
+      // A region's `state` only flips to 'completed' once every lesson in it
+      // has — comparing before/after catches exactly the completion that
+      // crosses that line, region-by-region rather than lesson-by-lesson.
+      // Only checked on a genuine first completion, so replaying an already
+      // finished lesson can't re-trigger the transition screen.
+      const transition = isFirstCompletion
+        ? deriveLessonCompletionTransition(currentPath, current.completedLessons, next.completedLessons)
+        : null
+      if (transition) setRoadmapTransition(transition)
+
+      // Any XP puts a learner on the board (LeaderboardView gates on
+      // `weeklyXp > 0`), and starting a mission already awards some — so the
+      // crossing itself usually happens before the lesson is done. Rather than
+      // fire mid-lesson, the celebration waits for the end of the lesson: the
+      // first completion that finds the learner already on the board, once
+      // ever. A roadmap transition takes the screen first when both happen on
+      // the same completion — the league celebration queues and fires only
+      // once that transition closes, rather than stacking on top of it.
+      const isOnBoard = next.weeklyXp > 0
+      const alreadyCelebrated = Boolean(current.seenPageIntroductions?.['league-qualified'])
+      if (isOnBoard && !alreadyCelebrated) {
+        const celebration = { leagueIndex: next.leagueIndex, weeklyXp: next.weeklyXp }
+        if (transition) pendingLeagueCelebrationRef.current = celebration
+        else setLeagueCelebration(celebration)
+        const seen = markPageIntroductionSeen(next, 'league-qualified')
+        saveProgress(seen)
+        return seen
+      }
       saveProgress(next)
       return next
     })
     showNotice(`Lesson complete · +${LESSON_XP} XP`)
+  }
+
+  // The celebration sits on top of the finished lesson, so continuing has to
+  // close the lesson too — otherwise dismissing it drops back into the lesson
+  // the learner had already completed.
+  const dismissLeagueCelebration = () => {
+    setLeagueCelebration(null)
+    setOpenLesson(null)
+    setActive('Leaderboard')
+  }
+
+  // Closes the lesson underneath the transition and hands off to any league
+  // celebration that queued while it was on screen, so a qualifying moment
+  // is never silently dropped — it just waits its turn.
+  const dismissRoadmapTransition = () => {
+    setRoadmapTransition(null)
+    setOpenLesson(null)
+    if (pendingLeagueCelebrationRef.current) {
+      setLeagueCelebration(pendingLeagueCelebrationRef.current)
+      pendingLeagueCelebrationRef.current = null
+    }
+  }
+
+  const startNextRegionLesson = (lessonId) => {
+    if (loadingLesson || lessonLaunchTimerRef.current) return
+    dismissRoadmapTransition()
+    launchLesson(lessonId)
+  }
+
+  // Lands back on the path detail screen (not wherever the lesson happened to
+  // be launched from) so the newly-unlocked region — or, on a finished path,
+  // the roadmap being reviewed — is what the learner sees next.
+  const viewRoadmapFromTransition = () => {
+    dismissRoadmapTransition()
+    setPathsInitialView('detail')
+    setActive('Paths')
+  }
+
+  const exploreRoadmapsFromTransition = () => {
+    dismissRoadmapTransition()
+    setPathsInitialView(null)
+    setActive('Paths')
   }
 
   const dismissLeagueResult = () => {
@@ -334,6 +413,14 @@ function App() {
   // Onboarding picks the path; before that, the default shelf is the spine.
   // A learner-generated custom path takes priority when it's the primary one.
   const currentPath = customPaths?.[profile?.pathId] ?? getPath(profile?.pathId)
+
+  // Gated by an explicit env flag (see .env.development) rather than the
+  // implicit import.meta.env.DEV, so it can be turned off without a code
+  // change. Stays a compile-time constant Vite dead-code-eliminates wherever
+  // the flag isn't 'true' — a production `vite build` never reads
+  // .env.development either way, so this is out of shipped builds regardless.
+  const testHooksEnabled = import.meta.env.VITE_ENABLE_TEST_HOOKS === 'true'
+
   const currentLeague = getLeague(leagueIndex)
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
@@ -403,6 +490,50 @@ function App() {
   const homeHint = nextLesson
     ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
     : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
+
+  // A direct preview instead of driving real completion state to reach these
+  // screens — that approach kept breaking on real data's own edge cases (an
+  // authored path's first region seed-completed regardless of what's in
+  // completedLessons, a "completed last lesson" replay silently no-opping).
+  // This sidesteps all of that: it renders the real RoadmapTransition with a
+  // hand-built transition object, nothing else in the app touched. Visit
+  // ?preview=region-complete or ?preview=roadmap-complete.
+  if (testHooksEnabled) {
+    const previewParam = new URLSearchParams(window.location.search).get('preview')
+    if (previewParam === 'region-complete' || previewParam === 'roadmap-complete') {
+      const previewPath = getPath('machine-learning')
+      const previewRegions = derivePathProgress(previewPath, {}).regions
+      const previewTransition = previewParam === 'roadmap-complete'
+        ? {
+            type: 'roadmap-complete',
+            pathId: previewPath.id,
+            pathTitle: previewPath.title,
+            completedRegion: previewRegions.at(-1),
+            regionsCompleted: previewRegions.length,
+            regionsTotal: previewRegions.length,
+            lessonsCompleted: previewRegions.reduce((sum, region) => sum + region.lessonsTotal, 0),
+            lessonsTotal: previewRegions.reduce((sum, region) => sum + region.lessonsTotal, 0),
+          }
+        : {
+            type: 'next-region',
+            pathId: previewPath.id,
+            pathTitle: previewPath.title,
+            completedRegion: previewRegions[1],
+            nextRegion: previewRegions[2],
+            firstLesson: previewRegions[2].lessons[0],
+            launchable: true,
+          }
+      return (
+        <RoadmapTransition
+          transition={previewTransition}
+          onStartLesson={() => {}}
+          onViewRoadmap={() => { window.location.search = '' }}
+          onExploreRoadmaps={() => { window.location.search = '' }}
+          onReviewRoadmap={() => { window.location.search = '' }}
+        />
+      )
+    }
+  }
 
   if (!profile) return <OnboardingView onComplete={completeOnboarding} />
   if (showFirstLessonWelcome) return <FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />
@@ -753,13 +884,36 @@ function App() {
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
       {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} />}
+      {/* Rendered after LessonView so it lands on top of the lesson the learner
+          just finished, rather than behind it. */}
+      {leagueCelebration && (
+        <LeagueQualifiedCelebration
+          leagueIndex={leagueCelebration.leagueIndex}
+          weeklyXp={leagueCelebration.weeklyXp}
+          onClose={dismissLeagueCelebration}
+        />
+      )}
+      {roadmapTransition && (
+        <RoadmapTransition
+          transition={roadmapTransition}
+          onStartLesson={startNextRegionLesson}
+          onViewRoadmap={viewRoadmapFromTransition}
+          onExploreRoadmaps={exploreRoadmapsFromTransition}
+          onReviewRoadmap={viewRoadmapFromTransition}
+        />
+      )}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
     </div>
   )
 }
 
+// Every CSS animation in styles.css sits behind a prefers-reduced-motion
+// guard; motion's JS-driven ones need telling separately, so the setting is
+// honoured the same way whichever way an animation happens to be built.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <MotionConfig reducedMotion="user">
+      <App />
+    </MotionConfig>
   </StrictMode>,
 )

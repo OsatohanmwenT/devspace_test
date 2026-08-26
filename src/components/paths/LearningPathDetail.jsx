@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getRegionTopics } from '../../data/learningResources';
+import { isFrameworkCheckpointReady } from '../../lib/onboarding';
+import { getCheatsheetPersonalization } from '../../lib/personalization';
 import { getLesson } from '../lesson/lessonContent';
 import { LessonPodcastModal } from '../lesson/LessonPodcastModal';
-import { getCheatsheetPersonalization } from '../../lib/personalization';
-import { isFrameworkCheckpointReady } from '../../lib/onboarding';
 import { ActionButton } from '../ui/ActionButton';
 import { BookOpenIcon, ChecklistIcon, HeadphonesIcon } from '../ui/icons';
 import { CheatsheetDrawer } from './CheatsheetDrawer';
@@ -160,6 +160,17 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                 <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
                 {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
               </div>
+              <div className="flex items-center gap-3.5 max-[680px]:gap-2.5">
+                {canOpenLesson && (
+                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap" onClick={() => {
+                  setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
+                    ? startedIds
+                    : [...startedIds, selectedLesson.id])
+                  onOpenLesson(selectedLesson.id)
+                }}>
+                  {selectedLessonStarted ? 'Continue' : 'Start lesson'}
+                </ActionButton>
+              )}
               {hasPodcastContent && (
                 <button
                   type="button"
@@ -170,16 +181,8 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                   <HeadphonesIcon className="size-5" />
                 </button>
               )}
-              {canOpenLesson && (
-                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap" onClick={() => {
-                  setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
-                    ? startedIds
-                    : [...startedIds, selectedLesson.id])
-                  onOpenLesson(selectedLesson.id)
-                }}>
-                  {selectedLessonStarted ? 'Continue' : 'Start lesson'}
-                </ActionButton>
-              )}
+              
+              </div>
               {!canOpenLesson && selectedLesson.state === 'available' && (
                 <ActionButton variant="neutral" className="min-h-11 w-fit! px-5 whitespace-nowrap" onClick={() => setShowLessonPreview(true)}>Lesson details</ActionButton>
               )}

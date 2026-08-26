@@ -5,7 +5,7 @@ import { DevyMood } from '../ui/DevyMood'
 // Shared by the mid-lesson concept hand-off and the end-of-lesson screen. They
 // look alike but are not the same event, so the mood is the caller's call:
 // finishing a lesson is worth a celebration, moving between concepts is not.
-export function ConceptTransition({ eyebrow, title, body, mood = 'neutral' }) {
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badge }) {
   const rootRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -44,8 +44,17 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral' }) {
               and opacity properties (CSS animations win that fight over an
               inline style, so GSAP's tween would visibly never move). The
               celebrating "cheer" loop picks up once the entrance settles. */}
-          <div data-transition-mark className="mb-5 size-[140px] max-[720px]:mb-3 max-[720px]:size-[104px]">
+          <div data-transition-mark className="relative mb-5 size-[140px] max-[720px]:mb-3 max-[720px]:size-[104px]">
             <DevyMood mood={mood} animate={false} className="h-full w-full" />
+            {/* A small accent rather than a second mascot — this keeps Devy as
+                the one consistent face across every transition, while still
+                marking a skill check as a different kind of beat than a
+                concept-complete or lesson-complete screen. */}
+            {badge && (
+              <span className="absolute -right-1 -bottom-1 grid size-11 place-items-center rounded-2xl border-2 border-[#1f1f1f] bg-[#2f6fed] text-white shadow-[0_6px_14px_rgba(0,0,0,.28)] [[data-theme=light]_&]:border-white max-[720px]:size-9">
+                {badge}
+              </span>
+            )}
           </div>
           <span data-transition-eyebrow className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">
             {eyebrow}

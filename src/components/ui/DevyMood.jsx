@@ -8,6 +8,7 @@ const SOURCES = {
   neutral: '/assets/devy.svg',
   celebrating: '/assets/devy-celebration.svg',
   annoyed: '/assets/devy-annoyed.svg',
+  walking: '/assets/Devy_walk.svg',
 }
 
 // Each mood carries its own motion so a celebration reads as a celebration even
@@ -17,6 +18,7 @@ const MOTION = {
   neutral: '',
   celebrating: 'devy-celebrate',
   annoyed: 'devy-annoyed',
+  walking: 'devy-walk',
 }
 
 export function DevyMood({ mood = 'neutral', className = '', animate = true, alt = '', ...rest }) {
