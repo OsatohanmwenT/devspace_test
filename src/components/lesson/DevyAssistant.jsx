@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RichText } from './RichText'
 import { getFallbackResponse, getGreeting, getPrompts, getResponse, matchPrompt } from '../../lib/devy'
+import { playSound } from '../../lib/sound'
 
 function Bubble({ children }) {
   return (
@@ -46,6 +47,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
   const ask = (promptId, label) => {
     const response = getResponse(promptId, step, { checked })
     if (!response) return
+    if (promptId === 'hint' || promptId.startsWith('practice-hint-')) playSound('hint_open')
     addResponse({ id: promptId, label, response })
   }
 

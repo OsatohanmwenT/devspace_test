@@ -73,6 +73,13 @@ export function getPrompts(step, checked = false) {
     return checked ? [prompt('why'), prompt('explain')] : [prompt('hint'), prompt('explain')]
   }
 
+  if (step.type === 'practice') {
+    if (checked) return []
+    const hints = step.content?.hints ?? []
+    const labels = ['Give me a hint', 'Another hint', 'One more hint']
+    return hints.map((_, index) => ({ id: `practice-hint-${index + 1}`, label: labels[index] ?? `Hint ${index + 1}` }))
+  }
+
   return []
 }
 
@@ -134,6 +141,12 @@ export function getFallbackResponse(availablePrompts) {
 
 export function getResponse(promptId, step, { checked = false } = {}) {
   if (!step) return null
+
+  if (promptId.startsWith('practice-hint-')) {
+    const index = Number(promptId.slice('practice-hint-'.length)) - 1
+    const hint = step.content?.hints?.[index]
+    return hint ? { body: hint } : null
+  }
 
   switch (promptId) {
     case 'summarise': {

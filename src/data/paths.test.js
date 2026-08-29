@@ -2,20 +2,22 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { explorePaths, getPath } from './paths.js'
 
-for (const [pathId, lessonId] of [
-  ['technical-project-coordinator', 'technical-teams-basics'],
-  ['digital-marketing', 'digital-marketing-basics'],
-  ['data-analyst', 'data-analysis-basics'],
-  ['video-editor', 'video-editing-basics'],
-  ['content-creator', 'content-creation-basics'],
-  ['social-media-manager', 'social-media-basics'],
-  ['graphic-designer', 'graphic-design-basics'],
+for (const [pathId, lessonId, regionCount] of [
+  ['technical-project-coordinator', 'technical-teams-basics', 6],
+  ['digital-marketing', 'digital-marketing-basics', 6],
+  // Two real regions now (Datasets and Variable Types, then Quality and the
+  // Analysis Workflow) ahead of the five still-placeholder regions.
+  ['data-analyst', 'data-analysis-basics', 7],
+  ['video-editor', 'video-editing-basics', 6],
+  ['content-creator', 'content-creation-basics', 6],
+  ['social-media-manager', 'social-media-basics', 6],
+  ['graphic-designer', 'graphic-design-basics', 6],
 ]) {
-  test(`${pathId} resolves to its own six region curriculum`, () => {
+  test(`${pathId} resolves to its own ${regionCount} region curriculum`, () => {
     const path = getPath(pathId)
 
     assert.equal(path.id, pathId)
-    assert.equal(path.cards.length, 6)
+    assert.equal(path.cards.length, regionCount)
     assert.equal(path.cards[0].state, 'current')
     assert.equal(path.cards[0].lessons[0].id, lessonId)
     assert.ok(path.cards.slice(1).every((region) => region.state === 'locked'))

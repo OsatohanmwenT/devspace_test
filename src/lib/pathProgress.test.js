@@ -125,14 +125,15 @@ test('the next checkpoint is found with its distance from the current lesson', (
 test('checkpoint totals ignore placeholder regions', () => {
   const analyst = derivePathProgress(getPath('data-analyst'), {})
 
-  // Five of six regions are `upcomingRegion` placeholders whose single lesson
-  // is flagged as a checkpoint — counting those would claim five checkpoints
-  // for a path with one real lesson.
-  assert.equal(analyst.regionsTotal, 6)
+  // Two real regions (Datasets and Variable Types, then Quality and the
+  // Analysis Workflow) ahead of five `upcomingRegion` placeholders whose
+  // single lesson is flagged as a checkpoint — counting those would claim
+  // five checkpoints for a path with two real, non-checkpoint lessons.
+  assert.equal(analyst.regionsTotal, 7)
   assert.equal(analyst.checkpointsTotal, 0)
   assert.deepEqual(
     analyst.regions.map((region) => region.hasAuthoredContent),
-    [true, false, false, false, false, false],
+    [true, true, false, false, false, false, false],
   )
   assert.equal(analyst.currentLesson.id, 'data-analysis-basics')
 })
@@ -186,7 +187,7 @@ test('finishing a region with a launchable next region returns a next-region tra
   assert.equal(transition.firstLesson.id, 'data-types')
 })
 
-test('finishing a region before a preview-only region returns a non-launchable transition', () => {
+test('finishing Tile 1 returns a launchable transition into the real Tile 2 region', () => {
   const analyst = getPath('data-analyst')
   const transition = deriveLessonCompletionTransition(
     analyst,
@@ -196,6 +197,21 @@ test('finishing a region before a preview-only region returns a non-launchable t
 
   assert.equal(transition.type, 'next-region')
   assert.equal(transition.completedRegion.id, 'data-analysis-foundations')
+  assert.equal(transition.nextRegion.id, 'data-quality-workflow')
+  assert.equal(transition.launchable, true)
+  assert.equal(transition.firstLesson.id, 'data-quality-workflow')
+})
+
+test('finishing a region before a preview-only region returns a non-launchable transition', () => {
+  const analyst = getPath('data-analyst')
+  const transition = deriveLessonCompletionTransition(
+    analyst,
+    completedMap('data-analysis-basics'),
+    completedMap('data-analysis-basics', 'data-quality-workflow'),
+  )
+
+  assert.equal(transition.type, 'next-region')
+  assert.equal(transition.completedRegion.id, 'data-quality-workflow')
   assert.equal(transition.nextRegion.id, 'data-analyst-spreadsheets')
   assert.equal(transition.launchable, false)
   assert.equal(transition.firstLesson, null)

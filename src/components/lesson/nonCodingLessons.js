@@ -160,80 +160,257 @@ export const digitalMarketingLesson = {
   },
 }
 
+// Northstar Store — a small fictional online retailer — is the one dataset
+// this whole two-tile pilot returns to, so a learner builds one mental model
+// of the data instead of a new unrelated example every screen.
+const NORTHSTAR_COLUMNS = [
+  { key: 'order_id', label: 'order_id' },
+  { key: 'customer_segment', label: 'customer_segment' },
+  { key: 'city', label: 'city' },
+  { key: 'items', label: 'items' },
+  { key: 'order_value_ngn', label: 'order_value_ngn' },
+  { key: 'payment_method', label: 'payment_method' },
+  { key: 'delivery_minutes', label: 'delivery_minutes' },
+]
+
+const NORTHSTAR_ROWS = [
+  { order_id: 'NS1001', customer_segment: 'Student', city: 'Lagos', items: 2, order_value_ngn: '₦8,500', payment_method: 'Transfer', delivery_minutes: 35 },
+  { order_id: 'NS1002', customer_segment: 'Professional', city: 'Abuja', items: 1, order_value_ngn: '₦12,400', payment_method: 'Card', delivery_minutes: 48 },
+  { order_id: 'NS1003', customer_segment: 'Student', city: 'Ibadan', items: 3, order_value_ngn: '₦6,700', payment_method: 'Transfer', delivery_minutes: 41 },
+  { order_id: 'NS1004', customer_segment: 'Business', city: 'Lagos', items: 5, order_value_ngn: '₦24,600', payment_method: 'Card', delivery_minutes: 62 },
+  { order_id: 'NS1005', customer_segment: 'Professional', city: 'Abuja', items: 2, order_value_ngn: '₦15,800', payment_method: 'Transfer', delivery_minutes: 39 },
+  { order_id: 'NS1006', customer_segment: 'Student', city: 'Lagos', items: 1, order_value_ngn: '₦4,200', payment_method: 'Cash', delivery_minutes: 52 },
+]
+
+// Same order data, deliberately damaged: a missing city (r3), an impossible
+// item count that's also a duplicate row (r4/r5), and an inconsistently
+// cased payment method (r6). `rowId` is the unique table key — `order_id`
+// stays a plain column so the duplicate can legitimately repeat its value.
+const NORTHSTAR_MESSY_COLUMNS = NORTHSTAR_COLUMNS
+const NORTHSTAR_MESSY_ROWS = [
+  { rowId: 'r1', order_id: 'NS1001', customer_segment: 'Student', city: 'Lagos', items: 2, order_value_ngn: '₦8,500', payment_method: 'Transfer', delivery_minutes: 35 },
+  { rowId: 'r2', order_id: 'NS1002', customer_segment: 'Professional', city: 'Abuja', items: 1, order_value_ngn: '₦12,400', payment_method: 'Card', delivery_minutes: 48 },
+  { rowId: 'r3', order_id: 'NS1003', customer_segment: 'Student', city: '—', items: 3, order_value_ngn: '₦6,700', payment_method: 'Transfer', delivery_minutes: 41 },
+  { rowId: 'r4', order_id: 'NS1004', customer_segment: 'Business', city: 'Lagos', items: -2, order_value_ngn: '₦24,600', payment_method: 'Card', delivery_minutes: 62 },
+  { rowId: 'r5', order_id: 'NS1004', customer_segment: 'Business', city: 'Lagos', items: -2, order_value_ngn: '₦24,600', payment_method: 'Card', delivery_minutes: 62 },
+  { rowId: 'r6', order_id: 'NS1005', customer_segment: 'Professional', city: 'Abuja', items: 2, order_value_ngn: '₦15,800', payment_method: 'card', delivery_minutes: 39 },
+]
+
+const NORTHSTAR_CUSTOMER_COLUMNS = [
+  { key: 'customer_name', label: 'customer_name' },
+  { key: 'customer_email', label: 'customer_email' },
+  { key: 'phone_number', label: 'phone_number' },
+  { key: 'customer_segment', label: 'customer_segment' },
+  { key: 'city', label: 'city' },
+  { key: 'order_value_ngn', label: 'order_value_ngn' },
+  { key: 'delivery_minutes', label: 'delivery_minutes' },
+]
+
+const NORTHSTAR_CUSTOMER_ROWS = [
+  { order_id: 'NS1001', customer_name: 'Amaka O.', customer_email: 'amaka@example.com', phone_number: '080•••••01', customer_segment: 'Student', city: 'Lagos', order_value_ngn: '₦8,500', delivery_minutes: 35 },
+  { order_id: 'NS1004', customer_name: 'Tunde B.', customer_email: 'tunde@example.com', phone_number: '080•••••04', customer_segment: 'Business', city: 'Lagos', order_value_ngn: '₦24,600', delivery_minutes: 62 },
+]
+
 export const dataAnalysisLesson = {
   id: 'data-analysis-basics',
-  title: 'How data analysis works',
+  title: 'Datasets and Variable Types',
   role: 'data_analyst',
   concepts: [
     {
-      id: 'data-analysis-foundations',
-      title: 'Data analysis foundations',
+      id: 'rows-columns-datasets',
+      title: 'Rows, columns, and datasets',
       activities: [
         {
-          id: 'data-analysis-foundations-learn',
+          id: 'rows-columns-datasets-learn',
           type: 'article',
           content: {
-            title: 'Turning raw data into a decision',
-            intro: 'A data analyst answers a real question by moving from raw, messy data to a clear, trustworthy conclusion.',
+            title: 'A dataset is a collection of observations',
+            intro: 'Northstar Store wants to understand its orders better. Analysts usually work with many related pieces of information at once — when those pieces are organised together, we call the collection a dataset.',
+            table: {
+              columns: NORTHSTAR_COLUMNS,
+              rows: NORTHSTAR_ROWS,
+              rowKey: 'order_id',
+              caption: 'Click a row, a column, or a cell to see what each one represents.',
+            },
             sections: [
               {
-                title: 'Start with a clear question',
-                body: [
-                  'Good analysis begins before you open a spreadsheet. Decide ',
-                  { strong: 'what decision the answer needs to support' },
-                  ', such as whether signups dropped after a pricing change, not just "look at the data".',
-                ],
+                title: 'Every row is one observation',
+                body: 'Each row in Northstar’s table describes one order — one thing that actually happened. NS1001 and NS1002 are two different orders, so they each get their own row.',
               },
               {
-                title: 'Clean before you conclude',
-                body: 'Raw data usually has duplicates, missing values, and inconsistent formats. Cleaning it first means the patterns you find later are real, not artifacts of messy data.',
+                title: 'Every column is one variable',
+                body: [
+                  'Each column describes one type of information recorded for every order — its city, its payment method, how long delivery took. Where a row and a column meet, you get one ',
+                  { strong: 'value' },
+                  ': a single fact about a single order.',
+                ],
               },
             ],
-            diagram: {
-              title: 'From raw data to a decision',
-              body: 'Each stage removes noise and adds meaning, until the result is something a person can act on.',
-              label: 'Raw data becomes cleaned data, then analysis, then an insight, then a decision',
-              nodes: ['Raw data', 'Cleaned data', 'Analysis', 'Insight', 'Decision'],
-            },
             next: {
-              title: 'Check the analysis foundations',
-              body: 'Choose the clearer question and the sounder next step in two short situations.',
+              title: 'Check rows, columns, and datasets',
+              body: 'Use the Northstar table to answer two quick questions.',
             },
           },
         },
         {
-          id: 'data-analysis-foundations-check',
+          id: 'rows-columns-datasets-check',
           type: 'quiz',
           content: {
-            title: 'Check data analysis foundations',
-            intro: 'Use the question, the data, and the decision behind each choice.',
+            title: 'Check rows, columns, and datasets',
+            intro: 'Use the Northstar order table to answer these.',
             questions: [
               {
-                id: 'data-analysis-q1',
+                id: 'na-q1',
                 type: 'multiple-choice',
-                prompt: 'Which is the clearest question to start an analysis with?',
-                options: [
-                  'What does the data say?',
-                  'Did signups drop after the March 1 pricing change, and by how much?',
-                  'Can we make a chart?',
-                  'Is the data interesting?',
-                ],
+                prompt: 'In Northstar’s dataset, what does one row represent?',
+                options: ['One city', 'One order', 'One payment method', 'One type of customer'],
                 correctIndex: 1,
-                explanation: 'A useful question names the event, the metric it affects, and asks for a measurable answer.',
+                explanation: 'Each row is one recorded order — look at order IDs such as NS1001 and NS1002, each in its own row.',
               },
               {
-                id: 'data-analysis-q2',
+                id: 'na-q2',
                 type: 'multiple-choice',
-                prompt: 'A spreadsheet of signups has duplicate rows and blank dates. What should the analyst do first?',
-                options: [
-                  'Build the chart anyway, duplicates rarely matter',
-                  'Clean the duplicates and missing values before analyzing',
-                  'Delete the whole dataset and ask for a new one',
-                  'Ignore the dates and use only the totals',
-                ],
-                correctIndex: 1,
-                explanation: 'Cleaning the data first keeps later patterns and conclusions trustworthy.',
+                prompt: [{ code: 'payment_method' }, ' — what does this column represent?'],
+                options: ['One observation', 'One individual value', 'One variable recorded for every order', 'The whole dataset'],
+                correctIndex: 2,
+                explanation: 'A column is a variable — one type of information recorded for every row.',
               },
+            ],
+          },
+        },
+        {
+          id: 'rows-columns-datasets-practice',
+          type: 'practice',
+          content: {
+            eyebrow: 'Hands-on',
+            title: 'Read the dataset',
+            instruction: 'Use the Northstar table to answer three quick tasks.',
+            mode: 'table-tasks',
+            dataset: { columns: NORTHSTAR_COLUMNS, rows: NORTHSTAR_ROWS, rowKey: 'order_id' },
+            tasks: [
+              { id: 't1', prompt: 'Select the row representing order NS1004.', target: { type: 'row', rowId: 'NS1004' } },
+              { id: 't2', prompt: 'Select the column that tells us how long delivery took.', target: { type: 'column', columnKey: 'delivery_minutes' } },
+              { id: 't3', prompt: 'Select the exact cell that tells us how long order NS1003 took to arrive.', target: { type: 'cell', rowId: 'NS1003', columnKey: 'delivery_minutes' } },
+            ],
+            successBody: 'Nice. You can now read the basic shape of a dataset.',
+            hints: [
+              'Look at the order_id column to find the row you need.',
+              'A column name usually describes exactly what it measures.',
+              'Find the right row first, then look across to the right column.',
+            ],
+          },
+        },
+      ],
+      transition: {
+        eyebrow: 'Concept complete',
+        title: 'Great work — you can read a dataset!',
+        body: 'Next, you’ll learn that not every column means the same kind of thing.',
+      },
+    },
+    {
+      id: 'categorical-vs-numerical',
+      title: 'Categorical vs numerical variables',
+      activities: [
+        {
+          id: 'categorical-vs-numerical-learn',
+          type: 'article',
+          content: {
+            title: 'Not every column means the same kind of thing',
+            intro: 'Some variables describe groups or labels. Others describe amounts we can measure or count.',
+            sections: [
+              {
+                title: 'Categorical variables',
+                body: [
+                  'Categorical variables tell us ',
+                  { strong: 'what kind' },
+                  ' of thing something is — like ',
+                  { code: 'Student' },
+                  ', ',
+                  { code: 'Lagos' },
+                  ', or ',
+                  { code: 'Card' },
+                  '.',
+                ],
+              },
+              {
+                title: 'Numerical variables',
+                body: [
+                  'Numerical variables tell us ',
+                  { strong: 'how many or how much' },
+                  ' — like 2 items, ₦8,500, or 35 minutes.',
+                ],
+              },
+              {
+                title: 'Numbers can still be labels',
+                body: [
+                  'A column can contain digits without being something you’d calculate with. An order ID like ',
+                  { code: 'NS1003' },
+                  ' is a label, even though it contains numbers — you’d never average two order IDs together.',
+                ],
+              },
+            ],
+            video: {
+              title: 'Types of Data: Categorical vs Numerical Data',
+              subtitle: '365 Data Science',
+              duration: '4:13',
+              badgeLabel: 'DS',
+              videoId: 'DUcXZ08IdMo',
+              segments: [{ id: 'default', label: null, startSeconds: 0, endSeconds: 253 }],
+            },
+            next: {
+              title: 'Check categorical vs numerical',
+              body: 'Use the Northstar table to tell the two apart.',
+            },
+          },
+        },
+        {
+          id: 'categorical-vs-numerical-check',
+          type: 'quiz',
+          content: {
+            title: 'Check categorical vs numerical',
+            intro: 'Use what a column actually measures, not just whether it has digits.',
+            questions: [
+              {
+                id: 'na-q3',
+                type: 'multiple-choice',
+                prompt: 'Which Northstar variable is categorical?',
+                options: [{ code: 'delivery_minutes' }, { code: 'order_value_ngn' }, { code: 'payment_method' }, { code: 'items' }],
+                correctIndex: 2,
+                explanation: 'payment_method names a group — Transfer, Card, or Cash — not an amount.',
+              },
+              {
+                id: 'na-q4',
+                type: 'multiple-choice',
+                prompt: 'Which variable could reasonably be averaged?',
+                options: [{ code: 'city' }, { code: 'customer_segment' }, { code: 'payment_method' }, { code: 'delivery_minutes' }],
+                correctIndex: 3,
+                explanation: 'Delivery time is a numerical measurement — averaging city names or payment methods wouldn’t make sense.',
+              },
+            ],
+          },
+        },
+        {
+          id: 'categorical-vs-numerical-practice',
+          type: 'practice',
+          content: {
+            eyebrow: 'Hands-on',
+            title: 'Sort the data',
+            instruction: 'Sort each value from Northstar’s table into the group it belongs to.',
+            mode: 'sort-cards',
+            items: [
+              { id: 'lagos', label: 'Lagos', zone: 'categorical' },
+              { id: 'value', label: '₦12,400', zone: 'numerical' },
+              { id: 'student', label: 'Student', zone: 'categorical' },
+              { id: 'delivery', label: '48 minutes', zone: 'numerical' },
+              { id: 'card', label: 'Card', zone: 'categorical' },
+              { id: 'items3', label: '3 items', zone: 'numerical' },
+            ],
+            zones: [{ id: 'categorical', label: 'Categorical' }, { id: 'numerical', label: 'Numerical' }],
+            successBody: 'Categorical describes what kind. Numerical describes how much or how many.',
+            hints: [
+              'Ask yourself: is this telling me what kind of thing it is, or how much/how many?',
+              '“Lagos” names a place — that’s a label, not an amount.',
+              '“48 minutes” is something you could measure or average — that’s numerical.',
             ],
           },
         },
@@ -241,9 +418,326 @@ export const dataAnalysisLesson = {
     },
   ],
   completion: {
-    eyebrow: 'Lesson complete',
-    title: 'You understand data analysis!',
-    body: 'You learned how a clear question, clean data, and honest evidence lead to a decision worth trusting.',
+    eyebrow: 'Tile complete',
+    title: 'You can read the shape of a dataset now.',
+    body: 'Next, we’ll learn how analysts decide whether data is trustworthy enough to use.',
+  },
+}
+
+export const dataQualityWorkflowLesson = {
+  id: 'data-quality-workflow',
+  title: 'Quality and the Analysis Workflow',
+  role: 'data_analyst',
+  concepts: [
+    {
+      id: 'data-quality-checks',
+      title: 'Basic data-quality checks',
+      activities: [
+        {
+          id: 'data-quality-checks-learn',
+          type: 'article',
+          content: {
+            title: 'Clean-looking data can still be wrong',
+            intro: 'Data quality means asking whether the information is reliable enough to support the question you’re trying to answer. Here’s Northstar’s order data exactly as it arrived.',
+            table: {
+              columns: NORTHSTAR_MESSY_COLUMNS,
+              rows: NORTHSTAR_MESSY_ROWS,
+              rowKey: 'rowId',
+              caption: 'This is the same order data — but nobody has checked it yet.',
+            },
+            sections: [
+              {
+                title: 'Missing',
+                body: 'Is information absent where we expected a value? Order NS1003 has no city recorded.',
+              },
+              {
+                title: 'Duplicate',
+                body: 'Has the same observation been recorded more than once? Order NS1004 appears twice, with identical values both times.',
+              },
+              {
+                title: 'Inconsistent',
+                body: ['Is the same category written in different ways? This table has both ', { code: 'Card' }, ' and ', { code: 'card' }, '.'],
+              },
+              {
+                title: 'Impossible or suspicious',
+                body: 'Does a value contradict what could realistically happen? An order can’t have -2 items.',
+              },
+              {
+                title: 'Investigate before you delete',
+                body: 'Don’t automatically delete every suspicious value. First identify the problem, then decide what it means.',
+              },
+            ],
+            video: {
+              title: 'A Beginner’s Guide to the Data Analysis Process',
+              subtitle: 'CareerFoundry — why cleaning comes before analysis',
+              duration: '5:22–7:10',
+              badgeLabel: 'CF',
+              videoId: 'lgCNTuLBMK4',
+              segments: [{ id: 'default', label: null, startSeconds: 322, endSeconds: 430 }],
+            },
+            next: {
+              title: 'Check data-quality checks',
+              body: 'Use Northstar’s messy table to decide what to do next.',
+            },
+          },
+        },
+        {
+          id: 'data-quality-checks-check',
+          type: 'quiz',
+          content: {
+            title: 'Check data-quality checks',
+            intro: 'A weird value is a signal to investigate, not an instant delete.',
+            questions: [
+              {
+                id: 'dq-q1',
+                type: 'multiple-choice',
+                prompt: 'Northstar has the exact same NS1004 row twice. What is the best first action?',
+                options: ['Delete both rows immediately', 'Ignore them', 'Flag the duplicate and verify why it exists', 'Change one order ID randomly'],
+                correctIndex: 2,
+                explanation: 'A duplicate is a signal to investigate, not permission to blindly delete information.',
+              },
+              {
+                id: 'dq-q2',
+                type: 'multiple-choice',
+                prompt: [{ code: 'items' }, ' — which value is clearly impossible for this column?'],
+                options: ['1', '2', '3', '-2'],
+                correctIndex: 3,
+                explanation: 'An order can’t contain a negative number of items.',
+              },
+            ],
+          },
+        },
+        {
+          id: 'data-quality-checks-practice',
+          type: 'practice',
+          content: {
+            eyebrow: 'Hands-on',
+            title: 'Find the quality problems',
+            instruction: 'Find four things you would investigate before analysing this dataset.',
+            mode: 'issue-spotter',
+            dataset: { columns: NORTHSTAR_MESSY_COLUMNS, rows: NORTHSTAR_MESSY_ROWS, rowKey: 'rowId' },
+            issues: [
+              { id: 'missing-city', rowId: 'r3', columnKey: 'city', label: 'Missing value' },
+              { id: 'impossible-items', rowId: 'r4', columnKey: 'items', label: 'Impossible value' },
+              { id: 'duplicate', rowId: 'r5', columnKey: 'order_id', label: 'Duplicate' },
+              { id: 'inconsistent-payment', rowId: 'r6', columnKey: 'payment_method', label: 'Inconsistent category' },
+            ],
+            nonIssueNudge: 'That value might be unusual, but nothing we’ve learned tells us it’s definitely a quality problem.',
+            successBody: 'You found all four — that’s the habit of checking before you trust a dataset.',
+            hints: [
+              'Look for something missing.',
+              'Now check whether any order appears more than once.',
+              'Compare how the payment-method labels are written.',
+            ],
+          },
+        },
+      ],
+      transition: {
+        eyebrow: 'Concept complete',
+        title: 'You know what to check before you trust data.',
+        body: 'Next, you’ll learn the repeatable workflow analysts follow from question to communicated result.',
+      },
+    },
+    {
+      id: 'analysis-workflow',
+      title: 'The analysis workflow',
+      activities: [
+        {
+          id: 'analysis-workflow-learn',
+          type: 'article',
+          content: {
+            title: 'Analysis is a process, not a button',
+            intro: 'Analysts don’t begin by throwing data into a chart. They begin with a question and move through a repeatable workflow.',
+            diagram: {
+              title: 'The analysis workflow',
+              body: 'Each stage builds on the one before it — skipping ahead is how confident-looking wrong answers happen.',
+              label: 'Ask, then inspect, then clean, then analyze, then visualize, then communicate',
+              nodes: ['Ask', 'Inspect', 'Clean', 'Analyze', 'Visualize', 'Communicate'],
+            },
+            sections: [
+              { title: 'Ask', body: 'What decision or question are we trying to answer? For Northstar: “Which customer segment experiences the longest delivery times?”' },
+              { title: 'Inspect', body: 'What data do we have, and what does each part mean?' },
+              { title: 'Clean', body: 'Fix or investigate problems that could mislead the analysis.' },
+              { title: 'Analyze', body: 'Compare, summarize, or calculate what the data tells us.' },
+              { title: 'Visualize', body: 'Use an appropriate visual when it makes the result easier to understand.' },
+              { title: 'Communicate', body: 'Explain what you found, what it means, and what limitations remain.' },
+            ],
+            video: {
+              title: 'A Beginner’s Guide to the Data Analysis Process',
+              subtitle: 'CareerFoundry',
+              duration: '0:21–10:06',
+              badgeLabel: 'CF',
+              videoId: 'lgCNTuLBMK4',
+              segments: [
+                { id: 'ask', label: 'Start with the question', startSeconds: 21, endSeconds: 166 },
+                { id: 'analyze', label: 'Analyze', startSeconds: 431, endSeconds: 501 },
+                { id: 'share', label: 'Share the result', startSeconds: 501, endSeconds: 606 },
+              ],
+            },
+            next: {
+              title: 'Check the analysis workflow',
+              body: 'Put the six stages, and Northstar’s next move, in the right order.',
+            },
+          },
+        },
+        {
+          id: 'analysis-workflow-check',
+          type: 'quiz',
+          content: {
+            title: 'Check the analysis workflow',
+            intro: 'Use the order of the six stages.',
+            questions: [
+              {
+                id: 'aw-q1',
+                type: 'multiple-choice',
+                prompt: 'A manager says, “Customers are complaining about slow delivery.” What should an analyst do first?',
+                options: ['Build a chart', 'Define the question they need to answer', 'Delete slow deliveries', 'Calculate every possible statistic'],
+                correctIndex: 1,
+                explanation: 'Every workflow starts with a clear question, not a chart.',
+              },
+              {
+                id: 'aw-q2',
+                type: 'multiple-choice',
+                prompt: 'You discover missing cities and duplicate order records. Which stage should happen before analysis?',
+                options: ['Ask', 'Analyze', 'Clean', 'Communicate'],
+                correctIndex: 2,
+                explanation: 'Cleaning always comes before you analyze or visualize.',
+              },
+            ],
+          },
+        },
+        {
+          id: 'analysis-workflow-practice',
+          type: 'practice',
+          content: {
+            eyebrow: 'Hands-on',
+            title: 'Build the analysis workflow',
+            instruction: 'Put the six stages in order, then decide Northstar’s next move.',
+            mode: 'reorder',
+            items: [
+              { id: 'communicate', label: 'Communicate' },
+              { id: 'clean', label: 'Clean' },
+              { id: 'ask', label: 'Ask' },
+              { id: 'analyze', label: 'Analyze' },
+              { id: 'inspect', label: 'Inspect' },
+              { id: 'visualize', label: 'Visualize' },
+            ],
+            correctOrder: ['ask', 'inspect', 'clean', 'analyze', 'visualize', 'communicate'],
+            scenario: {
+              prompt: 'Northstar asks: “Which customer segment experiences the longest delivery times?” What should you do next?',
+              options: ['Inspect the relevant columns', 'Build a machine learning model', 'Send a conclusion', 'Delete Student orders'],
+              correctIndex: 0,
+              explanation: 'Inspecting the relevant columns comes right after asking the question, and before cleaning or analyzing.',
+            },
+            successBody: 'That’s the workflow — asking first is what keeps the rest of the analysis honest.',
+            hints: [
+              'Every workflow starts with a question, not a chart.',
+              'Cleaning always comes before you analyze or visualize.',
+              'Communicating the result is always the last step.',
+            ],
+          },
+        },
+      ],
+      transition: {
+        eyebrow: 'Concept complete',
+        title: 'You know the analysis workflow.',
+        body: 'Last: what responsible analysts do — and don’t do — with people’s data.',
+      },
+    },
+    {
+      id: 'ethics-privacy',
+      title: 'Ethics and privacy basics',
+      activities: [
+        {
+          id: 'ethics-privacy-learn',
+          type: 'article',
+          content: {
+            title: 'Having access to data does not mean you should use all of it',
+            intro: 'Analysts often work with information connected to real people. Good analysis requires more than getting the calculation right — it also requires using data responsibly.',
+            table: {
+              columns: NORTHSTAR_CUSTOMER_COLUMNS,
+              rows: NORTHSTAR_CUSTOMER_ROWS,
+              rowKey: 'order_id',
+              caption: 'Northstar’s full customer file — more than most questions actually need.',
+            },
+            sections: [
+              { title: 'Use what you need', body: 'If an analysis doesn’t require a person’s email address, don’t include it unnecessarily.' },
+              { title: 'Protect personal information', body: 'Names, phone numbers, email addresses, and similar identifiers shouldn’t casually appear in shared analysis files.' },
+              { title: 'Respect purpose and permission', body: 'Data collected for one purpose shouldn’t automatically be treated as permission for every other possible use.' },
+              { title: 'Communicate honestly', body: 'Don’t hide limitations or manipulate results because a stakeholder prefers a different answer.' },
+            ],
+            diagram: {
+              title: 'From raw data to a shared result',
+              body: 'Each stage removes what the question doesn’t actually need.',
+              label: 'Raw customer data becomes an analysis dataset with unnecessary personal fields removed, then a shared result',
+              nodes: ['Raw customer data', 'Remove unnecessary personal fields', 'Analysis dataset', 'Shared result'],
+            },
+            next: {
+              title: 'Check ethics and privacy',
+              body: 'Decide what a question actually needs — and what it doesn’t.',
+            },
+          },
+        },
+        {
+          id: 'ethics-privacy-check',
+          type: 'quiz',
+          content: {
+            title: 'Check ethics and privacy',
+            intro: 'Use only what the question in front of you actually requires.',
+            questions: [
+              {
+                id: 'ep-q1',
+                type: 'multiple-choice',
+                prompt: 'You need to compare average delivery time by customer segment. Which fields do you need?',
+                options: [
+                  [{ code: 'customer_name' }, ' + ', { code: 'customer_email' }],
+                  [{ code: 'phone_number' }, ' + ', { code: 'customer_email' }],
+                  [{ code: 'customer_segment' }, ' + ', { code: 'delivery_minutes' }],
+                  [{ code: 'customer_name' }, ' + ', { code: 'phone_number' }],
+                ],
+                correctIndex: 2,
+                explanation: 'The question can be answered without exposing any personal contact information.',
+              },
+              {
+                id: 'ep-q2',
+                type: 'multiple-choice',
+                prompt: 'A manager asks you to remove results that make their team look bad. What should you do?',
+                options: ['Remove them to keep the peace', 'Keep the analysis honest and explain the result and its limitations', 'Only show good months', 'Delete the raw data'],
+                correctIndex: 1,
+                explanation: 'A responsible analyst reports what the data actually shows, limitations included.',
+              },
+            ],
+          },
+        },
+        {
+          id: 'ethics-privacy-practice',
+          type: 'practice',
+          content: {
+            eyebrow: 'Hands-on',
+            title: 'Prepare a safe analysis file',
+            instruction: 'Northstar wants to understand delivery time by customer segment. Choose only the fields needed for the analysis.',
+            mode: 'field-select',
+            columns: NORTHSTAR_CUSTOMER_COLUMNS,
+            required: ['customer_segment', 'delivery_minutes'],
+            optional: ['city'],
+            prepareLabel: 'Prepare dataset',
+            successBody: 'Good analysts remove unnecessary exposure before they start sharing results.',
+            hints: [
+              'Start with only the fields this specific question needs.',
+              'Northstar’s question is about segment and delivery time — nothing about who the customer is.',
+              'customer_segment and delivery_minutes are the two fields this needs.',
+            ],
+          },
+        },
+      ],
+    },
+  ],
+  completion: {
+    eyebrow: 'Tile complete',
+    title: 'You now know how an analyst approaches data before the tools begin.',
+    body: 'Before analyzing data: ask a clear question, check for missing, duplicate, inconsistent, or impossible values, clean what needs attention, then communicate honestly — and only use what a question actually needs.',
+    enablePodcast: true,
+    reinforcementConceptId: 'data-quality-checks',
   },
 }
 

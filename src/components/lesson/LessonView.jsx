@@ -6,19 +6,31 @@ import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
 import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
+import { LessonPractice } from './LessonPractice'
+import { LessonPodcastModal } from './LessonPodcastModal'
+import { RecallCheckModal } from './RecallCheckModal'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
 import { ChecklistIcon, GemIcon } from '../ui/icons'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
-import { buildLessonFlow } from './lessonFlow'
+import { buildLessonFlow, getConceptRecallQuestion } from './lessonFlow'
 import { clearIncorrectBlanks, isFillType, isQuestionComplete, isQuestionCorrect } from './questionState'
 import { getDevyLine } from '../../lib/devy'
+import { playSound } from '../../lib/sound'
 import { LESSON_XP } from '../../lib/lessonMeta'
 import { LESSON_COIN_AWARD } from '../../data/progress'
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
 import { getLessonTopics } from '../../data/learningResources'
+
+function loadBoolean(storageKey) {
+  try {
+    return window.localStorage.getItem(storageKey) === 'true'
+  } catch {
+    return false
+  }
+}
 
 const STREAK_THRESHOLD = 3
 // A wrong answer gets one retry with coaching before the explanation reveals
@@ -75,7 +87,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
   const [isLessonMenuOpen, setIsLessonMenuOpen] = useState(false)
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const bookmarkKey = `devspace-lesson-saved:${activeLessonId}`
+  const [isSaved, setIsSaved] = useState(() => loadBoolean(bookmarkKey))
+  const [isPodcastOpen, setIsPodcastOpen] = useState(false)
+  const [reinforcementPrompt, setReinforcementPrompt] = useState(false)
   const [successPulse, setSuccessPulse] = useState(0)
   const [errorPulse, setErrorPulse] = useState(0)
   const [audioReadyForNext, setAudioReadyForNext] = useState(false)
@@ -91,6 +106,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const currentStep = lessonFlow[session.stepIndex]
   const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete' || currentStep?.kind === 'skill-check'
   const isQuestion = currentStep?.type === 'question'
+  const isPractice = currentStep?.type === 'practice'
 
   const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
   const answer = questionState?.answer
@@ -103,9 +119,28 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const canCheck = isQuestion && isQuestionComplete(currentStep.question, answer)
   const isLastStep = session.stepIndex === lessonFlow.length - 1
 
+  const practiceState = isPractice ? session.activityStates[currentStep.id] : undefined
+  const practiceAnswer = practiceState?.answer
+  const isPracticeComplete = Boolean(practiceState?.completed)
+  // DevyAssistant only needs to know "is this step resolved" — question and
+  // practice steps each define that differently, article/transition steps
+  // don't use it at all.
+  const isStepResolved = isQuestion ? isChecked : isPractice ? isPracticeComplete : false
+
+  const reinforcementConceptId = currentStep?.kind === 'complete' ? lesson?.completion?.reinforcementConceptId : null
+  const reinforcementConcept = reinforcementConceptId ? lesson?.concepts?.find((concept) => concept.id === reinforcementConceptId) : null
+  const reinforcementQuestion = reinforcementConceptId ? getConceptRecallQuestion(lesson, reinforcementConceptId) : null
+
   useEffect(() => {
     setAudioReadyForNext(false)
   }, [currentStep?.id])
+
+  useEffect(() => {
+    if (currentStep?.kind === 'complete') {
+      playSound('tile_complete')
+      playSound('xp_gain')
+    }
+  }, [currentStep?.id, currentStep?.kind])
 
   // Real tallies for the break-screen recap strip — never invented copy. Scoped
   // to one concept for a mid-lesson hand-off, to the whole flow for the finish.
@@ -168,6 +203,25 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
+  const answerPractice = (nextAnswer) => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], answer: nextAnswer } },
+    }))
+  }
+
+  // A completed practice pays out through the same first-try-correct path a
+  // clean question answer does — the real coin/mastery economy, not a second
+  // one invented just for practice screens.
+  const completePractice = () => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], completed: true } },
+    }))
+    playSound('practice_complete')
+    onQuestionOutcome?.(activeLessonId, currentStep.concept.id, { correct: true, attempts: 1, firstTryCorrect: true })
+  }
+
   // Devy "says" a line above the footer avatar for a few seconds, with a
   // matching bounce on the mascot itself — an ambient reaction, not the
   // full chat panel. Each call replaces whatever was showing before it.
@@ -193,6 +247,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
     if (!resolved) {
       setErrorPulse((current) => current + 1)
+      playSound('answer_wrong')
       sayDevyLine(getDevyLine({ event: 'retry' }))
       const clearedAnswer = isFillType(currentStep.question) ? clearIncorrectBlanks(currentStep.question, answer) : undefined
       setSession((current) => ({
@@ -207,9 +262,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     if (correct) {
       setSuccessPulse((current) => current + 1)
       setErrorPulse(0)
+      playSound('answer_correct')
+      if (firstTryCorrect) playSound('coin_gain')
     } else {
       setErrorPulse((current) => current + 1)
       setSuccessPulse(0)
+      playSound('answer_wrong')
     }
     // Only a clean first-try answer extends the in-a-row counter — a correct
     // guess on retry shouldn't read the same as getting it right the first time.
@@ -296,7 +354,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             ? (isChecked
               ? { label: 'Continue', onClick: goNext }
               : { label: attempts > 0 ? 'Try again' : 'Check', onClick: checkQuestion, disabled: !canCheck })
-            : { label: 'Continue', onClick: goNext }
+            : isPractice
+              ? { label: 'Continue', onClick: goNext, disabled: !isPracticeComplete }
+              : { label: 'Continue', onClick: goNext }
 
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
   useEffect(() => {
@@ -412,7 +472,11 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           </button>
           {isLessonMenuOpen && (
             <div className="absolute right-0 top-[calc(100%+8px)] z-20 grid w-[240px] rounded-xl border border-[#eeeeeb] bg-white p-2 shadow-[0_12px_28px_rgba(20,20,20,.12)] [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:shadow-[0_12px_28px_rgba(0,0,0,.32)]" role="menu">
-              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsSaved((saved) => !saved)}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.2l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>{isSaved ? 'Saved' : 'Save this lesson'}</button>
+              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsSaved((saved) => {
+                const next = !saved
+                try { window.localStorage.setItem(bookmarkKey, String(next)) } catch { /* best-effort */ }
+                return next
+              })}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.2l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>{isSaved ? 'Saved' : 'Save this lesson'}</button>
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsNotesOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Notes</button>
               {lessonTopics.length > 0 && <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsCheatsheetOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Cheatsheet</button>}
               <div className="my-1 border-t border-[#eeeeeb] [[data-theme=dark]_&]:border-[#404040]" role="separator" />
@@ -429,9 +493,20 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       >
         {!lesson && <UnavailableLesson lessonId={activeLessonId} />}
         {currentStep?.type === 'article' && <LessonArticle
+          key={currentStep.id}
           article={currentStep.content}
           lessonTitle={lesson?.title}
         />}
+        {isPractice && (
+          <LessonPractice
+            key={currentStep.id}
+            content={currentStep.content}
+            answer={practiceAnswer}
+            onAnswerChange={answerPractice}
+            onComplete={completePractice}
+            completed={isPracticeComplete}
+          />
+        )}
         {isQuestion && (
           <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
             <LessonQuestion
@@ -461,7 +536,26 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             {...currentStep.completion}
             mood="celebrating"
             stats={[{ value: `+${LESSON_XP}`, label: 'XP' }, { value: `+${LESSON_COIN_AWARD}`, label: 'Devy Coins' }, ...recapStats()]}
-          />
+          >
+            {currentStep.completion?.enablePodcast && (
+              <button
+                type="button"
+                onClick={() => setIsPodcastOpen(true)}
+                className={`min-h-11 rounded-xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-transparent px-4 text-[14px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:border-[#6699ec] ${focusRing}`}
+              >
+                Listen to Tile recap
+              </button>
+            )}
+            {reinforcementQuestion && (
+              <button
+                type="button"
+                onClick={() => setReinforcementPrompt(true)}
+                className={`min-h-11 rounded-xl border border-[#5c5c60] [[data-theme=light]_&]:border-[#d4d4d4] bg-transparent px-4 text-[14px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 hover:border-[#6699ec] ${focusRing}`}
+              >
+                Simulate 3-day review
+              </button>
+            )}
+          </ConceptTransition>
         )}
       </main>
 
@@ -482,7 +576,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         <DevyAssistant
           key={currentStep?.id}
           step={currentStep}
-          checked={isChecked}
+          checked={isStepResolved}
           profile={lesson?.role ? { ...profile, role: lesson.role } : profile}
           onClose={() => setIsDevyOpen(false)}
           focusRing={focusRing}
@@ -546,6 +640,17 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           subtitle={lesson?.title}
           topics={lessonTopics}
           onClose={() => setIsCheatsheetOpen(false)}
+        />
+      )}
+      {isPodcastOpen && lesson && (
+        <LessonPodcastModal lesson={lesson} onClose={() => setIsPodcastOpen(false)} />
+      )}
+      {reinforcementPrompt && reinforcementQuestion && (
+        <RecallCheckModal
+          conceptTitle={reinforcementConcept?.title}
+          question={reinforcementQuestion}
+          onOutcome={(outcome) => onQuestionOutcome?.(activeLessonId, reinforcementConceptId, outcome)}
+          onClose={() => setReinforcementPrompt(false)}
         />
       )}
       {isExitDialogOpen && (

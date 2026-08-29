@@ -4,6 +4,7 @@ import { ToggleSwitch } from '../ui/ToggleSwitch'
 import { InfoTooltip } from '../ui/InfoTooltip'
 import { SettingsSection } from './SettingsSection'
 import { SettingsRow } from './SettingsRow'
+import { isSoundEnabled, setSoundEnabled } from '../../lib/sound'
 
 const navItems = [
   { id: 'account', label: 'Account' },
@@ -27,6 +28,13 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
     streak: true,
     weeklyEmail: false,
   })
+  const [soundEffects, setSoundEffects] = useState(() => isSoundEnabled())
+
+  const updateSoundEffects = (value) => {
+    setSoundEffects(value)
+    setSoundEnabled(value)
+    onNotice(`${value ? 'Enabled' : 'Disabled'} sound effects`)
+  }
   const currentMinutes = progress?.profile?.dailyMinutes ?? 10
   const activeGoal = dailyGoals.find((g) => g.minutes === currentMinutes) ?? dailyGoals[1]
 
@@ -154,6 +162,9 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
                 </button>
               ))}
             </div>
+            <SettingsRow label="Sound effects" description="Short sounds for correct answers, practice completion, and tile milestones.">
+              <ToggleSwitch checked={soundEffects} onChange={updateSoundEffects} label="Sound effects" />
+            </SettingsRow>
           </SettingsSection>
 
           <SettingsSection id="danger" title="Account actions">

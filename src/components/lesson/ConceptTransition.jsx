@@ -5,7 +5,7 @@ import { DevyMood } from '../ui/DevyMood'
 // Shared by the mid-lesson concept hand-off and the end-of-lesson screen. They
 // look alike but are not the same event, so the mood is the caller's call:
 // finishing a lesson is worth a celebration, moving between concepts is not.
-export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badge, stats }) {
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badge, stats, children }) {
   const rootRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -85,6 +85,7 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
               ))}
             </dl>
           )}
+          {children && <div className="mt-6 flex flex-wrap items-center justify-center gap-3">{children}</div>}
         </div>
       </div>
     </section>
