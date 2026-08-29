@@ -67,7 +67,13 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
         <div className="grid gap-6 min-w-0">
           <SettingsSection id="account" title="Account" description="Your profile information as seen by other learners.">
             <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
-              <Avatar name={identity?.name || 'Learner'} photo={identity?.photo} size="lg" />
+              <Avatar
+                name={identity?.name || 'Learner'}
+                photo={identity?.photo}
+                avatarStyle={identity?.avatarStyle}
+                avatarSeed={identity?.name?.trim() || 'you'}
+                size="lg"
+              />
               <div className="grid min-w-0 flex-1 gap-0.5">
                 <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{identity?.name?.trim() || 'Learner'}</strong>
                 <span className="truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{email}</span>

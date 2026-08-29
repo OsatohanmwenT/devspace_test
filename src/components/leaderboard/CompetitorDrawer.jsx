@@ -22,7 +22,7 @@ export function CompetitorDrawer({ entry, rival, league, seasonIndex, onClose })
     <Drawer id="competitor-drawer" title={entry.name} subtitle={entry.role} onClose={onClose} labelledBy="competitor-drawer-title">
       <div className="grid gap-5">
         <div className="flex items-center gap-3">
-          <Avatar name={entry.name} size="lg" />
+          <Avatar name={entry.name} avatarSeed={rival.id} size="lg" />
           <div className="grid min-w-0 gap-0.5">
             <span className="flex items-center gap-1.5 text-[16px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
               {entry.name}

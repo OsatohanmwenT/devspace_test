@@ -181,6 +181,7 @@ function App() {
         seasonIndex: getSeasonIndex(now()),
         seasonCoins: 0,
         leagueIndex: result.nextLeagueIndex,
+        highestLeagueIndex: Math.max(current.highestLeagueIndex ?? 0, result.nextLeagueIndex),
         lastLeagueResult: result,
         silverPassSeasonIndex: result.silverPassSeasonIndex ?? current.silverPassSeasonIndex,
         rewardBalance: current.rewardBalance + rewardAmount,

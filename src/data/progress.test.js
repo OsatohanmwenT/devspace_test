@@ -118,6 +118,16 @@ test('a payload already on seasons is left alone', () => {
   assert.equal(migrated.leagueIndex, 2)
 })
 
+test('a payload saved before highestLeagueIndex existed adopts the current league', () => {
+  const migrated = migrateProgress({ xp: 900, seasonIndex: 20, leagueIndex: 3 }, 20)
+  assert.equal(migrated.highestLeagueIndex, 3)
+})
+
+test('highestLeagueIndex never regresses when the current league is lower (a demotion)', () => {
+  const migrated = migrateProgress({ xp: 900, seasonIndex: 20, leagueIndex: 1, highestLeagueIndex: 3 }, 20)
+  assert.equal(migrated.highestLeagueIndex, 3)
+})
+
 test('saved progress without page introductions migrates safely', () => {
   assert.deepEqual(migrateProgress({ seasonIndex: 20 }, 20).seenPageIntroductions, {})
 })

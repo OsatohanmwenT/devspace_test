@@ -19,6 +19,12 @@ const defaultProgress = {
   lifetimeCoins: 0,
   seasonIndex: null,
   leagueIndex: 0,
+  // The furthest league ever *reached* — unlike `leagueIndex`, this never
+  // drops on a demotion. Gates which DiceBear avatar styles are unlocked
+  // (see lib/avatarStyles.js) — a progressive-reveal tied to real progress,
+  // so a style earned by climbing to Gold stays earned even if a rough
+  // season drops the learner back to Silver.
+  highestLeagueIndex: 0,
   // Set to the season index a Bronze top-10 finish earns a free Silver Pass
   // for; null otherwise. Valid only for that one season — see
   // lib/leagueAccess.js.
@@ -102,6 +108,11 @@ export function migrateProgress(stored, seasonIndex) {
     merged.lastLeagueResult = null
   }
   if (merged.seasonIndex === null) merged.seasonIndex = seasonIndex
+  // A payload saved before highestLeagueIndex existed has no such key —
+  // adopt the current league rather than defaulting to 0, so a learner
+  // already sitting in Gold doesn't see their avatar options regress to
+  // Bronze-only the first time they load after this field shipped.
+  if (merged.highestLeagueIndex < merged.leagueIndex) merged.highestLeagueIndex = merged.leagueIndex
   if (!Array.isArray(merged.earnedStreakMilestones)) merged.earnedStreakMilestones = []
   if (!Array.isArray(merged.streakActivityDates)) merged.streakActivityDates = []
   if (merged.longestStreak < merged.streakDays) merged.longestStreak = merged.streakDays

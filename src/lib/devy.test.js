@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildLessonFlow } from '../components/lesson/lessonFlow.js'
 import { lessonsById } from '../components/lesson/lessonContent.js'
-import { getFallbackResponse, getGreeting, getPrompts, getResponse, matchPrompt, PROMPT_LABELS, toPlainText } from './devy.js'
+import { getFallbackResponse, getGreeting, getPrompts, getQuestionIntro, getQuizIntro, getResponse, matchPrompt, PROMPT_LABELS, toPlainText } from './devy.js'
 
 const allSteps = Object.values(lessonsById).flatMap((lesson) => buildLessonFlow(lesson))
 const questionSteps = allSteps.filter((step) => step.type === 'question')
@@ -133,4 +133,17 @@ test('unknown prompts and missing steps resolve to null rather than throwing', (
   assert.equal(getResponse('nonsense', questionSteps[0], { checked: true }), null)
   assert.equal(getResponse('hint', null), null)
   assert.deepEqual(getPrompts(null), [])
+})
+
+test('a quiz intro reads the authored spokenIntro when present, else a generic line', () => {
+  assert.equal(getQuizIntro({ spokenIntro: 'Quick one, you’ve got this.' }), 'Quick one, you’ve got this.')
+  assert.equal(getQuizIntro({}), 'Quick check before we move on.')
+  assert.equal(getQuizIntro(null), 'Quick check before we move on.')
+  assert.equal(getQuizIntro(undefined), 'Quick check before we move on.')
+})
+
+test('a question intro says nothing extra unless one was authored', () => {
+  assert.equal(getQuestionIntro({ spokenIntro: 'Take a breath before you answer.' }), 'Take a breath before you answer.')
+  assert.equal(getQuestionIntro({}), null)
+  assert.equal(getQuestionIntro(null), null)
 })

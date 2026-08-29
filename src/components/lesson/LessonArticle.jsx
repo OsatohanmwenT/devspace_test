@@ -1,4 +1,5 @@
 import { RichText } from './RichText';
+import { LessonDataTable } from './LessonDataTable';
 
 export function LessonArticle({ article, lessonTitle }) {
   return (
@@ -52,6 +53,18 @@ export function LessonArticle({ article, lessonTitle }) {
             <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[15px] leading-[1.6]"><RichText content={section.body} /></p>
           </section>
         ))}
+
+        {article.table && (
+          <section className="max-w-[82ch] mt-[26px] max-[720px]:mt-6">
+            {article.table.title && (
+              <h2 className="m-0 mb-2 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-xl font-semibold">{article.table.title}</h2>
+            )}
+            {article.table.intro && (
+              <p className="m-0 text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] text-[15px] leading-[1.6]">{article.table.intro}</p>
+            )}
+            <LessonDataTable columns={article.table.columns} rows={article.table.rows} rowKey={article.table.rowKey} caption={article.table.caption} />
+          </section>
+        )}
 
         {article.diagram && (
           <section className="max-w-[62ch] mt-[26px] max-[720px]:mt-6">

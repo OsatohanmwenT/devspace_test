@@ -52,8 +52,12 @@ function PanelHeader({ title, onBack, onClose }) {
 // Anchored dropdown off the lesson header — "Audio" arms hands-free narration
 // (auto-plays each article as it loads), Voice/Speed drill into a sub-list,
 // and Auto-continue chains straight into the next step when narration ends.
-export function NarrationControl({ article, onNarrationStart, onNarrationEnd }) {
-  const narration = useLessonNarration(article, { onNarrationStart, onNarrationEnd })
+// `personality`/`onChangePersonality` come from LessonView's single
+// useNarrationPersonality() instance (see useLessonNarration.js) rather than
+// being read again here, so this toggle and LessonView's own quiz-intro/
+// correct-incorrect speech always agree on the same on/off state.
+export function NarrationControl({ article, onNarrationStart, onNarrationEnd, personality, onChangePersonality }) {
+  const narration = useLessonNarration(article, { onNarrationStart, onNarrationEnd, personality })
   const [isOpen, setIsOpen] = useState(false)
   const [view, setView] = useState('root')
   const rootRef = useRef(null)
@@ -107,6 +111,16 @@ export function NarrationControl({ article, onNarrationStart, onNarrationEnd }) 
                 </div>
                 <ToggleSwitch checked={narration.autoPlay} onChange={narration.changeAutoPlay} label="Audio" />
               </div>
+
+              {onChangePersonality && (
+                <div className="flex items-start gap-3 px-2 py-2">
+                  <div className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Devy’s commentary</span>
+                    <span className="text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#777]">Devy adds asides and tips while narrating, not just the article text.</span>
+                  </div>
+                  <ToggleSwitch checked={Boolean(personality)} onChange={onChangePersonality} label="Devy’s commentary" />
+                </div>
+              )}
 
               <div className="my-1 border-t border-[#eeeeeb] [[data-theme=dark]_&]:border-[#404040]" role="separator" />
 

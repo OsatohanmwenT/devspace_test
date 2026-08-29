@@ -6,6 +6,7 @@ import { ConceptTransition } from './ConceptTransition'
 import { LessonArticle } from './LessonArticle'
 import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
+import { LessonPractice } from './LessonPractice'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
 import { ChecklistIcon, GemIcon } from '../ui/icons'
@@ -13,7 +14,8 @@ import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
 import { isQuestionComplete, isQuestionCorrect } from './questionState'
-import { getDevyLine } from '../../lib/devy'
+import { getDevyLine, getQuizIntro } from '../../lib/devy'
+import { getPersistedRate, getPersistedVoice, speakText, useNarrationPersonality } from './useLessonNarration'
 import { LESSON_XP } from '../../lib/lessonMeta'
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
@@ -82,10 +84,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const stayButtonRef = useRef(null)
   const exitDialogRef = useRef(null)
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
+  const { personality, changePersonality } = useNarrationPersonality()
 
   const currentStep = lessonFlow[session.stepIndex]
   const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete' || currentStep?.kind === 'skill-check'
   const isQuestion = currentStep?.type === 'question'
+  const isPractice = currentStep?.type === 'practice'
 
   const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
   const answer = questionState?.answer
@@ -93,8 +97,31 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const canCheck = isQuestion && isQuestionComplete(currentStep.question, answer)
   const isLastStep = session.stepIndex === lessonFlow.length - 1
 
+  const practiceState = isPractice ? session.activityStates[currentStep.id] : undefined
+  const practiceAnswer = practiceState?.answer
+  const isPracticeComplete = Boolean(practiceState?.completed)
+  // DevyAssistant only needs "is this step resolved" — question and practice
+  // steps each define that differently; article/transition steps don't use it.
+  const isStepResolved = isQuestion ? isChecked : isPractice ? isPracticeComplete : false
+
   useEffect(() => {
     setAudioReadyForNext(false)
+  }, [currentStep?.id])
+
+  // Devy's commentary speaks a quiz's framing line the moment its first
+  // question (or its skill-check screen) appears — once per quiz, not once
+  // per question, matching how the on-screen quiz intro only shows once too.
+  useEffect(() => {
+    if (!personality || !currentStep) return
+    if (currentStep.kind === 'skill-check') {
+      speakText(getQuizIntro(null), { rate: getPersistedRate(), voice: getPersistedVoice() })
+      return
+    }
+    if (currentStep.type === 'question' && currentStep.questionIndex === 0) {
+      const quizContent = currentStep.concept?.activities?.[currentStep.activityIndex]?.content
+      speakText(getQuizIntro(quizContent), { rate: getPersistedRate(), voice: getPersistedVoice() })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the step identity only, personality changing mid-step shouldn't replay the line
   }, [currentStep?.id])
 
   // Real tallies for the break-screen recap strip — never invented copy. Scoped
@@ -156,6 +183,20 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
+  const answerPractice = (nextAnswer) => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], answer: nextAnswer } },
+    }))
+  }
+
+  const completePractice = () => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], completed: true } },
+    }))
+  }
+
   // Devy "says" a line above the footer avatar for a few seconds, with a
   // matching bounce on the mascot itself — an ambient reaction, not the
   // full chat panel. Each call replaces whatever was showing before it.
@@ -178,11 +219,14 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     if (correct) setSuccessPulse((current) => current + 1)
     else setErrorPulse((current) => current + 1)
     const nextStreak = correct ? session.streak + 1 : 0
-    sayDevyLine(
-      correct && nextStreak >= STREAK_THRESHOLD
-        ? getDevyLine({ event: 'streak', streak: nextStreak })
-        : getDevyLine({ event: correct ? 'correct' : 'incorrect' }),
-    )
+    const line = correct && nextStreak >= STREAK_THRESHOLD
+      ? getDevyLine({ event: 'streak', streak: nextStreak })
+      : getDevyLine({ event: correct ? 'correct' : 'incorrect' })
+    sayDevyLine(line)
+    // The ambient bubble and the spoken line are always the same words —
+    // just two channels, one visual and one (when Devy's commentary is on)
+    // audible.
+    if (personality) speakText(line, { rate: getPersistedRate(), voice: getPersistedVoice() })
     setSession((current) => ({
       ...current,
       activityStates: { ...current.activityStates, [currentStep.id]: { answer, checked: true } },
@@ -259,7 +303,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             ? (isChecked
               ? { label: 'Continue', onClick: goNext }
               : { label: 'Check', onClick: checkQuestion, disabled: !canCheck })
-            : { label: 'Continue', onClick: goNext }
+            : isPractice
+              ? { label: 'Continue', onClick: goNext, disabled: !isPracticeComplete }
+              : { label: 'Continue', onClick: goNext }
 
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
   useEffect(() => {
@@ -339,7 +385,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               currentStep={session.stepIndex + 1}
               totalSteps={Math.max(lessonFlow.length, 1)}
               onPrevious={session.stepIndex > 0 ? goPrevious : undefined}
-              onNext={!isLastStep && (!isQuestion || isChecked) ? goNext : undefined}
+              onNext={!isLastStep && (!isQuestion || isChecked) && (!isPractice || isPracticeComplete) ? goNext : undefined}
               streaking={showStreak}
             />
           )}
@@ -358,6 +404,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               article={currentStep.content}
               onNarrationStart={() => setAudioReadyForNext(false)}
               onNarrationEnd={() => setAudioReadyForNext(true)}
+              personality={personality}
+              onChangePersonality={changePersonality}
             />
           )}
 
@@ -395,6 +443,16 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           article={currentStep.content}
           lessonTitle={lesson?.title}
         />}
+        {isPractice && (
+          <LessonPractice
+            key={currentStep.id}
+            content={currentStep.content}
+            answer={practiceAnswer}
+            onAnswerChange={answerPractice}
+            onComplete={completePractice}
+            completed={isPracticeComplete}
+          />
+        )}
         {isQuestion && (
           <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
             <LessonQuestion
@@ -443,7 +501,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         <DevyAssistant
           key={currentStep?.id}
           step={currentStep}
-          checked={isChecked}
+          checked={isStepResolved}
           profile={lesson?.role ? { ...profile, role: lesson.role } : profile}
           onClose={() => setIsDevyOpen(false)}
           focusRing={focusRing}

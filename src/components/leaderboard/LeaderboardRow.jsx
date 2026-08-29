@@ -39,7 +39,13 @@ function RankDelta({ delta }) {
 // Non-current-user rows become a button when `onSelect` is passed, opening
 // the competitor-inspection drawer — inspecting yourself isn't a thing, so
 // the current user's own row stays a plain, non-interactive div either way.
-export function LeaderboardRow({ entry, isCurrentUser, onSelect }) {
+//
+// `photo` and `avatarStyle` are only ever set for the current user's own row
+// (a real uploaded photo, or an unlocked avatar style they picked in Edit
+// profile) — every rival gets a DiceBear avatar seeded by their stable id
+// instead of a bare colored initial, which is what keeps a 30-row board from
+// reading as a wall of identical letter circles.
+export function LeaderboardRow({ entry, isCurrentUser, photo, avatarStyle, onSelect }) {
   const tier = MEDALS[entry.rank]
   const interactive = Boolean(onSelect) && !isCurrentUser
   const Tag = interactive ? 'button' : 'div'
@@ -57,7 +63,7 @@ export function LeaderboardRow({ entry, isCurrentUser, onSelect }) {
         <span aria-hidden="true">{tier ? <TrophyIcon className="w-[18px] h-[18px]" /> : entry.rank}</span>
         <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">Rank {entry.rank}</span>
       </span>
-      <Avatar name={entry.name} size="md" />
+      <Avatar name={entry.name} photo={photo} avatarStyle={avatarStyle} avatarSeed={entry.id} size="md" />
       <div className="grid min-w-0">
         <span className="flex items-center gap-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm font-semibold">
           {entry.name}

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 const RATE_KEY = 'devspace-narration-rate'
 const VOICE_KEY = 'devspace-narration-voice'
 const AUTO_PLAY_KEY = 'devspace-narration-autoplay'
+const PERSONALITY_KEY = 'devspace-narration-personality'
 
 export const NARRATION_RATES = [0.75, 1, 1.25, 1.5, 2]
 
@@ -28,11 +29,71 @@ export function articleToSpeech(article) {
   return parts.filter(Boolean).join('. ')
 }
 
+// The "Devy's commentary" variant: reacts to and reframes the content rather
+// than reading it verbatim. Falls back section-by-section to the plain
+// on-screen text, so a lesson can have personality lines for some sections
+// and not others without narration ever going silent on a gap.
+export function articleToSpeechPersonality(article) {
+  const parts = [article.spokenIntro ?? article.intro]
+  for (const section of article.sections ?? []) {
+    parts.push(section.spoken ?? flattenRichText(section.body))
+  }
+  return parts.filter(Boolean).join(' ')
+}
+
+// A standalone one-off utterance, decoupled from useLessonNarration's own
+// state machine — this is what lets a caller (a quiz intro, a correct/
+// incorrect line) speak a short line without needing a whole narration-hook
+// instance and without disturbing whatever article narration is doing.
+export function speakText(text, { rate = 1, voice } = {}) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.rate = rate
+  if (voice) utterance.voice = voice
+  window.speechSynthesis.speak(utterance)
+}
+
+// For one-off utterances spoken outside an article (a quiz intro, a
+// correct/incorrect line) — reads the same persisted rate/voice the
+// article narration hook uses, so every spoken line in a lesson sounds
+// consistent regardless of which of the two speaking paths produced it.
+export function getPersistedRate() {
+  return Number(localStorage.getItem(RATE_KEY)) || 1
+}
+
+export function getPersistedVoice() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined
+  const name = localStorage.getItem(VOICE_KEY)
+  if (!name) return undefined
+  return window.speechSynthesis.getVoices().find((voice) => voice.name === name)
+}
+
+// On/off state for Devy's commentary. Owned by a single call in LessonView
+// and passed down from there (to useLessonNarration and to NarrationControl's
+// toggle) rather than called again in each consumer — a second independent
+// call here would hold its own unsynced copy of the same localStorage value.
+export function useNarrationPersonality() {
+  const [personality, setPersonality] = useState(() => readBoolean(PERSONALITY_KEY, false))
+
+  const changePersonality = useCallback((next) => {
+    setPersonality(next)
+    localStorage.setItem(PERSONALITY_KEY, String(next))
+  }, [])
+
+  return { personality, changePersonality }
+}
+
 // Wraps window.speechSynthesis: play/pause/stop, a persisted rate and voice,
 // an "Audio" mode that auto-narrates each new article as it loads, and an
 // "Auto-continue" mode that advances to the next step once narration ends —
 // together these make a hands-free listening mode, not just a manual play button.
-export function useLessonNarration(article, { onNarrationStart, onNarrationEnd } = {}) {
+//
+// `personality` is read from the caller (LessonView owns the single
+// `useNarrationPersonality()` instance and passes it down) rather than read
+// here directly, so every consumer — this hook's own narration and
+// LessonView's quiz-intro/correct-incorrect speech — agrees on the same
+// value within a render instead of each holding a separate, unsynced copy.
+export function useLessonNarration(article, { onNarrationStart, onNarrationEnd, personality = false } = {}) {
   const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
 
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -56,7 +117,7 @@ export function useLessonNarration(article, { onNarrationStart, onNarrationEnd }
     if (!supported) return
     window.speechSynthesis.cancel()
     onNarrationStart?.()
-    const utterance = new SpeechSynthesisUtterance(articleToSpeech(article))
+    const utterance = new SpeechSynthesisUtterance(personality ? articleToSpeechPersonality(article) : articleToSpeech(article))
     utterance.rate = nextRate
     if (nextVoice) utterance.voice = nextVoice
     utterance.onend = () => {
@@ -68,7 +129,7 @@ export function useLessonNarration(article, { onNarrationStart, onNarrationEnd }
     window.speechSynthesis.speak(utterance)
     setIsSpeaking(true)
     setIsPaused(false)
-  }, [article, supported, onNarrationStart, onNarrationEnd])
+  }, [article, supported, onNarrationStart, onNarrationEnd, personality])
 
   const stop = useCallback(() => {
     if (!supported) return

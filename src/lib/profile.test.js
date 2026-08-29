@@ -4,7 +4,7 @@ import { getProfileProgress, isProfileUrl, normalizeProfile, WORK_TYPES } from '
 
 test('profile migration keeps existing onboarding data and adds safe defaults', () => {
   assert.deepEqual(normalizeProfile({ role: 'frontend_developer' }), {
-    role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
+    role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, avatarStyle: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
   })
 })
 

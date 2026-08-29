@@ -1,7 +1,15 @@
 import { DevyMood } from '../ui/DevyMood'
+import { LessonDataTable } from './LessonDataTable'
 import { RichText } from './RichText'
 import { tokenizePython, TOKEN_CLASSES } from './pythonHighlight'
-import { clearBlank, fillNextBlank, isFillType, isQuestionCorrect } from './questionState'
+import { tokenizeSql } from './sqlHighlight'
+import { clearBlank, fillNextBlank, isFillType, isQuestionCorrect, isTableType, toggleRowSelection } from './questionState'
+
+const LANGUAGE_TOKENIZERS = { python: tokenizePython, sql: tokenizeSql }
+const LANGUAGE_BADGES = {
+  python: { label: 'PY', className: 'bg-[#569cd6] text-neutral-800' },
+  sql: { label: 'SQL', className: 'bg-[#f4a44a] text-neutral-800' },
+}
 
 const BLANK_BASE = 'lesson-blank inline-flex min-w-[102px] max-[720px]:min-w-[86px] min-h-[38px] max-[720px]:min-h-9 items-center justify-center mx-[3px] rounded-lg px-2.5 max-[720px]:px-2 py-[3px] font-jetbrains-mono text-[14px] font-medium leading-[1.2] align-middle focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#6699ec]'
 
@@ -65,17 +73,21 @@ function TokenBank({ question, answer, checked, onAnswer }) {
 // Code with blanks — a Parsons-style exercise. The static parts are syntax
 // highlighted; the blanks are the same fill model as prose questions.
 function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
+  const language = question.language ?? 'python'
+  const tokenize = LANGUAGE_TOKENIZERS[language] ?? tokenizePython
+  const badge = LANGUAGE_BADGES[language] ?? LANGUAGE_BADGES.python
+
   return (
     <div className="overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#3a3a3a] bg-[#1e1e1e]">
       <div className="flex items-center gap-2 border-b border-[#404040] bg-[#252526] px-4 py-2.5">
-        <span className="grid h-4 w-4 place-items-center rounded-sm bg-[#569cd6] text-[9px] font-bold text-neutral-800">PY</span>
-        <span className="font-jetbrains-mono text-[13px] text-[#d4d4d4]">{question.filename ?? 'script.py'}</span>
+        <span className={`grid h-4 w-4 place-items-center rounded-sm text-[9px] font-bold ${badge.className}`}>{badge.label}</span>
+        <span className="font-jetbrains-mono text-[13px] text-[#d4d4d4]">{question.filename ?? (language === 'sql' ? 'query.sql' : 'script.py')}</span>
       </div>
       <pre className="overflow-x-auto px-4 py-3.5 font-jetbrains-mono text-[14px] leading-[1.8] text-[#d4d4d4]">
         <code>
           {question.segments.map((segment, index) => (
             <span key={index}>
-              {tokenizePython(segment).map((token, tokenIndex) => (
+              {tokenize(segment).map((token, tokenIndex) => (
                 <span key={tokenIndex} className={TOKEN_CLASSES[token.type]}>{token.value}</span>
               ))}
               {index < question.answers.length && (
@@ -85,6 +97,63 @@ function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
           ))}
         </code>
       </pre>
+    </div>
+  )
+}
+
+// A read-only, syntax-highlighted query shown above a table-select task —
+// same chrome as CodeFill's editor frame, minus the blanks.
+function QueryPreview({ query, language = 'sql' }) {
+  const tokenize = LANGUAGE_TOKENIZERS[language] ?? tokenizeSql
+  const badge = LANGUAGE_BADGES[language] ?? LANGUAGE_BADGES.sql
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#3a3a3a] bg-[#1e1e1e]">
+      <div className="flex items-center gap-2 border-b border-[#404040] bg-[#252526] px-4 py-2.5">
+        <span className={`grid h-4 w-4 place-items-center rounded-sm text-[9px] font-bold ${badge.className}`}>{badge.label}</span>
+        <span className="font-jetbrains-mono text-[13px] text-[#d4d4d4]">query.sql</span>
+      </div>
+      <pre className="overflow-x-auto px-4 py-3.5 font-jetbrains-mono text-[14px] leading-[1.8] text-[#d4d4d4]">
+        <code>{tokenize(query).map((token, index) => <span key={index} className={TOKEN_CLASSES[token.type]}>{token.value}</span>)}</code>
+      </pre>
+    </div>
+  )
+}
+
+// "Run this query, click the rows it would return" — the interactive table
+// standing in for a real database, since there's no execution engine behind
+// this app. Selecting rows is the drag-and-drop-adjacent, hands-on way to
+// answer without needing a full code editor to actually run anything.
+function TableSelect({ question, answer, checked, onAnswer }) {
+  const selectedRowIds = answer ?? []
+  const rowKey = question.table.rowKey ?? 'id'
+  const rowMarkers = {}
+  if (checked) {
+    const expected = new Set(question.correctRowIds)
+    for (const row of question.table.rows) {
+      const id = row[rowKey]
+      const isSelected = selectedRowIds.includes(id)
+      if (isSelected && expected.has(id)) rowMarkers[id] = 'found'
+      else if (isSelected) rowMarkers[id] = 'wrong'
+      else if (expected.has(id)) rowMarkers[id] = 'missed'
+    }
+  }
+
+  return (
+    <div className="grid gap-3">
+      <QueryPreview query={question.query} language={question.language} />
+      <p className="m-0 text-[15px] font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">Click every row this query would return:</p>
+      <LessonDataTable
+        variant="select-rows"
+        columns={question.table.columns}
+        rows={question.table.rows}
+        rowKey={rowKey}
+        caption={question.table.caption}
+        selectedRowIds={selectedRowIds}
+        rowMarkers={rowMarkers}
+        disabled={checked}
+        onToggleRow={(id) => onAnswer(toggleRowSelection(answer, id))}
+      />
     </div>
   )
 }
@@ -164,7 +233,9 @@ export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy,
             <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
           </div>
         </div>
-        : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
+        : isTableType(question)
+          ? <TableSelect question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
+          : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
 
       {checked && (
         <div className="grid gap-3">

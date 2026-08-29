@@ -18,6 +18,9 @@ export function normalizeProfile(profile = null) {
     headline: typeof profile.headline === 'string' ? profile.headline : '',
     bio: typeof profile.bio === 'string' ? profile.bio : '',
     photo: typeof profile.photo === 'string' && profile.photo ? profile.photo : null,
+    // A chosen DiceBear look (see lib/avatarStyles.js) — only meaningful
+    // once `photo` is absent, since a real uploaded photo always wins.
+    avatarStyle: typeof profile.avatarStyle === 'string' && profile.avatarStyle ? profile.avatarStyle : null,
     projectInterest: Array.isArray(profile.projectInterest)
       ? profile.projectInterest
       : profile.projectInterest ? [profile.projectInterest] : [],

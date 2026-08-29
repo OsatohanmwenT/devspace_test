@@ -50,6 +50,21 @@ export function getDevyLine({ event, streak }) {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
+// Framing lines spoken (when voice personality mode is on — see
+// useLessonNarration.js) just before a quiz or a single question starts.
+// Hand-authored per lesson via the content's own `spokenIntro` field,
+// same pattern as everything else in this file reading straight off the
+// step's data rather than generating anything.
+export function getQuizIntro(quizContent) {
+  return quizContent?.spokenIntro ?? 'Quick check before we move on.'
+}
+
+// null means "say nothing extra" — most questions read fine on their own,
+// so a per-question spoken line is the exception, not the default.
+export function getQuestionIntro(question) {
+  return question?.spokenIntro ?? null
+}
+
 export function getGreeting(profile) {
   const roleLabel = profile?.role ? ROLE_LABELS[profile.role] : null
   if (roleLabel) {
@@ -68,6 +83,13 @@ export function getPrompts(step, checked = false) {
 
   if (step.type === 'question') {
     return checked ? [prompt('why'), prompt('explain')] : [prompt('hint'), prompt('explain')]
+  }
+
+  if (step.type === 'practice') {
+    if (checked) return []
+    const hints = step.content?.hints ?? []
+    const labels = ['Give me a hint', 'Another hint', 'One more hint']
+    return hints.map((_, index) => ({ id: `practice-hint-${index + 1}`, label: labels[index] ?? `Hint ${index + 1}` }))
   }
 
   return []
@@ -131,6 +153,12 @@ export function getFallbackResponse(availablePrompts) {
 
 export function getResponse(promptId, step, { checked = false } = {}) {
   if (!step) return null
+
+  if (promptId.startsWith('practice-hint-')) {
+    const index = Number(promptId.slice('practice-hint-'.length)) - 1
+    const hint = step.content?.hints?.[index]
+    return hint ? { body: hint } : null
+  }
 
   switch (promptId) {
     case 'summarise': {

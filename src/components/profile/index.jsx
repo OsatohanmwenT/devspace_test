@@ -15,6 +15,7 @@ import { explorePaths } from '../../data/paths'
 import { getLeague } from '../../data/leagues'
 import { STREAK_MILESTONES } from '../../lib/streak'
 import { getProfileProgress, normalizeProfile } from '../../lib/profile'
+import { getAvatarDataUri } from '../../lib/avatarStyles'
 import { TierMedal } from '../leaderboard/TierMedal'
 import { EditProfileModal } from './EditProfileModal'
 
@@ -525,6 +526,13 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               <div className="flex items-center gap-4">
                 {identity?.photo ? (
                   <img src={identity.photo} alt="" aria-hidden="true" className="size-14 flex-none rounded-2xl object-cover shadow-md" />
+                ) : identity?.avatarStyle ? (
+                  <img
+                    src={getAvatarDataUri(identity.avatarStyle, identity?.name?.trim() || 'you')}
+                    alt=""
+                    aria-hidden="true"
+                    className="size-14 flex-none rounded-2xl bg-[#262629] object-cover shadow-md"
+                  />
                 ) : (
                   <div className="relative size-14 flex-none rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#4338ca] grid place-items-center font-rethink-sans text-2xl font-bold text-white shadow-md">
                     {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
@@ -715,6 +723,13 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                       alt=""
                       aria-hidden="true"
                       className="size-[88px] rounded-full object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                    />
+                  ) : identity?.avatarStyle ? (
+                    <img
+                      src={getAvatarDataUri(identity.avatarStyle, identity?.name?.trim() || 'you')}
+                      alt=""
+                      aria-hidden="true"
+                      className="size-[88px] rounded-full bg-[#262629] object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
                     />
                   ) : (
                     <span
@@ -953,6 +968,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
       {isEditOpen && (
         <EditProfileModal
           profile={identity}
+          highestLeagueIndex={progress?.highestLeagueIndex}
           onSave={(fields) => onSaveProfile?.(fields)}
           onClose={() => setIsEditOpen(false)}
         />

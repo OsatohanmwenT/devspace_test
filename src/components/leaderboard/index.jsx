@@ -327,6 +327,8 @@ export default function LeaderboardView({
                     <LeaderboardRow
                       entry={item.entry}
                       isCurrentUser={item.entry.id === USER_ID}
+                      photo={item.entry.id === USER_ID ? progress?.profile?.photo : undefined}
+                      avatarStyle={item.entry.id === USER_ID ? progress?.profile?.avatarStyle : undefined}
                       onSelect={tab === 'This season' ? (entry) => setSelectedRivalId(entry.id) : undefined}
                     />
                   </li>
