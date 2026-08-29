@@ -76,17 +76,22 @@ export const PREMIUM_PERKS = [
   {
     id: 'all-time',
     title: 'All-time standings',
-    detail: 'See lifetime totals, not just this week.',
+    detail: 'See lifetime totals, not just this season.',
   },
   {
     id: 'replay-xp',
     title: 'Practice replays count',
-    detail: 'Redo a session on a later day and still earn px.',
+    detail: 'Redo a session on a later day and still earn XP.',
   },
   {
     id: 'full-cohort',
     title: 'Full cohort view',
-    detail: 'All 30 learners and every cutoff, not just your window.',
+    detail: 'The full league and every cutoff, not just your window.',
+  },
+  {
+    id: 'silver-plus',
+    title: 'Silver+ competitive leagues',
+    detail: 'Compete past Bronze, where the reward pools get bigger. One benefit among several — not the reason to upgrade on its own.',
   },
 ]
 

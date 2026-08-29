@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applyStreakDecay, DAY_INITIALS, WEEK_LENGTH, earnMilestones, getStreakHistory, getStreakMessage, getStreakWeek, isActiveToday, resolveStreak, STREAK_MILESTONES } from './streak.js'
+import { applyStreakDecay, DAY_INITIALS, WEEK_LENGTH, earnMilestones, findNewestMilestone, getStreakEra, getStreakHistory, getStreakMessage, getStreakWeek, isActiveToday, resolveStreak, STREAK_MILESTONES } from './streak.js'
 
 // A fixed Friday so the labels are predictable regardless of when tests run.
 const FRIDAY = new Date(2026, 7, 7)
@@ -154,4 +154,31 @@ test('a gap that does not break the streak spends nothing', () => {
   const next = applyStreakDecay({ streakDays: 5, lastActiveDate: YESTERDAY, streakShieldWeek: null, weekIndex: 40 }, TODAY, true)
   assert.equal(next.streakDays, 5)
   assert.equal(next.streakShieldWeek, null, 'a shield should not be spent when nothing needed saving')
+})
+
+test('the streak era escalates at each day-range boundary', () => {
+  assert.equal(getStreakEra(0).id, 'spark')
+  assert.equal(getStreakEra(1).id, 'spark')
+  assert.equal(getStreakEra(7).id, 'spark')
+  assert.equal(getStreakEra(8).id, 'climb')
+  assert.equal(getStreakEra(30).id, 'climb')
+  assert.equal(getStreakEra(31).id, 'world')
+  assert.equal(getStreakEra(99).id, 'world')
+  assert.equal(getStreakEra(100).id, 'legend')
+  assert.equal(getStreakEra(500).id, 'legend')
+})
+
+test('findNewestMilestone reports nothing when no new tier was crossed', () => {
+  assert.equal(findNewestMilestone([3, 7], [3, 7]), null)
+  assert.equal(findNewestMilestone([], []), null)
+})
+
+test('findNewestMilestone reports the single newly crossed tier', () => {
+  const milestone = findNewestMilestone([3], [3, 7])
+  assert.equal(milestone.days, 7)
+})
+
+test('findNewestMilestone reports the highest tier when several are crossed at once', () => {
+  const milestone = findNewestMilestone([], [3, 7, 14])
+  assert.equal(milestone.days, 14)
 })

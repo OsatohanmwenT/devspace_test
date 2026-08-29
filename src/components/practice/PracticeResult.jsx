@@ -1,5 +1,6 @@
 import { ActionButton } from '../ui/ActionButton'
 import { DevyMood } from '../ui/DevyMood'
+import { PRACTICE_COIN_AWARD } from '../../data/progress'
 
 // A practice round used to end by vanishing: the last "Finish practice" click
 // closed the session outright, so the score, the XP and the answer the learner
@@ -57,7 +58,7 @@ export function PracticeResult({ session, correctCount, total, xpAward, isReplay
 
           {/* Held to the same width as the action below it, so the screen reads
               as one column rather than a wide slab over a narrow button. */}
-          <dl className="mt-7 grid w-[min(100%,350px)] grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[#404040] bg-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-[#e1e1e1]">
+          <dl className={`mt-7 grid w-[min(100%,350px)] ${isReplay ? 'grid-cols-2' : 'grid-cols-3'} gap-px overflow-hidden rounded-2xl border border-[#404040] bg-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-[#e1e1e1]`}>
             <div className="grid gap-1 bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 py-3.5">
               <dt className="text-[11px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Correct</dt>
               <dd className="m-0 font-rethink-sans text-[22px] font-bold leading-none text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 tabular-nums">
@@ -72,6 +73,17 @@ export function PracticeResult({ session, correctCount, total, xpAward, isReplay
                 {xpAward > 0 ? `+${xpAward}` : '—'}
               </dd>
             </div>
+            {/* Coins are a first-completion-only reward, unlike XP which a
+                Premium learner can re-earn on replay — so this cell simply
+                doesn't exist on a replay, rather than showing a confusing —. */}
+            {!isReplay && (
+              <div className="grid gap-1 bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 py-3.5">
+                <dt className="text-[11px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Devy Coins</dt>
+                <dd className="m-0 font-rethink-sans text-[22px] font-bold leading-none tabular-nums text-[#f0c964]">
+                  +{PRACTICE_COIN_AWARD}
+                </dd>
+              </div>
+            )}
           </dl>
 
           {xpAward === 0 && (

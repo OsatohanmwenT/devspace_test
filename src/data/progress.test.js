@@ -1,24 +1,22 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, markPageIntroductionSeen, migrateProgress, PRACTICE_XP } from './progress.js'
+import { activatePremium, addCoins, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, markPageIntroductionSeen, migrateProgress, PRACTICE_XP, recordConceptMastery, setAvatarChoice, setPayoutMethod } from './progress.js'
 
 const TODAY = 'Fri Aug 07 2026'
 const YESTERDAY = 'Thu Aug 06 2026'
 
 const base = {
   xp: 100,
-  weeklyXp: 35,
   dailyXp: 0,
   dailyXpDate: null,
   streakDays: 0,
   lastActiveDate: null,
 }
 
-test('earning XP moves lifetime, weekly and daily counters together', () => {
+test('earning XP moves lifetime and daily counters together', () => {
   const next = applyActivity(base, 25, TODAY)
 
   assert.equal(next.xp, 125)
-  assert.equal(next.weeklyXp, 60)
   assert.equal(next.dailyXp, 25)
   assert.equal(next.dailyXpDate, TODAY)
 })
@@ -40,7 +38,6 @@ test('the daily counter resets on a new day while lifetime XP does not', () => {
   assert.equal(today.dailyXp, 25)
   assert.equal(today.dailyXpDate, TODAY)
   assert.equal(today.xp, 175)
-  assert.equal(today.weeklyXp, 110)
 })
 
 test('the streak advances once per day, not once per activity', () => {
@@ -68,20 +65,22 @@ test('unrelated fields survive untouched', () => {
 // A payload saved before isPremium existed has no such key at all — this is the
 // migration path, and it has to produce `false`, not `undefined`.
 test('a payload saved before Premium existed gets the free default', () => {
-  const migrated = migrateProgress({ xp: 50, weekIndex: 12 }, 20)
+  const migrated = migrateProgress({ xp: 50, weekIndex: 12 }, 20, 3)
 
   assert.equal(migrated.isPremium, false)
   assert.equal(migrated.xp, 50)
   assert.equal(migrated.weekIndex, 12)
 })
 
-test('a first-ever run adopts the current week', () => {
-  assert.equal(migrateProgress({}, 20).weekIndex, 20)
-  assert.equal(migrateProgress({ weekIndex: 5 }, 20).weekIndex, 5)
+test('a first-ever run adopts the current week and season', () => {
+  assert.equal(migrateProgress({}, 20, 3).weekIndex, 20)
+  assert.equal(migrateProgress({ weekIndex: 5 }, 20, 3).weekIndex, 5)
+  assert.equal(migrateProgress({}, 20, 3).seasonIndex, 3)
+  assert.equal(migrateProgress({ seasonIndex: 1 }, 20, 3).seasonIndex, 1)
 })
 
 test('saved progress without page introductions migrates safely', () => {
-  assert.deepEqual(migrateProgress({ weekIndex: 20 }, 20).seenPageIntroductions, {})
+  assert.deepEqual(migrateProgress({ weekIndex: 20 }, 20, 3).seenPageIntroductions, {})
 })
 
 test('marking an introduction as seen preserves other page introductions', () => {
@@ -221,4 +220,117 @@ test('completing one session says nothing about another', () => {
   const progress = { isPremium: false, completedSessions: { 'python-basics': { completedAt: TODAY } } }
 
   assert.equal(getPracticeXpAward(progress, 'sql-select', TODAY), PRACTICE_XP)
+})
+
+test('saved progress without concept mastery migrates to an empty map', () => {
+  assert.deepEqual(migrateProgress({ weekIndex: 20 }, 20, 3).masteryByConcept, {})
+})
+
+test('recording a concept outcome creates a fresh record on first write', () => {
+  const next = recordConceptMastery({ ...base, masteryByConcept: {} }, 'writing-programs', 'program-execution', { correct: true, firstTryCorrect: true }, TODAY)
+
+  const record = next.masteryByConcept['writing-programs:program-execution']
+  assert.ok(record)
+  assert.equal(record.attemptsTotal, 1)
+  assert.equal(record.lastOutcomeCorrect, true)
+})
+
+test('recording a second concept leaves the first one untouched', () => {
+  const first = recordConceptMastery({ ...base, masteryByConcept: {} }, 'writing-programs', 'program-execution', { correct: true, firstTryCorrect: true }, TODAY)
+  const both = recordConceptMastery(first, 'writing-programs', 'variables-expressions', { correct: false, firstTryCorrect: false }, TODAY)
+
+  assert.ok(both.masteryByConcept['writing-programs:program-execution'])
+  assert.ok(both.masteryByConcept['writing-programs:variables-expressions'])
+  assert.equal(both.masteryByConcept['writing-programs:program-execution'].attemptsTotal, 1)
+})
+
+test('recording concept mastery does not touch XP or streak', () => {
+  const next = recordConceptMastery({ ...base, masteryByConcept: {} }, 'writing-programs', 'program-execution', { correct: true, firstTryCorrect: true }, TODAY)
+
+  assert.equal(next.xp, base.xp)
+  assert.equal(next.streakDays, base.streakDays)
+  assert.equal(next.dailyXp, base.dailyXp)
+})
+
+test('saved progress without a coin balance migrates to zero', () => {
+  const migrated = migrateProgress({ weekIndex: 20 }, 20, 3)
+  assert.equal(migrated.devyCoins, 0)
+  assert.equal(migrated.seasonDevyCoins, 0)
+})
+
+test('a first-ever run adopts the current season', () => {
+  assert.equal(migrateProgress({}, 20, 3).seasonIndex, 3)
+})
+
+test('addCoins accumulates onto both the lifetime and season balances', () => {
+  const next = addCoins(addCoins({ ...base, devyCoins: 0, seasonDevyCoins: 0 }, 5), 1)
+  assert.equal(next.devyCoins, 6)
+  assert.equal(next.seasonDevyCoins, 6)
+})
+
+test('addCoins ignores a non-positive amount', () => {
+  const progress = { ...base, devyCoins: 3, seasonDevyCoins: 3 }
+  assert.equal(addCoins(progress, 0).devyCoins, 3)
+  assert.equal(addCoins(progress, -5).devyCoins, 3)
+  assert.equal(addCoins(progress, 0).seasonDevyCoins, 3)
+})
+
+test('addCoins does not touch XP or streak', () => {
+  const next = addCoins(base, 10)
+  assert.equal(next.xp, base.xp)
+  assert.equal(next.streakDays, base.streakDays)
+})
+
+// A season resets on its own 28-day clock, but a lifetime total never should
+// — this is the distinction the whole "lifetime vs season" split exists for.
+test('lifetime coins and season coins move together but mean different things', () => {
+  const seasonReset = { ...base, devyCoins: 50, seasonDevyCoins: 0 }
+  const next = addCoins(seasonReset, 10)
+  assert.equal(next.devyCoins, 60, 'lifetime keeps accumulating across seasons')
+  assert.equal(next.seasonDevyCoins, 10, 'season total reflects only this season so far')
+})
+
+test('saved progress without reward fields migrates to safe defaults', () => {
+  const migrated = migrateProgress({ weekIndex: 20 }, 20, 3)
+  assert.equal(migrated.rewardBalance, 0)
+  assert.equal(migrated.lifetimeRewards, 0)
+  assert.deepEqual(migrated.rewardHistory, [])
+  assert.deepEqual(migrated.paidPayouts, [])
+  assert.equal(migrated.pendingPayout, null)
+  assert.equal(migrated.payoutMethod, null)
+})
+
+test('setPayoutMethod stores what was typed and marks it verified', () => {
+  const next = setPayoutMethod(base, { bank: 'GTBank', accountNumber: '0123456789', accountName: 'Ada Lovelace' })
+  assert.deepEqual(next.payoutMethod, { bank: 'GTBank', accountNumber: '0123456789', accountName: 'Ada Lovelace', verified: true })
+})
+
+test('setPayoutMethod replaces a prior method rather than merging it', () => {
+  const withOld = { ...base, payoutMethod: { bank: 'Old Bank', accountNumber: '000', accountName: 'X', verified: true } }
+  const next = setPayoutMethod(withOld, { bank: 'GTBank', accountNumber: '0123456789', accountName: 'Ada Lovelace' })
+  assert.equal(next.payoutMethod.bank, 'GTBank')
+})
+
+test('saved progress without league-access fields migrates to safe defaults', () => {
+  const migrated = migrateProgress({ weekIndex: 20, leagueIndex: 2 }, 20, 3)
+  assert.equal(migrated.highestQualifiedLeagueIndex, 2, 'a payload from before this existed assumes at least its current league')
+  assert.deepEqual(migrated.leaguePasses, [])
+  assert.equal(migrated.leagueAccessGrantedForSeason, null)
+})
+
+test('setAvatarChoice saves a style, seed and display name together', () => {
+  const withProfile = { ...base, profile: { pathId: 'machine-learning' } }
+  const next = setAvatarChoice(withProfile, { avatarStyle: 'pixelArt', avatarSeed: 'ada-lovelace', name: 'Ada' })
+
+  assert.equal(next.profile.avatarStyle, 'pixelArt')
+  assert.equal(next.profile.avatarSeed, 'ada-lovelace')
+  assert.equal(next.profile.name, 'Ada')
+  assert.equal(next.profile.pathId, 'machine-learning', 'the rest of the profile is untouched')
+})
+
+test('setAvatarChoice leaves the name alone when none is passed', () => {
+  const withName = { ...base, profile: { pathId: 'machine-learning', name: 'Ada' } }
+  const next = setAvatarChoice(withName, { avatarStyle: 'bottts', avatarSeed: 'ada-lovelace' })
+
+  assert.equal(next.profile.name, 'Ada')
 })

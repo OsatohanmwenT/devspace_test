@@ -16,6 +16,7 @@ import { getLeague } from '../../data/leagues'
 import { STREAK_MILESTONES } from '../../lib/streak'
 import { getProfileProgress, normalizeProfile } from '../../lib/profile'
 import { TierMedal } from '../leaderboard/TierMedal'
+import { Avatar } from '../ui/Avatar'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
 
@@ -119,7 +120,7 @@ function TrendingUpIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="m3 17 6-6 4 4 8-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15 7h6v6" stroke="currentColor" strokeWidth="1.8" strokeLineround="round" strokeLinejoin="round" />
+      <path d="M15 7h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -378,14 +379,14 @@ function ShareProfileModal({ shareUrl, roleLabel, skills = [], experienceCount =
   )
 }
 
-export default function ProfileView({ profile, progress, currentPath, pathProgress, onEditProfile, isPublicView: isPublicViewProp, onTogglePublicView }) {
+export default function ProfileView({ profile, progress, currentPath, pathProgress, onEditProfile, isPublicView: isPublicViewProp, onTogglePublicView, onChangeAvatar }) {
   const [localPublicView, setLocalPublicView] = useState(false)
   const isPublicView = isPublicViewProp ?? localPublicView
   const setIsPublicView = onTogglePublicView ?? setLocalPublicView
   const [linkCopied, setLinkCopied] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
 
-  const { xp, weeklyXp, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
+  const { xp, seasonDevyCoins, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
   const league = getLeague(leagueIndex)
   const levelInfo = getLevel(xp)
   const earnedTiers = earnedStreakMilestones ?? []
@@ -517,9 +518,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
 
             <div className="grid gap-4 px-7 py-6 max-[480px]:px-5">
               <div className="flex items-center gap-4">
-                <div className="relative size-14 flex-none rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#4338ca] grid place-items-center font-rethink-sans text-2xl font-bold text-white shadow-md">
-                  {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                </div>
+                <Avatar name={identity?.name} avatarStyle={identity?.avatarStyle} avatarSeed={identity?.avatarSeed} size="lg" className="shadow-md" />
                 <div className="grid gap-0.5">
                   <h1 className={`m-0 font-rethink-sans text-[28px] font-semibold leading-[1.15] tracking-[-.02em] ${INK}`}>
                     {identity?.name?.trim() || 'Learner'}
@@ -659,7 +658,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{weeklyXp} XP this week</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonDevyCoins.toLocaleString()} 🪙 this season</span>
                   </div>
                 </div>
               </SectionCard>
@@ -699,12 +698,16 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               />
               <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
                 <div className="relative -mt-11 w-[88px]">
-                  <span
-                    className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                    aria-hidden="true"
-                  >
-                    {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                  </span>
+                  <Avatar name={identity?.name} avatarStyle={identity?.avatarStyle} avatarSeed={identity?.avatarSeed} size="lg" className="!size-[88px] ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white" />
+                  {onChangeAvatar && (
+                    <button
+                      type="button"
+                      onClick={onChangeAvatar}
+                      className="absolute inset-0 grid place-items-center rounded-full bg-black/0 text-[11px] font-semibold text-transparent opacity-0 transition-opacity hover:bg-black/45 hover:text-white hover:opacity-100 focus-visible:bg-black/45 focus-visible:text-white focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                    >
+                      Change
+                    </button>
+                  )}
                   <span
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
                     aria-hidden="true"
@@ -880,7 +883,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{weeklyXp} XP this week</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonDevyCoins.toLocaleString()} 🪙 this season</span>
                   </div>
                 </div>
               </SectionCard>

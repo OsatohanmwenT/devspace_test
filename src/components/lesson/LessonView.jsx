@@ -12,14 +12,19 @@ import { ChecklistIcon, GemIcon } from '../ui/icons'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
-import { isQuestionComplete, isQuestionCorrect } from './questionState'
+import { clearIncorrectBlanks, isFillType, isQuestionComplete, isQuestionCorrect } from './questionState'
 import { getDevyLine } from '../../lib/devy'
 import { LESSON_XP } from '../../lib/lessonMeta'
+import { LESSON_COIN_AWARD } from '../../data/progress'
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
 import { getLessonTopics } from '../../data/learningResources'
 
 const STREAK_THRESHOLD = 3
+// A wrong answer gets one retry with coaching before the explanation reveals
+// — enough to let a learner correct a slip without turning every miss into
+// an open-ended guessing game.
+const MAX_QUESTION_ATTEMPTS = 2
 
 function loadLessonSession(storageKey, flowLength) {
   const empty = { stepIndex: 0, activityStates: {}, streak: 0 }
@@ -55,7 +60,7 @@ function UnavailableLesson({ lessonId }) {
   )
 }
 
-export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile, xp = 0 }) {
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, onQuestionOutcome, profile, xp = 0 }) {
   const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
   const lesson = getLesson(activeLessonId)
   // Rebuilt per lesson rather than once at module load, so the id actually selects content.
@@ -89,7 +94,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
   const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
   const answer = questionState?.answer
+  // `checked` means resolved — correct, or the attempt cap was reached — not
+  // merely "Check was pressed once." A session saved before retries existed
+  // has no `attempts` field; defaulting it to 0 treats that as a fresh start.
   const isChecked = questionState?.checked ?? false
+  const attempts = questionState?.attempts ?? 0
+  const isRetrying = isQuestion && attempts > 0 && !isChecked
   const canCheck = isQuestion && isQuestionComplete(currentStep.question, answer)
   const isLastStep = session.stepIndex === lessonFlow.length - 1
 
@@ -152,7 +162,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const answerQuestion = (nextAnswer) => {
     setSession((current) => ({
       ...current,
-      activityStates: { ...current.activityStates, [currentStep.id]: { answer: nextAnswer, checked: false } },
+      // Spread the existing entry so `attempts` survives a re-answer during a
+      // retry instead of being wiped back to a fresh-question state.
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], answer: nextAnswer, checked: false } },
     }))
   }
 
@@ -175,9 +187,33 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
   const checkQuestion = () => {
     const correct = isQuestionCorrect(currentStep.question, answer)
-    if (correct) setSuccessPulse((current) => current + 1)
-    else setErrorPulse((current) => current + 1)
-    const nextStreak = correct ? session.streak + 1 : 0
+    const nextAttempts = attempts + 1
+    const resolved = correct || nextAttempts >= MAX_QUESTION_ATTEMPTS
+    const firstTryCorrect = correct && nextAttempts === 1
+
+    if (!resolved) {
+      setErrorPulse((current) => current + 1)
+      sayDevyLine(getDevyLine({ event: 'retry' }))
+      const clearedAnswer = isFillType(currentStep.question) ? clearIncorrectBlanks(currentStep.question, answer) : undefined
+      setSession((current) => ({
+        ...current,
+        activityStates: { ...current.activityStates, [currentStep.id]: { answer: clearedAnswer, checked: false, attempts: nextAttempts } },
+      }))
+      return
+    }
+
+    // A prior retry may have already lit the error glow this question — only
+    // one glow may be on screen at once, so resolving always clears the other.
+    if (correct) {
+      setSuccessPulse((current) => current + 1)
+      setErrorPulse(0)
+    } else {
+      setErrorPulse((current) => current + 1)
+      setSuccessPulse(0)
+    }
+    // Only a clean first-try answer extends the in-a-row counter — a correct
+    // guess on retry shouldn't read the same as getting it right the first time.
+    const nextStreak = firstTryCorrect ? session.streak + 1 : 0
     sayDevyLine(
       correct && nextStreak >= STREAK_THRESHOLD
         ? getDevyLine({ event: 'streak', streak: nextStreak })
@@ -185,9 +221,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     )
     setSession((current) => ({
       ...current,
-      activityStates: { ...current.activityStates, [currentStep.id]: { answer, checked: true } },
+      activityStates: { ...current.activityStates, [currentStep.id]: { answer, checked: true, attempts: nextAttempts, firstTryCorrect } },
       streak: nextStreak,
     }))
+    onQuestionOutcome?.(activeLessonId, currentStep.concept.id, { correct, attempts: nextAttempts, firstTryCorrect })
   }
 
   const finishLesson = () => {
@@ -258,7 +295,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           : isQuestion
             ? (isChecked
               ? { label: 'Continue', onClick: goNext }
-              : { label: 'Check', onClick: checkQuestion, disabled: !canCheck })
+              : { label: attempts > 0 ? 'Try again' : 'Check', onClick: checkQuestion, disabled: !canCheck })
             : { label: 'Continue', onClick: goNext }
 
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
@@ -403,6 +440,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               headingLevel="h1"
               answer={answer}
               checked={isChecked}
+              retrying={isRetrying}
+              firstTryCorrect={Boolean(questionState?.firstTryCorrect)}
               onAnswer={answerQuestion}
               onAskDevy={() => setIsDevyOpen(true)}
             />
@@ -421,7 +460,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           <ConceptTransition
             {...currentStep.completion}
             mood="celebrating"
-            stats={[{ value: `+${LESSON_XP}`, label: 'XP' }, ...recapStats()]}
+            stats={[{ value: `+${LESSON_XP}`, label: 'XP' }, { value: `+${LESSON_COIN_AWARD}`, label: 'Devy Coins' }, ...recapStats()]}
           />
         )}
       </main>

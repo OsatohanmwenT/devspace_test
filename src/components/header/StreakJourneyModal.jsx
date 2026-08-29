@@ -3,7 +3,7 @@ import { CheckIcon, LockIcon } from '../ui/icons'
 import { Drawer } from '../ui/Drawer'
 import { DevyMood } from '../ui/DevyMood'
 import { InfoTooltip } from '../ui/InfoTooltip'
-import { getStreakHistory, getTimeUntilMidnight, STREAK_MILESTONES } from '../../lib/streak'
+import { getStreakEra, getStreakHistory, getTimeUntilMidnight, STREAK_MILESTONES } from '../../lib/streak'
 
 // The journey is a side panel rather than a full modal for the same reason the
 // cheatsheet is: it's something you consult, not a destination. Keeping the page
@@ -52,6 +52,7 @@ export function StreakJourneyModal({
   const activity = getStreakHistory(currentStreak, lastActiveDate, activeDates, clock)
   const nextMilestone = STREAK_MILESTONES.find((tier) => tier.days > currentStreak)
   const isAtRisk = currentStreak > 0 && !isActiveToday
+  const streakEra = getStreakEra(currentStreak)
 
   const status = isAtRisk
     ? { text: `${getTimeUntilMidnight(clock)} left to keep your streak`, className: 'text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]' }
@@ -107,6 +108,11 @@ export function StreakJourneyModal({
             <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
               Day<br />streak
             </span>
+            {currentStreak > 0 && (
+              <span className={`ml-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[.06em] ${streakEra.accentClass} bg-current/10`}>
+                {streakEra.label}
+              </span>
+            )}
             {/* The status line below already says whether today is covered, but
                 it says it in 13px grey. Devy says it at a glance. */}
             {(isAtRisk || isActiveToday) && (

@@ -5,7 +5,7 @@ import { DevyMood } from '../ui/DevyMood'
 // Shared by the mid-lesson concept hand-off and the end-of-lesson screen. They
 // look alike but are not the same event, so the mood is the caller's call:
 // finishing a lesson is worth a celebration, moving between concepts is not.
-export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badge }) {
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badge, stats }) {
   const rootRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -18,6 +18,12 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
         .from('[data-transition-eyebrow]', { autoAlpha: 0, y: 8, duration: 0.3 }, '-=0.15')
         .from('[data-transition-title]', { autoAlpha: 0, y: 10, duration: 0.35 }, '-=0.15')
         .from('[data-transition-body]', { autoAlpha: 0, y: 8, duration: 0.35 }, '-=0.2')
+
+      // Only in the DOM when stats are passed — animating a selector with no
+      // match is what was logging GSAP's "target not found" console warning.
+      if (stats?.length > 0) {
+        timeline.from('[data-transition-stats]', { autoAlpha: 0, y: 8, duration: 0.35 }, '-=0.2')
+      }
 
       // The ongoing cheer only starts once GSAP is done writing to the mark —
       // starting it any earlier is exactly the conflict this component avoids.
@@ -69,6 +75,16 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
           <p data-transition-body className="mt-4 mb-0 max-w-[48ch] text-balance text-base leading-[1.6] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968] max-[720px]:mt-3 max-[720px]:text-[15px]">
             {body}
           </p>
+          {stats?.length > 0 && (
+            <dl data-transition-stats className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label="Lesson results">
+              {stats.map((stat, index) => (
+                <div key={index} className="grid min-w-[86px] gap-0.5 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-2.5 text-center">
+                  <dd className="m-0 font-rethink-sans text-lg font-bold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{stat.value}</dd>
+                  <dt className="m-0 text-[11px] font-semibold uppercase tracking-[.06em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{stat.label}</dt>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
       </div>
     </section>

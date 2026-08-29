@@ -1,23 +1,22 @@
-const PALETTE = ['#6699ec', '#04adc0', '#e08a3c', '#7fb069', '#e0607e', '#5fb8ff']
+import { resolveAvatar } from '../../lib/avatarStyles'
+
 const SIZES = {
-  sm: 'size-7 text-xs',
-  md: 'size-10 text-[15px]',
-  lg: 'size-14 text-xl',
+  sm: 'size-7',
+  md: 'size-10',
+  lg: 'size-14',
 }
 
-function colorForName(name) {
-  const sum = [...name].reduce((total, char) => total + char.charCodeAt(0), 0)
-  return PALETTE[sum % PALETTE.length]
-}
-
-export function Avatar({ name, size = 'md', className = '' }) {
-  const initial = name?.trim()?.[0]?.toUpperCase() ?? '?'
+// Every profile — the learner's own and every simulated rival's — gets a
+// real DiceBear SVG (see lib/avatarStyles.js), not an initials circle.
+// `avatarStyle`/`avatarSeed` are only ever set once someone has actually
+// chosen a look; until then `resolveAvatar` derives a stable default from
+// whatever seed is available, so nobody ever renders blank.
+export function Avatar({ name, avatarStyle, avatarSeed, size = 'md', className = '' }) {
+  const { uri } = resolveAvatar(avatarStyle, avatarSeed, avatarSeed || name)
 
   return (
-    <span className={`inline-grid shrink-0 place-items-center rounded-full font-rethink-sans font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
-      {initial}
+    <span className={`inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-[#262626] [[data-theme=light]_&]:bg-[#f0f0ee] ${SIZES[size] ?? SIZES.md} ${className}`}>
+      <img src={uri} alt="" className="h-full w-full" aria-hidden="true" />
     </span>
   )
 }
-
-

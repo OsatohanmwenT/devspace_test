@@ -18,6 +18,8 @@ export function normalizeProfile(profile = null) {
     headline: typeof profile.headline === 'string' ? profile.headline : '',
     bio: typeof profile.bio === 'string' ? profile.bio : '',
     photo: typeof profile.photo === 'string' && profile.photo ? profile.photo : null,
+    avatarStyle: typeof profile.avatarStyle === 'string' && profile.avatarStyle ? profile.avatarStyle : null,
+    avatarSeed: typeof profile.avatarSeed === 'string' && profile.avatarSeed ? profile.avatarSeed : null,
     projectInterest: Array.isArray(profile.projectInterest)
       ? profile.projectInterest
       : profile.projectInterest ? [profile.projectInterest] : [],

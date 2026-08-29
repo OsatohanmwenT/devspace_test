@@ -78,3 +78,12 @@ export function buildLessonFlow(lesson) {
 
   return flow
 }
+
+// Picks the same first quiz question every time — deterministic rather than
+// random, so a recall check is reproducible and testable, and a learner
+// doesn't feel like they're being quizzed on a moving target.
+export function getConceptRecallQuestion(lesson, conceptId) {
+  const concept = lesson?.concepts?.find((candidate) => candidate.id === conceptId)
+  const quiz = concept?.activities?.find((activity) => activity.type === 'quiz')
+  return quiz?.content?.questions?.[0] ?? null
+}

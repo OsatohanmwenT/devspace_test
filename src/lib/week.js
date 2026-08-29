@@ -71,3 +71,45 @@ export function formatTimeRemaining(ms) {
   if (hours > 0) return `${hours}h ${minutes}m left`
   return `${minutes}m left`
 }
+
+// Competitive seasons run on their own 28-day cycle, independent of the
+// weekly streak/XP cadence above — same anchor and sim-offset mechanism
+// (`now()`), so the same `?simOffset=` trick that fast-forwards a week also
+// fast-forwards a season, just on a longer clock.
+export const SEASON_DAYS = 28
+const SEASON_MS = SEASON_DAYS * DAY_MS
+const SEASON_ANCHOR = ANCHOR
+
+export function getSeasonStart(timestamp) {
+  const cycles = Math.floor((timestamp - SEASON_ANCHOR) / SEASON_MS)
+  return SEASON_ANCHOR + cycles * SEASON_MS
+}
+
+export function getSeasonIndex(timestamp) {
+  return Math.floor((timestamp - SEASON_ANCHOR) / SEASON_MS)
+}
+
+export function getSeasonStartFromIndex(seasonIndex) {
+  return SEASON_ANCHOR + seasonIndex * SEASON_MS
+}
+
+export function getSeasonEnd(timestamp) {
+  return getSeasonStartFromIndex(getSeasonIndex(timestamp) + 1)
+}
+
+// How far through the season we are, 0 at the start and 1 at the next boundary.
+export function getSeasonProgress(timestamp) {
+  const start = getSeasonStart(timestamp)
+  const end = getSeasonEnd(timestamp)
+  return Math.min(1, Math.max(0, (timestamp - start) / (end - start)))
+}
+
+export function getSeasonTimeRemaining(timestamp) {
+  return Math.max(0, getSeasonEnd(timestamp) - timestamp)
+}
+
+// A 1-based, human-facing season number — index 0 (the anchor's own season)
+// reads as "Season 1", matching how nobody would want to see "Season 0".
+export function getSeasonNumber(seasonIndex) {
+  return seasonIndex + 1
+}

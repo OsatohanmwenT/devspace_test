@@ -1,6 +1,6 @@
-// Personas the weekly cohorts are drawn from. `pace` is baseline XP per active
-// day in Bronze (scaled up per league); `consistency` is how likely they are to
-// practise on any given day.
+// Personas each season's cohorts are drawn from. `pace` is baseline Devy Coins
+// per active day in Bronze (scaled up per league); `consistency` is how likely
+// they are to practise on any given day.
 //
 // ORDER IS LOAD-BEARING: buildCohort shuffles this array by index, so inserting,
 // removing or reordering an entry silently rewrites every past and future

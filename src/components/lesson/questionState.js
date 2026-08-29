@@ -36,3 +36,13 @@ export function clearBlank(answer, blankIndex) {
   blanks[blankIndex] = undefined
   return blanks
 }
+
+// Retry should not punish the blanks the learner already got right — only
+// the wrong ones are cleared, so a partially-correct fill question keeps its
+// progress across a retry instead of starting over from empty.
+export function clearIncorrectBlanks(question, answer) {
+  const blanks = [...(answer ?? [])]
+  return blanks.map((selectedIndex, blankIndex) =>
+    question.options[selectedIndex] === question.answers[blankIndex] ? selectedIndex : undefined,
+  )
+}

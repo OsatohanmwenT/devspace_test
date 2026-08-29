@@ -28,6 +28,32 @@ export function earnMilestones(streakDays, earnedDays = []) {
     restores: earned.reduce((total, tier) => total + tier.restores, 0),
   }
 }
+// Four escalating bands matching the original day-range design (1-7 / 8-30 /
+// 31-100 / 100+). There's no new mascot art behind any of this — the "growth"
+// is entirely color/copy intensity layered on the same three Devy moods, so
+// this only ever needs to return a treatment, never an asset path.
+export const STREAK_ERAS = [
+  { id: 'spark', minDays: 1, label: 'Warming up', accentClass: 'text-[#f5a623]', bgClass: 'bg-[#f5a623]', glowClass: 'shadow-[0_0_0_3px_rgba(245,166,35,0.18)]' },
+  { id: 'climb', minDays: 8, label: 'Climbing', accentClass: 'text-[#ff9d3d]', bgClass: 'bg-[#ff9d3d]', glowClass: 'shadow-[0_0_0_4px_rgba(255,157,61,0.24)]' },
+  { id: 'world', minDays: 31, label: 'New world unlocked', accentClass: 'text-[#ff7a3d]', bgClass: 'bg-[#ff7a3d]', glowClass: 'shadow-[0_0_0_5px_rgba(255,122,61,0.3)]' },
+  { id: 'legend', minDays: 100, label: 'Legendary streak', accentClass: 'text-[#f0c964]', bgClass: 'bg-[#f0c964]', glowClass: 'shadow-[0_0_0_6px_rgba(240,201,100,0.38)]' },
+]
+
+export function getStreakEra(streakDays) {
+  return [...STREAK_ERAS].reverse().find((era) => streakDays >= era.minDays) ?? STREAK_ERAS[0]
+}
+
+// The UI needs to know not just "what's been earned" but "what was *just*
+// earned" to fire a one-time celebration rather than re-showing it every
+// render — this is the one place that answers that, so nothing downstream
+// re-derives it by diffing arrays itself.
+export function findNewestMilestone(previousEarned = [], nextEarned = []) {
+  const newlyEarnedDays = nextEarned.filter((day) => !previousEarned.includes(day))
+  if (newlyEarnedDays.length === 0) return null
+  const highestDay = Math.max(...newlyEarnedDays)
+  return STREAK_MILESTONES.find((tier) => tier.days === highestDay) ?? null
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 function startOfDay(value) {

@@ -16,6 +16,17 @@ export function GemIcon({ className }) {
   )
 }
 
+export function CoinIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="currentColor" />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+      <path d="M9.5 15.2c.5.6 1.4 1 2.5 1 1.7 0 2.8-.8 2.8-1.9 0-1.2-1.1-1.6-2.6-1.9-1.6-.3-2.4-.6-2.4-1.6 0-.9.9-1.5 2.2-1.5.9 0 1.7.3 2.2.8" stroke="#7a5a12" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M12 7.6v9" stroke="#7a5a12" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function SirenIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">

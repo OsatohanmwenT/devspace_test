@@ -1,30 +1,45 @@
+import { getLeague, leagues } from '../../data/leagues'
+import { getRewardPool } from '../../lib/rewardConfig'
 import { PageIntroStages } from '../ui/PageIntroStages'
 
-const STAGES = [
-  {
-    title: 'Welcome to Leagues',
-    body: 'Track your progress with other learners on a weekly leaderboard.',
-    mood: 'neutral',
-  },
-  {
-    title: 'Earn XP to get ahead',
-    body: 'Finish lessons and practice sessions to climb this week’s standings.',
-    mood: 'neutral',
-  },
-  {
-    title: 'Level up each week',
-    body: 'When the week ends, the top of the board moves up to a tougher league.',
-    mood: 'celebrating',
-  },
-]
+// Fires once, the very first time the leaderboard becomes available — so in
+// practice this is always Bronze, but it's still driven by `leagueIndex`
+// rather than hardcoded, the same "no number lives twice" rule the reward
+// config itself follows.
+export function LeaderboardIntroduction({ leagueIndex = 0, onComplete }) {
+  const league = getLeague(leagueIndex)
+  const leagueName = league.name.replace(' League', '')
+  const nextLeague = league.promoteCount > 0 && leagueIndex + 1 < leagues.length ? getLeague(leagueIndex + 1) : null
 
-export function LeaderboardIntroduction({ onComplete }) {
+  const stages = [
+    {
+      eyebrow: 'Leagues',
+      title: `Welcome to ${leagueName}`,
+      body: 'You’ve been showing up. Now let’s see how far you can climb.',
+      mood: 'walking',
+    },
+    {
+      eyebrow: 'Learn. Master. Earn.',
+      title: 'Devy Coins are earned, not given',
+      body: 'A clean first-try answer, a finished lesson, a real practice round — all earn competitive Devy Coins. Repeating what you already know does not.',
+      mood: 'neutral',
+    },
+    {
+      eyebrow: `${league.name} reward pool`,
+      title: `₦${getRewardPool(league.id).toLocaleString()}`,
+      body: nextLeague
+        ? `Climb into a reward position. Top learners can unlock ${nextLeague.name}.`
+        : 'Climb into a reward position — this is the top league, so every rank here counts.',
+      mood: 'celebrating',
+    },
+  ]
+
   return (
     <PageIntroStages
-      stages={STAGES}
-      finalActionLabel="See the board"
+      stages={stages}
+      finalActionLabel={`Enter ${leagueName}`}
       onDone={onComplete}
-      ariaLabel="About leagues"
+      ariaLabel={`Welcome to ${league.name}`}
     />
   )
 }

@@ -139,7 +139,7 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
   )
 }
 
-export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy, headingLevel: Heading = 'h2', prefix }) {
+export function LessonQuestion({ question, answer, checked, retrying = false, firstTryCorrect = false, onAnswer, onAskDevy, headingLevel: Heading = 'h2', prefix }) {
   const correct = checked && isQuestionCorrect(question, answer)
   const placeOption = (optionIndex, blankIndex) => {
     if (checked || !Number.isInteger(optionIndex) || optionIndex < 0 || optionIndex >= question.options.length || answer?.includes(optionIndex) || answer?.[blankIndex] !== undefined) return
@@ -166,10 +166,30 @@ export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy,
         </div>
         : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
 
+      {/* A wrong answer with attempts left gets a nudge, not the reveal — no
+          correctness or explanation is derived here, so there's nothing to
+          spoil even by inspecting the DOM. */}
+      {!checked && retrying && (
+        <aside className="flex items-center gap-3 rounded-xl border border-[#4a3f22] bg-[#2a2416] px-4 py-2.5 [[data-theme=light]_&]:border-[#f0dfa8] [[data-theme=light]_&]:bg-[#fdf6e3] max-[720px]:items-start" aria-live="polite">
+          <DevyMood mood="neutral" className="size-9 flex-none" />
+          <div className="min-w-0 flex-1">
+            <strong className="block text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Not quite yet</strong>
+            <p className="m-0 mt-0.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Have another look and try again.</p>
+          </div>
+          {onAskDevy && <button type="button" className="min-h-9 flex-none rounded-lg border border-[#5c5c60] bg-transparent px-3.5 text-sm font-semibold text-[#f4f4f2] hover:border-[#6699ec] hover:bg-[#303030] [[data-theme=light]_&]:border-[#e5e5e5] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#fafafa]" onClick={onAskDevy}>Ask Devy</button>}
+        </aside>
+      )}
+
       {checked && (
         <div className="grid gap-3">
           <div className={`lesson-answer-feedback ${correct ? 'lesson-answer-feedback-correct' : 'lesson-answer-feedback-error'} rounded-2xl border px-5 py-3.5 ${correct ? 'border-[#2b5540] bg-[#16281f] [[data-theme=light]_&]:border-[#b6e3ca] [[data-theme=light]_&]:bg-[#e7f6ee]' : 'border-[#5c2f2b] bg-[#2a1817] [[data-theme=light]_&]:border-[#f5c6c2] [[data-theme=light]_&]:bg-[#fdecea]'}`}>
-            <strong className={`block text-sm ${correct ? 'text-[#6ee7a8] [[data-theme=light]_&]:text-[#197a4b]' : 'text-[#ffa8a2] [[data-theme=light]_&]:text-[#b3261e]'}`}>{correct ? 'Correct' : 'Not quite'}</strong>
+            <strong className={`block text-sm ${correct ? 'text-[#6ee7a8] [[data-theme=light]_&]:text-[#197a4b]' : 'text-[#ffa8a2] [[data-theme=light]_&]:text-[#b3261e]'}`}>
+              {correct ? 'Correct' : 'Not quite'}
+              {/* A clean first-try answer is the only one that earns a coin —
+                  a retry-then-correct still resolves the question fine, it just
+                  doesn't get this note, so the reward stays tied to a clean read. */}
+              {firstTryCorrect && <span className="ml-2 text-[#f0c964]">+1 Devy Coin</span>}
+            </strong>
             <p className="m-0 mt-2 text-[15px] leading-[1.55] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"><RichText content={question.explanation} /></p>
           </div>
 

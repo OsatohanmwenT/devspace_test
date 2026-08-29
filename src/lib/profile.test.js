@@ -4,8 +4,18 @@ import { getProfileProgress, isProfileUrl, normalizeProfile, WORK_TYPES } from '
 
 test('profile migration keeps existing onboarding data and adds safe defaults', () => {
   assert.deepEqual(normalizeProfile({ role: 'frontend_developer' }), {
-    role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
+    role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, avatarStyle: null, avatarSeed: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
   })
+})
+
+test('profile migration keeps a chosen avatar, and defaults an unset one to null', () => {
+  const chosen = normalizeProfile({ avatarStyle: 'pixelArt', avatarSeed: 'ada-lovelace' })
+  assert.equal(chosen.avatarStyle, 'pixelArt')
+  assert.equal(chosen.avatarSeed, 'ada-lovelace')
+
+  const unset = normalizeProfile({ avatarStyle: '', avatarSeed: 42 })
+  assert.equal(unset.avatarStyle, null)
+  assert.equal(unset.avatarSeed, null)
 })
 
 test('profile migration turns older scalar interests and needs into arrays', () => {

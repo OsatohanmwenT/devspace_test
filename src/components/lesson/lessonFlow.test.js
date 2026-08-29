@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildLessonFlow } from './lessonFlow.js'
+import { buildLessonFlow, getConceptRecallQuestion } from './lessonFlow.js'
 
 function makeQuiz(conceptIndex, questionCount) {
   return {
@@ -100,4 +100,26 @@ test('leaves a quiz with no authored questions as a single step', () => {
 
   assert.equal(flow.filter((step) => step.type === 'question').length, 0)
   assert.deepEqual(flow.map((step) => step.kind), ['activity', 'activity', 'complete'])
+})
+
+test('a recall check picks the concept\'s first quiz question', () => {
+  const question = getConceptRecallQuestion(makeLesson(2, 2), 'concept-2')
+
+  assert.equal(question.id, 'c2-q1')
+  assert.equal(question.prompt, 'Question 1')
+})
+
+test('a concept with no quiz activity has no recall question', () => {
+  const lesson = makeLesson(1)
+  lesson.concepts[0].activities = [lesson.concepts[0].activities[0]]
+
+  assert.equal(getConceptRecallQuestion(lesson, 'concept-1'), null)
+})
+
+test('an unknown concept id has no recall question', () => {
+  assert.equal(getConceptRecallQuestion(makeLesson(1), 'not-a-real-concept'), null)
+})
+
+test('a missing lesson has no recall question', () => {
+  assert.equal(getConceptRecallQuestion(null, 'concept-1'), null)
 })

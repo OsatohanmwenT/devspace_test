@@ -1,4 +1,4 @@
-import { MotionConfig } from 'motion/react';
+import { motion, MotionConfig } from 'motion/react';
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
@@ -7,8 +7,15 @@ import { ShortSessionRow } from './components/home/ShortSessionRow';
 import LeaderboardView from './components/leaderboard';
 import { LeagueQualifiedCelebration } from './components/leaderboard/LeagueQualifiedCelebration';
 import { getLesson } from './components/lesson/lessonContent';
+import { getConceptRecallQuestion } from './components/lesson/lessonFlow';
 import { LessonLoading } from './components/lesson/LessonLoading';
 import LessonView from './components/lesson/LessonView';
+import { RecallCheckModal } from './components/lesson/RecallCheckModal';
+import { AvatarPickerModal } from './components/profile/AvatarPickerModal';
+import { ReviewReminderCard } from './components/home/ReviewReminderCard';
+import { StreakMilestoneCelebration } from './components/header/StreakMilestoneCelebration';
+import { SilverPassCelebration } from './components/leaderboard/SilverPassCelebration';
+import { SeasonRecapView } from './components/leaderboard/SeasonRecapView';
 import OnboardingView from './components/onboarding';
 import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome';
 import PathsView from './components/paths';
@@ -17,24 +24,29 @@ import PlansView from './components/plans';
 import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
 import ProfileView from './components/profile';
+import RewardsView from './components/rewards/RewardsView';
 import SettingsView from './components/settings';
 import { ActionButton } from './components/ui/ActionButton';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
 import { Badge } from './components/ui/Badge';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyMood } from './components/ui/DevyMood';
-import { BoltIcon, SirenIcon } from './components/ui/icons';
+import { BoltIcon, CoinIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
-import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
+import { activatePremium, addCoins, applyActivity, CONCEPT_COIN_AWARD, deactivatePremium, getDailyXp, getPracticeXpAward, LESSON_COIN_AWARD, loadProgress, markPageIntroductionSeen, PRACTICE_COIN_AWARD, recordConceptMastery, saveCustomPath, saveProgress, setAvatarChoice, setPayoutMethod, switchPrimaryPath } from './data/progress';
+import { getStandings, getZoneSummary, resolveSeason, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
+import { sanitizeLeagueAccess } from './lib/leagueAccess';
+import { buildSeasonRecap } from './lib/seasonRecap';
+import { findDueConcepts, parseConceptKey } from './lib/mastery';
 import { computeDailyGoal } from './lib/onboarding';
+import { advancePayout, confirmDueRewards, createRewardEntry, requestPayout } from './lib/payouts';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
-import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
-import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week';
+import { findNewestMilestone, getStreakEra, getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
+import { formatTimeRemaining, getSeasonIndex, getSeasonTimeRemaining, getWeekIndex, now } from './lib/week';
 import './styles.css';
 import './tailwind.css';
 
@@ -57,6 +69,7 @@ function App() {
   const [openPractice, setOpenPractice] = useState(null)
   const [activePopover, setActivePopover] = useState(null)
   const [streakJourneyOpen, setStreakJourneyOpen] = useState(false)
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [progress, setProgress] = useState(loadProgress)
   const [plansHighlight, setPlansHighlight] = useState(null)
   const [publicProfileView, setPublicProfileView] = useState(false)
@@ -64,6 +77,23 @@ function App() {
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   const [leagueCelebration, setLeagueCelebration] = useState(null)
   const [roadmapTransition, setRoadmapTransition] = useState(null)
+  // Which concept's recall-check modal is open, if any — separate from
+  // `dueReview` below, since the due concept can keep changing underneath an
+  // already-open modal without closing it.
+  const [reviewPrompt, setReviewPrompt] = useState(null)
+  // The streak tier just crossed, if any — set by checkStreakMilestone right
+  // after any applyActivity call, so the splash only ever fires once per
+  // crossing rather than re-deriving "is this new" from render state.
+  const [streakCelebration, setStreakCelebration] = useState(null)
+  // The fullscreen "you earned a Silver League Pass" moment — set only the
+  // one season a top-10 Bronze finish actually grants a fresh pass (see
+  // resolveSeason's passJustGranted), never on a season that merely spends
+  // one earned earlier.
+  const [silverPassCelebration, setSilverPassCelebration] = useState(null)
+  // Opened on demand from the "View season recap" link on the last result —
+  // never auto-popped, so it never has to compete with the pass celebration
+  // or the roadmap transition for the screen.
+  const [seasonRecapOpen, setSeasonRecapOpen] = useState(false)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -157,27 +187,84 @@ function App() {
     window.setTimeout(() => setNotice(''), 2200)
   }
 
-  // Settle any finished week before the leaderboard renders, so promotion and
-  // demotion have already been applied by first paint.
+  // Settle any finished season before the leaderboard renders, so promotion,
+  // demotion, and Silver+ access have already been applied by first paint. A
+  // season that paid a reward opens a review entry here — the money doesn't
+  // reach Reward Balance until confirmDueRewards below closes that review
+  // out. `leagueIndex` here already reflects the access gate (lib/leagueAccess.js)
+  // — a rank-earned promotion into a Pro-gated league without access lands
+  // back in Bronze, with the achievement itself kept in `highestQualifiedLeagueIndex`.
   useEffect(() => {
     setProgress((current) => {
-      const result = resolveWeek(current, now())
+      const result = resolveSeason(current, now())
       if (!result) return current
       const next = {
         ...current,
-        weekIndex: getWeekIndex(now()),
-        weeklyXp: 0,
+        seasonIndex: getSeasonIndex(now()),
+        seasonDevyCoins: 0,
         leagueIndex: result.nextLeagueIndex,
         lastLeagueResult: result,
+        rewardHistory: [...(current.rewardHistory ?? []), createRewardEntry(result, now())],
+        leaguePasses: result.leaguePasses,
+        highestQualifiedLeagueIndex: result.highestQualifiedLeagueIndex,
+        leagueAccessGrantedForSeason: result.leagueAccessGrantedForSeason,
+      }
+      if (result.passJustGranted) {
+        setSilverPassCelebration({ rank: result.rank, usedImmediately: result.accessVia === 'pass' })
       }
       saveProgress(next)
       return next
     })
   }, [])
 
+  // Self-heals a `leagueIndex` that doesn't match a grant recorded for the
+  // season in progress — catches a tampered or stale value the gate above
+  // never actually produced, without disturbing a learner mid-season just
+  // because Pro happened to lapse after they legitimately entered (see
+  // sanitizeLeagueAccess). Runs once per load, not continuously — a
+  // continuous check would eject that mid-season learner immediately instead
+  // of letting them finish the season they're already in.
+  useEffect(() => {
+    setProgress((current) => {
+      const next = sanitizeLeagueAccess(current, getSeasonIndex(now()))
+      if (next === current) return current
+      saveProgress(next)
+      return next
+    })
+  }, [])
+
+  // Confirms any reward whose review window has closed and advances any
+  // payout in flight — both run off elapsed time, the same way resolveSeason
+  // settles a season without ever having "waited" for it in real time. Ticks
+  // on the same interval the leaderboard's own clock uses, so the two never
+  // visibly disagree about what time it is.
+  useEffect(() => {
+    const settle = () => {
+      setProgress((current) => {
+        const next = advancePayout(confirmDueRewards(current, now()), now())
+        if (next === current) return current
+        saveProgress(next)
+        return next
+      })
+    }
+    settle()
+    const id = window.setInterval(settle, 60 * 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  // Fires the one-time streak splash the moment a tier is crossed — called
+  // from inside each setProgress updater right after applyActivity, the same
+  // place setLeagueCelebration/setRoadmapTransition already fire their own
+  // one-time screens from.
+  const checkStreakMilestone = (previous, next) => {
+    const milestone = findNewestMilestone(previous.earnedStreakMilestones, next.earnedStreakMilestones)
+    if (milestone) setStreakCelebration({ streakDays: next.streakDays, milestone })
+  }
+
   const recordActivity = (xpGain) => {
     setProgress((current) => {
       const next = applyActivity(current, xpGain)
+      checkStreakMilestone(current, next)
       saveProgress(next)
       return next
     })
@@ -189,13 +276,17 @@ function App() {
       // The award rule lives in data/progress so the results screen can state
       // the same number this banks — completedAt is overwritten every time, so
       // a same-day retry can never be double-counted.
+      const isFirstCompletion = !current.completedSessions?.[sessionId]
+      const withActivity = applyActivity(current, getPracticeXpAward(current, sessionId, today), today)
+      const withCoins = isFirstCompletion ? addCoins(withActivity, PRACTICE_COIN_AWARD) : withActivity
       const next = {
-        ...applyActivity(current, getPracticeXpAward(current, sessionId, today), today),
+        ...withCoins,
         completedSessions: {
           ...current.completedSessions,
           [sessionId]: { correctCount, total, completedAt: today },
         },
       }
+      checkStreakMilestone(current, next)
       saveProgress(next)
       return next
     })
@@ -206,10 +297,13 @@ function App() {
       const today = new Date().toDateString()
       // First completion earns XP; replays still update the record.
       const isFirstCompletion = !current.completedLessons?.[completedLessonId]
+      const withActivity = applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today)
+      const withCoins = isFirstCompletion ? addCoins(withActivity, LESSON_COIN_AWARD) : withActivity
       const next = {
-        ...applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today),
+        ...withCoins,
         completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
       }
+      checkStreakMilestone(current, next)
 
       // A region's `state` only flips to 'completed' once every lesson in it
       // has — comparing before/after catches exactly the completion that
@@ -221,18 +315,19 @@ function App() {
         : null
       if (transition) setRoadmapTransition(transition)
 
-      // Any XP puts a learner on the board (LeaderboardView gates on
-      // `weeklyXp > 0`), and starting a mission already awards some — so the
-      // crossing itself usually happens before the lesson is done. Rather than
-      // fire mid-lesson, the celebration waits for the end of the lesson: the
-      // first completion that finds the learner already on the board, once
-      // ever. A roadmap transition takes the screen first when both happen on
-      // the same completion — the league celebration queues and fires only
-      // once that transition closes, rather than stacking on top of it.
-      const isOnBoard = next.weeklyXp > 0
+      // Any Devy Coins put a learner on the board (LeaderboardView gates on
+      // `seasonDevyCoins > 0`), and a first lesson completion already awards
+      // some — so the crossing itself usually happens before the lesson is
+      // done. Rather than fire mid-lesson, the celebration waits for the end
+      // of the lesson: the first completion that finds the learner already on
+      // the board, once ever. A roadmap transition takes the screen first
+      // when both happen on the same completion — the league celebration
+      // queues and fires only once that transition closes, rather than
+      // stacking on top of it.
+      const isOnBoard = next.seasonDevyCoins > 0
       const alreadyCelebrated = Boolean(current.seenPageIntroductions?.['league-qualified'])
       if (isOnBoard && !alreadyCelebrated) {
-        const celebration = { leagueIndex: next.leagueIndex, weeklyXp: next.weeklyXp }
+        const celebration = { leagueIndex: next.leagueIndex, seasonDevyCoins: next.seasonDevyCoins }
         if (transition) pendingLeagueCelebrationRef.current = celebration
         else setLeagueCelebration(celebration)
         const seen = markPageIntroductionSeen(next, 'league-qualified')
@@ -243,6 +338,36 @@ function App() {
       return next
     })
     showNotice(`Lesson complete · +${LESSON_XP} XP`)
+  }
+
+  // The hidden counterpart to recordLessonCompletion — a single question's
+  // outcome feeds the learning-evidence signal in lib/mastery.js. Deliberately
+  // untangled from applyActivity: mastery never touches XP or streak. Coins
+  // are the one visible reward tied to this moment, for a clean answer only —
+  // a retry-then-correct still resolves the question but earns nothing extra.
+  const recordQuestionOutcome = (lessonId, conceptId, outcome) => {
+    setProgress((current) => {
+      const withMastery = recordConceptMastery(current, lessonId, conceptId, outcome)
+      const next = outcome.firstTryCorrect ? addCoins(withMastery, CONCEPT_COIN_AWARD) : withMastery
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const handleSetPayoutMethod = (method) => {
+    setProgress((current) => {
+      const next = setPayoutMethod(current, method)
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const handleRequestPayout = () => {
+    setProgress((current) => {
+      const next = requestPayout(current, now())
+      saveProgress(next)
+      return next
+    })
   }
 
   // The celebration sits on top of the finished lesson, so continuing has to
@@ -377,10 +502,39 @@ function App() {
   const completeOnboarding = (nextProfile) => {
     setProgress((current) => {
       const next = { ...current, profile: nextProfile }
+      if (!current.seenPageIntroductions?.['avatar-picker']) {
+        setShowAvatarPicker(true)
+        const seen = markPageIntroductionSeen(next, 'avatar-picker')
+        saveProgress(seen)
+        return seen
+      }
       saveProgress(next)
       return next
     })
     setShowFirstLessonWelcome(true)
+  }
+
+  // Covers all three lesson-exit paths (finish, leave, cancel) since
+  // LessonView funnels every one of them through this single onExit call.
+  // Gated the same way as the league-qualified celebration above: fires once
+  // ever, whichever of onboarding-complete or this fires first.
+  const handleLessonExit = () => {
+    setOpenLesson(null)
+    setProgress((current) => {
+      if (current.seenPageIntroductions?.['avatar-picker']) return current
+      setShowAvatarPicker(true)
+      const seen = markPageIntroductionSeen(current, 'avatar-picker')
+      saveProgress(seen)
+      return seen
+    })
+  }
+
+  const saveAvatarChoice = ({ avatarStyle, avatarSeed, name }) => {
+    setProgress((current) => {
+      const next = setAvatarChoice(current, { avatarStyle, avatarSeed, ...(name ? { name } : {}) })
+      saveProgress(next)
+      return next
+    })
   }
 
   const launchLesson = (lessonId) => {
@@ -409,7 +563,33 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile, customPaths, pathHistory, seenPageIntroductions } = progress
+  const { xp, seasonDevyCoins, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile, customPaths, pathHistory, seenPageIntroductions, masteryByConcept, devyCoins } = progress
+
+  // Captures the rank a learner had the first moment they had any coins on
+  // the board this season — the "before" half of the season recap's
+  // rank-change card. Set once per season and never overwritten, so a busy
+  // first day doesn't keep moving the starting line.
+  //
+  // Guarded entirely on `current` inside the updater, not on the closed-over
+  // `seasonDevyCoins` — this effect and the season-resolution one above both
+  // run in the same commit on mount, in declaration order. If resolution runs
+  // first and resets the season, this effect's *closure* still sees the old
+  // season's now-stale coin total, but its updater sees the fresh
+  // post-resolution state — reading `current.seasonDevyCoins` for the guard
+  // is what stops it from stamping a bogus day-one snapshot onto the season
+  // that just started, overwriting the real one for the season that just ended.
+  useEffect(() => {
+    setProgress((current) => {
+      if (current.seasonDevyCoins <= 0) return current
+      if (current.seasonStartRank?.seasonIndex === current.seasonIndex) return current
+      const standings = getStandings(current.seasonIndex, current.leagueIndex, current.seasonDevyCoins, now())
+      const rank = getZoneSummary(standings, current.leagueIndex).user.rank
+      const next = { ...current, seasonStartRank: { seasonIndex: current.seasonIndex, rank } }
+      saveProgress(next)
+      return next
+    })
+  }, [seasonDevyCoins, leagueIndex])
+
   // Onboarding picks the path; before that, the default shelf is the spine.
   // A learner-generated custom path takes priority when it's the primary one.
   const currentPath = customPaths?.[profile?.pathId] ?? getPath(profile?.pathId)
@@ -434,13 +614,36 @@ function App() {
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
   const activeToday = isActiveToday(lastActiveDate)
   const streakAtRisk = streakDays > 0 && !activeToday
+  const streakEra = getStreakEra(streakDays)
   const streakMessage = getStreakMessage(streakDays, activeToday)
   const homeStandings = useMemo(() => {
-    const standings = getStandings(getWeekIndex(now()), leagueIndex, weeklyXp, now())
+    const standings = getStandings(getSeasonIndex(now()), leagueIndex, seasonDevyCoins, now())
     const leaders = standings.slice(0, 3)
     const learner = standings.find((entry) => entry.id === USER_ID)
     return leaders.some((entry) => entry.id === USER_ID) ? leaders : [...leaders, learner]
-  }, [leagueIndex, weeklyXp])
+  }, [leagueIndex, seasonDevyCoins])
+
+  // Built once per result rather than on every render — a season only ever
+  // resolves once, so this only recomputes when there's actually a new one.
+  const seasonRecap = useMemo(
+    () => (lastLeagueResult ? buildSeasonRecap(lastLeagueResult, { masteryByConcept, seasonStartRank: progress.seasonStartRank }) : null),
+    [lastLeagueResult, masteryByConcept, progress.seasonStartRank],
+  )
+
+  // The single most-overdue concept, if any — resolved down to an actual
+  // question so a stale key (content since renamed or removed) fails closed
+  // instead of surfacing a broken review card.
+  const dueReview = useMemo(() => {
+    const [first] = findDueConcepts(masteryByConcept, new Date().toDateString())
+    if (!first) return null
+    const { lessonId, conceptId } = parseConceptKey(first.conceptKey)
+    const lesson = getLesson(lessonId)
+    const concept = lesson?.concepts?.find((candidate) => candidate.id === conceptId)
+    if (!concept) return null
+    const question = getConceptRecallQuestion(lesson, conceptId)
+    if (!question) return null
+    return { lessonId, conceptId, conceptTitle: concept.title, question }
+  }, [masteryByConcept])
 
   // Paths the learner paused to focus on the current primary one — offered
   // back on Home so switching is a click, not a rebuild. If history is empty,
@@ -488,7 +691,7 @@ function App() {
   }, [completedSessions, currentPath])
   // Reflects what the learner actually onboarded as, rather than ML for everyone.
   const homeHint = nextLesson
-    ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
+    ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${seasonDevyCoins > 0 ? 'You’ve already earned Devy Coins this season — keep the streak going.' : 'A single lesson is enough to join this season’s league.'}`
     : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
 
   // A direct preview instead of driving real completion state to reach these
@@ -601,7 +804,17 @@ function App() {
               aria-expanded={activePopover === 'xp'}
             >
               <AnimatedGemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
-              <span aria-hidden="true">{xp}</span>
+              {/* Keying on the value itself remounts the span on every gain,
+                  so the pop replays each time rather than only on first mount. */}
+              <motion.span
+                key={xp}
+                aria-hidden="true"
+                initial={{ scale: 1.35 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+              >
+                {xp}
+              </motion.span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
             {activePopover === 'xp' && (
@@ -609,6 +822,16 @@ function App() {
                 <XpPopover earnedToday={getDailyXp(progress)} xpGoal={xpGoal} />
               </div>
             )}
+          </div>
+
+          <div
+            className="inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold border-[#404040] bg-[#262626] text-[#f0c964] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#a6790f]"
+            aria-label={`${devyCoins} Devy Coins`}
+          >
+            <CoinIcon className="w-3.5 h-3.5" />
+            <motion.span key={devyCoins} aria-hidden="true" initial={{ scale: 1.35 }} animate={{ scale: 1 }} transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}>
+              {devyCoins}
+            </motion.span>
           </div>
         </div>
 
@@ -680,19 +903,22 @@ function App() {
             isLoading={profileLoading}
             isPublicView={publicProfileView}
             onTogglePublicView={setPublicProfileView}
+            onChangeAvatar={() => setShowAvatarPicker(true)}
           />
         ) : active === 'Plans' ? (
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
         ) : active === 'Leaderboard' ? (
           <LeaderboardView
-            weeklyXp={weeklyXp}
-            xp={xp}
+            seasonDevyCoins={seasonDevyCoins}
+            lifetimeCoins={devyCoins}
             leagueIndex={leagueIndex}
             lastLeagueResult={lastLeagueResult}
             progress={progress}
             onDismissResult={dismissLeagueResult}
             onStartPractice={() => setActive('Practice')}
             onOpenPlans={openPlans}
+            onViewOwnProfile={() => { setPublicProfileView(false); setActive('Profile') }}
+            onViewRecap={() => setSeasonRecapOpen(true)}
             hasSeenIntroduction={Boolean(seenPageIntroductions?.leaderboard)}
             onDismissIntroduction={() => dismissPageIntroduction('leaderboard')}
           />
@@ -702,6 +928,14 @@ function App() {
             completedSessions={completedSessions}
             currentPath={currentPath}
           />
+        ) : active === 'Rewards' ? (
+          <RewardsView
+            progress={progress}
+            leagueIndex={leagueIndex}
+            seasonDevyCoins={seasonDevyCoins}
+            onSetPayoutMethod={handleSetPayoutMethod}
+            onRequestPayout={handleRequestPayout}
+          />
         ) : (
           <>
         <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
@@ -709,7 +943,10 @@ function App() {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[38px] font-medium">{streakDays}</span>
-                <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
+                <BoltIcon className={`w-[34px] h-[34px] p-2 rounded-full text-white ${streakEra.bgClass} ${streakEra.glowClass}`} />
+                {streakDays > 0 && (
+                  <span className={`text-[11px] font-bold uppercase tracking-[.06em] ${streakEra.accentClass}`}>{streakEra.label}</span>
+                )}
               </div>
               <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
             </div>
@@ -752,6 +989,15 @@ function App() {
             </div>
           </section>
 
+          {/* Reinforcement is core-loop, the upsell below isn't — it goes
+              first when a review is actually due. */}
+          {dueReview && (
+            <ReviewReminderCard
+              conceptTitle={dueReview.conceptTitle}
+              onReview={() => setReviewPrompt({ lessonId: dueReview.lessonId, conceptId: dueReview.conceptId })}
+            />
+          )}
+
           <section className="overflow-hidden rounded-3xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f5edf4] border border-[#404040] [[data-theme=light]_&]:border-[#eadfea] [[data-theme=light]_&]:shadow-none">
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
@@ -769,16 +1015,16 @@ function App() {
             <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
               <div className="grid gap-0.5">
                 <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-semibold">{currentLeague.name}</strong>
-              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
+              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getSeasonTimeRemaining(now()))}</span>
               </div>
               <InfoTooltip label="How leagues work" align="end">
-                Earn XP this week to move up the leaderboard. Final standings update when the week ends.
+                Earn Devy Coins this season to move up the leaderboard. Final standings update when the season ends.
               </InfoTooltip>
             </div>
             <button type="button" className="grid w-full gap-2 rounded-2xl border border-[#404040] bg-[#171717] p-3.5 text-left transition-colors hover:border-[#5a5a60] hover:bg-[#1c1c1e] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:hover:border-[#d4d4d4]" onClick={() => setActive('Leaderboard')} aria-label="Open leaderboard">
               <span className="flex items-center justify-between px-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Standings</span>
-                <span>XP</span>
+                <span>Coins</span>
               </span>
               {homeStandings.map((entry) => (
                 <span key={entry.id} className={`grid min-h-8 grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-[13px] ${entry.id === USER_ID ? 'bg-[#2a293c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#e9f2ff] [[data-theme=light]_&]:text-neutral-800' : ''}`}>
@@ -883,15 +1129,32 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={handleLessonExit} onComplete={recordLessonCompletion} onQuestionOutcome={recordQuestionOutcome} profile={profile} xp={xp} />}
       {/* Rendered after LessonView so it lands on top of the lesson the learner
           just finished, rather than behind it. */}
       {leagueCelebration && (
         <LeagueQualifiedCelebration
           leagueIndex={leagueCelebration.leagueIndex}
-          weeklyXp={leagueCelebration.weeklyXp}
+          seasonDevyCoins={leagueCelebration.seasonDevyCoins}
           onClose={dismissLeagueCelebration}
         />
+      )}
+      {streakCelebration && (
+        <StreakMilestoneCelebration
+          streakDays={streakCelebration.streakDays}
+          milestone={streakCelebration.milestone}
+          onClose={() => setStreakCelebration(null)}
+        />
+      )}
+      {silverPassCelebration && (
+        <SilverPassCelebration
+          rank={silverPassCelebration.rank}
+          usedImmediately={silverPassCelebration.usedImmediately}
+          onClose={() => setSilverPassCelebration(null)}
+        />
+      )}
+      {seasonRecapOpen && seasonRecap && (
+        <SeasonRecapView recap={seasonRecap} onClose={() => setSeasonRecapOpen(false)} />
       )}
       {roadmapTransition && (
         <RoadmapTransition
@@ -903,6 +1166,24 @@ function App() {
         />
       )}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {reviewPrompt && dueReview && (
+        <RecallCheckModal
+          conceptTitle={dueReview.conceptTitle}
+          question={dueReview.question}
+          onOutcome={(outcome) => recordQuestionOutcome(reviewPrompt.lessonId, reviewPrompt.conceptId, outcome)}
+          onClose={() => setReviewPrompt(null)}
+        />
+      )}
+      {showAvatarPicker && (
+        <AvatarPickerModal
+          initialName={profile?.name}
+          initialAvatarStyle={profile?.avatarStyle}
+          initialAvatarSeed={profile?.avatarSeed}
+          seedFallback={profile?.name}
+          onSave={saveAvatarChoice}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
     </div>
   )
 }
