@@ -1,24 +1,26 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, markPageIntroductionSeen, migrateProgress, PRACTICE_XP } from './progress.js'
+import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, markPageIntroductionSeen, migrateProgress, PRACTICE_XP } from './progress.js'
+import { getWeekStartFromIndex } from '../lib/week.js'
 
 const TODAY = 'Fri Aug 07 2026'
 const YESTERDAY = 'Thu Aug 06 2026'
 
 const base = {
   xp: 100,
-  weeklyXp: 35,
+  seasonCoins: 35,
+  lifetimeCoins: 35,
   dailyXp: 0,
   dailyXpDate: null,
   streakDays: 0,
   lastActiveDate: null,
 }
 
-test('earning XP moves lifetime, weekly and daily counters together', () => {
+test('earning XP moves lifetime and daily counters, but never coins', () => {
   const next = applyActivity(base, 25, TODAY)
 
   assert.equal(next.xp, 125)
-  assert.equal(next.weeklyXp, 60)
+  assert.equal(next.seasonCoins, 35, 'applyActivity must never touch coins')
   assert.equal(next.dailyXp, 25)
   assert.equal(next.dailyXpDate, TODAY)
 })
@@ -40,7 +42,6 @@ test('the daily counter resets on a new day while lifetime XP does not', () => {
   assert.equal(today.dailyXp, 25)
   assert.equal(today.dailyXpDate, TODAY)
   assert.equal(today.xp, 175)
-  assert.equal(today.weeklyXp, 110)
 })
 
 test('the streak advances once per day, not once per activity', () => {
@@ -65,23 +66,60 @@ test('unrelated fields survive untouched', () => {
   assert.deepEqual(next.profile, { pathId: 'x' })
 })
 
+// applyCoins is the only place Season Devy Coins move — mirrors applyActivity's
+// shape but touches seasonCoins/lifetimeCoins instead of xp/dailyXp.
+test('applyCoins adds to both season and lifetime totals together', () => {
+  const next = applyCoins(base, 8)
+
+  assert.equal(next.seasonCoins, 43)
+  assert.equal(next.lifetimeCoins, 43)
+})
+
+test('applyCoins is a no-op for a zero or negative award', () => {
+  assert.equal(applyCoins(base, 0), base)
+  assert.equal(applyCoins(base, -5), base)
+})
+
 // A payload saved before isPremium existed has no such key at all — this is the
 // migration path, and it has to produce `false`, not `undefined`.
 test('a payload saved before Premium existed gets the free default', () => {
-  const migrated = migrateProgress({ xp: 50, weekIndex: 12 }, 20)
+  const migrated = migrateProgress({ xp: 50, seasonIndex: 12 }, 20)
 
   assert.equal(migrated.isPremium, false)
   assert.equal(migrated.xp, 50)
-  assert.equal(migrated.weekIndex, 12)
+  assert.equal(migrated.seasonIndex, 12)
 })
 
-test('a first-ever run adopts the current week', () => {
-  assert.equal(migrateProgress({}, 20).weekIndex, 20)
-  assert.equal(migrateProgress({ weekIndex: 5 }, 20).weekIndex, 5)
+test('a first-ever run adopts the current season', () => {
+  assert.equal(migrateProgress({}, 20).seasonIndex, 20)
+  assert.equal(migrateProgress({ seasonIndex: 5 }, 20).seasonIndex, 5)
+})
+
+// A payload from before seasons existed is recognizable by the old
+// weekIndex/weeklyXp shape and no seasonIndex — league state gets a clean
+// cutover rather than a conversion, since a week doesn't map onto 28 days.
+test('a pre-season payload resets league state but keeps learning state', () => {
+  const migrated = migrateProgress({ xp: 900, weekIndex: 40, weeklyXp: 300, leagueIndex: 2, streakDays: 12 }, 20)
+
+  assert.equal(migrated.xp, 900, 'lifetime XP is untouched')
+  assert.equal(migrated.streakDays, 12, 'streak is untouched')
+  assert.equal(migrated.seasonIndex, 20, 'adopts the current season')
+  assert.equal(migrated.seasonCoins, 0)
+  assert.equal(migrated.leagueIndex, 0)
+  assert.equal(migrated.silverPassSeasonIndex, null)
+  assert.equal('weekIndex' in migrated, false)
+  assert.equal('weeklyXp' in migrated, false)
+})
+
+test('a payload already on seasons is left alone', () => {
+  const migrated = migrateProgress({ xp: 900, seasonIndex: 20, seasonCoins: 300, leagueIndex: 2 }, 20)
+
+  assert.equal(migrated.seasonCoins, 300)
+  assert.equal(migrated.leagueIndex, 2)
 })
 
 test('saved progress without page introductions migrates safely', () => {
-  assert.deepEqual(migrateProgress({ weekIndex: 20 }, 20).seenPageIntroductions, {})
+  assert.deepEqual(migrateProgress({ seasonIndex: 20 }, 20).seenPageIntroductions, {})
 })
 
 test('marking an introduction as seen preserves other page introductions', () => {
@@ -128,12 +166,15 @@ test('a free learner returning after a gap starts the streak over', () => {
 
 test('a premium learner returning after one missed day keeps the streak', () => {
   // lastActiveDate is Wed; TODAY is Fri — Thursday was missed, a two-day gap
-  // that would break a free streak outright.
-  const stale = activatePremium({ ...base, streakDays: 6, lastActiveDate: 'Wed Aug 05 2026', weekIndex: 40 }, 'annual', 'Wed Aug 05 2026')
-  const next = applyActivity(stale, 10, TODAY)
+  // that would break a free streak outright. The shield gate is keyed off a
+  // real calendar week (not the league season), computed fresh from the
+  // timestamp passed in rather than any stored field.
+  const shieldWeekTimestamp = getWeekStartFromIndex(40) + 2 * 60 * 60 * 1000
+  const stale = activatePremium({ ...base, streakDays: 6, lastActiveDate: 'Wed Aug 05 2026' }, 'annual', 'Wed Aug 05 2026')
+  const next = applyActivity(stale, 10, TODAY, shieldWeekTimestamp)
 
   assert.equal(next.streakDays, 7, 'the shield covers the gap, then today extends it')
-  assert.equal(next.streakShieldWeek, 40, 'the shield should be marked spent for the current week')
+  assert.equal(next.streakShieldWeek, 40, 'the shield should be marked spent for the current calendar week')
 })
 
 test('a milestone grants its restore credits only once', () => {
@@ -171,7 +212,7 @@ test('higher tiers grant more credits than early ones', () => {
 test('a restore credit saves exactly one missed day for a free learner', () => {
   // Already holds the day-3 tier, as anyone on a 5-day streak would — otherwise
   // crossing it here would bank a fresh credit and mask the one being spent.
-  const stale = { ...base, streakDays: 5, lastActiveDate: 'Wed Aug 05 2026', streakRestoreCredits: 1, weekIndex: 40, earnedStreakMilestones: [3] }
+  const stale = { ...base, streakDays: 5, lastActiveDate: 'Wed Aug 05 2026', streakRestoreCredits: 1, earnedStreakMilestones: [3] }
   const next = applyActivity(stale, 10, TODAY)
 
   assert.equal(next.streakDays, 6)

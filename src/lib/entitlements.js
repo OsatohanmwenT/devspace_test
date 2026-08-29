@@ -3,10 +3,15 @@
 // app and make a future free trial, grandfathered grant, or expiry rule a
 // find-and-replace across files instead of an edit here.
 //
-// Nothing in this map may ever touch scoring. `resolveWeek` and `rankEntries`
-// read only XP — never entitlement — and a test in progress.test.js asserts a
-// premium and a free learner with equal XP resolve identically. That is the
-// pay-to-win firewall: sell status, streak insurance, and visibility, never rank.
+// Nothing in this map may ever touch scoring. `resolveSeason` and
+// `rankEntries` read only coins — never entitlement — and a test in
+// leagueSim.test.js asserts a premium and a free learner with equal coins
+// resolve identically. That is the pay-to-win firewall: sell status, streak
+// insurance, and visibility, never rank.
+//
+// Whether Pro is *required* to compete in a league at all (Silver and above)
+// is a separate question, answered by lib/leagueAccess.js — that's gating,
+// not scoring, and it must stay out of this map and out of resolveSeason.
 export const CAPABILITIES = {
   PRO_TAG: 'pro-tag',
   ALL_TIME_BOARD: 'all-time-board',

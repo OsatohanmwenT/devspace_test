@@ -1,6 +1,10 @@
 // Extension included so this module also resolves under `node --test`, which
 // does not do Vite's extensionless resolution.
-import { getWeekIndex, now } from '../lib/week.js'
+import { getSeasonIndex, now } from '../lib/season.js'
+// The streak shield/restore gate is "once per calendar week" — a real week,
+// not the 28-day league season — so it keeps its own clock read via week.js
+// rather than reusing the league's seasonIndex.
+import { getWeekIndex, now as weekNow } from '../lib/week.js'
 import { applyStreakDecay, earnMilestones } from '../lib/streak.js'
 import { can, CAPABILITIES } from '../lib/entitlements.js'
 
@@ -8,9 +12,17 @@ const STORAGE_KEY = 'devspace-progress'
 
 const defaultProgress = {
   xp: 0,
-  weeklyXp: 0,
-  weekIndex: null,
+  // The leaderboard's ranking currency. Resets each season; distinct from
+  // `xp`, which is persistent learning growth and never resets.
+  seasonCoins: 0,
+  // Historical total across all seasons — status/history only, never ranked.
+  lifetimeCoins: 0,
+  seasonIndex: null,
   leagueIndex: 0,
+  // Set to the season index a Bronze top-10 finish earns a free Silver Pass
+  // for; null otherwise. Valid only for that one season — see
+  // lib/leagueAccess.js.
+  silverPassSeasonIndex: null,
   streakDays: 0,
   lastActiveDate: null,
   longestStreak: 0,
@@ -48,20 +60,60 @@ const defaultProgress = {
   // that stops being primary isn't lost — it's pushed here so "Also
   // learning" can offer it back rather than silently dropping it.
   pathHistory: [],
+  // Leagues the learner created or joined by code, keyed by id — see
+  // lib/privateLeagues.js. Ranked by the same seasonCoins everyone already
+  // has; never touches official promotion/demotion or coin totals.
+  privateLeagues: {},
+  // Confirmed rewards not yet paid out — see lib/rewards.js and
+  // components/leaderboard/PayoutCenter.jsx.
+  rewardBalance: 0,
+  // History/status only, never paid out from directly.
+  lifetimeRewards: 0,
+  // Most recent seasons' reward outcomes, newest first — [{ seasonIndex, leagueId, rank, amount }].
+  seasonRewardHistory: [],
+  // Completed payout requests — [{ id, amount, requestedAt, paidAt }].
+  payoutHistory: [],
+  // Demo-only bank details, never transmitted anywhere — { bankName, accountNumber, accountName }.
+  payoutProfile: null,
+  // Weekly head-to-head — see lib/h2h.js. Rides the calendar week (not the
+  // league season), and never touches leagueIndex/seasonCoins itself.
+  h2h: { weekIndex: null, windowStartCoins: 0, points: 0, history: [] },
 }
 
 // The pure half of loading: merge a stored payload onto the defaults and adopt
-// a week if this is the first run. Split out from `loadProgress` so it can be
-// tested under `node --test`, which has no `window`.
-export function migrateProgress(stored, weekIndex) {
+// a season if this is the first run. Split out from `loadProgress` so it can
+// be tested under `node --test`, which has no `window`.
+//
+// A weekly cadence doesn't map onto a 28-day one, so a payload saved before
+// seasons existed (recognizable by having the old `weekIndex`/`weeklyXp`
+// shape but no `seasonIndex`) gets a clean cutover rather than a conversion:
+// league state resets to the current season, Bronze, 0 coins. Learning state
+// (xp, streaks, completions, Premium) is untouched.
+export function migrateProgress(stored, seasonIndex) {
+  const isPreSeason = stored && typeof stored === 'object' && 'weekIndex' in stored && !('seasonIndex' in stored)
   const merged = { ...defaultProgress, ...stored }
-  if (merged.weekIndex === null) merged.weekIndex = weekIndex
+  if (isPreSeason) {
+    delete merged.weekIndex
+    delete merged.weeklyXp
+    merged.seasonCoins = 0
+    merged.seasonIndex = null
+    merged.leagueIndex = 0
+    merged.silverPassSeasonIndex = null
+    merged.lastLeagueResult = null
+  }
+  if (merged.seasonIndex === null) merged.seasonIndex = seasonIndex
   if (!Array.isArray(merged.earnedStreakMilestones)) merged.earnedStreakMilestones = []
   if (!Array.isArray(merged.streakActivityDates)) merged.streakActivityDates = []
   if (merged.longestStreak < merged.streakDays) merged.longestStreak = merged.streakDays
   if (merged.customPaths == null || typeof merged.customPaths !== 'object') merged.customPaths = {}
   if (merged.seenPageIntroductions == null || typeof merged.seenPageIntroductions !== 'object') merged.seenPageIntroductions = {}
   if (!Array.isArray(merged.pathHistory)) merged.pathHistory = []
+  if (merged.privateLeagues == null || typeof merged.privateLeagues !== 'object') merged.privateLeagues = {}
+  if (!Array.isArray(merged.seasonRewardHistory)) merged.seasonRewardHistory = []
+  if (!Array.isArray(merged.payoutHistory)) merged.payoutHistory = []
+  if (merged.payoutProfile != null && typeof merged.payoutProfile !== 'object') merged.payoutProfile = null
+  if (merged.h2h == null || typeof merged.h2h !== 'object') merged.h2h = { weekIndex: null, windowStartCoins: 0, points: 0, history: [] }
+  if (!Array.isArray(merged.h2h.history)) merged.h2h = { ...merged.h2h, history: [] }
   return merged
 }
 
@@ -94,20 +146,26 @@ export function switchPrimaryPath(current, pathId) {
 export function loadProgress() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    return migrateProgress(raw ? JSON.parse(raw) : {}, getWeekIndex(now()))
+    return migrateProgress(raw ? JSON.parse(raw) : {}, getSeasonIndex(now()))
   } catch {
-    return migrateProgress({}, getWeekIndex(now()))
+    return migrateProgress({}, getSeasonIndex(now()))
   }
 }
 
 // Every way of earning XP — a lesson, a practice session, starting a mission —
-// touches the same four counters plus the streak. Keeping that in one place is
+// touches the same three counters plus the streak. Keeping that in one place is
 // what makes the daily goal trustworthy: `dailyXp` has to roll over on a new
 // day, and it only takes one caller forgetting for the ring to read wrong.
-export function applyActivity(current, xpGain, today = new Date().toDateString()) {
+//
+// This only ever touches `xp` (lifetime learning growth) — never the
+// leaderboard's Season Devy Coins. Coins are awarded separately by
+// `applyCoins`, because the spec's anti-farming rule means they aren't
+// earned by the same events XP is (a same-day retry is worth XP to Premium
+// but never worth coins to anyone).
+export function applyActivity(current, xpGain, today = new Date().toDateString(), timestamp = weekNow()) {
   const isNewDay = current.dailyXpDate !== today
   const decay = applyStreakDecay(
-    current,
+    { ...current, weekIndex: getWeekIndex(timestamp) },
     today,
     can(current, CAPABILITIES.STREAK_SHIELD),
   )
@@ -122,7 +180,6 @@ export function applyActivity(current, xpGain, today = new Date().toDateString()
   return {
     ...current,
     xp: current.xp + xpGain,
-    weeklyXp: current.weeklyXp + xpGain,
     dailyXp: (isNewDay ? 0 : current.dailyXp) + xpGain,
     dailyXpDate: today,
     streakDays: nextStreakDays,
@@ -133,6 +190,17 @@ export function applyActivity(current, xpGain, today = new Date().toDateString()
     streakActivityDates: nextActivityDates,
     lastStreakProtection: decay.protection,
     streakShieldWeek: decay.streakShieldWeek,
+  }
+}
+
+// The only place Season Devy Coins are ever added, mirroring applyActivity's
+// shape. No Premium branch — see lib/coins.js for why.
+export function applyCoins(current, coinGain) {
+  if (coinGain <= 0) return current
+  return {
+    ...current,
+    seasonCoins: current.seasonCoins + coinGain,
+    lifetimeCoins: current.lifetimeCoins + coinGain,
   }
 }
 
@@ -172,10 +240,19 @@ export function deactivatePremium(current) {
   return { ...current, isPremium: false, premiumPlanId: null }
 }
 
+// Returns whether the write actually landed — most callers don't check
+// (the in-memory state already updated regardless), but a large payload
+// (e.g. a profile photo data URL) can legitimately blow the browser's
+// storage quota, and that failure is otherwise silent: the UI would keep
+// believing the save worked until the next reload lost it. Callers that
+// can react to a failed save (a save-and-notify flow) should check this.
 export function saveProgress(progress) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+    return true
   } catch {
-    // Storage can be unavailable in private mode; the session still works in memory.
+    // Storage can be unavailable in private mode, or full/over quota; the
+    // session still works in memory.
+    return false
   }
 }

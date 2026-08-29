@@ -61,8 +61,17 @@ export function getPlansByType(typeId) {
 }
 
 // Every perk here is honest about what it does and does not do — the league
-// promotion math never reads `isPremium`, so nothing on this list touches rank.
+// promotion math never reads `isPremium`, so nothing on this list touches
+// rank or how many coins anyone earns. `league-access` is the one exception
+// to "cosmetic only": Pro is what gets you into Silver and above at all
+// (Bronze stays free) — see lib/leagueAccess.js. It still never affects
+// scoring once you're in.
 export const PREMIUM_PERKS = [
+  {
+    id: 'league-access',
+    title: 'Compete in Silver and above',
+    detail: 'Bronze is always free. Pro unlocks Silver, Gold, Sapphire, and Diamond.',
+  },
   {
     id: 'streak-shield',
     title: 'Streak shield',
@@ -76,7 +85,7 @@ export const PREMIUM_PERKS = [
   {
     id: 'all-time',
     title: 'All-time standings',
-    detail: 'See lifetime totals, not just this week.',
+    detail: 'See lifetime totals, not just this season.',
   },
   {
     id: 'replay-xp',

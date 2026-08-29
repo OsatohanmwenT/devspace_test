@@ -12,7 +12,6 @@ const STAGE_TRANSITION = { duration: 0.62, ease: [0.22, 0.61, 0.36, 1] }
 function StageArt({ mood }) {
   return (
     <div className="relative mb-9 grid place-items-center max-[680px]:mb-7">
-      <span className="absolute size-28 rounded-full bg-[#513dec]/25 blur-2xl" aria-hidden="true" />
       <DevyMood mood={mood} className="relative size-36 max-[680px]:size-28" />
     </div>
   )
@@ -30,13 +29,13 @@ export function PageIntroStages({ stages, actionLabel = 'Continue', finalActionL
 
   return (
     <section
-      className="fixed inset-0 z-40 grid min-h-screen place-items-center bg-[linear-gradient(to_bottom,#121214_0%,#121214_42%,#1d2a43_100%)] px-6 py-8 text-[#f4f4f2] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,#fafaf8_0%,#fafaf8_42%,#e4effd_100%)] [[data-theme=light]_&]:text-neutral-800 max-[680px]:px-4"
+      className="fixed inset-0 z-40 grid min-h-screen place-items-center overflow-y-auto bg-[linear-gradient(to_bottom,#121214_0%,#121214_42%,#1d2a43_100%)] px-6 py-8 text-[#f4f4f2] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,#fafaf8_0%,#fafaf8_42%,#e4effd_100%)] [[data-theme=light]_&]:text-neutral-800 max-[680px]:px-4"
       aria-label={ariaLabel}
     >
       {/* Keyed on the stage index so each stage is a fresh mount that rises in
           as a whole page. The dots and Continue sit outside it, so the controls
           stay put while the screen behind them moves. */}
-      <main className="grid w-full max-w-[520px] justify-items-center overflow-hidden text-center">
+      <main className="grid w-full max-w-[520px] justify-items-center text-center">
         <motion.div
           key={index}
           className="grid w-full justify-items-center"

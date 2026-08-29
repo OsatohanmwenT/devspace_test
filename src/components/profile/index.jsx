@@ -16,6 +16,7 @@ import { getLeague } from '../../data/leagues'
 import { STREAK_MILESTONES } from '../../lib/streak'
 import { getProfileProgress, normalizeProfile } from '../../lib/profile'
 import { TierMedal } from '../leaderboard/TierMedal'
+import { EditProfileModal } from './EditProfileModal'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
 
@@ -378,14 +379,15 @@ function ShareProfileModal({ shareUrl, roleLabel, skills = [], experienceCount =
   )
 }
 
-export default function ProfileView({ profile, progress, currentPath, pathProgress, onEditProfile, isPublicView: isPublicViewProp, onTogglePublicView }) {
+export default function ProfileView({ profile, progress, currentPath, pathProgress, onSaveProfile, isPublicView: isPublicViewProp, onTogglePublicView }) {
   const [localPublicView, setLocalPublicView] = useState(false)
   const isPublicView = isPublicViewProp ?? localPublicView
   const setIsPublicView = onTogglePublicView ?? setLocalPublicView
   const [linkCopied, setLinkCopied] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
-  const { xp, weeklyXp, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
+  const { xp, seasonCoins, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
   const league = getLeague(leagueIndex)
   const levelInfo = getLevel(xp)
   const earnedTiers = earnedStreakMilestones ?? []
@@ -439,12 +441,16 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
     ? experienceLabel.replace(/^i've\s+/i, "I've ").replace(/^built\s+/i, "Built ")
     : null
 
-  const about = [
+  const generatedAbout = [
     motivationLabel ? `${motivationLabel}.` : null,
     cleanExperience ? `Starting level: ${cleanExperience.charAt(0).toUpperCase() + cleanExperience.slice(1)}.` : null,
     currentPath ? `Currently focusing on the “${currentPath.title}” learning track.` : null,
     profile?.dailyMinutes ? `Dedicated to ${profile.dailyMinutes} minutes of daily practice.` : null,
   ].filter(Boolean).join(' ')
+  // The learner's own bio, when they've written one, leads — the generated
+  // sentence still follows so the auto-filled facts (track, daily goal)
+  // don't just disappear once someone customizes their profile.
+  const about = [identity?.bio, generatedAbout].filter(Boolean).join(' ')
 
   const profileQuests = getProfileProgress(identity, { lessonsCompleted: verifiedLessons })
 
@@ -517,15 +523,19 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
 
             <div className="grid gap-4 px-7 py-6 max-[480px]:px-5">
               <div className="flex items-center gap-4">
-                <div className="relative size-14 flex-none rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#4338ca] grid place-items-center font-rethink-sans text-2xl font-bold text-white shadow-md">
-                  {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                </div>
+                {identity?.photo ? (
+                  <img src={identity.photo} alt="" aria-hidden="true" className="size-14 flex-none rounded-2xl object-cover shadow-md" />
+                ) : (
+                  <div className="relative size-14 flex-none rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#4338ca] grid place-items-center font-rethink-sans text-2xl font-bold text-white shadow-md">
+                    {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
+                  </div>
+                )}
                 <div className="grid gap-0.5">
                   <h1 className={`m-0 font-rethink-sans text-[28px] font-semibold leading-[1.15] tracking-[-.02em] ${INK}`}>
                     {identity?.name?.trim() || 'Learner'}
                   </h1>
                   <p className="m-0 text-[15px] font-semibold text-[#8f97f2] [[data-theme=light]_&]:text-[#4338ca]">
-                    {roleLabel}{branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
+                    {identity?.headline?.trim() || roleLabel}{branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
                   </p>
                 </div>
               </div>
@@ -659,7 +669,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{weeklyXp} XP this week</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} 🪙 this season</span>
                   </div>
                 </div>
               </SectionCard>
@@ -699,12 +709,21 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               />
               <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
                 <div className="relative -mt-11 w-[88px]">
-                  <span
-                    className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                    aria-hidden="true"
-                  >
-                    {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                  </span>
+                  {identity?.photo ? (
+                    <img
+                      src={identity.photo}
+                      alt=""
+                      aria-hidden="true"
+                      className="size-[88px] rounded-full object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                    />
+                  ) : (
+                    <span
+                      className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                      aria-hidden="true"
+                    >
+                      {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
+                    </span>
+                  )}
                   <span
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
                     aria-hidden="true"
@@ -719,7 +738,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                     {identity?.name?.trim() || 'Learner'}
                   </h1>
                   <p className={`m-0 text-[16px] leading-[1.45] ${INK}`}>
-                    {roleLabel}
+                    {identity?.headline?.trim() || roleLabel}
                     {branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
                   </p>
                   <p className={`m-0 pt-1 text-[13px] ${MUTED}`}>
@@ -745,13 +764,11 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   </div>
                 </div>
 
-                {onEditProfile && (
-                  <div className="flex flex-wrap gap-2">
-                    <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={onEditProfile}>
-                      Edit profile
-                    </ActionButton>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={() => setIsEditOpen(true)}>
+                    Edit profile
+                  </ActionButton>
+                </div>
               </div>
             </header>
 
@@ -880,7 +897,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{weeklyXp} XP this week</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} 🪙 this season</span>
                   </div>
                 </div>
               </SectionCard>
@@ -930,6 +947,14 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
             setIsShareModalOpen(false)
             setIsPublicView(true)
           }}
+        />
+      )}
+
+      {isEditOpen && (
+        <EditProfileModal
+          profile={identity}
+          onSave={(fields) => onSaveProfile?.(fields)}
+          onClose={() => setIsEditOpen(false)}
         />
       )}
     </div>

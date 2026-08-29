@@ -5,7 +5,7 @@ import { ROW_GRID } from './rowGrid'
 const MEDALS = { 1: 'gold', 2: 'silver', 3: 'bronze' }
 const TIER_RANK_COLOR = { gold: 'text-[#ffcf8b] [[data-theme=light]_&]:text-[#b8860b]', silver: 'text-[#c7c9d1] [[data-theme=light]_&]:text-[#8a8d97]', bronze: 'text-[#d98a52] [[data-theme=light]_&]:text-[#a35a25]' }
 
-// delta is null for the first day of the week, when there is no previous day to
+// delta is null for the first day of the season, when there is no previous day to
 // measure against — that is different from having held your place, so it reads
 // as blank rather than as a dash.
 function RankDelta({ delta }) {
@@ -36,11 +36,23 @@ function RankDelta({ delta }) {
   )
 }
 
-export function LeaderboardRow({ entry, isCurrentUser }) {
+// Non-current-user rows become a button when `onSelect` is passed, opening
+// the competitor-inspection drawer — inspecting yourself isn't a thing, so
+// the current user's own row stays a plain, non-interactive div either way.
+export function LeaderboardRow({ entry, isCurrentUser, onSelect }) {
   const tier = MEDALS[entry.rank]
+  const interactive = Boolean(onSelect) && !isCurrentUser
+  const Tag = interactive ? 'button' : 'div'
 
   return (
-    <div className={isCurrentUser ? `${ROW_GRID} my-1 rounded-2xl border border-[#8bb5f5] bg-[#2a293c] [[data-theme=light]_&]:border-[#b9d4f7] [[data-theme=light]_&]:bg-[#e9f2ff]` : `${ROW_GRID} rounded-xl border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f3f1ec]`}>
+    <Tag
+      type={interactive ? 'button' : undefined}
+      onClick={interactive ? () => onSelect(entry) : undefined}
+      className={`${isCurrentUser
+        ? `${ROW_GRID} my-1 rounded-2xl border border-[#8bb5f5] bg-[#2a293c] [[data-theme=light]_&]:border-[#b9d4f7] [[data-theme=light]_&]:bg-[#e9f2ff]`
+        : `${ROW_GRID} rounded-xl border border-transparent transition-colors duration-150 hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f3f1ec]`
+      } ${interactive ? 'w-full text-left cursor-pointer' : ''}`}
+    >
       <span className={`grid place-items-center text-[13px] text-center ${tier ? TIER_RANK_COLOR[tier] : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'}`}>
         <span aria-hidden="true">{tier ? <TrophyIcon className="w-[18px] h-[18px]" /> : entry.rank}</span>
         <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">Rank {entry.rank}</span>
@@ -53,7 +65,9 @@ export function LeaderboardRow({ entry, isCurrentUser }) {
         </span>
         <span className="overflow-hidden text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs text-ellipsis whitespace-nowrap">{entry.role}</span>
       </div>
-      <span className={`text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm tabular-nums whitespace-nowrap ${isCurrentUser ? 'font-semibold' : ''}`}>{entry.score.toLocaleString()}</span>
-    </div>
+      <div className="grid justify-items-end gap-0.5">
+        <span className={`text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-sm tabular-nums whitespace-nowrap ${isCurrentUser ? 'font-semibold' : ''}`}>{entry.score.toLocaleString()}</span>
+      </div>
+    </Tag>
   )
 }

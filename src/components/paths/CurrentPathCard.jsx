@@ -10,7 +10,7 @@ export function CurrentPathCard({ path, onOpenDetail }) {
           <p className="mt-0.5 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{currentPath.progressValue}% complete <span aria-hidden="true">·</span> Next: {nextLesson?.title}</p>
         </div>
       </div>
-      <span className="text-[13px] font-semibold text-[#8ee6ad] [[data-theme=light]_&]:text-[#168a46]">Open path</span>
+      <span className="self-end rounded-lg bg-[#16a34a] px-3 py-2 text-[13px] font-semibold text-white">Open path</span>
     </button>
   )
 }

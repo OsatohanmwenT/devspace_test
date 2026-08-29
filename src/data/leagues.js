@@ -1,26 +1,44 @@
-// Promotion zones are widest at the bottom so beginners almost always advance,
-// and tighten near the top where staying put is the achievement.
+// Promotion zones are percentages of the cohort per the spec (top 15% in
+// Bronze, narrowing near the top) rather than the old fixed row counts — see
+// getPromoteCount/getDemoteCount below for how those turn into row counts.
+// Even Bronze's zone is genuinely competitive at 15%, unlike the old ladder's
+// "almost everyone advances" Bronze — that was calibrated for a fixed top-20-
+// of-30 cutoff that no longer exists.
 //
-// `pace` scales the whole rival field, so it is the dial that decides how much
-// XP a week actually costs. It is calibrated against the onboarding daily goal
-// (`dailyGoalXp` in data/onboarding.js): the floor goal of 25 XP/day is 175 a
-// week, and at Bronze's 0.6 that clears the promotion cutoff ~99% of the time.
-// Before this calibration the same perfect-attendance week promoted 13% of the
-// time, which left the lightest-commitment learners permanently stuck — Bronze
-// never demotes, so there was no way down and, in practice, no way up either.
-// leagueSim.test.js locks these rates; change `pace` and it will tell you.
+// `pace` scales the whole rival field, so it is the dial that decides how
+// many coins a season actually costs. Coins are discrete, anti-farmed awards
+// (lib/coins.js) rather than a continuous rate like XP was, so there is no
+// honest "daily goal" to calibrate against — pace is tuned directly against
+// the rival field instead: modest activity should rarely crack Bronze's top
+// 15%, real sustained effort should reliably clear it. leagueSim.test.js
+// locks these rates; change `pace` and it will tell you.
+//
+// `requiresPro` marks the leagues Bronze doesn't fund entry to — Silver and
+// above need an active Pro subscription (or, for a season, a Silver Pass
+// earned by finishing top 10 in Bronze — see lib/leagueAccess.js). This is
+// gating, not scoring: nothing here or in leagueSim.js reads `isPremium`,
+// which is what keeps Pro from ever affecting rank once someone is competing.
 export const leagues = [
-  { id: 'bronze', name: 'Bronze League', color: '#d98a52', promoteCount: 20, demoteCount: 0, pace: 0.6 },
-  { id: 'silver', name: 'Silver League', color: '#c7c9d1', promoteCount: 15, demoteCount: 5, pace: 0.85 },
-  { id: 'gold', name: 'Gold League', color: '#ffcf8b', promoteCount: 10, demoteCount: 5, pace: 1.15 },
-  { id: 'sapphire', name: 'Sapphire League', color: '#5fb8ff', promoteCount: 7, demoteCount: 5, pace: 1.5 },
-  { id: 'ruby', name: 'Ruby League', color: '#e0607e', promoteCount: 5, demoteCount: 5, pace: 1.85 },
-  { id: 'emerald', name: 'Emerald League', color: '#7fb069', promoteCount: 3, demoteCount: 5, pace: 2.15 },
-  { id: 'diamond', name: 'Diamond League', color: '#04adc0', promoteCount: 0, demoteCount: 5, pace: 2.4 },
+  { id: 'bronze', name: 'Bronze League', color: '#d98a52', promotePercent: 0.15, demotePercent: 0, requiresPro: false, pace: 0.6 },
+  { id: 'silver', name: 'Silver League', color: '#c7c9d1', promotePercent: 0.15, demotePercent: 0.10, requiresPro: true, pace: 0.95 },
+  { id: 'gold', name: 'Gold League', color: '#ffcf8b', promotePercent: 0.12, demotePercent: 0.10, requiresPro: true, pace: 1.35 },
+  { id: 'sapphire', name: 'Sapphire League', color: '#5fb8ff', promotePercent: 0.10, demotePercent: 0.12, requiresPro: true, pace: 1.8 },
+  { id: 'diamond', name: 'Diamond League', color: '#04adc0', promotePercent: 0, demotePercent: 0.15, requiresPro: true, pace: 2.3 },
 ]
 
 export const COHORT_SIZE = 30
 
 export function getLeague(index) {
   return leagues[Math.min(leagues.length - 1, Math.max(0, index))]
+}
+
+// Percentages round to whole rows against a fixed cohort size, same as the
+// fixed counts they replace — kept as functions (not precomputed fields) so
+// COHORT_SIZE stays the single source of truth if it ever changes.
+export function getPromoteCount(league) {
+  return Math.round(league.promotePercent * COHORT_SIZE)
+}
+
+export function getDemoteCount(league) {
+  return Math.round(league.demotePercent * COHORT_SIZE)
 }

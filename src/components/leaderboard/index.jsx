@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react';
-import { getLeague } from '../../data/leagues';
+import { getDemoteCount, getLeague, getPromoteCount } from '../../data/leagues';
+import { rivals } from '../../data/rivals';
 import { can, CAPABILITIES } from '../../lib/entitlements';
+import { canCompeteInLeague } from '../../lib/leagueAccess';
 import { getAllTimeStandings, getBoardWindow, getStandings, getZoneSummary, USER_ID } from '../../lib/leagueSim';
-import { getWeekIndex, now } from '../../lib/week';
+import { getSeasonIndex, now } from '../../lib/season';
+import { buildClimbCard, buildH2HWinCard, buildLeagueUnlockedCard, buildTopPercentCard } from '../../lib/shareCards';
 import { InfoTooltip } from '../ui/InfoTooltip';
+import { ForwardLink } from '../ui/NavArrowLink';
+import { CompetitorDrawer } from './CompetitorDrawer';
+import { HeadToHead } from './HeadToHead';
+import { HeadToHeadIntroduction } from './HeadToHeadIntroduction';
 import { LeaderboardIntroduction } from './LeaderboardIntroduction';
 import { LeaderboardRow } from './LeaderboardRow';
 import { LeaderboardTabs } from './LeaderboardTabs';
 import { LeagueLadder } from './LeagueLadder';
 import { LeagueResultBanner } from './LeagueResultBanner';
-import { LeagueJoinPrompt, LockedBoardSkeleton } from './LockedLeaderboard';
+import { LeagueJoinPrompt, LeagueProGatePrompt, LockedBoardSkeleton } from './LockedLeaderboard';
+import { PrivateLeagues } from './PrivateLeagues';
+import { PrivateLeaguesIntroduction } from './PrivateLeaguesIntroduction';
+import { ShareCardModal } from './ShareCardModal';
 
-const TABS = ['This week', 'All time', 'By path']
+const TABS = ['This season', 'All time', 'By path']
 const TICK_MS = 60 * 1000
-const PX_TO_JOIN = 10
+const COINS_TO_JOIN = 5
 const ALL_TIME_PREVIEW_ROWS = 5
 
 function ZoneDivider({ label, color }) {
@@ -60,7 +70,7 @@ function AllTimePreview({ rows, onOpenPlans }) {
         </div>
         <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-transparent to-[#1f1f1f] [[data-theme=light]_&]:to-white">
           <div className="grid justify-items-center gap-2 text-center">
-          <span className="text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">See every XP you&apos;ve earned.</span>
+          <span className="text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">See every coin you&apos;ve earned.</span>
           <button
             type="button"
             onClick={() => onOpenPlans?.('all-time')}
@@ -76,7 +86,7 @@ function AllTimePreview({ rows, onOpenPlans }) {
 }
 
 export default function LeaderboardView({
-  weeklyXp = 0,
+  seasonCoins = 0,
   xp = 0,
   leagueIndex = 0,
   lastLeagueResult,
@@ -86,43 +96,66 @@ export default function LeaderboardView({
   onOpenPlans,
   hasSeenIntroduction = true,
   onDismissIntroduction,
+  onDismissSubIntroduction,
+  onCreatePrivateLeague,
+  onJoinPrivateLeague,
+  onLeavePrivateLeague,
 }) {
   const [tab, setTab] = useState(TABS[0])
   const [expanded, setExpanded] = useState(false)
   const [clock, setClock] = useState(() => now())
+  // Private leagues and head-to-head are each a separate lens on the same
+  // board, not more tabs — LeaderboardTabs is hardcoded to a 3-column grid
+  // for This season/All time/By path, so each gets its own view swap
+  // instead of stretching that. The Payout Center lives in Settings now,
+  // since it's a wallet, not a leaderboard lens.
+  const [view, setView] = useState('official')
+  const [selectedRivalId, setSelectedRivalId] = useState(null)
+  const [shareCard, setShareCard] = useState(null)
 
-  // Rival XP advances with the clock, so re-deriving on a timer makes the board
-  // visibly move while the page is open.
+  // Rival coin totals advance with the clock, so re-deriving on a timer makes
+  // the board visibly move while the page is open.
   useEffect(() => {
     const id = window.setInterval(() => setClock(now()), TICK_MS)
     return () => window.clearInterval(id)
   }, [])
 
   const league = getLeague(leagueIndex)
-  // Until you've earned something this week you aren't really in the league —
-  // showing a stranger's board with you last is the wrong first impression.
-  const hasJoined = weeklyXp > 0
+  const promoteCount = getPromoteCount(league)
+  const demoteCount = getDemoteCount(league)
+  const seasonIndex = getSeasonIndex(clock)
+  // Bronze is free; Silver+ needs Pro (or a season's Silver Pass, for a
+  // Bronze top-10 finish) to actually compete — see lib/leagueAccess.js. The
+  // ladder still shows the league as reached even when this is false; only
+  // the live board is gated.
+  const canCompete = canCompeteInLeague(progress, league, seasonIndex)
+
+  // Until you've earned something this season you aren't really in the
+  // league — showing a stranger's board with you last is the wrong first
+  // impression.
+  const hasJoined = seasonCoins > 0
 
   const hasProTag = can(progress, CAPABILITIES.PRO_TAG)
   const hasAllTime = can(progress, CAPABILITIES.ALL_TIME_BOARD)
   const hasFullCohort = can(progress, CAPABILITIES.FULL_COHORT)
 
-  const weekIndex = getWeekIndex(clock)
-  const weekly = hasJoined
-    ? getStandings(weekIndex, leagueIndex, weeklyXp, clock, { userTag: hasProTag ? 'PRO' : null })
+  const seasonly = hasJoined && canCompete
+    ? getStandings(seasonIndex, leagueIndex, seasonCoins, clock, { userTag: hasProTag ? 'PRO' : null })
     : []
-  const summary = hasJoined ? getZoneSummary(weekly, leagueIndex) : null
+  const summary = seasonly.length ? getZoneSummary(seasonly, leagueIndex) : null
   const progressStatus = summary?.inDemotion
-    ? { label: `${summary.gapToSafety.toLocaleString()} px to safety`, tone: 'text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]' }
+    ? { label: `${summary.gapToSafety.toLocaleString()} 🪙 to safety`, tone: 'text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]' }
     : summary?.inPromotion
-      ? { label: summary.promotionCushion > 0 ? `Promotion zone · ${summary.promotionCushion.toLocaleString()} px clear` : 'Promotion zone · hold your place', tone: 'text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]' }
+      ? { label: summary.promotionCushion > 0 ? `Promotion zone · ${summary.promotionCushion.toLocaleString()} 🪙 clear` : 'Promotion zone · hold your place', tone: 'text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]' }
       : summary?.promotesAnyone
-        ? { label: `${summary.gapToPromotion.toLocaleString()} px to promotion`, tone: 'text-[#89baff] [[data-theme=light]_&]:text-[#3d77eb]' }
+        ? { label: `${summary.gapToPromotion.toLocaleString()} 🪙 to promotion`, tone: 'text-[#89baff] [[data-theme=light]_&]:text-[#3d77eb]' }
         : { label: 'Holding your place', tone: 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]' }
 
-  const userRole = weekly.find((entry) => entry.isCurrentUser)?.role
+  const userEntry = seasonly.find((entry) => entry.isCurrentUser)
+
+  const userRole = userEntry?.role
   const byPath = tab === 'By path'
-    ? weekly.filter((entry) => entry.role === userRole).map((entry, index) => ({ ...entry, rank: index + 1 }))
+    ? seasonly.filter((entry) => entry.role === userRole).map((entry, index) => ({ ...entry, rank: index + 1 }))
     : []
 
   const allTimeFull = tab === 'All time' && hasJoined ? getAllTimeStandings(xp) : []
@@ -132,48 +165,123 @@ export default function LeaderboardView({
     return top.some((entry) => entry.isCurrentUser) ? top : [...top, allTimeFull.find((entry) => entry.isCurrentUser)]
   })()
 
-  // Only the weekly board has cutoffs to window around; the other ranges are
+  // Only the season board has cutoffs to window around; the other ranges are
   // flat lists, so they render every row they have.
   const rendered = (() => {
-    if (!hasJoined || tab !== 'This week') return []
-    return getBoardWindow(weekly, summary, { expanded: expanded && hasFullCohort })
+    if (!hasJoined || !canCompete || tab !== 'This season') return []
+    return getBoardWindow(seasonly, summary, { expanded: expanded && hasFullCohort })
   })()
+
+  const inviteLink = (() => {
+    const [firstLeague] = Object.values(progress?.privateLeagues ?? {})
+    return firstLeague ? `https://devspace.dev/league/${firstLeague.code}` : null
+  })()
+
+  const shareYourStanding = () => {
+    if (!userEntry) return
+    if (userEntry.delta > 0) return setShareCard(buildClimbCard(userEntry.delta))
+    setShareCard(buildTopPercentCard(userEntry.rank, seasonly.length))
+  }
+
+  const selectedRival = selectedRivalId ? seasonly.find((entry) => entry.id === selectedRivalId) : null
+  const selectedRivalData = selectedRival ? rivals.find((rival) => rival.id === selectedRival.id) : null
 
   // Gated after the hooks above so the board's timer/derivations keep their
   // stable hook order regardless of whether the intro is showing.
   if (!hasSeenIntroduction) return <LeaderboardIntroduction onComplete={onDismissIntroduction} />
 
+  if (view === 'private' && !progress?.seenPageIntroductions?.['private-leagues']) {
+    return <PrivateLeaguesIntroduction onComplete={() => onDismissSubIntroduction?.('private-leagues')} />
+  }
+
+  if (view === 'private') {
+    return (
+      <>
+        <PrivateLeagues
+          privateLeagues={progress?.privateLeagues}
+          seasonCoins={seasonCoins}
+          seasonIndex={seasonIndex}
+          onBack={() => setView('official')}
+          onCreate={onCreatePrivateLeague}
+          onJoin={onJoinPrivateLeague}
+          onLeave={onLeavePrivateLeague}
+        />
+        {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
+      </>
+    )
+  }
+
+  if (view === 'h2h' && !progress?.seenPageIntroductions?.['h2h']) {
+    return <HeadToHeadIntroduction onComplete={() => onDismissSubIntroduction?.('h2h')} />
+  }
+
+  if (view === 'h2h') {
+    return (
+      <>
+        <HeadToHead
+          h2h={progress?.h2h}
+          seasonCoins={seasonCoins}
+          clock={clock}
+          onBack={() => setView('official')}
+          onShareWin={(match) => setShareCard(buildH2HWinCard(match.opponentName))}
+        />
+        {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
+      </>
+    )
+  }
+
   return (
     <section className="grid gap-8" aria-label="Leaderboard">
       {lastLeagueResult && (
-        <LeagueResultBanner result={lastLeagueResult} progress={progress} onDismiss={onDismissResult} onOpenPlans={onOpenPlans} />
+        <LeagueResultBanner
+          result={lastLeagueResult}
+          progress={progress}
+          onDismiss={onDismissResult}
+          onOpenPlans={onOpenPlans}
+          onShare={() => setShareCard(buildLeagueUnlockedCard(lastLeagueResult.toLeague))}
+        />
       )}
 
       {/* The header explains the league; the compact target strip below tells
           the learner what their next useful move is before they scan the rows. */}
       <div className="grid w-full justify-items-center gap-3 text-center max-w-[860px] mx-auto rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] px-6 py-5 max-[680px]:px-4">
+        <div className="flex w-full flex-wrap items-center justify-end gap-x-5 gap-y-1">
+          <ForwardLink onClick={() => setView('h2h')}>Head-to-head</ForwardLink>
+          <ForwardLink onClick={() => setView('private')}>Private leagues</ForwardLink>
+        </div>
         <LeagueLadder leagueIndex={leagueIndex} />
         <div className="flex items-center gap-2">
           <h1 className="m-0 mt-1 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-3xl font-semibold leading-tight">{league.name}</h1>
           <InfoTooltip label="How the leaderboard works" align="center">
-            Everyone in your league is ranked by XP earned this week — practice, lessons, and streaks all count.
-            Standings reset every Monday.{' '}
-            {league.promoteCount > 0 ? `Finish in the top ${league.promoteCount} to move up a league.` : 'This is the top league, so there’s nowhere higher to climb.'}
+            Everyone in your league is ranked by Season Devy Coins earned this season — verified lessons and practice count, repeats don't.
+            Standings reset every season.{' '}
+            {promoteCount > 0 ? `Finish in the top ${promoteCount} to move up a league.` : 'This is the top league, so there’s nowhere higher to climb.'}
             {' '}
-            {league.demoteCount > 0 ? `Finish in the bottom ${league.demoteCount} and you’ll drop one.` : 'You can’t drop below this league.'}
+            {demoteCount > 0 ? `Finish in the bottom ${demoteCount} and you’ll drop one.` : 'You can’t drop below this league.'}
           </InfoTooltip>
         </div>
         <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[15px] leading-[1.5]">
-          {league.promoteCount > 0 && league.demoteCount > 0
-            ? `Top ${league.promoteCount} advance · bottom ${league.demoteCount} drop`
-            : league.promoteCount > 0
-              ? `Top ${league.promoteCount} advance to ${getLeague(leagueIndex + 1).name}`
-              : `Hold your place · bottom ${league.demoteCount} drop`}
+          {promoteCount > 0 && demoteCount > 0
+            ? `Top ${promoteCount} advance · bottom ${demoteCount} drop`
+            : promoteCount > 0
+              ? `Top ${promoteCount} advance to ${getLeague(leagueIndex + 1).name}`
+              : `Hold your place · bottom ${demoteCount} drop`}
         </p>
-        {!hasJoined && <LeagueJoinPrompt pxToJoin={PX_TO_JOIN} onStartPractice={onStartPractice} />}
+        {!canCompete
+          ? <LeagueProGatePrompt leagueName={league.name} onOpenPlans={onOpenPlans} />
+          : !hasJoined && <LeagueJoinPrompt coinsToJoin={COINS_TO_JOIN} onStartPractice={onStartPractice} />}
+        {canCompete && hasJoined && (
+          <button
+            type="button"
+            onClick={shareYourStanding}
+            className="mt-1 text-[13px] font-medium text-[#89baff] hover:underline [[data-theme=light]_&]:text-[#3d77eb]"
+          >
+            Share your standing
+          </button>
+        )}
       </div>
 
-      {!hasJoined ? (
+      {!canCompete || !hasJoined ? (
         <LockedBoardSkeleton />
       ) : (
         <div className="grid w-full max-w-[860px] mx-auto gap-6">
@@ -191,9 +299,9 @@ export default function LeaderboardView({
             <ol className="grid list-none m-0 overflow-hidden rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] p-1.5" aria-label={`${league.name} standings`}>
               <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-3.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Learner</span>
-                <span>px</span>
+                <span>🪙</span>
               </li>
-              {(tab === 'This week' ? rendered
+              {(tab === 'This season' ? rendered
                 : tab === 'By path' ? byPath.map((entry) => ({ type: 'row', entry }))
                 : allTime.map((entry) => ({ type: 'row', entry }))
               ).map((item, index) => {
@@ -216,7 +324,11 @@ export default function LeaderboardView({
                 }
                 return (
                 <li key={item.entry.id} className="border-t border-[#404040] first:border-t-0 [[data-theme=light]_&]:border-[#ebe9e4]">
-                    <LeaderboardRow entry={item.entry} isCurrentUser={item.entry.id === USER_ID} />
+                    <LeaderboardRow
+                      entry={item.entry}
+                      isCurrentUser={item.entry.id === USER_ID}
+                      onSelect={tab === 'This season' ? (entry) => setSelectedRivalId(entry.id) : undefined}
+                    />
                   </li>
                 )
               })}
@@ -224,6 +336,18 @@ export default function LeaderboardView({
           )}
         </div>
       )}
+
+      {selectedRival && selectedRivalData && (
+        <CompetitorDrawer
+          entry={selectedRival}
+          rival={selectedRivalData}
+          league={league}
+          seasonIndex={seasonIndex}
+          onClose={() => setSelectedRivalId(null)}
+        />
+      )}
+
+      {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
     </section>
   )
 }

@@ -23,17 +23,17 @@ function SkeletonRow({ width }) {
 // restated the league name the card had already given in 30px type, and the two
 // stacked heroes pushed the only action on the page below the fold. Same
 // information, one card, CTA visible on arrival.
-export function LeagueJoinPrompt({ pxToJoin, onStartPractice }) {
+export function LeagueJoinPrompt({ coinsToJoin, onStartPractice }) {
   return (
     <div className="mt-1 flex w-full items-center gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#ebe9e4] pt-5 text-left max-[680px]:flex-col max-[680px]:gap-3 max-[680px]:text-center">
       {/* Devy is impatient to see you on the board, not disappointed in you. */}
       <DevyMood mood="annoyed" className="size-20 flex-none max-[680px]:size-16" />
       <div className="grid min-w-0 flex-1 gap-1">
         <strong className="text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-          You’re not on this week’s board yet
+          You’re not on this season’s board yet
         </strong>
         <span className="text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-          Earn {pxToJoin} px to join. One practice round or lesson does it.
+          Earn {coinsToJoin} 🪙 to join. One practice round or lesson does it.
         </span>
       </div>
       <ActionButton
@@ -47,11 +47,39 @@ export function LeagueJoinPrompt({ pxToJoin, onStartPractice }) {
   )
 }
 
+// Shown instead of live standings when a learner has reached a Pro-gated
+// league (Silver+) without Pro or an active Silver Pass. Their rank still
+// advanced the ladder — this isn't "you're not on the board," it's "the
+// board is waiting for you to unlock it" — so the copy and CTA differ from
+// LeagueJoinPrompt even though the shape is the same.
+export function LeagueProGatePrompt({ leagueName, onOpenPlans }) {
+  return (
+    <div className="mt-1 flex w-full items-center gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#ebe9e4] pt-5 text-left max-[680px]:flex-col max-[680px]:gap-3 max-[680px]:text-center">
+      <DevyMood mood="celebrating" className="size-20 flex-none max-[680px]:size-16" />
+      <div className="grid min-w-0 flex-1 gap-1">
+        <strong className="text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+          {leagueName} unlocked
+        </strong>
+        <span className="text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+          Upgrade to Pro to compete here — your coins keep counting toward your history either way.
+        </span>
+      </div>
+      <ActionButton
+        variant="primary"
+        className="min-h-[50px] flex-none px-6 text-[15px] font-medium max-[680px]:w-full"
+        onClick={() => onOpenPlans?.('league-access')}
+      >
+        See Plans
+      </ActionButton>
+    </div>
+  )
+}
+
 export function LockedBoardSkeleton() {
   return (
     <div
       className="grid list-none m-0 p-1.5 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)]"
-      aria-label="Standings are hidden until you join this week's league"
+      aria-label="Standings are hidden until you join this season's league"
     >
       {SKELETON_WIDTHS.map((width, index) => <SkeletonRow key={index} width={width} />)}
     </div>

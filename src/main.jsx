@@ -6,6 +6,7 @@ import { XpPopover } from './components/header/XpPopover';
 import { ShortSessionRow } from './components/home/ShortSessionRow';
 import LeaderboardView from './components/leaderboard';
 import { LeagueQualifiedCelebration } from './components/leaderboard/LeagueQualifiedCelebration';
+import { PayoutCenter } from './components/leaderboard/PayoutCenter';
 import { getLesson } from './components/lesson/lessonContent';
 import { LessonLoading } from './components/lesson/LessonLoading';
 import LessonView from './components/lesson/LessonView';
@@ -28,13 +29,22 @@ import { InfoTooltip } from './components/ui/InfoTooltip';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
-import { activatePremium, applyActivity, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
-import { getStandings, resolveWeek, USER_ID } from './lib/leagueSim';
+import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
+import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
+import { advanceH2HWeek } from './lib/h2h';
+import { getStandings, resolveSeason, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
+import {
+    createPrivateLeague as createPrivateLeagueRecord,
+    joinPrivateLeagueByCode,
+    leavePrivateLeague as leavePrivateLeagueRecord,
+} from './lib/privateLeagues';
+import { getRewardForRank, MIN_PAYOUT_THRESHOLD } from './lib/rewards';
+import { formatTimeRemaining, getSeasonIndex, getTimeRemaining, now } from './lib/season';
 import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
-import { formatTimeRemaining, getTimeRemaining, getWeekIndex, now } from './lib/week';
+import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
 
@@ -157,19 +167,42 @@ function App() {
     window.setTimeout(() => setNotice(''), 2200)
   }
 
-  // Settle any finished week before the leaderboard renders, so promotion and
-  // demotion have already been applied by first paint.
+  // Settle any finished season before the leaderboard renders, so promotion
+  // and demotion have already been applied by first paint. A finished
+  // season's rank is also what the reward center's confirmed balance is
+  // built from — see lib/rewards.js.
   useEffect(() => {
     setProgress((current) => {
-      const result = resolveWeek(current, now())
+      const result = resolveSeason(current, now())
       if (!result) return current
+      const rewardAmount = getRewardForRank(getLeague(current.leagueIndex).id, result.rank)
       const next = {
         ...current,
-        weekIndex: getWeekIndex(now()),
-        weeklyXp: 0,
+        seasonIndex: getSeasonIndex(now()),
+        seasonCoins: 0,
         leagueIndex: result.nextLeagueIndex,
         lastLeagueResult: result,
+        silverPassSeasonIndex: result.silverPassSeasonIndex ?? current.silverPassSeasonIndex,
+        rewardBalance: current.rewardBalance + rewardAmount,
+        lifetimeRewards: current.lifetimeRewards + rewardAmount,
+        seasonRewardHistory: rewardAmount > 0
+          ? [{ seasonIndex: result.seasonIndex, leagueId: getLeague(current.leagueIndex).id, rank: result.rank, amount: rewardAmount }, ...current.seasonRewardHistory].slice(0, 10)
+          : current.seasonRewardHistory,
       }
+      saveProgress(next)
+      return next
+    })
+  }, [])
+
+  // Settle any finished H2H week the same way — a no-op until the stored
+  // window is actually over (see lib/h2h.js). Kept separate from the season
+  // effect since the two run on entirely different clocks (calendar week vs
+  // 28-day season).
+  useEffect(() => {
+    setProgress((current) => {
+      const { h2h, resolved } = advanceH2HWeek(current.h2h, current.seasonCoins, weekNow())
+      if (!resolved && h2h === current.h2h) return current
+      const next = { ...current, h2h }
       saveProgress(next)
       return next
     })
@@ -186,11 +219,14 @@ function App() {
   const recordPracticeCompletion = (sessionId, correctCount, total) => {
     setProgress((current) => {
       const today = new Date().toDateString()
-      // The award rule lives in data/progress so the results screen can state
-      // the same number this banks — completedAt is overwritten every time, so
-      // a same-day retry can never be double-counted.
+      // The XP award rule lives in data/progress so the results screen can
+      // state the same number this banks — completedAt is overwritten every
+      // time, so a same-day retry can never be double-counted. The coin award
+      // (lib/coins) is computed against the same completedSessions record but
+      // has no Premium replay exception — a repeat is worth 0 coins to anyone.
+      const withXp = applyActivity(current, getPracticeXpAward(current, sessionId, today), today)
       const next = {
-        ...applyActivity(current, getPracticeXpAward(current, sessionId, today), today),
+        ...applyCoins(withXp, getPracticeCoinAward(current, sessionId)),
         completedSessions: {
           ...current.completedSessions,
           [sessionId]: { correctCount, total, completedAt: today },
@@ -204,10 +240,12 @@ function App() {
   const recordLessonCompletion = (completedLessonId) => {
     setProgress((current) => {
       const today = new Date().toDateString()
-      // First completion earns XP; replays still update the record.
+      // First completion earns XP and coins; replays still update the record
+      // but earn neither.
       const isFirstCompletion = !current.completedLessons?.[completedLessonId]
+      const withXp = applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today)
       const next = {
-        ...applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today),
+        ...applyCoins(withXp, getLessonCoinAward(current, completedLessonId)),
         completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
       }
 
@@ -221,18 +259,19 @@ function App() {
         : null
       if (transition) setRoadmapTransition(transition)
 
-      // Any XP puts a learner on the board (LeaderboardView gates on
-      // `weeklyXp > 0`), and starting a mission already awards some — so the
-      // crossing itself usually happens before the lesson is done. Rather than
-      // fire mid-lesson, the celebration waits for the end of the lesson: the
-      // first completion that finds the learner already on the board, once
-      // ever. A roadmap transition takes the screen first when both happen on
-      // the same completion — the league celebration queues and fires only
-      // once that transition closes, rather than stacking on top of it.
-      const isOnBoard = next.weeklyXp > 0
+      // Earning your first coin puts a learner on the board (LeaderboardView
+      // gates on `seasonCoins > 0`) — starting a mission doesn't count, only
+      // a verified first completion does, per the anti-farming rule. Rather
+      // than fire mid-lesson, the celebration waits for the end of the
+      // lesson: the first completion that finds the learner already on the
+      // board, once ever. A roadmap transition takes the screen first when
+      // both happen on the same completion — the league celebration queues
+      // and fires only once that transition closes, rather than stacking on
+      // top of it.
+      const isOnBoard = next.seasonCoins > 0
       const alreadyCelebrated = Boolean(current.seenPageIntroductions?.['league-qualified'])
       if (isOnBoard && !alreadyCelebrated) {
-        const celebration = { leagueIndex: next.leagueIndex, weeklyXp: next.weeklyXp }
+        const celebration = { leagueIndex: next.leagueIndex, seasonCoins: next.seasonCoins }
         if (transition) pendingLeagueCelebrationRef.current = celebration
         else setLeagueCelebration(celebration)
         const seen = markPageIntroductionSeen(next, 'league-qualified')
@@ -303,6 +342,57 @@ function App() {
     })
   }
 
+  const createPrivateLeague = (name) => {
+    setProgress((current) => {
+      const next = createPrivateLeagueRecord(current, name)
+      saveProgress(next)
+      return next
+    })
+    showNotice('League created')
+  }
+
+  const joinPrivateLeague = (code) => {
+    setProgress((current) => {
+      const next = joinPrivateLeagueByCode(current, code)
+      saveProgress(next)
+      return next
+    })
+    showNotice('Joined league')
+  }
+
+  const leavePrivateLeague = (leagueId) => {
+    setProgress((current) => {
+      const next = leavePrivateLeagueRecord(current, leagueId)
+      saveProgress(next)
+      return next
+    })
+    showNotice('Left league')
+  }
+
+  // No billing behind this either — same demo-action shape as
+  // activatePremium. Moves the whole confirmed balance into history rather
+  // than a partial withdrawal, since there's no real payout rail to size a
+  // partial request against.
+  const requestPayout = () => {
+    setProgress((current) => {
+      if (current.rewardBalance < MIN_PAYOUT_THRESHOLD) return current
+      const entry = { id: `payout-${Date.now()}`, amount: current.rewardBalance, requestedAt: Date.now(), paidAt: Date.now() }
+      const next = { ...current, rewardBalance: 0, payoutHistory: [entry, ...current.payoutHistory].slice(0, 20) }
+      saveProgress(next)
+      return next
+    })
+    showNotice('Payout sent')
+  }
+
+  const savePayoutProfile = (fields) => {
+    setProgress((current) => {
+      const next = { ...current, payoutProfile: { ...current.payoutProfile, ...fields } }
+      saveProgress(next)
+      return next
+    })
+    showNotice('Payout details saved')
+  }
+
   const startPremium = (planId) => {
     setProgress((current) => {
       const next = activatePremium(current, planId)
@@ -356,13 +446,21 @@ function App() {
   // The learner's own words and links, layered onto the onboarding-derived
   // profile — everything else on the CV comes from real progress records,
   // but name, headline, bio, links, and works are theirs to say.
+  //
+  // A profile photo rides along as a data URL inside this same localStorage
+  // blob (no backend to upload to — see lib/imageUpload.js), which can
+  // legitimately blow the browser's storage quota even after the picker
+  // downscales it. saveProgress reports that failure rather than pretending
+  // it worked, so the notice here can tell the truth instead of lying about
+  // a save that silently didn't happen.
   const saveProfileFields = (fields) => {
+    let saved = true
     setProgress((current) => {
       const next = { ...current, profile: { ...current.profile, ...fields } }
-      saveProgress(next)
+      saved = saveProgress(next)
       return next
     })
-    showNotice('Profile updated')
+    showNotice(saved ? 'Profile updated' : "Couldn't save — try a smaller photo")
   }
 
   const chooseFrontendFramework = (stack) => {
@@ -409,7 +507,7 @@ function App() {
     showNotice(`${nextTheme === 'light' ? 'Light' : 'Dark'} mode enabled`)
   }
 
-  const { xp, weeklyXp, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile, customPaths, pathHistory, seenPageIntroductions } = progress
+  const { xp, seasonCoins, streakDays, leagueIndex, lastLeagueResult, completedSessions, completedLessons, lastActiveDate, longestStreak, streakRestoreCredits, streakActivityDates, earnedStreakMilestones, lastStreakProtection, profile, customPaths, pathHistory, seenPageIntroductions } = progress
   // Onboarding picks the path; before that, the default shelf is the spine.
   // A learner-generated custom path takes priority when it's the primary one.
   const currentPath = customPaths?.[profile?.pathId] ?? getPath(profile?.pathId)
@@ -436,11 +534,11 @@ function App() {
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
   const homeStandings = useMemo(() => {
-    const standings = getStandings(getWeekIndex(now()), leagueIndex, weeklyXp, now())
+    const standings = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
     const leaders = standings.slice(0, 3)
     const learner = standings.find((entry) => entry.id === USER_ID)
     return leaders.some((entry) => entry.id === USER_ID) ? leaders : [...leaders, learner]
-  }, [leagueIndex, weeklyXp])
+  }, [leagueIndex, seasonCoins])
 
   // Paths the learner paused to focus on the current primary one — offered
   // back on Home so switching is a click, not a rebuild. If history is empty,
@@ -488,7 +586,7 @@ function App() {
   }, [completedSessions, currentPath])
   // Reflects what the learner actually onboarded as, rather than ML for everyone.
   const homeHint = nextLesson
-    ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${weeklyXp > 0 ? 'You’ve already earned XP this week — keep the streak going.' : 'A single lesson is enough to join this week’s league.'}`
+    ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${seasonCoins > 0 ? 'You’re already on the board this season — keep the streak going.' : 'A single lesson is enough to join this season’s league.'}`
     : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
 
   // A direct preview instead of driving real completion state to reach these
@@ -642,7 +740,7 @@ function App() {
       </header>
       )}
 
-      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile', 'Payouts'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
         {active === 'Paths' ? (
           <PathsView
             currentLearnerPath={currentPath}
@@ -667,7 +765,20 @@ function App() {
             email="devspaceglobal@gmail.com"
             progress={progress}
             onOpenPlans={openPlans}
+            onOpenPayouts={() => setActive('Payouts')}
+            onOpenProfile={() => setActive('Profile')}
             onUpdateDailyMinutes={(minutes) => saveProfileFields({ dailyMinutes: minutes })}
+          />
+        ) : active === 'Payouts' ? (
+          <PayoutCenter
+            rewardBalance={progress.rewardBalance}
+            lifetimeRewards={progress.lifetimeRewards}
+            seasonRewardHistory={progress.seasonRewardHistory}
+            payoutHistory={progress.payoutHistory}
+            payoutProfile={progress.payoutProfile}
+            onBack={() => setActive('Settings')}
+            onRequestPayout={requestPayout}
+            onSavePayoutProfile={savePayoutProfile}
           />
         ) : active === 'Profile' ? (
           <ProfileView
@@ -685,7 +796,7 @@ function App() {
           <PlansView progress={progress} onActivate={startPremium} onCancel={endPremium} highlightPerk={plansHighlight} onBack={() => setActive('Home')} />
         ) : active === 'Leaderboard' ? (
           <LeaderboardView
-            weeklyXp={weeklyXp}
+            seasonCoins={seasonCoins}
             xp={xp}
             leagueIndex={leagueIndex}
             lastLeagueResult={lastLeagueResult}
@@ -695,6 +806,10 @@ function App() {
             onOpenPlans={openPlans}
             hasSeenIntroduction={Boolean(seenPageIntroductions?.leaderboard)}
             onDismissIntroduction={() => dismissPageIntroduction('leaderboard')}
+            onDismissSubIntroduction={dismissPageIntroduction}
+            onCreatePrivateLeague={createPrivateLeague}
+            onJoinPrivateLeague={joinPrivateLeague}
+            onLeavePrivateLeague={leavePrivateLeague}
           />
         ) : active === 'Practice' ? (
           <PracticeView
@@ -772,13 +887,13 @@ function App() {
               <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
               </div>
               <InfoTooltip label="How leagues work" align="end">
-                Earn XP this week to move up the leaderboard. Final standings update when the week ends.
+                Earn Season Devy Coins to move up the leaderboard. Final standings update when the season ends.
               </InfoTooltip>
             </div>
             <button type="button" className="grid w-full gap-2 rounded-2xl border border-[#404040] bg-[#171717] p-3.5 text-left transition-colors hover:border-[#5a5a60] hover:bg-[#1c1c1e] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:hover:border-[#d4d4d4]" onClick={() => setActive('Leaderboard')} aria-label="Open leaderboard">
               <span className="flex items-center justify-between px-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Standings</span>
-                <span>XP</span>
+                <span>🪙</span>
               </span>
               {homeStandings.map((entry) => (
                 <span key={entry.id} className={`grid min-h-8 grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-[13px] ${entry.id === USER_ID ? 'bg-[#2a293c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#e9f2ff] [[data-theme=light]_&]:text-neutral-800' : ''}`}>
@@ -889,7 +1004,7 @@ function App() {
       {leagueCelebration && (
         <LeagueQualifiedCelebration
           leagueIndex={leagueCelebration.leagueIndex}
-          weeklyXp={leagueCelebration.weeklyXp}
+          seasonCoins={leagueCelebration.seasonCoins}
           onClose={dismissLeagueCelebration}
         />
       )}

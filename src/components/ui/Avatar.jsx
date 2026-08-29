@@ -10,11 +10,23 @@ function colorForName(name) {
   return PALETTE[sum % PALETTE.length]
 }
 
-export function Avatar({ name, size = 'md', className = '' }) {
+export function Avatar({ name, photo, size = 'md', className = '' }) {
   const initial = name?.trim()?.[0]?.toUpperCase() ?? '?'
+  const sizeClasses = SIZES[size] ?? SIZES.md
+
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt=""
+        aria-hidden="true"
+        className={`inline-block shrink-0 rounded-full object-cover ${sizeClasses} ${className}`}
+      />
+    )
+  }
 
   return (
-    <span className={`inline-grid shrink-0 place-items-center rounded-full font-rethink-sans font-semibold text-white ${SIZES[size] ?? SIZES.md} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
+    <span className={`inline-grid shrink-0 place-items-center rounded-full font-rethink-sans font-semibold text-white ${sizeClasses} ${className}`} style={{ background: colorForName(name ?? '') }} aria-hidden="true">
       {initial}
     </span>
   )

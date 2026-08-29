@@ -91,8 +91,8 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
                   <h3 className="truncate font-rethink-sans text-[19px] font-medium leading-[1.3] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{path.title}</h3>
                   <p className="mt-1 line-clamp-2 text-[13px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Building: {path.project}</p>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[13px] font-semibold text-[#8ee6ad] [[data-theme=light]_&]:text-[#168a46]">Open path</span>
+                <div className="flex items-center justify-end gap-3">
+                  <span className="rounded-lg bg-[#16a34a] px-3 py-2 text-[13px] font-semibold text-white">Open path</span>
                   <span className="inline-flex rounded-full bg-[#1d3b2a] px-2 py-1 text-[10px] font-bold uppercase tracking-[.08em] text-[#8ee6ad] [[data-theme=light]_&]:bg-[#e2f6e8] [[data-theme=light]_&]:text-[#168a46]">Custom</span>
                 </div>
               </button>

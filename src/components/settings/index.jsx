@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
+import { Avatar } from '../ui/Avatar'
 import { ToggleSwitch } from '../ui/ToggleSwitch'
 import { InfoTooltip } from '../ui/InfoTooltip'
+import { normalizeProfile } from '../../lib/profile'
 import { SettingsSection } from './SettingsSection'
 import { SettingsRow } from './SettingsRow'
 
 const navItems = [
   { id: 'account', label: 'Account' },
   { id: 'premium', label: 'Premium' },
+  { id: 'rewards', label: 'Rewards' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'notifications', label: 'Notifications' },
   { id: 'learning', label: 'Learning' },
@@ -21,12 +24,13 @@ const dailyGoals = [
   { id: 'intense', label: 'Intense', minutes: 20, meta: '20 min / day · 100 XP' },
 ]
 
-export default function SettingsView({ theme, onToggleTheme, onNotice, email, progress, onOpenPlans, onUpdateDailyMinutes }) {
+export default function SettingsView({ theme, onToggleTheme, onNotice, email, progress, onOpenPlans, onOpenPayouts, onOpenProfile, onUpdateDailyMinutes }) {
   const [notifications, setNotifications] = useState({
     reminders: true,
     streak: true,
     weeklyEmail: false,
   })
+  const identity = normalizeProfile(progress?.profile)
   const currentMinutes = progress?.profile?.dailyMinutes ?? 10
   const activeGoal = dailyGoals.find((g) => g.minutes === currentMinutes) ?? dailyGoals[1]
 
@@ -63,12 +67,12 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
         <div className="grid gap-6 min-w-0">
           <SettingsSection id="account" title="Account" description="Your profile information as seen by other learners.">
             <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
-              <span className="grid size-12 flex-none place-items-center rounded-full bg-[#6699ec] text-lg font-semibold text-white" aria-hidden="true">L</span>
+              <Avatar name={identity?.name || 'Learner'} photo={identity?.photo} size="lg" />
               <div className="grid min-w-0 flex-1 gap-0.5">
-                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Learner</strong>
+                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{identity?.name?.trim() || 'Learner'}</strong>
                 <span className="truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{email}</span>
               </div>
-              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onNotice('Profile editing is coming soon')}>
+              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onOpenProfile?.()}>
                 Edit profile
               </ActionButton>
             </div>
@@ -88,6 +92,22 @@ export default function SettingsView({ theme, onToggleTheme, onNotice, email, pr
               </span>
               <ActionButton variant={progress?.isPremium ? 'neutral' : 'premium'} className="min-h-10 text-sm" onClick={() => onOpenPlans?.()}>
                 {progress?.isPremium ? 'Manage plan' : 'See plans'}
+              </ActionButton>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection id="rewards" title="Rewards" description="Confirmed cash rewards from the leaderboard, and where they get paid out.">
+            <div className="flex items-center gap-4 max-[480px]:flex-col max-[480px]:items-start">
+              <div className="grid gap-0.5">
+                <strong className="text-[15px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+                  ₦{(progress?.rewardBalance ?? 0).toLocaleString()} available
+                </strong>
+                <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                  Lifetime rewards: ₦{(progress?.lifetimeRewards ?? 0).toLocaleString()}
+                </span>
+              </div>
+              <ActionButton variant="neutral" className="min-h-10 text-sm" onClick={() => onOpenPayouts?.()}>
+                Open Payout Center
               </ActionButton>
             </div>
           </SettingsSection>
