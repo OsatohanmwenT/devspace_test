@@ -27,6 +27,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
   const conversationRef = useRef(null)
   const thinkingTimerRef = useRef(null)
   const prompts = getPrompts(step, checked).filter(({ id }) => !messages.some((message) => message.id === id))
+  const isHintOnly = step?.type === 'question' && !checked
 
   useEffect(() => {
     conversationRef.current?.scrollTo({ top: conversationRef.current.scrollHeight, behavior: 'smooth' })
@@ -78,7 +79,7 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
       <div ref={conversationRef} className="scrollbar-hidden mt-5 min-h-0 flex-1 overflow-y-auto" aria-live="polite">
         <div className="grid min-h-full content-end gap-3">
           <div className={messages.length ? 'blur-[2px] opacity-30 transition-[filter,opacity] duration-300' : ''}>
-            <Bubble>{getGreeting(profile)}</Bubble>
+            <Bubble>{getGreeting(profile, { isHintOnly })}</Bubble>
           </div>
 
           {messages.map((message, index) => (

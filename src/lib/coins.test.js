@@ -22,6 +22,14 @@ test('any repeat of a lesson earns zero coins, Premium or not', () => {
   assert.equal(getLessonCoinAward({ ...completed, isPremium: true }, 'intro-variables'), 0)
 })
 
+test('Earn It First: an assisted lesson pays zero coins even on a genuine first completion', () => {
+  assert.equal(getLessonCoinAward({ completedLessons: {} }, 'intro-variables', true), 0)
+})
+
+test('a lesson completion is unassisted by default', () => {
+  assert.equal(getLessonCoinAward({ completedLessons: {} }, 'intro-variables'), COIN_AWARDS.CONCEPT_MASTERED)
+})
+
 test('completing one session or lesson says nothing about another', () => {
   const progress = {
     completedSessions: { 'python-basics': { completedAt: 'Thu Aug 06 2026' } },

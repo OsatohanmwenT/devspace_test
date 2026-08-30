@@ -238,15 +238,19 @@ function App() {
     })
   }
 
-  const recordLessonCompletion = (completedLessonId) => {
+  const recordLessonCompletion = (completedLessonId, meta) => {
+    // Earn It First: opening Devy before a first attempt on any question
+    // forfeits this completion's reward, same as a repeat completion already
+    // does — the lesson still counts toward progression, it just pays 0.
+    const assisted = Boolean(meta?.assisted)
     setProgress((current) => {
       const today = new Date().toDateString()
-      // First completion earns XP and coins; replays still update the record
-      // but earn neither.
+      // First completion earns XP and coins; replays and assisted runs still
+      // update the record but earn neither.
       const isFirstCompletion = !current.completedLessons?.[completedLessonId]
-      const withXp = applyActivity(current, isFirstCompletion ? LESSON_XP : 0, today)
+      const withXp = applyActivity(current, isFirstCompletion && !assisted ? LESSON_XP : 0, today)
       const next = {
-        ...applyCoins(withXp, getLessonCoinAward(current, completedLessonId)),
+        ...applyCoins(withXp, getLessonCoinAward(current, completedLessonId, assisted)),
         completedLessons: { ...current.completedLessons, [completedLessonId]: { completedAt: today } },
       }
 
@@ -282,7 +286,7 @@ function App() {
       saveProgress(next)
       return next
     })
-    showNotice(`Lesson complete · +${LESSON_XP} XP`)
+    showNotice(assisted ? 'Lesson complete · no XP (Devy helped on a question)' : `Lesson complete · +${LESSON_XP} XP`)
   }
 
   // The celebration sits on top of the finished lesson, so continuing has to

@@ -92,11 +92,30 @@ test('the greeting adapts to the profile and survives a missing one', () => {
 test('typed text routes to the matching prompt', () => {
   const step = questionSteps.find((item) => item.question.type === 'multiple-choice')
   const unchecked = getPrompts(step, false)
+  const checked = getPrompts(step, true)
 
   assert.equal(matchPrompt('give me a hint', unchecked), 'hint')
   assert.equal(matchPrompt("I'm stuck", unchecked), 'hint')
-  assert.equal(matchPrompt('can you explain the concept?', unchecked), 'explain')
-  assert.equal(matchPrompt('I am confused', unchecked), 'explain')
+  // Earn It First: a full concept recap isn't offered before a first
+  // attempt, so asking for one falls through rather than resolving.
+  assert.equal(matchPrompt('can you explain the concept?', unchecked), null)
+  assert.equal(matchPrompt('can you explain the concept?', checked), 'explain')
+  assert.equal(matchPrompt('I am confused', checked), 'explain')
+})
+
+// Earn It First: a question offers only a hint before it's been checked —
+// the concept recap and the "why" both wait for a real attempt, same gate
+// that withholds this lesson's XP/coins (see getLessonCoinAward).
+test('Earn It First: an unchecked question offers only a hint, never the full recap', () => {
+  for (const step of questionSteps) {
+    assert.deepEqual(getPrompts(step, false).map((item) => item.id), ['hint'])
+  }
+})
+
+test('the greeting explains why only a hint is on offer, in hint-only mode', () => {
+  const greeting = getGreeting({ role: 'ml_engineer' }, { isHintOnly: true })
+  assert.match(greeting, /XP/)
+  assert.doesNotMatch(greeting, /Machine Learning Engineer/, 'hint-only mode is about the XP stakes, not the role framing')
 })
 
 test('typed text cannot unlock an answer the chips are withholding', () => {

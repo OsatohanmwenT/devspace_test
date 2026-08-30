@@ -1,7 +1,29 @@
+import { useState } from 'react';
 import { RichText } from './RichText';
 import { LessonDataTable } from './LessonDataTable';
+import { LockIcon } from '../ui/icons';
+import { YouTubeSegmentPlayer } from './YouTubeSegmentPlayer';
 
 export function LessonArticle({ article, lessonTitle }) {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const segments = article.video?.segments ?? []
+  const [activeSegmentId, setActiveSegmentId] = useState(segments[0]?.id)
+  // Watching one chapter to its end unlocks the next — you can always revisit
+  // one you've already finished, but you can't jump ahead without playing
+  // it, same "no skipping without watching" rule the video itself enforces
+  // by blocking a scrub past the furthest point actually played.
+  const [completedSegmentIds, setCompletedSegmentIds] = useState([])
+  const activeSegment = segments.find((segment) => segment.id === activeSegmentId) ?? segments[0]
+  // Most video blocks today are decorative-only (title/duration for a video
+  // that hasn't been recorded yet) — no `videoId`/`segments` behind them.
+  // The play button only goes interactive once there's an actual video to
+  // play; otherwise it stays the same inert preview card it always was.
+  const canPlay = Boolean(article.video?.videoId) && Boolean(activeSegment)
+  const furthestUnlockedIndex = segments.reduce(
+    (furthest, segment, index) => (completedSegmentIds.includes(segment.id) ? Math.max(furthest, index + 1) : furthest),
+    0,
+  )
+
   return (
     <article
       className="h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fafaf8]"
@@ -19,7 +41,7 @@ export function LessonArticle({ article, lessonTitle }) {
           {article.intro}
         </p>
 
-        {article.video && (
+        {article.video && !(canPlay && isPlaying) && (
           <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 mt-[22px] rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] max-w-[82ch] text-center">
             <div className="grid gap-2">
               <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
@@ -28,8 +50,10 @@ export function LessonArticle({ article, lessonTitle }) {
             <div className="relative">
               <button
                 type="button"
-                className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out hover:bg-[#2ab9c9] hover:scale-[1.06]"
-                aria-label={`Play: ${article.video.title}`}
+                disabled={!canPlay}
+                className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out enabled:hover:bg-[#2ab9c9] enabled:hover:scale-[1.06] disabled:cursor-default disabled:opacity-80"
+                aria-label={canPlay ? `Play: ${article.video.title}` : `${article.video.title} (video coming soon)`}
+                onClick={() => canPlay && setIsPlaying(true)}
               >
                 <svg className="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
               </button>
@@ -44,6 +68,41 @@ export function LessonArticle({ article, lessonTitle }) {
             </div>
             <span className="absolute top-3.5 right-4 rounded-md bg-[rgba(255,255,255,0.12)] px-2 py-[3px] text-[#f4f4f2] text-xs font-semibold">{article.video.duration}</span>
             <img className="absolute left-[18px] bottom-3.5 h-[14px] w-auto opacity-50" src="/assets/logo.svg" alt="" />
+          </div>
+        )}
+
+        {article.video && canPlay && isPlaying && (
+          <div className="mt-[22px] max-w-[82ch]">
+            {segments.length > 1 && (
+              <div className="mb-2.5 flex flex-wrap gap-2" role="group" aria-label="Video chapter">
+                {segments.map((segment, index) => {
+                  const unlocked = index <= furthestUnlockedIndex
+                  const isActive = segment.id === activeSegmentId
+                  return (
+                    <button
+                      key={segment.id}
+                      type="button"
+                      disabled={!unlocked}
+                      onClick={() => setActiveSegmentId(segment.id)}
+                      aria-pressed={isActive}
+                      title={unlocked ? segment.label : `Watch "${activeSegment?.label ?? 'this chapter'}" first`}
+                      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium ${isActive ? 'border-[#04adc0] bg-[#213c3f] text-[#f4f4f2]' : unlocked ? 'border-[#4a4a4a] text-[#c4c4c7] hover:border-[#6699ec] cursor-pointer' : 'border-[#333336] text-[#68686c] cursor-default'}`}
+                    >
+                      {!unlocked && <LockIcon className="size-3" />}
+                      {segment.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            <YouTubeSegmentPlayer
+              key={`${article.video.videoId}-${activeSegment.id}`}
+              videoId={article.video.videoId}
+              startSeconds={activeSegment.startSeconds}
+              endSeconds={activeSegment.endSeconds}
+              title={article.video.title}
+              onSegmentComplete={() => setCompletedSegmentIds((current) => (current.includes(activeSegment.id) ? current : [...current, activeSegment.id]))}
+            />
           </div>
         )}
 

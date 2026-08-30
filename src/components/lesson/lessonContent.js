@@ -9,6 +9,11 @@ export const programExecutionArticle = {
     subtitle: 'Program execution',
     duration: '3:12',
     badgeLabel: 'PY',
+    // Opening minutes of freeCodeCamp's "Learn Python - Full Course for
+    // Beginners" — hello world and running your first script, matching this
+    // concept's intro-to-execution scope.
+    videoId: 'rfscVS0vtbw',
+    segments: [{ id: 'intro', label: 'Getting started', startSeconds: 0, endSeconds: 192 }],
   },
   sections: [
     {

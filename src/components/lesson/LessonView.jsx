@@ -24,7 +24,7 @@ import { getLessonTopics } from '../../data/learningResources'
 const STREAK_THRESHOLD = 3
 
 function loadLessonSession(storageKey, flowLength) {
-  const empty = { stepIndex: 0, activityStates: {}, streak: 0 }
+  const empty = { stepIndex: 0, activityStates: {}, streak: 0, assistedByDevy: false }
   try {
     const savedSession = JSON.parse(localStorage.getItem(storageKey))
     if (!savedSession) return empty
@@ -33,6 +33,7 @@ function loadLessonSession(storageKey, flowLength) {
       stepIndex: Math.min(Math.max(savedSession.stepIndex ?? 0, 0), flowLength - 1),
       activityStates: savedSession.activityStates ?? {},
       streak: savedSession.streak ?? 0,
+      assistedByDevy: savedSession.assistedByDevy ?? false,
     }
   } catch {
     return empty
@@ -72,6 +73,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [isCheatsheetOpen, setIsCheatsheetOpen] = useState(false)
   const [isLessonMenuOpen, setIsLessonMenuOpen] = useState(false)
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false)
+  // Earn It First: opening Devy before a first attempt on any question here
+  // forfeits this lesson's XP/coins, same lever a repeat completion already
+  // uses (see getLessonCoinAward). Warned once per session — after that the
+  // session's already marked assisted, so there's nothing more to lose.
+  const [isEarnItFirstDialogOpen, setIsEarnItFirstDialogOpen] = useState(false)
+  const earnItFirstStayRef = useRef(null)
   const [isSaved, setIsSaved] = useState(false)
   const [successPulse, setSuccessPulse] = useState(0)
   const [errorPulse, setErrorPulse] = useState(0)
@@ -234,9 +241,31 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
+  // Gate, don't block: an unanswered question is the one place asking Devy
+  // has a real cost, and only the first time this session — once assisted,
+  // the reward's already gone, so later questions open Devy freely.
+  const openDevy = () => {
+    if (isQuestion && !isChecked && !session.assistedByDevy) {
+      setIsEarnItFirstDialogOpen(true)
+      return
+    }
+    setIsDevyOpen(true)
+  }
+
+  const keepTrying = () => {
+    setIsEarnItFirstDialogOpen(false)
+    window.setTimeout(() => exitButtonRef.current?.focus())
+  }
+
+  const askDevyAnyway = () => {
+    setIsEarnItFirstDialogOpen(false)
+    setSession((current) => ({ ...current, assistedByDevy: true }))
+    setIsDevyOpen(true)
+  }
+
   const finishLesson = () => {
     localStorage.removeItem(storageKey)
-    onComplete?.(activeLessonId)
+    onComplete?.(activeLessonId, { assisted: session.assistedByDevy })
     onExit()
   }
 
@@ -284,6 +313,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     return () => document.removeEventListener('keydown', handleDialogKeys)
   }, [isExitDialogOpen])
 
+  useEffect(() => {
+    if (isEarnItFirstDialogOpen) earnItFirstStayRef.current?.focus()
+  }, [isEarnItFirstDialogOpen])
+
   const footerAction = !currentStep
     ? null
     : currentStep.kind === 'transition'
@@ -313,6 +346,13 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       if (isExitDialogOpen) return
       // The drawer owns the keyboard while it's open.
       if (isNotesOpen || isCheatsheetOpen) return
+      if (isEarnItFirstDialogOpen) {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          keepTrying()
+        }
+        return
+      }
       if (event.key === 'Escape') {
         requestExit()
         return
@@ -462,7 +502,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               answer={answer}
               checked={isChecked}
               onAnswer={answerQuestion}
-              onAskDevy={() => setIsDevyOpen(true)}
+              onAskDevy={openDevy}
             />
           </div>
         )}
@@ -516,7 +556,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             <button
               type="button"
               className={`relative grid size-[54px] max-[720px]:size-12 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
-              onClick={() => setIsDevyOpen(true)}
+              onClick={openDevy}
               aria-label="Open Devy chat"
               aria-expanded={isDevyOpen}
             >
@@ -581,6 +621,29 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             <div className="mt-7 grid w-full gap-3">
               <button ref={stayButtonRef} type="button" className={`min-h-14 rounded-2xl bg-[#2563eb] px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_5px_0_#1d4ed8] hover:bg-[#3b82f6] active:translate-y-1 active:shadow-none ${focusRing}`} onClick={stayInLesson}>Keep learning</button>
               <button type="button" className={`min-h-11 px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-[#ff6262] hover:text-[#ff8585] [[data-theme=light]_&]:text-[#d92d2d] ${focusRing}`} onClick={leaveLesson}>Leave lesson</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isEarnItFirstDialogOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 px-5">
+          <div
+            className="grid w-full max-w-[440px] justify-items-center rounded-3xl bg-[#14252c] px-7 py-7 text-center shadow-[0_18px_48px_rgba(0,0,0,.45)] [[data-theme=light]_&]:bg-white max-[520px]:px-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="earn-it-first-title"
+          >
+            <DevyMood mood="neutral" className="mb-4 h-[102px] w-[90px] object-contain" />
+            <span className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#88bdf2]">Earn It First</span>
+            <h2 id="earn-it-first-title" className="m-0 max-w-[22ch] font-rethink-sans text-[22px] font-semibold leading-[1.35] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+              Try it yourself first.
+            </h2>
+            <p className="m-0 mt-2.5 max-w-[34ch] text-[14px] leading-[1.5] text-[#b2b2b6] [[data-theme=light]_&]:text-[#8a8a8e]">
+              Asking Devy now costs this lesson its XP and coins. Devy can still rule out a wrong option, just not hand you the answer.
+            </p>
+            <div className="mt-6 grid w-full gap-3">
+              <button ref={earnItFirstStayRef} type="button" className={`min-h-14 rounded-2xl bg-[#2563eb] px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_5px_0_#1d4ed8] hover:bg-[#3b82f6] active:translate-y-1 active:shadow-none ${focusRing}`} onClick={keepTrying}>Keep trying</button>
+              <button type="button" className={`min-h-11 px-5 text-[15px] font-semibold uppercase tracking-[0.06em] text-[#9a9a9d] hover:text-[#c4c4c7] [[data-theme=light]_&]:text-[#8a8a8e] ${focusRing}`} onClick={askDevyAnyway}>Ask Devy anyway</button>
             </div>
           </div>
         </div>

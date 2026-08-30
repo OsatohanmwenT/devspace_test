@@ -65,7 +65,14 @@ export function getQuestionIntro(question) {
   return question?.spokenIntro ?? null
 }
 
-export function getGreeting(profile) {
+// Earn It First: asking Devy before you've tried a question yourself is
+// allowed, but only for a rules-out-one-option hint — the full concept
+// recap and the "why" stay behind an actual attempt, same as the XP/coins
+// that attempt would otherwise earn (see getLessonCoinAward, LessonView).
+export function getGreeting(profile, { isHintOnly = false } = {}) {
+  if (isHintOnly) {
+    return 'Hi, I’m Devy. I can rule out a wrong option, but working out the rest is what earns this lesson its XP.'
+  }
   const roleLabel = profile?.role ? ROLE_LABELS[profile.role] : null
   if (roleLabel) {
     return `Hi, I’m Devy. I’ll keep things close to ${roleLabel} work where it helps — ask me any time.`
@@ -82,7 +89,7 @@ export function getPrompts(step, checked = false) {
   }
 
   if (step.type === 'question') {
-    return checked ? [prompt('why'), prompt('explain')] : [prompt('hint'), prompt('explain')]
+    return checked ? [prompt('why'), prompt('explain')] : [prompt('hint')]
   }
 
   if (step.type === 'practice') {
