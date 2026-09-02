@@ -85,7 +85,7 @@ function walk(pick) {
 
 test('every answerable step in a full walk offers options', () => {
   const { answers, visited } = walk((_, options) => options[0].value)
-  assert.equal(visited.at(-1), 'summary')
+  assert.equal(visited.at(-1), 'daily_time_break')
   assert.ok(visited.includes('branch'))
   assert.ok(buildProfile(answers).pathId)
 })
@@ -105,7 +105,7 @@ test('a walk that takes both escape hatches still completes', () => {
 
   assert.ok(visited.includes('branch_triage'))
   assert.ok(visited.includes('role_sub_quiz'))
-  assert.equal(visited.at(-1), 'summary')
+  assert.equal(visited.at(-1), 'daily_time_break')
 
   const profile = buildProfile(answers)
   assert.ok(profile.role && profile.role !== 'help_me_choose')
@@ -231,7 +231,7 @@ test('low-experience backend learners are still placed by general experience', (
 test('visible steps grow and shrink with the answers', () => {
   const empty = ids({})
   assert.equal(empty[0], 'welcome')
-  assert.equal(empty.at(-1), 'summary')
+  assert.equal(empty.at(-1), 'daily_time_break')
   assert.ok(!empty.includes('role'))
 
   const full = ids({ branch: 'web', role: 'frontend_developer', experience: 'built_small_projects' })

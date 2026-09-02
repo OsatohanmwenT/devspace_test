@@ -31,8 +31,13 @@ const WINDOW_SIZE = 200
 // top-15% zone, STRONG is a season's worth of real effort that should
 // reliably clear it. leagueSim.test.js locks these rates; change `pace` in
 // data/leagues.js and it will tell you.
-const LOW_EFFORT_SEASON = 700
-const STRONG_EFFORT_SEASON = 1500
+//
+// Scaled to what's actually earnable right now: every lesson (5 coins) and
+// practice session (8 coins) is a one-time award, so a full season of real
+// effort tops out well under a hundred coins, not the thousands the original
+// benchmarks assumed a renewable daily content feed would produce.
+const LOW_EFFORT_SEASON = 25
+const STRONG_EFFORT_SEASON = 90
 
 // resolveSeason only settles a season that is already over, so score it from
 // the following season.
@@ -101,7 +106,7 @@ test('modest activity rarely clears Bronze’s narrow top-15% zone', () => {
 test('effort pays off in every league', () => {
   for (let leagueIndex = 0; leagueIndex < leagues.length - 1; leagueIndex += 1) {
     let previous = -1
-    for (const seasonCoins of [420, 700, 1400, 2100, 2800, 4200, 6000]) {
+    for (const seasonCoins of [25, 42, 84, 126, 168, 252, 360]) {
       const rate = outcomeRate(leagueIndex, seasonCoins, 'promoted')
       assert.ok(
         rate >= previous - 0.05,
@@ -114,7 +119,7 @@ test('effort pays off in every league', () => {
 
 test('a big enough season promotes out of anywhere below Diamond', () => {
   for (let leagueIndex = 0; leagueIndex < leagues.length - 1; leagueIndex += 1) {
-    assert.equal(outcomeRate(leagueIndex, 16000, 'promoted'), 1, `${leagues[leagueIndex].id} refused a 16000-coin season`)
+    assert.equal(outcomeRate(leagueIndex, 960, 'promoted'), 1, `${leagues[leagueIndex].id} refused a 960-coin season`)
   }
 })
 
@@ -145,12 +150,12 @@ test('premium status has zero effect on how a season resolves', () => {
 })
 
 test('settling reports the league it moved you to', () => {
-  const promoted = settle(0, 16000, 150)
+  const promoted = settle(0, 960, 150)
   assert.equal(promoted.outcome, 'promoted')
   assert.equal(promoted.nextLeagueIndex, 1)
   assert.equal(promoted.fromLeague, leagues[0].name)
   assert.equal(promoted.toLeague, leagues[1].name)
-  assert.equal(promoted.score, 16000)
+  assert.equal(promoted.score, 960)
 
   const stayed = settle(0, 0, 150)
   assert.equal(stayed.outcome, 'stayed')
@@ -161,7 +166,7 @@ test('settling reports the league it moved you to', () => {
 // out of the free tier doesn't hinge entirely on already having Pro.
 test('a Bronze top-10 finish earns a Silver Pass for the next season only', () => {
   const seasonIndex = 150
-  const top = settle(0, 16000, seasonIndex)
+  const top = settle(0, 960, seasonIndex)
   assert.equal(top.outcome, 'promoted')
   assert.ok(top.rank <= 10, `expected a top-10 finish, got rank ${top.rank}`)
   assert.equal(top.silverPassSeasonIndex, seasonIndex + 1)
@@ -313,8 +318,8 @@ test('the outlook sees the finishing rank the live board hides', () => {
   const targets = getSeasonTargets(seasonIndex, 0)
   const dayOne = getSeasonStartFromIndex(seasonIndex) + 2 * 60 * 60 * 1000
 
-  const liveRank = getZoneSummary(getStandings(seasonIndex, 0, 75, dayOne), 0).user.rank
-  const outlook = getPaceOutlook({ seasonCoins: 75, dailyGoal: 25, timestamp: dayOne, targets, leagueIndex: 0 })
+  const liveRank = getZoneSummary(getStandings(seasonIndex, 0, 5, dayOne), 0).user.rank
+  const outlook = getPaceOutlook({ seasonCoins: 5, dailyGoal: 25, timestamp: dayOne, targets, leagueIndex: 0 })
 
   assert.equal(liveRank, 1, 'the live board should still flatter on day one')
   assert.ok(outlook.stopNowRank > 10, `stopping now should finish far down, got ${outlook.stopNowRank}`)

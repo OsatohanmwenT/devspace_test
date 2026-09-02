@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { emptyAnswer, isQuestionComplete, isQuestionCorrect, isTableType, toggleRowSelection } from './questionState.js'
+import { clearIncorrectBlanks, emptyAnswer, isQuestionComplete, isQuestionCorrect, isTableType, toggleRowSelection } from './questionState.js'
 
 const tableQuestion = {
   type: 'table-select',
@@ -35,4 +35,23 @@ test('toggleRowSelection adds an unselected row and removes a selected one', () 
   assert.deepEqual(toggleRowSelection(undefined, 'A'), ['A'])
   assert.deepEqual(toggleRowSelection(['A'], 'B'), ['A', 'B'])
   assert.deepEqual(toggleRowSelection(['A', 'B'], 'A'), ['B'])
+})
+
+const fillQuestion = {
+  type: 'fill',
+  options: ['SELECT', 'FROM', 'WHERE', 'HAVING'],
+  answers: ['SELECT', 'FROM', 'WHERE'],
+}
+
+test('clearIncorrectBlanks keeps a correct blank and clears a wrong one', () => {
+  // 0=SELECT (right), 3=HAVING (wrong, should have been WHERE at index 2), 1=FROM (right)
+  assert.deepEqual(clearIncorrectBlanks(fillQuestion, [0, 1, 3]), [0, 1, undefined])
+})
+
+test('clearIncorrectBlanks clears every blank when none were correct', () => {
+  assert.deepEqual(clearIncorrectBlanks(fillQuestion, [3, 3, 3]), [undefined, undefined, undefined])
+})
+
+test('clearIncorrectBlanks treats a missing answer as an empty set of blanks', () => {
+  assert.deepEqual(clearIncorrectBlanks(fillQuestion, undefined), [])
 })

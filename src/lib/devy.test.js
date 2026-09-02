@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildLessonFlow } from '../components/lesson/lessonFlow.js'
 import { lessonsById } from '../components/lesson/lessonContent.js'
-import { getFallbackResponse, getGreeting, getPrompts, getQuestionIntro, getQuizIntro, getResponse, matchPrompt, PROMPT_LABELS, toPlainText } from './devy.js'
+import { getDevyLine, getFallbackResponse, getGreeting, getPrompts, getQuestionIntro, getQuizIntro, getResponse, matchPrompt, PROMPT_LABELS, toPlainText } from './devy.js'
 
 const allSteps = Object.values(lessonsById).flatMap((lesson) => buildLessonFlow(lesson))
 const questionSteps = allSteps.filter((step) => step.type === 'question')
@@ -159,6 +159,16 @@ test('a quiz intro reads the authored spokenIntro when present, else a generic l
   assert.equal(getQuizIntro({}), 'Quick check before we move on.')
   assert.equal(getQuizIntro(null), 'Quick check before we move on.')
   assert.equal(getQuizIntro(undefined), 'Quick check before we move on.')
+})
+
+test('a retry line is distinct from the final resolved miss', () => {
+  const retryLines = new Set()
+  const incorrectLines = new Set()
+  for (let i = 0; i < 30; i += 1) {
+    retryLines.add(getDevyLine({ event: 'retry' }))
+    incorrectLines.add(getDevyLine({ event: 'incorrect' }))
+  }
+  for (const line of retryLines) assert.ok(!incorrectLines.has(line), `"${line}" is shared between retry and incorrect pools`)
 })
 
 test('a question intro says nothing extra unless one was authored', () => {

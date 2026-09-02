@@ -13,17 +13,25 @@
 // 15%, real sustained effort should reliably clear it. leagueSim.test.js
 // locks these rates; change `pace` and it will tell you.
 //
+// These values are scaled to the content that actually exists right now —
+// a handful of lessons and practice sessions, each a one-time (anti-farmed)
+// coin award, capping a season's honestly-earned total well under what the
+// original pace assumed a sustained daily habit would produce. Re-scale
+// upward as more lessons and practice sessions get authored, using the same
+// binary-search-against-leagueSim.test.js approach: raise `pace` until the
+// low-effort benchmark stops promoting and the strong-effort one still does.
+//
 // `requiresPro` marks the leagues Bronze doesn't fund entry to — Silver and
 // above need an active Pro subscription (or, for a season, a Silver Pass
 // earned by finishing top 10 in Bronze — see lib/leagueAccess.js). This is
 // gating, not scoring: nothing here or in leagueSim.js reads `isPremium`,
 // which is what keeps Pro from ever affecting rank once someone is competing.
 export const leagues = [
-  { id: 'bronze', name: 'Bronze League', color: '#d98a52', promotePercent: 0.15, demotePercent: 0, requiresPro: false, pace: 0.6 },
-  { id: 'silver', name: 'Silver League', color: '#c7c9d1', promotePercent: 0.15, demotePercent: 0.10, requiresPro: true, pace: 0.95 },
-  { id: 'gold', name: 'Gold League', color: '#ffcf8b', promotePercent: 0.12, demotePercent: 0.10, requiresPro: true, pace: 1.35 },
-  { id: 'sapphire', name: 'Sapphire League', color: '#5fb8ff', promotePercent: 0.10, demotePercent: 0.12, requiresPro: true, pace: 1.8 },
-  { id: 'diamond', name: 'Diamond League', color: '#04adc0', promotePercent: 0, demotePercent: 0.15, requiresPro: true, pace: 2.3 },
+  { id: 'bronze', name: 'Bronze League', color: '#d98a52', promotePercent: 0.15, demotePercent: 0, requiresPro: false, pace: 0.036 },
+  { id: 'silver', name: 'Silver League', color: '#c7c9d1', promotePercent: 0.15, demotePercent: 0.10, requiresPro: true, pace: 0.057 },
+  { id: 'gold', name: 'Gold League', color: '#ffcf8b', promotePercent: 0.12, demotePercent: 0.10, requiresPro: true, pace: 0.081 },
+  { id: 'sapphire', name: 'Sapphire League', color: '#5fb8ff', promotePercent: 0.10, demotePercent: 0.12, requiresPro: true, pace: 0.108 },
+  { id: 'diamond', name: 'Diamond League', color: '#04adc0', promotePercent: 0, demotePercent: 0.15, requiresPro: true, pace: 0.138 },
 ]
 
 export const COHORT_SIZE = 30

@@ -1,10 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { BRANCHES, branchTriage, roleSubQuiz, stackSubQuiz, startingPointOptions } from '../../data/onboarding';
-import { getPath } from '../../data/paths';
 import {
     buildProfile,
-    computeLessonsPerWeek,
     explainPlacement,
     getBreakContent,
     getStageGroups,
@@ -21,16 +19,7 @@ import {
 import { ActionButton } from '../ui/ActionButton';
 import { DevyMood } from '../ui/DevyMood';
 import GeneratingPath from './GeneratingPath';
-import { ChipList, MiniIcon, OptionIcon, OptionList, StepHeading } from './OnboardingStep';
-
-// Joins answer labels the way the break-screen copy already does — "X", "X and Y", "X, Y and Z".
-function joinLabels(labels) {
-  return labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}` : labels[0]
-}
-
-function lowerFirst(text) {
-  return text.charAt(0).toLowerCase() + text.slice(1)
-}
+import { ChipList, MiniIcon, OptionList, StepHeading } from './OnboardingStep';
 
 // Screens whose option set is long enough to benefit from a 2-column icon
 // grid instead of a scanning a straight vertical list.
@@ -146,7 +135,7 @@ export default function OnboardingView({ onComplete }) {
   const hasRouteReview = getVisibleSteps(answers).some((item) => item.id === 'starting_point')
   const isMulti = isMultiSelectStep(step.id)
   const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
-  const isLast = step.id === 'summary'
+  const isLast = step.id === 'daily_time_break'
 
   const primaryLabel = step.id === 'welcome'
     ? 'Let’s go'
@@ -216,21 +205,6 @@ export default function OnboardingView({ onComplete }) {
 
         {isBreak && breakContent && !isPathPreview && !isPlacementRecommendation && (
           <BreakScreen key={step.id} message={breakContent.message} insight={breakContent.insight} />
-        )}
-
-        {!isGenerating && step.id === 'summary' && (
-          <SummaryPreview
-            pathTitle={getPath(buildProfile(answers).pathId).title}
-            placement={placement}
-            dailyMinutes={answers.dailyMinutes ?? 10}
-            immediateNeedLabels={getStepOptions('immediate_need', answers)
-              .filter((option) => (answers.immediateNeed ?? []).includes(option.value))
-              .map((option) => option.label)}
-            projectInterestLabels={getStepOptions('project_interest', answers)
-              .filter((option) => (answers.projectInterest ?? []).includes(option.value))
-              .map((option) => option.label)}
-            onChangeCareer={changePath}
-          />
         )}
 
         {step.id === 'starting_point' && (
@@ -541,8 +515,6 @@ function RouteReview({ groups, notSureOption, value, placement, branch, onSelect
 }
 
 
-// Shared by PathPreview (role break) and SummaryPreview (final screen) so the
-// two "here's your route" moments render the exact same visual language.
 function StageStrip({ stages, highlightValue, label }) {
   return (
     <ol className="m-0 flex max-w-[560px] flex-wrap items-center justify-center gap-y-3 p-0" aria-label={label}>
@@ -588,37 +560,6 @@ function PathPreview({ role, stages }) {
       </div>
       <StageStrip stages={stages} highlightValue={stages[0]?.value} label={`${role} learning path`} />
       <p className="m-0 text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">You’ll gain practical foundations and a clear route to portfolio ready work.</p>
-    </div>
-  )
-}
-
-// The closing screen — what the learner is about to get and why it fits what
-// they told us, not a repeat of the stage strip they just saw on the role
-// break, and not a bare recap of their own answers.
-function SummaryPreview({ pathTitle, placement, dailyMinutes, immediateNeedLabels, projectInterestLabels, onChangeCareer }) {
-  const lessonsPerWeek = computeLessonsPerWeek(dailyMinutes)
-  const benefits = [
-    placement && { key: 'placement', icon: 'sprout', text: `Starts right at ${placement.label} — no time spent on what you already know.` },
-    immediateNeedLabels.length > 0 && { key: 'need', icon: 'target', text: `Prioritized around ${lowerFirst(joinLabels(immediateNeedLabels))}.` },
-    projectInterestLabels.length > 0 && { key: 'interest', icon: 'blocks', text: `Projects built around ${joinLabels(projectInterestLabels)}.` },
-    { key: 'pace', icon: 'clock', text: `${dailyMinutes} min a day — about ${lessonsPerWeek} lessons a week.` },
-  ].filter(Boolean)
-
-  return (
-    <div className="grid w-full max-w-[480px] justify-items-center gap-5 self-center text-center">
-      <span className="grid size-14 place-items-center rounded-full bg-[#1e3a2a] text-[#4ade80] [[data-theme=light]_&]:bg-[#e3f6e9] [[data-theme=light]_&]:text-[#1a8a4c]" aria-hidden="true">
-        <svg className="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5 9.5 17 19 7" /></svg>
-      </span>
-      <StepHeading title="You’re all set" subtitle={`Your ${pathTitle} path is ready — here’s what makes it yours.`} />
-      <ul className="m-0 grid w-full list-none gap-2.5 p-0 text-left">
-        {benefits.map((benefit) => (
-          <li key={benefit.key} className="flex items-center gap-3 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-3.5 py-3">
-            <OptionIcon name={benefit.icon} selected={false} />
-            <span className="text-sm leading-[1.4] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{benefit.text}</span>
-          </li>
-        ))}
-      </ul>
-      <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={onChangeCareer}>Change career</button>
     </div>
   )
 }

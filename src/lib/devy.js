@@ -40,6 +40,9 @@ function prompt(id) {
 // the same line twice in a row.
 const LINES = {
   correct: ['Nice — that’s it.', 'Exactly right.', 'Yep, that’s the one.', 'Clean answer.'],
+  // Fires on a wrong answer that still has a retry left — distinct from
+  // `incorrect`, which is reserved for the final, resolved miss.
+  retry: ['Not quite, give it another shot.', 'Close. Try again.', 'Not this one, have another go.'],
   incorrect: ['Not quite — check the hint if you want.', 'Close, but not that one.', 'Not this time. I’m right here if you need me.'],
 }
 

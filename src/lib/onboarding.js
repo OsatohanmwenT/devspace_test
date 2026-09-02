@@ -108,7 +108,6 @@ export function getVisibleSteps(answers = {}) {
   addQuestion('project_interest')
   addQuestion('immediate_need')
   addQuestion('daily_time')
-  steps.push({ id: 'summary', type: 'summary' })
 
   return steps
 }

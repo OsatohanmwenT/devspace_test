@@ -209,14 +209,6 @@ function App() {
     })
   }, [])
 
-  const recordActivity = (xpGain) => {
-    setProgress((current) => {
-      const next = applyActivity(current, xpGain)
-      saveProgress(next)
-      return next
-    })
-  }
-
   const recordPracticeCompletion = (sessionId, correctCount, total) => {
     setProgress((current) => {
       const today = new Date().toDateString()
@@ -502,7 +494,6 @@ function App() {
     setStarted(true)
     setShowFirstLessonWelcome(false)
     launchLesson(nextLesson?.id ?? true)
-    if (!wasStarted) recordActivity(10)
     showNotice(wasStarted ? 'Mission ready to continue' : 'Mission started')
   }
 

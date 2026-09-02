@@ -39,6 +39,16 @@ export function isQuestionCorrect(question, answer) {
   return answer === question.correctIndex
 }
 
+// A wrong attempt with a retry left clears only the wrong blanks — a
+// correctly-filled blank stays put so a retry doesn't undo progress the
+// learner already got right.
+export function clearIncorrectBlanks(question, answer) {
+  const blanks = [...(answer ?? [])]
+  return blanks.map((selectedIndex, blankIndex) =>
+    question.options[selectedIndex] === question.answers[blankIndex] ? selectedIndex : undefined,
+  )
+}
+
 // Row selection is a plain toggle — clicking a selected row deselects it.
 export function toggleRowSelection(answer, rowId) {
   const current = answer ?? []

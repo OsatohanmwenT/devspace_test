@@ -208,7 +208,7 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
   )
 }
 
-export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy, headingLevel: Heading = 'h2', prefix }) {
+export function LessonQuestion({ question, answer, checked, retrying = false, onAnswer, onAskDevy, headingLevel: Heading = 'h2', prefix }) {
   const correct = checked && isQuestionCorrect(question, answer)
   const placeOption = (optionIndex, blankIndex) => {
     if (checked || !Number.isInteger(optionIndex) || optionIndex < 0 || optionIndex >= question.options.length || answer?.includes(optionIndex) || answer?.[blankIndex] !== undefined) return
@@ -236,6 +236,20 @@ export function LessonQuestion({ question, answer, checked, onAnswer, onAskDevy,
         : isTableType(question)
           ? <TableSelect question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
           : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
+
+      {/* A wrong answer with a retry left gets a nudge, not the reveal — no
+          correctness or explanation is derived here, so there's nothing to
+          spoil even by inspecting the DOM. */}
+      {!checked && retrying && (
+        <aside className="flex items-center gap-3 rounded-xl border border-[#4a3f22] bg-[#2a2416] px-4 py-2.5 [[data-theme=light]_&]:border-[#f0dfa8] [[data-theme=light]_&]:bg-[#fdf6e3] max-[720px]:items-start" aria-live="polite">
+          <DevyMood mood="neutral" className="size-9 flex-none" />
+          <div className="min-w-0 flex-1">
+            <strong className="block text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Not quite yet</strong>
+            <p className="m-0 mt-0.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Have another look and try again.</p>
+          </div>
+          {onAskDevy && <button type="button" className="min-h-9 flex-none rounded-lg border border-[#5c5c60] bg-transparent px-3.5 text-sm font-semibold text-[#f4f4f2] hover:border-[#6699ec] hover:bg-[#303030] [[data-theme=light]_&]:border-[#e5e5e5] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#fafafa]" onClick={onAskDevy}>Ask Devy</button>}
+        </aside>
+      )}
 
       {checked && (
         <div className="grid gap-3">
