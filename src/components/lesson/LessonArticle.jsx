@@ -3,8 +3,18 @@ import { RichText } from './RichText';
 import { LessonDataTable } from './LessonDataTable';
 import { YouTubeSegmentPlayer } from './YouTubeSegmentPlayer';
 
+// "2m 05s" / "45s" — short enough to sit inline next to the framing line,
+// precise enough that a learner knows exactly how much of their time this asks for.
+function formatClipDuration(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes === 0) return `${seconds}s`
+  return `${minutes}m ${String(seconds).padStart(2, '0')}s`
+}
+
 export function LessonArticle({ article, lessonTitle }) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showTranscript, setShowTranscript] = useState(false)
   const segments = article.video?.segments ?? []
   const [activeSegmentId, setActiveSegmentId] = useState(segments[0]?.id)
   const activeSegment = segments.find((segment) => segment.id === activeSegmentId) ?? segments[0]
@@ -26,37 +36,11 @@ export function LessonArticle({ article, lessonTitle }) {
           {article.intro}
         </p>
 
-        {article.video && !isPlaying && (
-          <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 mt-[22px] rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] max-w-[82ch] text-center">
-            <div className="grid gap-2">
-              <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
-              <p className="m-0 text-[rgba(244,244,242,0.55)] text-xs font-bold tracking-[0.14em] uppercase">{article.video.subtitle}</p>
-            </div>
-            <div className="relative">
-              <button
-                type="button"
-                className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out hover:bg-[#2ab9c9] hover:scale-[1.06]"
-                aria-label={`Play: ${article.video.title}`}
-                onClick={() => setIsPlaying(true)}
-              >
-                <svg className="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
-              </button>
-              {article.video.badgeLabel && (
-                <span
-                  className="absolute -right-1.5 -bottom-1.5 grid w-[26px] h-[26px] place-items-center border-2 border-[#121212] rounded-full bg-[#525252] text-white text-[10px] font-bold tracking-[0.02em]"
-                  aria-hidden="true"
-                >
-                  {article.video.badgeLabel}
-                </span>
-              )}
-            </div>
-            <span className="absolute top-3.5 right-4 rounded-md bg-[rgba(255,255,255,0.12)] px-2 py-[3px] text-[#f4f4f2] text-xs font-semibold">{article.video.duration}</span>
-            <img className="absolute left-[18px] bottom-3.5 h-[14px] w-auto opacity-50" src="/assets/logo.svg" alt="" />
-          </div>
-        )}
-
-        {article.video && isPlaying && (
+        {article.video && (
           <div className="mt-[22px] max-w-[82ch]">
+            {/* Segment chips are pickable before the first play too, so a
+                learner chooses which part matters before committing to
+                watch anything — not just when switching mid-video. */}
             {segments.length > 1 && (
               <div className="mb-2.5 flex flex-wrap gap-2" role="group" aria-label="Video chapter">
                 {segments.map((segment) => (
@@ -72,13 +56,73 @@ export function LessonArticle({ article, lessonTitle }) {
                 ))}
               </div>
             )}
-            <YouTubeSegmentPlayer
-              key={`${article.video.videoId}-${activeSegment.id}`}
-              videoId={article.video.videoId}
-              startSeconds={activeSegment.startSeconds}
-              endSeconds={activeSegment.endSeconds}
-              title={article.video.title}
-            />
+
+            {/* This framing line is what the video card's own poster used to
+                carry alone — kept visible through play and every segment
+                switch, not just before the first click. */}
+            {activeSegment && (
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="m-0 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                  Watch: <span className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{activeSegment.label ?? article.video.subtitle ?? article.video.title}</span>
+                  <span className="text-[#68686c] [[data-theme=light]_&]:text-[#a0a0a0]"> · {formatClipDuration(activeSegment.endSeconds - activeSegment.startSeconds)} clip</span>
+                </p>
+                {/* Never force watching the whole video to get the idea — a
+                    short read-instead alternative sits right next to it. */}
+                {article.video.transcriptSummary && (
+                  <button
+                    type="button"
+                    onClick={() => setShowTranscript((open) => !open)}
+                    aria-expanded={showTranscript}
+                    className="text-[12.5px] font-semibold text-[#6699ec] hover:underline"
+                  >
+                    {showTranscript ? 'Hide summary' : 'Prefer to read? Show a summary'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showTranscript && article.video.transcriptSummary && (
+              <p className="m-0 mb-3 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-3 text-[13.5px] leading-[1.55] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252]">
+                {article.video.transcriptSummary}
+              </p>
+            )}
+
+            {!isPlaying ? (
+              <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] text-center">
+                <div className="grid gap-2">
+                  <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
+                  <p className="m-0 text-[rgba(244,244,242,0.55)] text-xs font-bold tracking-[0.14em] uppercase">{article.video.subtitle}</p>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out hover:bg-[#2ab9c9] hover:scale-[1.06]"
+                    aria-label={`Play: ${article.video.title}`}
+                    onClick={() => setIsPlaying(true)}
+                  >
+                    <svg className="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
+                  </button>
+                  {article.video.badgeLabel && (
+                    <span
+                      className="absolute -right-1.5 -bottom-1.5 grid w-[26px] h-[26px] place-items-center border-2 border-[#121212] rounded-full bg-[#525252] text-white text-[10px] font-bold tracking-[0.02em]"
+                      aria-hidden="true"
+                    >
+                      {article.video.badgeLabel}
+                    </span>
+                  )}
+                </div>
+                <span className="absolute top-3.5 right-4 rounded-md bg-[rgba(255,255,255,0.12)] px-2 py-[3px] text-[#f4f4f2] text-xs font-semibold">{article.video.duration}</span>
+                <img className="absolute left-[18px] bottom-3.5 h-[14px] w-auto opacity-50" src="/assets/logo.svg" alt="" />
+              </div>
+            ) : (
+              <YouTubeSegmentPlayer
+                key={`${article.video.videoId}-${activeSegment.id}`}
+                videoId={article.video.videoId}
+                startSeconds={activeSegment.startSeconds}
+                endSeconds={activeSegment.endSeconds}
+                title={article.video.title}
+              />
+            )}
           </div>
         )}
 

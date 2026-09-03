@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Reorder } from 'motion/react'
 import { RichText } from './RichText'
 import { LessonDataTable } from './LessonDataTable'
 import {
@@ -140,12 +141,17 @@ function IssueSpotterPractice({ content, answer, onAnswerChange, onComplete, com
         markers={markers}
         onSelectCell={handleCell}
       />
-      <div className="flex flex-wrap gap-2" aria-live="polite">
-        {content.issues.map((issue) => (
-          <span key={issue.id} className={`${CHIP_BASE} ${foundIssueIds.includes(issue.id) ? CHIP_ACTIVE : 'border-dashed border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#68686c] [[data-theme=light]_&]:text-[#a0a0a0]'} inline-flex items-center`}>
-            {issue.label}
-          </span>
-        ))}
+      <div aria-live="polite">
+        <p className="m-0 mb-2 text-[13px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+          {foundIssueIds.length} of {content.issues.length} quality problems found
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {content.issues.map((issue) => (
+            <span key={issue.id} className={`${CHIP_BASE} ${foundIssueIds.includes(issue.id) ? CHIP_ACTIVE : 'border-dashed border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#68686c] [[data-theme=light]_&]:text-[#a0a0a0]'} inline-flex items-center`}>
+              {issue.label}
+            </span>
+          ))}
+        </div>
       </div>
       {nudge && (
         <p className="m-0 text-[13px] leading-[1.4] text-[#f0c964]" role="status">{content.nonIssueNudge}</p>
@@ -155,18 +161,29 @@ function IssueSpotterPractice({ content, answer, onAnswerChange, onComplete, com
   )
 }
 
+function DragHandleIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="9" cy="6" r="1.4" fill="currentColor" /><circle cx="9" cy="12" r="1.4" fill="currentColor" /><circle cx="9" cy="18" r="1.4" fill="currentColor" />
+      <circle cx="15" cy="6" r="1.4" fill="currentColor" /><circle cx="15" cy="12" r="1.4" fill="currentColor" /><circle cx="15" cy="18" r="1.4" fill="currentColor" />
+    </svg>
+  )
+}
+
 function ReorderPractice({ content, answer, onAnswerChange, onComplete, completed }) {
   const order = answer?.order ?? content.items.map((item) => item.id)
   const scenarioAnswer = answer?.scenarioAnswer ?? null
   const orderCorrect = isReorderCorrect(order, content.correctOrder)
   const scenarioCorrect = scenarioAnswer === content.scenario.correctIndex
 
+  const setOrder = (nextOrder) => onAnswerChange({ ...answer, order: nextOrder })
+
   const move = (index, direction) => {
     const target = index + direction
     if (target < 0 || target >= order.length) return
     const next = [...order]
     ;[next[index], next[target]] = [next[target], next[index]]
-    onAnswerChange({ ...answer, order: next })
+    setOrder(next)
   }
 
   const answerScenario = (index) => {
@@ -176,24 +193,41 @@ function ReorderPractice({ content, answer, onAnswerChange, onComplete, complete
 
   return (
     <div className="grid gap-4">
-      <ol className="m-0 grid list-none gap-2 p-0">
+      {/* Drag is the primary interaction on pointer devices — the whole row
+          is the drag target, matching the visual weight the task deserves.
+          The up/down buttons stay as the explicit keyboard/accessibility
+          fallback; stopping their pointerdown from bubbling keeps a click on
+          them from also starting a drag gesture. */}
+      <Reorder.Group as="ol" axis="y" values={order} onReorder={orderCorrect ? () => {} : setOrder} className="m-0 grid list-none gap-2 p-0">
         {order.map((id, index) => {
           const item = content.items.find((candidate) => candidate.id === id)
           const inPlace = orderCorrect
           return (
-            <li key={id} className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 ${inPlace ? 'bg-[#16281f] text-[#6ee7a8] [[data-theme=light]_&]:bg-[#e7f6ee] [[data-theme=light]_&]:text-[#197a4b]' : 'bg-[#1f1f1f] text-[#f4f4f2] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800'}`}>
+            <Reorder.Item
+              key={id}
+              value={id}
+              as="li"
+              drag={inPlace ? false : 'y'}
+              whileDrag={{ scale: 1.02, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}
+              className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 ${inPlace ? 'bg-[#16281f] text-[#6ee7a8] [[data-theme=light]_&]:bg-[#e7f6ee] [[data-theme=light]_&]:text-[#197a4b]' : 'cursor-grab bg-[#1f1f1f] text-[#f4f4f2] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 active:cursor-grabbing'}`}
+            >
+              {!inPlace && (
+                <span className="flex-none text-[#68686c] [[data-theme=light]_&]:text-[#a0a0a0]" aria-hidden="true">
+                  <DragHandleIcon />
+                </span>
+              )}
               <span className="grid size-6 flex-none place-items-center rounded-full bg-[#404040] text-[11px] font-bold text-[#d7d7da] [[data-theme=light]_&]:bg-[#e1e1e1] [[data-theme=light]_&]:text-[#525252]">{index + 1}</span>
               <span className="flex-1 text-[14px] font-medium">{item.label}</span>
               {!inPlace && (
                 <span className="flex gap-1">
-                  <button type="button" aria-label={`Move ${item.label} up`} disabled={index === 0} onClick={() => move(index, -1)} className="grid size-7 place-items-center rounded-md border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#c4c4c7] disabled:opacity-30">↑</button>
-                  <button type="button" aria-label={`Move ${item.label} down`} disabled={index === order.length - 1} onClick={() => move(index, 1)} className="grid size-7 place-items-center rounded-md border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#c4c4c7] disabled:opacity-30">↓</button>
+                  <button type="button" aria-label={`Move ${item.label} up`} disabled={index === 0} onPointerDown={(event) => event.stopPropagation()} onClick={() => move(index, -1)} className="grid size-7 place-items-center rounded-md border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#c4c4c7] disabled:opacity-30">↑</button>
+                  <button type="button" aria-label={`Move ${item.label} down`} disabled={index === order.length - 1} onPointerDown={(event) => event.stopPropagation()} onClick={() => move(index, 1)} className="grid size-7 place-items-center rounded-md border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] text-[#c4c4c7] disabled:opacity-30">↓</button>
                 </span>
               )}
-            </li>
+            </Reorder.Item>
           )
         })}
-      </ol>
+      </Reorder.Group>
 
       {orderCorrect && (
         <div className={`${PANEL}`}>
@@ -250,9 +284,12 @@ function FieldSelectPractice({ content, answer, onAnswerChange, onComplete, comp
           const checked = selectedKeys.includes(column.key)
           const fading = completed && !checked
           return (
-            <label key={column.key} className={`flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px] transition-opacity duration-500 ${fading ? 'opacity-20' : ''} ${completed ? 'cursor-default' : 'cursor-pointer hover:bg-[#1f1f1f] [[data-theme=light]_&]:hover:bg-white'}`}>
-              <input type="checkbox" checked={checked} disabled={completed} onChange={() => toggle(column.key)} className="size-4 accent-[#6699ec]" />
-              <span className="font-jetbrains-mono text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{column.label}</span>
+            <label key={column.key} className={`grid gap-0.5 rounded-lg px-2.5 py-2 text-[14px] transition-opacity duration-500 ${fading ? 'opacity-20' : ''} ${completed ? 'cursor-default' : 'cursor-pointer hover:bg-[#1f1f1f] [[data-theme=light]_&]:hover:bg-white'}`}>
+              <span className="flex items-center gap-3">
+                <input type="checkbox" checked={checked} disabled={completed} onChange={() => toggle(column.key)} className="size-4 accent-[#6699ec]" />
+                <span className="font-jetbrains-mono text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{column.label}</span>
+              </span>
+              {column.note && <span className="pl-7 text-[12.5px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{column.note}</span>}
             </label>
           )
         })}
@@ -263,6 +300,16 @@ function FieldSelectPractice({ content, answer, onAnswerChange, onComplete, comp
         </button>
       )}
       {invalidNote && <p className="m-0 text-[13px] text-[#ffa8a2] [[data-theme=light]_&]:text-[#b3261e]">{invalidNote}</p>}
+      {completed && (
+        <div className={`${PANEL}`}>
+          <p className="m-0 mb-2 text-[11px] font-bold uppercase tracking-[.06em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Safe analysis dataset</p>
+          <div className="flex flex-wrap gap-2">
+            {selectedKeys.map((key) => (
+              <span key={key} className="rounded-md border border-[#4a4a4a] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-2.5 py-1 font-jetbrains-mono text-[12.5px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{key}</span>
+            ))}
+          </div>
+        </div>
+      )}
       {completed && <SuccessBanner body={content.successBody} />}
     </div>
   )

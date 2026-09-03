@@ -21,8 +21,35 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
 
       // Only in the DOM when stats are passed — animating a selector with no
       // match is what was logging GSAP's "target not found" console warning.
+      // Each stat card staggers in on its own rather than as one block, so a
+      // multi-stat completion screen reads as a short sequence of rewards
+      // landing, not everything flashing on at once.
       if (stats?.length > 0) {
-        timeline.from('[data-transition-stats]', { autoAlpha: 0, y: 8, duration: 0.35 }, '-=0.2')
+        timeline.from('[data-transition-stat]', { autoAlpha: 0, y: 8, duration: 0.35, stagger: 0.12 }, '-=0.1')
+
+        // A numeric reward (+25 XP, +10 Devy Coins) counts up from zero
+        // instead of just appearing — the rendered value is already correct
+        // for reduced-motion / no-JS, this only re-plays it as a beat.
+        timeline.add(() => {
+          rootRef.current?.querySelectorAll('[data-count-to]').forEach((node) => {
+            const target = Number(node.dataset.countTo)
+            const prefix = node.dataset.countPrefix ?? ''
+            node.textContent = `${prefix}0`
+            const counter = { value: 0 }
+            gsap.to(counter, {
+              value: target,
+              duration: 0.6,
+              ease: 'power1.out',
+              onUpdate: () => { node.textContent = `${prefix}${Math.round(counter.value)}` },
+            })
+          })
+        }, '-=0.1')
+      }
+
+      // Secondary actions (tile recap, simulate review) settle in last, once
+      // the reward itself has had a moment to register.
+      if (children) {
+        timeline.from('[data-transition-actions]', { autoAlpha: 0, y: 8, duration: 0.3 }, stats?.length > 0 ? '+=0.25' : '-=0.1')
       }
 
       // The ongoing cheer only starts once GSAP is done writing to the mark —
@@ -76,16 +103,31 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
             {body}
           </p>
           {stats?.length > 0 && (
-            <dl data-transition-stats className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label="Lesson results">
-              {stats.map((stat, index) => (
-                <div key={index} className="grid min-w-[86px] gap-0.5 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-2.5 text-center">
-                  <dd className="m-0 font-rethink-sans text-lg font-bold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{stat.value}</dd>
-                  <dt className="m-0 text-[11px] font-semibold uppercase tracking-[.06em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{stat.label}</dt>
-                </div>
-              ))}
+            <dl className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label="Lesson results">
+              {stats.map((stat, index) => {
+                // Only a clean "+25" / "10" style value counts up — a
+                // fraction like "2/6" reads fine appearing as-is.
+                const countMatch = /^(\+)?(\d+)$/.exec(stat.value)
+                return (
+                  <div
+                    key={index}
+                    data-transition-stat
+                    title={stat.title}
+                    className="grid min-w-[86px] gap-0.5 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-2.5 text-center"
+                  >
+                    <dd
+                      className="m-0 font-rethink-sans text-lg font-bold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"
+                      {...(countMatch ? { 'data-count-to': countMatch[2], 'data-count-prefix': countMatch[1] ?? '' } : {})}
+                    >
+                      {stat.value}
+                    </dd>
+                    <dt className="m-0 text-[11px] font-semibold uppercase tracking-[.06em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{stat.label}</dt>
+                  </div>
+                )
+              })}
             </dl>
           )}
-          {children && <div className="mt-6 flex flex-wrap items-center justify-center gap-3">{children}</div>}
+          {children && <div data-transition-actions className="mt-6 flex flex-wrap items-center justify-center gap-3">{children}</div>}
         </div>
       </div>
     </section>

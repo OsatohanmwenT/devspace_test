@@ -104,20 +104,26 @@ function ProseFill({ question, answer, checked, onAnswer, onDropOption }) {
   )
 }
 
-function MultipleChoice({ question, answer, checked, onAnswer }) {
+function MultipleChoice({ question, answer, checked, retrying, onAnswer }) {
   return (
     <div className="grid gap-2" role="group" aria-label={question.prompt}>
       {question.options.map((option, optionIndex) => {
         const isSelected = answer === optionIndex
         const isCorrectOption = optionIndex === question.correctIndex
         const isIncorrectSelection = checked && isSelected && !isCorrectOption
+        // The pick that just failed a check stays visible through a retry —
+        // muted amber, matching the "Not quite yet" banner's tone, rather
+        // than the loud red reserved for the final, resolved miss.
+        const isPreviousMiss = retrying && !checked && isSelected
         const optionClassName = checked && isCorrectOption
           ? 'border-[#2b5540] bg-[#16281f] [[data-theme=light]_&]:border-[#b6e3ca] [[data-theme=light]_&]:bg-[#e7f6ee]'
           : isIncorrectSelection
             ? 'border-[#ff676d] bg-[#442f30] [[data-theme=light]_&]:border-[#ff676d] [[data-theme=light]_&]:bg-[#fdecea]'
-            : isSelected
-              ? 'border-[#6699ec] bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e4eaf4]'
-              : 'border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] hover:border-[#6699ec]'
+            : isPreviousMiss
+              ? 'border-[#6b5323] bg-[#2a2416] [[data-theme=light]_&]:border-[#f0dfa8] [[data-theme=light]_&]:bg-[#fdf6e3]'
+              : isSelected
+                ? 'border-[#6699ec] bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e4eaf4]'
+                : 'border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] hover:border-[#6699ec]'
 
         return (
           <button
@@ -125,13 +131,14 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
             key={optionIndex}
             className={`lesson-answer ${checked && isCorrectOption ? 'lesson-answer-correct' : isIncorrectSelection ? 'lesson-answer-error' : isSelected ? 'lesson-answer-selected' : ''} flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left text-[15px] leading-[1.5] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[border-color,background] duration-[120ms] ${optionClassName}`}
             aria-pressed={isSelected}
-            aria-invalid={isIncorrectSelection}
+            aria-invalid={isIncorrectSelection || isPreviousMiss}
             disabled={checked}
             onClick={() => onAnswer(optionIndex)}
           >
             <RichText content={option} />
             {checked && isCorrectOption && <svg className="size-5 flex-none text-[#16834e]" viewBox="0 0 24 24" fill="none" aria-label="Correct answer"><path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
             {isIncorrectSelection && <svg className="size-5 flex-none text-[#b3261e]" viewBox="0 0 24 24" fill="none" aria-label="Incorrect answer"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>}
+            {isPreviousMiss && <span className="flex-none text-[12px] font-semibold text-[#f0dfa8]">Not this one</span>}
           </button>
         )
       })}
@@ -164,7 +171,7 @@ export function LessonQuestion({ question, answer, checked, retrying = false, fi
             <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
           </div>
         </div>
-        : <MultipleChoice question={question} answer={answer} checked={checked} onAnswer={onAnswer} />}
+        : <MultipleChoice question={question} answer={answer} checked={checked} retrying={retrying} onAnswer={onAnswer} />}
 
       {/* A wrong answer with attempts left gets a nudge, not the reveal — no
           correctness or explanation is derived here, so there's nothing to

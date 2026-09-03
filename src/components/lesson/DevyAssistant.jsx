@@ -79,16 +79,16 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
 
       <div ref={conversationRef} className="scrollbar-hidden mt-5 min-h-0 flex-1 overflow-y-auto" aria-live="polite">
         <div className="grid min-h-full content-end gap-3">
-          <div className={messages.length ? 'blur-[2px] opacity-30 transition-[filter,opacity] duration-300' : ''}>
+          <div className={messages.length ? 'opacity-55 transition-opacity duration-300' : ''}>
             <Bubble>{getGreeting(profile)}</Bubble>
           </div>
 
           {messages.map((message, index) => (
             <div className={`grid gap-2 ${index === messages.length - 1 ? 'devy-message-in' : ''}`} key={`${message.id}-${index}`}>
-              <p className={`m-0 justify-self-end rounded-2xl rounded-tr-md bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e4eaf4] px-4 py-2.5 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-[filter,opacity] duration-300 ${index === messages.length - 1 ? 'opacity-65' : 'blur-[2px] opacity-25'}`}>
+              <p className={`m-0 justify-self-end rounded-2xl rounded-tr-md bg-[#2f2e3e] [[data-theme=light]_&]:bg-[#e4eaf4] px-4 py-2.5 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 transition-opacity duration-300 ${index === messages.length - 1 ? 'opacity-100' : 'opacity-55'}`}>
                 {message.label}
               </p>
-              <div className={`transition-[filter,opacity] duration-300 ${index === messages.length - 1 ? '' : 'blur-[2px] opacity-35'}`}>
+              <div className={`transition-opacity duration-300 ${index === messages.length - 1 ? '' : 'opacity-55'}`}>
                 <Bubble>
                   <RichText content={message.response.body} />
                   {message.response.code && (

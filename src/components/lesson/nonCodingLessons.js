@@ -196,14 +196,17 @@ const NORTHSTAR_MESSY_ROWS = [
   { rowId: 'r6', order_id: 'NS1005', customer_segment: 'Professional', city: 'Abuja', items: 2, order_value_ngn: '₦15,800', payment_method: 'card', delivery_minutes: 39 },
 ]
 
+// `note` is only read by the field-select practice (a plain-language reason
+// to include or leave out each field) — LessonDataTable ignores it, so this
+// same list is safe to reuse for the read-only Explain-screen table too.
 const NORTHSTAR_CUSTOMER_COLUMNS = [
-  { key: 'customer_name', label: 'customer_name' },
-  { key: 'customer_email', label: 'customer_email' },
-  { key: 'phone_number', label: 'phone_number' },
-  { key: 'customer_segment', label: 'customer_segment' },
-  { key: 'city', label: 'city' },
-  { key: 'order_value_ngn', label: 'order_value_ngn' },
-  { key: 'delivery_minutes', label: 'delivery_minutes' },
+  { key: 'customer_name', label: 'customer_name', note: 'Identifies a specific person — not needed to compare delivery time by segment.' },
+  { key: 'customer_email', label: 'customer_email', note: 'A direct contact identifier — this question has no reason to touch it.' },
+  { key: 'phone_number', label: 'phone_number', note: 'A direct contact identifier — same reasoning as email.' },
+  { key: 'customer_segment', label: 'customer_segment', note: 'The exact grouping Northstar asked about — required.' },
+  { key: 'city', label: 'city', note: 'Not required, but a reasonable, non-identifying addition if you want a geographic breakdown too.' },
+  { key: 'order_value_ngn', label: 'order_value_ngn', note: 'Not part of this question — leaving it out keeps the file focused.' },
+  { key: 'delivery_minutes', label: 'delivery_minutes', note: 'The exact measurement Northstar asked about — required.' },
 ]
 
 const NORTHSTAR_CUSTOMER_ROWS = [
@@ -356,6 +359,7 @@ export const dataAnalysisLesson = {
               badgeLabel: 'DS',
               videoId: 'DUcXZ08IdMo',
               segments: [{ id: 'default', label: null, startSeconds: 0, endSeconds: 253 }],
+              transcriptSummary: 'Categorical data describes qualities or groups — names, labels, categories — that can be counted but not meaningfully measured. Numerical data describes quantities that can be measured or counted, like age or income, and further splits into discrete (countable, whole-number) and continuous (any value in a range) values.',
             },
             next: {
               title: 'Check categorical vs numerical',
@@ -474,6 +478,7 @@ export const dataQualityWorkflowLesson = {
               badgeLabel: 'CF',
               videoId: 'lgCNTuLBMK4',
               segments: [{ id: 'default', label: null, startSeconds: 322, endSeconds: 430 }],
+              transcriptSummary: 'Cleaning means fixing structural problems in a dataset — removing exact duplicates, standardizing inconsistent labels, and deciding what to do with missing or impossible values — before any analysis runs on it. Cleaning is not the same as deleting: a duplicate or an outlier gets investigated first, not automatically discarded.',
             },
             next: {
               title: 'Check data-quality checks',
@@ -573,6 +578,7 @@ export const dataQualityWorkflowLesson = {
                 { id: 'analyze', label: 'Analyze', startSeconds: 431, endSeconds: 501 },
                 { id: 'share', label: 'Share the result', startSeconds: 501, endSeconds: 606 },
               ],
+              transcriptSummary: 'Start by defining the decision the analysis needs to support — a vague question produces a vague answer. Once the data is clean, analyzing means comparing, summarizing, or calculating what it actually shows. Sharing the result means explaining the finding plainly, including what it does and doesn’t prove, to whoever asked the original question.',
             },
             next: {
               title: 'Check the analysis workflow',

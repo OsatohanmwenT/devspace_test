@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 const CELL_BASE = 'border border-[#333336] [[data-theme=light]_&]:border-[#e1e1e1] px-3 py-2 text-[13px] leading-[1.4] font-jetbrains-mono whitespace-nowrap'
 
@@ -16,6 +16,12 @@ export function LessonDataTable({
   columns,
   rows,
   rowKey = 'order_id',
+  // The column whose value actually identifies a row to a learner — every
+  // table in this lesson has a real `order_id`, even when `rowKey` points at
+  // an internal dedup key instead (the messy dataset, where order_id repeats
+  // for a genuine duplicate row). The caption always speaks in these terms,
+  // never the internal key.
+  identifyingColumn = 'order_id',
   variant = 'explore',
   caption,
   selected,
@@ -26,6 +32,22 @@ export function LessonDataTable({
 }) {
   const [exploreTarget, setExploreTarget] = useState(null)
   const target = variant === 'explore' ? exploreTarget : selected
+
+  // A native scrollbar is easy to miss (auto-hiding on touch/trackpad) — a
+  // fade at the trailing edge makes "more columns exist here" visible at a
+  // glance, and disappears once there's genuinely nothing left to scroll to.
+  const scrollRef = useRef(null)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const updateScrollAffordance = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollRight(el.scrollWidth - el.scrollLeft - el.clientWidth > 4)
+  }
+  useLayoutEffect(() => {
+    updateScrollAffordance()
+    window.addEventListener('resize', updateScrollAffordance)
+    return () => window.removeEventListener('resize', updateScrollAffordance)
+  }, [columns, rows])
 
   const exploreRow = (id) => setExploreTarget((current) => (current?.type === 'row' && current.rowId === id ? null : { type: 'row', rowId: id }))
   const exploreColumn = (key) => setExploreTarget((current) => (current?.type === 'column' && current.columnKey === key ? null : { type: 'column', columnKey: key }))
@@ -40,12 +62,21 @@ export function LessonDataTable({
       ? 'One observation — one recorded order.'
       : target.type === 'column'
         ? 'One variable — one thing recorded for every order.'
-        : `For order ${target.rowId}, ${target.columnKey} = ${rows.find((row) => row[rowKey] === target.rowId)?.[target.columnKey]}.`
+        : (() => {
+            const row = rows.find((candidate) => candidate[rowKey] === target.rowId)
+            const orderLabel = row?.[identifyingColumn] ?? target.rowId
+            return `For order ${orderLabel}, ${target.columnKey} = ${row?.[target.columnKey]}.`
+          })()
     : null
 
   return (
     <div className="mt-3.5">
-      <div className="overflow-x-auto rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white">
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollAffordance}
+          className="overflow-x-auto rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-white"
+        >
         <table className="w-full border-collapse">
           <thead>
             <tr>
@@ -88,6 +119,13 @@ export function LessonDataTable({
             })}
           </tbody>
         </table>
+        </div>
+        {canScrollRight && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-xl bg-gradient-to-l from-[#1a1a1a] [[data-theme=light]_&]:from-white to-transparent"
+          />
+        )}
       </div>
       {(exploreCaption || caption) && (
         <p className="m-0 mt-2 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{exploreCaption || caption}</p>

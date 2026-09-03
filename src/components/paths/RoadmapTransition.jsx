@@ -93,8 +93,12 @@ export function RoadmapTransition({ transition, onStartLesson, onViewRoadmap, on
             <h1 className="m-0 mb-2 font-rethink-sans text-3xl font-semibold leading-[1.3] max-[680px]:text-[26px]">
               {completedRegion.title}, done!
             </h1>
+            {/* "3 of 3 lessons finished" is true but says nothing new right
+                after a lesson-complete recap already covered the numbers —
+                this screen's actual job is placing that region in the path,
+                so it recaps what it covered instead. */}
             <p className="m-0 max-w-[40ch] text-[17px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
-              {completedRegion.lessonsTotal} of {completedRegion.lessonsTotal} lessons finished.
+              {completedRegion.summary}
             </p>
           </>
         )}

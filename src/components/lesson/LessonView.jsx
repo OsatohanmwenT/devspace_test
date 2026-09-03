@@ -92,7 +92,6 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [isPodcastOpen, setIsPodcastOpen] = useState(false)
   const [reinforcementPrompt, setReinforcementPrompt] = useState(false)
   const [successPulse, setSuccessPulse] = useState(0)
-  const [errorPulse, setErrorPulse] = useState(0)
   const [audioReadyForNext, setAudioReadyForNext] = useState(false)
   const [devyLine, setDevyLine] = useState(null)
   const [isDevyTalking, setIsDevyTalking] = useState(false)
@@ -102,6 +101,15 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const stayButtonRef = useRef(null)
   const exitDialogRef = useRef(null)
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
+
+  // Devy, Notes and the Cheatsheet all dock against the same edge of the
+  // lesson — leaving more than one open at once squeezes the actual content
+  // into a sliver. Opening Devy always closes the other two.
+  const openDevy = () => {
+    setIsNotesOpen(false)
+    setIsCheatsheetOpen(false)
+    setIsDevyOpen(true)
+  }
 
   const currentStep = lessonFlow[session.stepIndex]
   const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete' || currentStep?.kind === 'skill-check'
@@ -158,7 +166,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const recapStats = (concept) => {
     const { correct, total } = questionRecap(concept)
     const stats = []
-    if (total > 0) stats.push({ value: `${correct}/${total}`, label: 'correct' })
+    // Bare "N/6" next to celebratory XP/coin numbers reads like a failing
+    // grade if it's not clear what's being counted — it's the final answer
+    // on each Check screen, so a retry that resolves correct still counts.
+    if (total > 0) stats.push({ value: `${correct}/${total}`, label: 'checks correct', title: 'Your final answer on each Check screen in this tile — if a retry ended correct, it still counts.' })
     if (session.streak >= STREAK_THRESHOLD) stats.push({ value: `${session.streak}`, label: 'in a row' })
     return stats
   }
@@ -182,7 +193,6 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setSession((current) => ({ ...current, stepIndex: Math.min(current.stepIndex + 1, lessonFlow.length - 1) }))
     setIsDevyOpen(false)
     setSuccessPulse(0)
-    setErrorPulse(0)
     setDevyLine(null)
   }
 
@@ -190,7 +200,6 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setSession((current) => ({ ...current, stepIndex: Math.max(current.stepIndex - 1, 0) }))
     setIsDevyOpen(false)
     setSuccessPulse(0)
-    setErrorPulse(0)
     setDevyLine(null)
   }
 
@@ -246,26 +255,29 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     const firstTryCorrect = correct && nextAttempts === 1
 
     if (!resolved) {
-      setErrorPulse((current) => current + 1)
+      // A wrong answer with attempts left is a normal part of learning, not
+      // an alarming event — no full-frame glow, and the multiple-choice
+      // pick stays visible (only a fill-blank's incorrect blanks clear) so
+      // the learner can see what they chose instead of re-guessing blind.
       playSound('answer_wrong')
       sayDevyLine(getDevyLine({ event: 'retry' }))
-      const clearedAnswer = isFillType(currentStep.question) ? clearIncorrectBlanks(currentStep.question, answer) : undefined
+      const nextAnswer = isFillType(currentStep.question) ? clearIncorrectBlanks(currentStep.question, answer) : answer
       setSession((current) => ({
         ...current,
-        activityStates: { ...current.activityStates, [currentStep.id]: { answer: clearedAnswer, checked: false, attempts: nextAttempts } },
+        activityStates: { ...current.activityStates, [currentStep.id]: { answer: nextAnswer, checked: false, attempts: nextAttempts } },
       }))
       return
     }
 
-    // A prior retry may have already lit the error glow this question — only
-    // one glow may be on screen at once, so resolving always clears the other.
+    // A prior retry may have already lit the success glow this question —
+    // resolving always clears it. The final wrong-after-retries state gets
+    // its explanation from LessonQuestion's own contained red panel, not a
+    // second full-frame glow.
     if (correct) {
       setSuccessPulse((current) => current + 1)
-      setErrorPulse(0)
       playSound('answer_correct')
       if (firstTryCorrect) playSound('coin_gain')
     } else {
-      setErrorPulse((current) => current + 1)
       setSuccessPulse(0)
       playSound('answer_wrong')
     }
@@ -418,7 +430,6 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       style={{ '--devy-panel-width': `${devyPanelWidth}px` }}
     >
       {successPulse > 0 && <div key={successPulse} className="lesson-success-glow" aria-hidden="true" />}
-      {errorPulse > 0 && <div key={errorPulse} className="lesson-error-glow" aria-hidden="true" />}
       <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
         <button
           ref={exitButtonRef}
@@ -477,8 +488,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
                 try { window.localStorage.setItem(bookmarkKey, String(next)) } catch { /* best-effort */ }
                 return next
               })}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.2l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>{isSaved ? 'Saved' : 'Save this lesson'}</button>
-              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsNotesOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Notes</button>
-              {lessonTopics.length > 0 && <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsCheatsheetOpen(true); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Cheatsheet</button>}
+              <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsNotesOpen(true); setIsDevyOpen(false); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Notes</button>
+              {lessonTopics.length > 0 && <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => { setIsCheatsheetOpen(true); setIsDevyOpen(false); setIsLessonMenuOpen(false) }}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Cheatsheet</button>}
               <div className="my-1 border-t border-[#eeeeeb] [[data-theme=dark]_&]:border-[#404040]" role="separator" />
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={() => setIsLessonMenuOpen(false)}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 21V4h12v11H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Report a problem</button>
               <button type="button" className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-left text-[15px] text-neutral-800 hover:bg-[#f5f5f5] [[data-theme=dark]_&]:text-[#f4f4f2] [[data-theme=dark]_&]:hover:bg-[#262626]" role="menuitem" onClick={requestExit}><svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Exit lesson</button>
@@ -518,7 +529,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               retrying={isRetrying}
               firstTryCorrect={Boolean(questionState?.firstTryCorrect)}
               onAnswer={answerQuestion}
-              onAskDevy={() => setIsDevyOpen(true)}
+              onAskDevy={openDevy}
             />
           </div>
         )}
@@ -591,7 +602,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             <button
               type="button"
               className={`relative grid size-[54px] max-[720px]:size-12 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
-              onClick={() => setIsDevyOpen(true)}
+              onClick={openDevy}
               aria-label="Open Devy chat"
               aria-expanded={isDevyOpen}
             >
