@@ -20,6 +20,9 @@ importers:
       canvas-confetti:
         specifier: ^1.9.4
         version: 1.9.4
+      cuelume:
+        specifier: ^0.2.2
+        version: 0.2.2
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
@@ -455,6 +458,9 @@ packages:
 
   canvas-confetti@1.9.4:
     resolution: {integrity: sha512-yxQbJkAVrFXWNbTUjPqjF7G+g6pDotOUHGbkZq2NELZUMDpiJ85rIEazVb8GTaAptNW2miJAXbs1BtioA251Pw==}
+
+  cuelume@0.2.2:
+    resolution: {integrity: sha512-TiNzJRjhddjC4jy4M7sv63V/86VaFhdIs6iHUCrc4CKhqypaxRBv1aedCBGebrz/cO7nroPkEfqHe/P7fOE2GQ==}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -1059,6 +1065,8 @@ snapshots:
       vite: 8.2.0(jiti@2.7.0)
 
   canvas-confetti@1.9.4: {}
+
+  cuelume@0.2.2: {}
 
   detect-libc@2.1.2: {}
 
