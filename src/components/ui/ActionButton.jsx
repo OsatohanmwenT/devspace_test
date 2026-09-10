@@ -8,6 +8,8 @@ export function ActionButton({ variant = 'primary', className = '', children, ty
   return (
     <button
       type={type}
+      data-cuelume-press="pulse"
+      data-cuelume-release="release"
       className={`motion-button relative font-rubik px-4 transition-[transform,filter,box-shadow] duration-75 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 ${variants[variant] ?? variants.primary} ${className}`}
       {...props}
     >

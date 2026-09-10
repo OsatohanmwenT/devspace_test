@@ -2,6 +2,7 @@ export function ToggleSwitch({ checked, onChange, label }) {
   return (
     <button
       type="button"
+      data-cuelume-toggle
       role="switch"
       aria-checked={checked}
       className={`relative h-6 w-11 flex-none rounded-full transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${checked ? 'bg-[#6699ec]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#d4d4d4]'}`}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { play } from 'cuelume'
 import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
@@ -241,6 +242,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       // A retry left: nudge, don't reveal — clear only the wrong blanks so a
       // fill question doesn't undo what was already right.
       setErrorPulse((current) => current + 1)
+      play('error')
       const line = getDevyLine({ event: 'retry' })
       sayDevyLine(line)
       if (personality) speakText(line, { rate: getPersistedRate(), voice: getPersistedVoice() })
@@ -252,8 +254,13 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       return
     }
 
-    if (correct) setSuccessPulse((current) => current + 1)
-    else setErrorPulse((current) => current + 1)
+    if (correct) {
+      setSuccessPulse((current) => current + 1)
+      play('success')
+    } else {
+      setErrorPulse((current) => current + 1)
+      play('error')
+    }
     // Only a clean first-try answer extends the in-a-row counter — a correct
     // guess on retry shouldn't read the same as getting it right the first time.
     const firstTryCorrect = correct && nextAttempts === 1
@@ -440,18 +447,18 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     >
       {successPulse > 0 && <div key={successPulse} className="lesson-success-glow" aria-hidden="true" />}
       {errorPulse > 0 && <div key={errorPulse} className="lesson-error-glow" aria-hidden="true" />}
-      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] items-center border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
+      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] max-[720px]:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-[720px]:gap-2 border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
         <button
           ref={exitButtonRef}
           type="button"
-          className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 max-[720px]:invisible ${focusRing}`}
+          className={`grid w-11 h-11 place-items-center border-0 rounded-lg bg-transparent shadow-none text-[#b2b2b6] [[data-theme=light]_&]:text-[#777] hover:bg-[#262626] [[data-theme=light]_&]:hover:bg-[#f5f5f5] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 max-[720px]:hidden ${focusRing}`}
           onClick={requestExit}
           aria-label="Exit lesson"
         >
           <svg className="w-[21px] h-[21px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </button>
 
-        <div className="justify-self-center max-[720px]:hidden">
+        <div className="w-full min-w-0 justify-self-center">
           {navigationStyle === 'pill' ? <LessonNavigationPill /> : (
             <LessonProgressStrip
               currentStep={session.stepIndex + 1}
@@ -463,14 +470,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           )}
         </div>
 
-        <div className="justify-self-center min-[721px]:absolute min-[721px]:right-[196px]">
-          <span className="flex h-9 items-center gap-1.5 rounded-full border border-[#e1e1e1] bg-white px-2.5 text-sm font-medium text-neutral-800 [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:text-[#f4f4f2]" aria-label={`${xp} XP`}>
+        <div className="flex items-center gap-2 justify-self-end">
+          <span className="flex h-9 items-center gap-1.5 rounded-full border border-[#e1e1e1] bg-white px-2.5 text-sm font-medium text-neutral-800 [[data-theme=dark]_&]:border-[#404040] [[data-theme=dark]_&]:bg-[#1f1f1f] [[data-theme=dark]_&]:text-[#f4f4f2] max-[720px]:hidden" aria-label={`${xp} XP`}>
             <GemIcon className="size-[14px] text-[#513dec]" />
             {xp}
           </span>
-        </div>
 
-        <div className="flex items-center gap-2 justify-self-end">
           {currentStep?.type === 'article' && (
             <NarrationControl
               article={currentStep.content}

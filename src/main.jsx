@@ -1,3 +1,4 @@
+import { bind } from 'cuelume';
 import { MotionConfig } from 'motion/react';
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -88,6 +89,10 @@ function App() {
   // A league celebration that qualifies while a roadmap transition is on
   // screen waits here rather than firing underneath it.
   const pendingLeagueCelebrationRef = useRef(null)
+
+  useEffect(() => {
+    bind()
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -638,6 +643,8 @@ function App() {
       {active !== 'Plans' && !openLesson && !openPractice && !customPathFullScreen && (
       <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
         <button
+          data-cuelume-press="pulse"
+          data-cuelume-release="release"
           className="flex items-center p-0 border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setActive('Home')}
           aria-label="Devspace home"
@@ -651,6 +658,8 @@ function App() {
             return (
               <button
                 key={item}
+                data-cuelume-hover="tick"
+                data-cuelume-toggle
                 className={
                   isActive
                     ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6699ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
@@ -708,6 +717,7 @@ function App() {
 
         <button
           ref={menuButtonRef}
+          data-cuelume-toggle
           className="min-w-11 min-h-11 max-[680px]:ml-auto p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
