@@ -12,6 +12,8 @@
   "dependencies": {
     "@dicebear/collection": "^9.4.3",
     "@dicebear/core": "^9.4.3",
+    "@lottiefiles/dotlottie-react": "^0.19.16",
+    "@rive-app/react-canvas": "^4.34.2",
     "@vitejs/plugin-react": "latest",
     "canvas-confetti": "^1.9.4",
     "cuelume": "^0.2.2",

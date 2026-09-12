@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DevyLottie } from './DevyLottie'
 
 const pageCopy = {
   Home: {
@@ -58,7 +59,7 @@ export function DevyDrawer({ page, pathTitle, nextLesson, onClose }) {
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5">
         {messages.length === 0 && <div className="grid justify-items-center gap-3 py-4 text-center">
-          <img className="size-[72px] object-contain" src="/assets/devy.svg" alt="" />
+          <DevyLottie clip="listening" ariaLabel="Devy" className="size-[72px]" />
           <p className="m-0 max-w-[30ch] text-sm leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Ask about anything on this page, or pick one of these.</p>
         </div>}
         <div className={`${messages.length ? '' : 'mt-4'} grid gap-3`} aria-live="polite">

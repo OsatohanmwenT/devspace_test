@@ -100,6 +100,10 @@ export default function LeaderboardView({
   onCreatePrivateLeague,
   onJoinPrivateLeague,
   onLeavePrivateLeague,
+  onRemovePrivateLeagueMember,
+  onRenamePrivateLeague,
+  onRegeneratePrivateLeagueCode,
+  onChooseH2HOpponent,
 }) {
   const [tab, setTab] = useState(TABS[0])
   const [expanded, setExpanded] = useState(false)
@@ -205,6 +209,9 @@ export default function LeaderboardView({
           onCreate={onCreatePrivateLeague}
           onJoin={onJoinPrivateLeague}
           onLeave={onLeavePrivateLeague}
+          onRemoveMember={onRemovePrivateLeagueMember}
+          onRename={onRenamePrivateLeague}
+          onRegenerateCode={onRegeneratePrivateLeagueCode}
         />
         {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
       </>
@@ -224,6 +231,7 @@ export default function LeaderboardView({
           clock={clock}
           onBack={() => setView('official')}
           onShareWin={(match) => setShareCard(buildH2HWinCard(match.opponentName))}
+          onChooseOpponent={onChooseH2HOpponent}
         />
         {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
       </>

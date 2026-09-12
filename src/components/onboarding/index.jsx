@@ -17,13 +17,28 @@ import {
     STEP_ANSWER_KEY,
 } from '../../lib/onboarding';
 import { ActionButton } from '../ui/ActionButton';
-import { DevyMood } from '../ui/DevyMood';
+import { DevyLottie } from '../ui/DevyLottie';
 import GeneratingPath from './GeneratingPath';
 import { ChipList, MiniIcon, OptionList, StepHeading } from './OnboardingStep';
 
 // Screens whose option set is long enough to benefit from a 2-column icon
 // grid instead of a scanning a straight vertical list.
 const GRID_LAYOUT_STEPS = new Set(['branch'])
+
+const QUESTION_DEVY_CLIPS = {
+  motivation: 'listening',
+  branch: 'walk',
+  branch_triage: 'walk',
+  role: 'listening',
+  role_sub_quiz: 'listening',
+  stack: 'thinking',
+  stack_sub_quiz: 'thinking',
+  experience: 'thinking',
+  javascript_experience: 'thinking',
+  starting_point: 'walk',
+  project_interest: 'walk',
+  daily_time: 'walk',
+}
 
 // Matches a stage's id against the tech it actually teaches, so the path
 // preview can show a real HTML/JS/React mark instead of a bare number.
@@ -51,6 +66,93 @@ function stageIcon(stageValue) {
   if (has('figma', 'design')) return 'design'
   if (has('api', 'apis', 'rest', 'graphql', 'networking')) return 'api'
   return null
+}
+
+// A tiny taste of what each branch actually looks like day-to-day — shown on
+// the branch break screen so "AI & Automation it is" is backed by something
+// concrete, the way Brilliant's onboarding shows a real code snippet instead
+// of an icon. Three short, independent cards per branch (not one multi-line
+// snippet) since only one faces the viewer at a time as they orbit.
+const T = 'text-[#8b7cf6]' // keyword/verb tint
+const V = 'text-[#4ade80]' // value/result tint
+const BRANCH_ORBIT_CARDS = {
+  web: [
+    [<>&lt;<span className={T}>button</span> onClick={'{submit}'}&gt;</>, <>&nbsp;&nbsp;Send</>],
+    [<>fetch(<span className={V}>'/api/users'</span>)</>],
+    [<>useState(<span className={V}>0</span>)</>],
+  ],
+  mobile: [
+    [<><span className={T}>Navigator</span>.push(Profile())</>],
+    [<>onTap: () =&gt; like()</>],
+    [<>StatusBar.setStyle(<span className={V}>'light'</span>)</>],
+  ],
+  backend: [
+    [<><span className={T}>POST</span> /api/orders → <span className={V}>201</span></>],
+    [<><span className={T}>SELECT</span> * FROM users</>],
+    [<>cache.set(key, value)</>],
+  ],
+  data: [
+    [<><span className={T}>SELECT</span> avg(revenue)</>],
+    [<>df.groupby(<span className={V}>'region'</span>).sum()</>],
+    [<>chart.plot(x, y)</>],
+  ],
+  ai: [
+    [<>model.fit(training_data)</>],
+    [<>predict(image) → <span className={V}>"cat" (98%)</span></>],
+    [<>automate(daily_report)</>],
+  ],
+  product: [
+    [<><span className={T}>As a</span> user, I want</>, <>faster checkout.</>],
+    [<>Impact: <span className={V}>High</span> · Effort: Low</>],
+    [<>Sprint 12 — 8 stories</>],
+  ],
+  marketing: [
+    [<><span className={T}>A/B test</span>: open rate <span className={V}>34% ↑</span></>],
+    [<>segment: age 18–24</>],
+    [<>CTR: 2.4% → <span className={V}>3.1%</span></>],
+  ],
+  content_media: [
+    [<>00:12 — cut to B-roll</>],
+    [<>caption: "wait for it…"</>],
+    [<>publish: Tue 9am</>],
+  ],
+  design: [
+    [<>spacing: <span className={V}>8px</span></>],
+    [<>radius: <span className={V}>12px</span></>],
+    [<>contrast: <span className={V}>4.6:1 ✓</span></>],
+  ],
+  cloud: [
+    [<><span className={T}>docker build</span> .</>],
+    [<>kubectl apply -f api.yaml</>],
+    [<>uptime: <span className={V}>99.98%</span></>],
+  ],
+}
+
+// Cards stay facing the learner as they travel around one central Devy.
+function BranchOrbit({ branch }) {
+  const cards = BRANCH_ORBIT_CARDS[branch]
+  if (!cards) return null
+
+  return (
+    <div className="relative mx-auto h-[260px] w-full max-w-[440px] [--orbit-radius:clamp(80px,24vw,145px)]" aria-hidden="true">
+      <div className="absolute inset-0">
+        {cards.map((lines, i) => (
+          <div
+            key={i}
+            className="devy-orbit-card absolute left-1/2 top-1/2 flex min-h-16 w-[140px] flex-col justify-center rounded-xl border border-[#555064] bg-[#222226] px-3 py-3 text-left font-mono text-[12px] leading-[1.5] text-[#e4e4e6] shadow-[0_8px_20px_rgba(0,0,0,.2)] [[data-theme=light]_&]:border-[#ded8ef] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#34343a]"
+            style={{ animationDelay: `${-i * 6}s` }}
+            aria-hidden="true"
+          >
+            {lines.map((line, j) => <div key={j}>{line}</div>)}
+          </div>
+        ))}
+      </div>
+      <div data-break-devy className="pointer-events-none absolute left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2">
+        <span aria-hidden="true" className="devy-thought-glow absolute inset-0 -z-10 rounded-full bg-[#6699ec]/25 blur-2xl [[data-theme=light]_&]:bg-[#6699ec]/30" />
+        <DevyLottie clip="thinking" className="relative h-28 w-28" />
+      </div>
+    </div>
+  )
 }
 
 const COPY = {
@@ -120,6 +222,27 @@ export default function OnboardingView({ onComplete }) {
     setIndex(3)
   }
 
+  // The decisive path off the placement screen: accept the recommendation
+  // outright and skip past the explicit route-review step (and its break
+  // screen) rather than making the learner inspect and reconfirm what was
+  // just recommended. "Review your full route" and the options tucked behind
+  // "This doesn't feel right" are what still reach that review screen.
+  const acceptPlacement = (placementValue) => {
+    const nextAnswers = { ...answers, startingPoint: placementValue }
+    setAnswers(nextAnswers)
+    setIndex((current) => {
+      const nextSteps = getVisibleSteps(nextAnswers)
+      let next = current + 1
+      while (nextSteps[next] && (nextSteps[next].id === 'starting_point' || nextSteps[next].id === 'starting_point_break')) next += 1
+      return Math.min(next, nextSteps.length - 1)
+    })
+  }
+
+  const reviewRoute = () => {
+    setIsRouteAssessment(false)
+    goNext()
+  }
+
   const isChoice = Boolean(answerKey)
   const isBreak = step.type === 'break'
   const isPathPreview = isBreak && Boolean(role) && (step.questionId === 'role' || step.questionId === 'role_sub_quiz')
@@ -132,7 +255,6 @@ export default function OnboardingView({ onComplete }) {
       || (step.questionId === 'stack_sub_quiz' && answers.stack === 'help_me_choose')
     ))
   )
-  const hasRouteReview = getVisibleSteps(answers).some((item) => item.id === 'starting_point')
   const isMulti = isMultiSelectStep(step.id)
   const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
   const isLast = step.id === 'daily_time_break'
@@ -141,8 +263,6 @@ export default function OnboardingView({ onComplete }) {
     ? 'Let’s go'
     : step.id === 'starting_point'
       ? 'Continue with this route'
-      : isPlacementRecommendation && hasRouteReview
-        ? 'Review your route'
       : isLast ? 'Start learning' : 'Continue'
   const onPrimary = isLast ? () => setIsGenerating(true) : goNext
 
@@ -177,8 +297,8 @@ export default function OnboardingView({ onComplete }) {
 
         {!isGenerating && step.id === 'welcome' && (
           <div className="grid justify-items-center gap-5 self-center text-center">
-            <img className="h-24 w-24 object-contain" src="/assets/devy.svg" alt="" />
-            <StepHeading title="Let’s set up your learning" subtitle="A few quick questions so Devspace knows what you want, where to start, and what examples will feel relevant." />
+            <DevyLottie clip="wave" ariaLabel="Devy" className="h-40 w-40" />
+            <StepHeading title="Let’s set up your learning" subtitle="A few quick questions so Devspace knows what you want, where to start, and what examples will feel relevant." showDevy={false} />
             <ActionButton
               variant="primary"
               className="mt-3 w-[min(100%,520px)] max-w-[46ch] min-h-[52px] text-[15px] font-medium"
@@ -196,15 +316,22 @@ export default function OnboardingView({ onComplete }) {
         {isPlacementRecommendation && (
           <PlacementRecommendation
             placement={placement}
-            stages={startingPointOptions[resolveLadderKey(answers)] ?? []}
+            roleLabel={roleLabel(branch, role)}
             explanation={explainPlacement(answers, placement, roleLabel(branch, role))}
+            onStartLearning={() => acceptPlacement(placement.value)}
+            onReviewRoute={reviewRoute}
             onChangeCareer={changePath}
             onTestLevel={() => { goNext(); setIsRouteAssessment(true) }}
           />
         )}
 
-        {isBreak && breakContent && !isPathPreview && !isPlacementRecommendation && (
-          <BreakScreen key={step.id} message={breakContent.message} insight={breakContent.insight} />
+        {!isGenerating && isBreak && breakContent && !isPathPreview && !isPlacementRecommendation && (
+          <BreakScreen
+            key={step.id}
+            message={breakContent.message}
+            insight={breakContent.insight}
+            snippet={(step.questionId === 'branch' || step.questionId === 'branch_triage') && branch ? <BranchOrbit branch={branch} /> : null}
+          />
         )}
 
         {step.id === 'starting_point' && (
@@ -231,6 +358,7 @@ export default function OnboardingView({ onComplete }) {
               subtitle={step.id === 'role_sub_quiz' || step.id === 'stack_sub_quiz'
                 ? 'Pick whichever sounds more like you — there’s no wrong answer.'
                 : isMulti ? 'Select all that apply.' : COPY[step.id]?.subtitle}
+              devyClip={QUESTION_DEVY_CLIPS[step.id]}
             />
             {step.id === 'project_interest'
               ? <ChipList options={options} value={value} onSelect={select} />
@@ -239,7 +367,7 @@ export default function OnboardingView({ onComplete }) {
         )}
       </main>
 
-      {step.id !== 'welcome' && !isRouteAssessment && !isGenerating && <footer className="flex items-center justify-center px-6 pb-5 max-[680px]:px-4">
+      {step.id !== 'welcome' && !isPlacementRecommendation && !isRouteAssessment && !isGenerating && <footer className="flex items-center justify-center px-6 pb-5 max-[680px]:px-4">
         <ActionButton
           variant="primary"
           className="w-[min(100%,520px)] min-h-[52px] text-[15px] font-medium"
@@ -253,62 +381,127 @@ export default function OnboardingView({ onComplete }) {
   )
 }
 
-function BreakScreen({ message, insight }) {
+// Reveals `text` a character at a time, like Duolingo's onboarding bubbles —
+// skipped entirely for reduced-motion, where the full line just appears.
+function useTypewriter(text, speed = 18) {
+  const [shown, setShown] = useState('')
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(text)
+      return undefined
+    }
+
+    setShown('')
+    let index = 0
+    const id = window.setInterval(() => {
+      index += 1
+      setShown(text.slice(0, index))
+      if (index >= text.length) window.clearInterval(id)
+    }, speed)
+
+    return () => window.clearInterval(id)
+  }, [text, speed])
+
+  return shown
+}
+
+function BreakScreen({ message, insight, snippet }) {
   const rootRef = useRef(null)
+  const typed = useTypewriter(message)
+  const isTyping = typed.length < message.length
+  // A brief scale-bump the instant typing finishes — a small "there, said it"
+  // payoff so the moment reads as a beat rather than a timer just running out.
+  const [justFinished, setJustFinished] = useState(false)
+
+  useEffect(() => {
+    if (isTyping || !message) return undefined
+    setJustFinished(true)
+    const timer = window.setTimeout(() => setJustFinished(false), 280)
+    return () => window.clearTimeout(timer)
+  }, [isTyping, message])
 
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
 
     const context = gsap.context(() => {
-      gsap.from('[data-break-devy]', { autoAlpha: 0, scale: 0.86, duration: 0.55, ease: 'power2.out' })
-      gsap.from('[data-break-copy]', { autoAlpha: 0, y: 18, duration: 0.45, ease: 'power2.out', delay: 0.16 })
+      // Devy pops in with an overshoot, the bubble follows a beat behind with
+      // its own — the second bounce reads as "he just said something",
+      // instead of both fading up together as one flat block.
+      const timeline = gsap.timeline()
+      timeline
+        .from('[data-break-devy]', { autoAlpha: 0, scale: 0.5, y: 16, duration: 0.5, ease: 'back.out(1.9)' })
+        .from('[data-break-bubble]', { autoAlpha: 0, scale: 0.8, x: -12, duration: 0.4, ease: 'back.out(2.2)' }, '-=0.22')
     }, rootRef)
 
     return () => context.revert()
   }, [])
 
   return (
-    <div ref={rootRef} className="grid w-full max-w-[520px] justify-items-center gap-5 self-center text-center">
-      <DevyMood data-break-devy mood="neutral" animate={false} alt="" className="h-24 w-24 object-contain" />
-      <div data-break-copy>
-        <StepHeading title={message} subtitle={insight} />
+    <div ref={rootRef} className="grid w-full max-w-[560px] justify-items-center gap-4 self-center">
+      <div className="flex w-full items-end justify-center gap-3">
+        {!snippet && <div className="relative flex-none">
+          <span aria-hidden="true" className="devy-thought-glow absolute inset-0 -z-10 rounded-full bg-[#6699ec]/25 blur-2xl [[data-theme=light]_&]:bg-[#6699ec]/30" />
+          <DevyLottie data-break-devy clip="thinking" className="relative h-24 w-24" />
+        </div>}
+        <div
+          data-break-bubble
+          className={`relative max-w-[320px] rounded-2xl rounded-bl-md border border-[#404040] bg-[#1f1f1f] px-4 py-3 text-left text-[17px] font-medium leading-[1.4] text-[#f4f4f2] shadow-[0_10px_28px_rgba(0,0,0,.4)] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:shadow-[0_10px_28px_rgba(20,20,20,.12)] ${justFinished ? 'devy-bubble-pop' : ''}`}
+          role="status"
+        >
+          <span className="sr-only">{message}</span>
+          <span aria-hidden="true">{typed}{isTyping && <span className="devy-caret" />}</span>
+        </div>
       </div>
+      {snippet && <div className="w-full">{snippet}</div>}
+      {insight && (
+        <p
+          className={`m-0 max-w-[60ch] text-center text-[15px] leading-[1.5] text-[#9a9a9d] transition-[opacity,transform] duration-300 ease-out [[data-theme=light]_&]:text-[#686968] ${isTyping ? 'translate-y-1.5 opacity-0' : 'translate-y-0 opacity-100'}`}
+        >
+          {insight}
+        </p>
+      )}
     </div>
   )
 }
 
-function PlacementRecommendation({ placement, stages, explanation, onChangeCareer, onTestLevel }) {
-  const current = stages.findIndex((stage) => stage.value === placement.value)
+// Kept deliberately small: one recommendation, one reason, one decisive
+// action. The corrections (test my level / pick a different stage / change
+// career) still exist, but tucked behind "This doesn't feel right" rather
+// than sitting next to the primary action asking to be second-guessed.
+function PlacementRecommendation({ placement, roleLabel, explanation, onStartLearning, onReviewRoute, onChangeCareer, onTestLevel }) {
+  const [showOptions, setShowOptions] = useState(false)
 
   return (
-    <div className="grid w-full max-w-[520px] justify-items-center gap-4 self-center text-center">
-      <img className="h-20 w-20 object-contain" src="/assets/devy.svg" alt="" />
-      <div className="grid justify-items-center gap-2">
-        <p className="m-0 text-sm font-medium text-[#6699ec]">Your recommended start</p>
-        <h1 className="m-0 max-w-[28ch] font-rethink-sans text-[clamp(26px,3.4vw,34px)] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-          Start with <span className="text-[#6699ec]">{placement.label}</span>
-        </h1>
-        <p className="m-0 max-w-[52ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-          {explanation
-            ? <>Because you chose <strong className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{explanation.roleLabel}</strong> and said <strong className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">“{explanation.answerLabel}”</strong>, {explanation.rungSummary}, {explanation.tail}</>
-            : 'Based on your experience, this is the best foundation before you move into more advanced work.'}
-        </p>
+    <div className="grid w-full max-w-[420px] justify-items-center gap-2.5 self-center text-center">
+      <DevyLottie clip="wave" ariaLabel="Devy" className="mb-1 h-24 w-24" />
+      <p className="m-0 text-[11px] font-semibold uppercase tracking-[.08em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Your recommended start</p>
+      <h1 className="m-0 max-w-[22ch] font-rethink-sans text-[clamp(24px,3vw,30px)] font-medium leading-[1.2] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+        Start with <span className="text-[#6699ec]">{placement.label}</span>
+      </h1>
+      <p className="m-0 max-w-[40ch] text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+        {explanation ? `${explanation.rungSummary}, ${explanation.tail}` : 'Based on your experience, this is the best place to begin.'}
+      </p>
+      <p className="m-0 mt-0.5 text-[13px] font-medium text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
+        {roleLabel} · {placement.label}
+      </p>
+
+      <ActionButton variant="primary" className="mt-4 min-h-[52px] w-full text-[15px] font-semibold" onClick={onStartLearning}>
+        Start learning →
+      </ActionButton>
+
+      <div className="mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={onReviewRoute}>Review your full route</button>
+        <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={() => setShowOptions((current) => !current)} aria-expanded={showOptions}>This doesn’t feel right</button>
       </div>
-      <section className="w-full rounded-2xl border border-[#404040] bg-[#1f1f1f] p-5 text-left [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white" aria-label="Recommended learning route">
-        <p className="m-0 text-[11px] font-semibold uppercase tracking-[.08em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Start here</p>
-        <strong className="mt-1.5 block text-[18px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{placement.label}</strong>
-        <p className="mb-0 mt-1.5 text-sm leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Build the core knowledge you'll use in every lesson that follows.</p>
-        {stages[current + 1] && (
-          <div className="mt-4 flex items-center justify-between gap-4 border-t border-[#404040] pt-4 [[data-theme=light]_&]:border-[#e0e0dc]">
-            <span className="text-sm text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Then continue to</span>
-            <strong className="text-right text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{stages[current + 1].label}</strong>
-          </div>
-        )}
-      </section>
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={onTestLevel}>Not sure? Test your level instead</button>
-        <button type="button" className="border-0 bg-transparent text-sm font-medium text-[#6699ec] underline underline-offset-4 hover:text-[#2563eb]" onClick={onChangeCareer}>Change career</button>
-      </div>
+
+      {showOptions && (
+        <div className="mt-1 grid w-full gap-1 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-1.5 text-left [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white">
+          <button type="button" className="min-h-11 rounded-xl border-0 bg-transparent px-3.5 text-left text-sm font-medium text-[#f4f4f2] hover:bg-[#262626] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5]" onClick={onTestLevel}>Test my level</button>
+          <button type="button" className="min-h-11 rounded-xl border-0 bg-transparent px-3.5 text-left text-sm font-medium text-[#f4f4f2] hover:bg-[#262626] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5]" onClick={onReviewRoute}>Choose a different starting point</button>
+          <button type="button" className="min-h-11 rounded-xl border-0 bg-transparent px-3.5 text-left text-sm font-medium text-[#f4f4f2] hover:bg-[#262626] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#f5f5f5]" onClick={onChangeCareer}>Change career</button>
+        </div>
+      )}
     </div>
   )
 }
@@ -517,31 +710,32 @@ function RouteReview({ groups, notSureOption, value, placement, branch, onSelect
 
 function StageStrip({ stages, highlightValue, label }) {
   return (
-    <ol className="m-0 flex max-w-[560px] flex-wrap items-center justify-center gap-y-3 p-0" aria-label={label}>
+    <ol className="m-0 flex max-w-[620px] flex-wrap items-center justify-center gap-y-4 p-0" aria-label={label}>
       {stages.map((stage, index) => {
         const isHighlighted = stage.value === highlightValue
         const icon = stageIcon(stage.value)
         return (
           <li key={stage.value} className="flex list-none items-center">
             {index > 0 && (
-              <span className="mx-1.5 h-px w-5 bg-[#404040] [[data-theme=light]_&]:bg-[#d4d4d4]" aria-hidden="true" />
+              <span className="mx-2 h-px w-6 bg-[#404040] [[data-theme=light]_&]:bg-[#d4d4d4]" aria-hidden="true" />
             )}
             <span
-              className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[13px] font-medium ${
+              className={`flex items-center gap-2.5 rounded-full py-2 pl-2 pr-4 text-[14px] font-medium ${
                 isHighlighted
-                  ? 'bg-[#2a264c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]'
+                  ? 'onboarding-start-pulse relative bg-[#2a264c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#eeebff] [[data-theme=light]_&]:text-[#30226e]'
                   : 'bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#f2f3f5] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
               }`}
             >
               <span
-                className={`grid size-5 flex-none place-items-center rounded-full text-[11px] font-semibold ${
+                className={`grid size-6 flex-none place-items-center rounded-full text-[12px] font-semibold ${
                   isHighlighted ? 'bg-[#5c49c9] text-white' : 'bg-[#3a3a3a] [[data-theme=light]_&]:bg-[#e0e0dc] text-[#c8c8c6] [[data-theme=light]_&]:text-[#4b4b4d]'
                 }`}
                 aria-hidden="true"
               >
-                {icon ? <MiniIcon name={icon} className="size-3" /> : index + 1}
+                {icon ? <MiniIcon name={icon} className="size-3.5" /> : index + 1}
               </span>
               {stage.label}
+              {isHighlighted && <span className="sr-only">, start here</span>}
             </span>
           </li>
         )

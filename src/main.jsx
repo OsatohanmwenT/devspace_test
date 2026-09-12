@@ -32,7 +32,7 @@ import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
 import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
-import { advanceH2HWeek } from './lib/h2h';
+import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './lib/h2h';
 import { getStandings, resolveSeason, USER_ID } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
@@ -41,6 +41,9 @@ import {
     createPrivateLeague as createPrivateLeagueRecord,
     joinPrivateLeagueByCode,
     leavePrivateLeague as leavePrivateLeagueRecord,
+    regeneratePrivateLeagueCode as regeneratePrivateLeagueCodeRecord,
+    removePrivateLeagueMember as removePrivateLeagueMemberRecord,
+    renamePrivateLeague as renamePrivateLeagueRecord,
 } from './lib/privateLeagues';
 import { getRewardForRank, MIN_PAYOUT_THRESHOLD } from './lib/rewards';
 import { formatTimeRemaining, getSeasonIndex, getTimeRemaining, now } from './lib/season';
@@ -344,13 +347,46 @@ function App() {
     })
   }
 
-  const createPrivateLeague = (name) => {
+  const createPrivateLeague = (name, emoji) => {
     setProgress((current) => {
-      const next = createPrivateLeagueRecord(current, name)
+      const next = createPrivateLeagueRecord(current, name, emoji)
       saveProgress(next)
       return next
     })
     showNotice('League created')
+  }
+
+  const removePrivateLeagueMember = (leagueId, rivalId) => {
+    setProgress((current) => {
+      const next = removePrivateLeagueMemberRecord(current, leagueId, rivalId)
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const renamePrivateLeague = (leagueId, name) => {
+    setProgress((current) => {
+      const next = renamePrivateLeagueRecord(current, leagueId, name)
+      saveProgress(next)
+      return next
+    })
+  }
+
+  const regeneratePrivateLeagueCode = (leagueId) => {
+    setProgress((current) => {
+      const next = regeneratePrivateLeagueCodeRecord(current, leagueId)
+      saveProgress(next)
+      return next
+    })
+    showNotice('Invite code regenerated — the old code no longer works')
+  }
+
+  const chooseH2HOpponent = (opponentId) => {
+    setProgress((current) => {
+      const next = { ...current, h2h: chooseH2HOpponentRecord(current.h2h, opponentId) }
+      saveProgress(next)
+      return next
+    })
   }
 
   const joinPrivateLeague = (code) => {
@@ -816,6 +852,10 @@ function App() {
             onCreatePrivateLeague={createPrivateLeague}
             onJoinPrivateLeague={joinPrivateLeague}
             onLeavePrivateLeague={leavePrivateLeague}
+            onRemovePrivateLeagueMember={removePrivateLeagueMember}
+            onRenamePrivateLeague={renamePrivateLeague}
+            onRegeneratePrivateLeagueCode={regeneratePrivateLeagueCode}
+            onChooseH2HOpponent={chooseH2HOpponent}
           />
         ) : active === 'Practice' ? (
           <PracticeView

@@ -6,6 +6,9 @@ import {
   getPrivateLeagueStandings,
   joinPrivateLeagueByCode,
   leavePrivateLeague,
+  regeneratePrivateLeagueCode,
+  removePrivateLeagueMember,
+  renamePrivateLeague,
 } from './privateLeagues.js'
 import { USER_ID } from './leagueSim.js'
 
@@ -96,6 +99,46 @@ test('outscoring every member puts the learner first', () => {
 
   const standings = getPrivateLeagueStandings(league, 1000000, 34)
   assert.equal(standings[0].id, USER_ID)
+})
+
+test('removing a member frees their spot instead of refilling it', () => {
+  const withLeague = createPrivateLeague(base, 'Study Crew')
+  const [league] = Object.values(withLeague.privateLeagues)
+  const startingCount = league.memberRivalIds.length
+  const [removedId] = league.memberRivalIds
+
+  const next = removePrivateLeagueMember(withLeague, league.id, removedId)
+  const updated = next.privateLeagues[league.id]
+
+  assert.equal(updated.memberRivalIds.length, startingCount - 1)
+  assert.equal(updated.memberRivalIds.includes(removedId), false)
+})
+
+test('only the owner can remove a member — a joined-by-code league is a no-op', () => {
+  const joined = joinPrivateLeagueByCode(base, 'ABC234')
+  const [league] = Object.values(joined.privateLeagues)
+
+  assert.deepEqual(removePrivateLeagueMember(joined, league.id, league.memberRivalIds[0]), joined)
+})
+
+test('renaming a league the owner made updates its name', () => {
+  const withLeague = createPrivateLeague(base, 'Study Crew')
+  const [league] = Object.values(withLeague.privateLeagues)
+
+  const next = renamePrivateLeague(withLeague, league.id, 'Section B Coders')
+  assert.equal(next.privateLeagues[league.id].name, 'Section B Coders')
+})
+
+test('regenerating a code changes it and only the owner can do it', () => {
+  const withLeague = createPrivateLeague(base, 'Study Crew')
+  const [league] = Object.values(withLeague.privateLeagues)
+
+  const next = regeneratePrivateLeagueCode(withLeague, league.id)
+  assert.notEqual(next.privateLeagues[league.id].code, league.code)
+
+  const joined = joinPrivateLeagueByCode(base, 'ABC234')
+  const [joinedLeague] = Object.values(joined.privateLeagues)
+  assert.deepEqual(regeneratePrivateLeagueCode(joined, joinedLeague.id), joined)
 })
 
 // The hard rule from the spec: private leagues never touch official league

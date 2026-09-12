@@ -1,5 +1,5 @@
 import { ActionButton } from '../ui/ActionButton'
-import { DevyMood } from '../ui/DevyMood'
+import { DevyLottie } from '../ui/DevyLottie'
 
 // Matches PracticeResult — the other phase of this same session — rather than
 // living as its own wide, divided stat card: same 112px Devy, same 520px
@@ -13,7 +13,7 @@ export function PracticeIntro({ session, completion, onStart }) {
       <main className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white">
         <div className="grid min-h-full place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
           <div className="grid w-full max-w-[520px] justify-items-center text-center">
-            <DevyMood mood="neutral" className="mb-6 h-28 w-28 max-[680px]:mb-5 max-[680px]:h-24 max-[680px]:w-24" />
+            <DevyLottie clip="wave" ariaLabel="Devy" className="mb-6 h-40 w-40 max-[680px]:mb-5 max-[680px]:h-32 max-[680px]:w-32" />
 
             <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">Let’s practice</span>
             <h1 className="mt-2 mb-0 font-rethink-sans text-[clamp(28px,4vw,38px)] font-semibold leading-[1.14] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">

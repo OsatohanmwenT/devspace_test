@@ -19,10 +19,19 @@ const USER_ROLE = 'Machine Learning Engineer path'
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I — easy to read aloud
 const CODE_LENGTH = 6
 const MIN_MEMBERS = 4
-const MAX_MEMBERS = 6
+export const MAX_MEMBERS = 6
 
 const LEAGUE_NAME_ADJECTIVES = ['Midnight', 'Steady', 'Bright', 'Quiet', 'Rapid', 'Golden', 'Northern', 'Prime']
 const LEAGUE_NAME_NOUNS = ['Coders', 'Learners', 'Builders', 'Crew', 'Circle', 'Squad', 'Collective', 'League']
+
+// Purely cosmetic — gives a list of leagues distinct silhouettes instead of
+// identical name-only rows. Kept small and emoji-only so it needs no assets.
+export const LEAGUE_EMOJIS = ['🚀', '🔥', '🌟', '⚡', '🎯', '🧠', '🐝', '🏆', '🎮', '🌊', '🍕', '🎨']
+
+function pickEmoji(random) {
+  const source = random ?? Math.random
+  return LEAGUE_EMOJIS[Math.floor(source() * LEAGUE_EMOJIS.length)]
+}
 
 export function generateInviteCode() {
   let code = ''
@@ -63,12 +72,16 @@ function deriveLeagueFromCode(code) {
     id: `private-${code}`,
     name: `${adjective} ${noun}`,
     code,
+    emoji: pickEmoji(random),
     memberRivalIds: pickMembers(code),
     createdAt: Date.now(),
+    // No ownerId: a league resolved from someone else's code has no owner in
+    // this client — see getPrivateLeagueStandings' note on why members are
+    // simulated rather than fetched.
   }
 }
 
-export function createPrivateLeague(current, name) {
+export function createPrivateLeague(current, name, emoji) {
   const trimmedName = (name ?? '').trim()
   if (!trimmedName) return current
 
@@ -78,11 +91,49 @@ export function createPrivateLeague(current, name) {
     id,
     name: trimmedName,
     code,
+    emoji: LEAGUE_EMOJIS.includes(emoji) ? emoji : pickEmoji(),
+    ownerId: USER_ID,
     memberRivalIds: pickMembers(id),
     createdAt: Date.now(),
   }
 
   return { ...current, privateLeagues: { ...current.privateLeagues, [id]: league } }
+}
+
+// Owner-only removal of a member — this is a real "kick," not a reroll: the
+// spot is simply freed, never auto-filled with another random name. Backing
+// a member out and leaving room open is what actually lets an owner make
+// space for a real friend who has the invite code, instead of the app
+// immediately handing that seat to a stranger again.
+export function removePrivateLeagueMember(current, leagueId, rivalId) {
+  const league = current.privateLeagues?.[leagueId]
+  if (!league || league.ownerId !== USER_ID) return current
+
+  const currentIds = league.memberRivalIds ?? []
+  if (!currentIds.includes(rivalId)) return current
+
+  const nextLeague = { ...league, memberRivalIds: currentIds.filter((id) => id !== rivalId) }
+  return { ...current, privateLeagues: { ...current.privateLeagues, [leagueId]: nextLeague } }
+}
+
+export function renamePrivateLeague(current, leagueId, name) {
+  const league = current.privateLeagues?.[leagueId]
+  const trimmedName = (name ?? '').trim()
+  if (!league || league.ownerId !== USER_ID || !trimmedName) return current
+
+  const nextLeague = { ...league, name: trimmedName }
+  return { ...current, privateLeagues: { ...current.privateLeagues, [leagueId]: nextLeague } }
+}
+
+// Invalidates the old code (an owner's response to it leaking somewhere it
+// shouldn't have) — anyone who only has the old code can no longer resolve
+// to this league, since deriveLeagueFromCode is keyed on the code string.
+export function regeneratePrivateLeagueCode(current, leagueId) {
+  const league = current.privateLeagues?.[leagueId]
+  if (!league || league.ownerId !== USER_ID) return current
+
+  const nextLeague = { ...league, code: generateInviteCode() }
+  return { ...current, privateLeagues: { ...current.privateLeagues, [leagueId]: nextLeague } }
 }
 
 // Joining twice with the same code is a no-op rather than a duplicate entry

@@ -1,12 +1,45 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Rethink+Sans:wght@400;500;600;700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 
 /* Profile/CV entrance — a quiet, single-run reveal, not a loop. */
+@media (prefers-reduced-motion: reduce) {
+  .devy-orbit-card:nth-child(1) { transform: translate(-50%, calc(-50% + 78px)); }
+  .devy-orbit-card:nth-child(2) { transform: translate(calc(-50% - var(--orbit-radius)), calc(-50% - 60px)) scale(.8); }
+  .devy-orbit-card:nth-child(3) { transform: translate(calc(-50% + var(--orbit-radius)), calc(-50% - 60px)) scale(.8); }
+}
+
 @keyframes profile-rise {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  @keyframes onboarding-start-pop {
+    0%, 20%, 100% { transform: scale(1) rotate(0deg); }
+    8% { transform: translateY(-4px) scale(1.08) rotate(-2deg); }
+    14% { transform: translateY(1px) scale(0.98) rotate(1deg); }
+    18% { transform: translateY(-1px) scale(1.025) rotate(0deg); }
+  }
+
+  @keyframes onboarding-start-ring {
+    0%, 24%, 100% { opacity: 0; transform: scale(1); }
+    5% { opacity: 0.7; }
+    23% { opacity: 0; transform: scale(1.16, 1.65); }
+  }
+
+  .onboarding-start-pulse {
+    animation: onboarding-start-pop 3.72s 350ms ease-out infinite;
+  }
+
+  .onboarding-start-pulse::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid #8b7cf6;
+    border-radius: inherit;
+    pointer-events: none;
+    animation: onboarding-start-ring 3.72s 450ms ease-out infinite;
+  }
+
   @keyframes drawer-scrim-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -107,6 +140,56 @@
 
   .devy-bubble-in {
     animation: devy-bubble-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes devy-caret-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  .devy-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: currentColor;
+    animation: devy-caret-blink 0.9s steps(1) infinite;
+  }
+
+  /* A soft aura behind thinking-Devy on the break screens — fills the empty
+     space around him and reads as "a thought is forming" rather than static
+     air. Pulses gently and continuously, independent of the entrance tween. */
+  @keyframes devy-thought-glow-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(1.25); }
+    50% { opacity: 0.8; transform: scale(1.5); }
+  }
+
+  .devy-thought-glow {
+    animation: devy-thought-glow-pulse 2.6s ease-in-out infinite;
+  }
+
+  /* The instant the typewriter finishes, one small scale-bump on the bubble —
+     a "there, said it" payoff beat instead of the text just stopping. */
+  @keyframes devy-bubble-pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.045); }
+    100% { transform: scale(1); }
+  }
+
+  .devy-bubble-pop {
+    animation: devy-bubble-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes devy-orbit-travel {
+    0%, 100% { transform: translate(-50%, calc(-50% + 78px)) scale(1); opacity: 1; z-index: 3; }
+    25% { transform: translate(calc(-50% - var(--orbit-radius)), -50%) scale(.86); opacity: .8; z-index: 1; }
+    50% { transform: translate(-50%, calc(-50% - 78px)) scale(.72); opacity: .35; z-index: 1; }
+    75% { transform: translate(calc(-50% + var(--orbit-radius)), -50%) scale(.86); opacity: .8; z-index: 1; }
+  }
+
+  .devy-orbit-card {
+    animation: devy-orbit-travel 18s ease-in-out infinite;
   }
 
   .devy-idle {

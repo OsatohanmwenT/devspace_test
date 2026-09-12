@@ -10,13 +10,40 @@ import { getWeekIndex, getWeekProgress } from './week.js'
 
 const DAY_FRACTION = 1 / 7
 const HISTORY_LIMIT = 10
+const CANDIDATE_COUNT = 4
 
 // Deterministic per week: the opponent and their eventual full-week coin
 // total are both knowable ahead of time, same principle as leagueSim.js's
 // rival cohort, so a live comparison can be shown mid-week.
-export function getWeeklyOpponent(weekIndex) {
+//
+// `chosenOpponentId` lets a learner pick their own rival for the week (see
+// getOpponentCandidates) instead of only ever getting whoever the default
+// draw lands on — if it doesn't resolve to a real rival, this falls straight
+// back to the original deterministic pick, so callers that never pass it
+// (existing tests included) see no change in behavior.
+export function getWeeklyOpponent(weekIndex, chosenOpponentId) {
+  if (chosenOpponentId) {
+    const chosen = rivals.find((rival) => rival.id === chosenOpponentId)
+    if (chosen) return chosen
+  }
   const random = seededRandom('h2h-opponent', weekIndex)
   return rivals[Math.floor(random() * rivals.length)]
+}
+
+// A short, deterministic shortlist a learner can pick this week's rival
+// from — the default matchup is always included (as the first entry) so
+// "not choosing" and "choosing the default" are the same matchup.
+export function getOpponentCandidates(weekIndex) {
+  const defaultOpponent = getWeeklyOpponent(weekIndex)
+  const random = seededRandom('h2h-candidates', weekIndex)
+  const pool = rivals.filter((rival) => rival.id !== defaultOpponent.id)
+  for (let index = pool.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(random() * (index + 1))
+    const held = pool[index]
+    pool[index] = pool[swap]
+    pool[swap] = held
+  }
+  return [defaultOpponent, ...pool.slice(0, CANDIDATE_COUNT - 1)]
 }
 
 // Same day-fraction accrual shape as leagueSim.js's rivalSeasonCoins, but
@@ -40,8 +67,8 @@ export function getOpponentWeekCoins(rival, weekIndex, progress) {
   return total
 }
 
-function settleMatch(weekIndex, userCoinsThisWeek) {
-  const opponent = getWeeklyOpponent(weekIndex)
+function settleMatch(weekIndex, userCoinsThisWeek, chosenOpponentId) {
+  const opponent = getWeeklyOpponent(weekIndex, chosenOpponentId)
   const opponentCoins = getOpponentWeekCoins(opponent, weekIndex, 1)
 
   let result = 'draw'
@@ -70,7 +97,7 @@ export function advanceH2HWeek(h2h, seasonCoins, timestamp) {
 
   if (h2h.weekIndex === null || h2h.weekIndex === undefined) {
     return {
-      h2h: { weekIndex: currentWeekIndex, windowStartCoins: seasonCoins, points: h2h.points ?? 0, history: h2h.history ?? [] },
+      h2h: { weekIndex: currentWeekIndex, windowStartCoins: seasonCoins, points: h2h.points ?? 0, history: h2h.history ?? [], chosenOpponentId: null },
       resolved: null,
     }
   }
@@ -78,7 +105,7 @@ export function advanceH2HWeek(h2h, seasonCoins, timestamp) {
   if (h2h.weekIndex >= currentWeekIndex) return { h2h, resolved: null }
 
   const userCoinsThisWeek = Math.max(0, seasonCoins - h2h.windowStartCoins)
-  const match = settleMatch(h2h.weekIndex, userCoinsThisWeek)
+  const match = settleMatch(h2h.weekIndex, userCoinsThisWeek, h2h.chosenOpponentId)
 
   return {
     h2h: {
@@ -86,18 +113,50 @@ export function advanceH2HWeek(h2h, seasonCoins, timestamp) {
       windowStartCoins: seasonCoins,
       points: (h2h.points ?? 0) + match.pointsEarned,
       history: [match, ...(h2h.history ?? [])].slice(0, HISTORY_LIMIT),
+      // A new week always starts unpicked — last week's choice shouldn't
+      // silently carry over to an opponent the learner never chose.
+      chosenOpponentId: null,
     },
     resolved: match,
   }
 }
 
+// A learner can pick their rival for the *current, still-open* week only —
+// past weeks are already settled, and picking for a future week that hasn't
+// opened yet has nothing to attach to.
+export function chooseH2HOpponent(h2h, opponentId) {
+  if (h2h.weekIndex === null || h2h.weekIndex === undefined) return h2h
+  return { ...h2h, chosenOpponentId: opponentId }
+}
+
 // Live, mid-week comparison for the UI — never mutates anything.
 export function getLiveH2HStanding(h2h, seasonCoins, timestamp) {
   const weekIndex = h2h.weekIndex ?? getWeekIndex(timestamp)
-  const opponent = getWeeklyOpponent(weekIndex)
+  const opponent = getWeeklyOpponent(weekIndex, h2h.chosenOpponentId)
   const progress = getWeekProgress(timestamp)
   const opponentCoins = getOpponentWeekCoins(opponent, weekIndex, progress)
   const userCoins = Math.max(0, seasonCoins - (h2h.windowStartCoins ?? seasonCoins))
 
   return { weekIndex, opponentId: opponent.id, opponentName: opponent.name, userCoins, opponentCoins }
+}
+
+// Season record + current streak for the summary strip — purely derived
+// from history, so it stays correct no matter how matches were settled.
+export function getH2HRecord(history) {
+  const record = (history ?? []).reduce(
+    (totals, match) => ({ ...totals, [match.result]: totals[match.result] + 1 }),
+    { win: 0, draw: 0, loss: 0 },
+  )
+
+  let streak = { result: null, count: 0 }
+  if (history?.length) {
+    const [mostRecent, ...rest] = history
+    streak = { result: mostRecent.result, count: 1 }
+    for (const match of rest) {
+      if (match.result !== mostRecent.result) break
+      streak.count += 1
+    }
+  }
+
+  return { ...record, streak }
 }

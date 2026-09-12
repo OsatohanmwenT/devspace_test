@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { DevyLottie } from '../ui/DevyLottie'
 
 const DEFAULT_LINES = [
   'Mapping what you already know…',
@@ -28,7 +29,7 @@ export default function GeneratingPath({ lines = DEFAULT_LINES, lineIntervalMs =
 
   return (
     <div className="grid w-full max-w-[420px] justify-items-center gap-1 self-center text-center" role="status" aria-live="polite">
-      <img className="onb-devy-loading h-[104px] w-[104px] object-contain" src="/assets/devy.svg" alt="" />
+      <DevyLottie clip="thinking" className="onb-devy-loading h-[104px] w-[104px]" />
       <h1 className="m-0 mt-4 font-rethink-sans text-[24px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Building your route</h1>
       <p className="m-0 mt-3 min-h-[22px] text-[15px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{lines[lineIndex]}</p>
       <span className="mt-2 flex items-center gap-1.5 text-[#8b7cf6]" aria-hidden="true">

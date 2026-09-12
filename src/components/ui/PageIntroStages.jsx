@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { ActionButton } from './ActionButton'
+import { DevyLottie } from './DevyLottie'
 import { DevyMood } from './DevyMood'
 
 // A staged intro: one idea per screen, advanced by Continue, in the shape of
@@ -9,10 +10,16 @@ import { DevyMood } from './DevyMood'
 // rather than swapping the copy in place, so it reads as moving through screens.
 const STAGE_TRANSITION = { duration: 0.62, ease: [0.22, 0.61, 0.36, 1] }
 
+// Neutral stages are the ones that were fully static (no CSS motion either —
+// see DevyMood's own comment on that), so those get the thinking clip.
+// Celebrating already gets its own CSS entrance/loop from DevyMood and has no
+// clip of its own, so it's left alone.
 function StageArt({ mood }) {
   return (
     <div className="relative mb-9 grid place-items-center max-[680px]:mb-7">
-      <DevyMood mood={mood} className="relative size-36 max-[680px]:size-28" />
+      {mood === 'neutral'
+        ? <DevyLottie clip="thinking" className="relative size-36 max-[680px]:size-28" />
+        : <DevyMood mood={mood} className="relative size-36 max-[680px]:size-28" />}
     </div>
   )
 }

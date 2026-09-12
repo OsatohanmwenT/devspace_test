@@ -1,3 +1,6 @@
+import { DevyMood } from '../ui/DevyMood'
+import { DevyLottie } from '../ui/DevyLottie'
+
 const FOCUS = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]'
 
 // A filled surface when unselected and a solid accent when selected, matching
@@ -181,10 +184,20 @@ export function ChipList({ options, value, onSelect }) {
   )
 }
 
-export function StepHeading({ title, subtitle }) {
+// Every question screen used to be Devy-less — only the break/placement/
+// welcome screens carried a mascot, so most of onboarding read as a bare
+// form. A small idle companion here (reusing the existing neutral art + its
+// idle float, not a new asset) keeps Devy present for the whole flow instead
+// of just its handful of "hero" moments.
+export function StepHeading({ title, subtitle, showDevy = true, devyClip }) {
   return (
-    <div className="grid content-start justify-items-center gap-2 text-center">
-      <h1 className="m-0 max-w-[25ch] font-rethink-sans text-3xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{title}</h1>
+    <div className="grid content-start justify-items-center gap-3 text-center">
+      <div className="flex items-center justify-center gap-3">
+        {showDevy && (devyClip
+          ? <DevyLottie clip={devyClip} className={`size-14 flex-none ${devyClip === 'walk' ? 'rounded-xl bg-[#29292b] p-1 [[data-theme=light]_&]:bg-[#29292b]' : ''}`} />
+          : <DevyMood mood="neutral" className="devy-idle size-14 flex-none" alt="" />)}
+        <h1 className="m-0 max-w-[25ch] font-rethink-sans text-3xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{title}</h1>
+      </div>
       {subtitle && <p className="m-0 max-w-[60ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
     </div>
   )
