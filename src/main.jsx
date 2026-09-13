@@ -3,6 +3,7 @@ import { MotionConfig } from 'motion/react';
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
+import { StreakMilestoneCelebration } from './components/header/StreakMilestoneCelebration';
 import { XpPopover } from './components/header/XpPopover';
 import { ShortSessionRow } from './components/home/ShortSessionRow';
 import LeaderboardView from './components/leaderboard';
@@ -47,7 +48,7 @@ import {
 } from './lib/privateLeagues';
 import { getRewardForRank, MIN_PAYOUT_THRESHOLD } from './lib/rewards';
 import { formatTimeRemaining, getSeasonIndex, getTimeRemaining, now } from './lib/season';
-import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
+import { getStreakMessage, getStreakWeek, isActiveToday, STREAK_MILESTONES, WEEK_LENGTH } from './lib/streak';
 import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
@@ -78,6 +79,7 @@ function App() {
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   const [leagueCelebration, setLeagueCelebration] = useState(null)
   const [roadmapTransition, setRoadmapTransition] = useState(null)
+  const [streakMilestoneCelebration, setStreakMilestoneCelebration] = useState(null)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -92,6 +94,23 @@ function App() {
   // A league celebration that qualifies while a roadmap transition is on
   // screen waits here rather than firing underneath it.
   const pendingLeagueCelebrationRef = useRef(null)
+  // Same idea for a streak milestone crossed on a completion that also opens
+  // a roadmap transition or league celebration — it waits for both to clear
+  // rather than stacking underneath or getting silently dropped.
+  const pendingStreakMilestoneRef = useRef(null)
+
+  // The one new tier crossed by this activity, if any — `applyActivity`
+  // merges the earned day straight into `earnedStreakMilestones`, so this is
+  // the only place that still knows "was this just earned" from "was this
+  // already banked." Only the highest tier matters if more than one is
+  // somehow crossed in a single update.
+  const getNewlyEarnedMilestone = (before, after) => {
+    const newlyEarnedDays = (after.earnedStreakMilestones ?? [])
+      .filter((day) => !(before.earnedStreakMilestones ?? []).includes(day))
+    if (newlyEarnedDays.length === 0) return null
+    const highestDay = Math.max(...newlyEarnedDays)
+    return STREAK_MILESTONES.find((tier) => tier.days === highestDay) ?? null
+  }
 
   useEffect(() => {
     bind()
@@ -233,6 +252,10 @@ function App() {
           [sessionId]: { correctCount, total, completedAt: today },
         },
       }
+      // Nothing else ever takes over the screen after a practice round, so a
+      // milestone crossed here can just show — no queueing to worry about.
+      const newMilestone = getNewlyEarnedMilestone(current, next)
+      if (newMilestone) setStreakMilestoneCelebration({ milestone: newMilestone, streakDays: next.streakDays })
       saveProgress(next)
       return next
     })
@@ -273,9 +296,19 @@ function App() {
       // both happen on the same completion — the league celebration queues
       // and fires only once that transition closes, rather than stacking on
       // top of it.
-      const isOnBoard = next.seasonCoins > 0
-      const alreadyCelebrated = Boolean(current.seenPageIntroductions?.['league-qualified'])
-      if (isOnBoard && !alreadyCelebrated) {
+      const willShowLeagueCelebration = next.seasonCoins > 0 && !current.seenPageIntroductions?.['league-qualified']
+
+      // Same queueing rule for a streak milestone: it waits behind whichever
+      // of the transition or the league celebration is about to claim the
+      // screen, so it's never silently dropped or stacked underneath either.
+      const newMilestone = getNewlyEarnedMilestone(current, next)
+      if (newMilestone) {
+        const celebration = { milestone: newMilestone, streakDays: next.streakDays }
+        if (transition || willShowLeagueCelebration) pendingStreakMilestoneRef.current = celebration
+        else setStreakMilestoneCelebration(celebration)
+      }
+
+      if (willShowLeagueCelebration) {
         const celebration = { leagueIndex: next.leagueIndex, seasonCoins: next.seasonCoins }
         if (transition) pendingLeagueCelebrationRef.current = celebration
         else setLeagueCelebration(celebration)
@@ -291,22 +324,36 @@ function App() {
 
   // The celebration sits on top of the finished lesson, so continuing has to
   // close the lesson too — otherwise dismissing it drops back into the lesson
-  // the learner had already completed.
+  // the learner had already completed. A streak milestone that queued behind
+  // this one (both earned on the same completion) gets its turn next.
   const dismissLeagueCelebration = () => {
     setLeagueCelebration(null)
     setOpenLesson(null)
     setActive('Leaderboard')
+    if (pendingStreakMilestoneRef.current) {
+      setStreakMilestoneCelebration(pendingStreakMilestoneRef.current)
+      pendingStreakMilestoneRef.current = null
+    }
+  }
+
+  const dismissStreakMilestoneCelebration = () => {
+    setStreakMilestoneCelebration(null)
+    setOpenLesson(null)
   }
 
   // Closes the lesson underneath the transition and hands off to any league
-  // celebration that queued while it was on screen, so a qualifying moment
-  // is never silently dropped — it just waits its turn.
+  // celebration — or, failing that, any streak milestone — that queued while
+  // it was on screen, so a qualifying moment is never silently dropped, it
+  // just waits its turn.
   const dismissRoadmapTransition = () => {
     setRoadmapTransition(null)
     setOpenLesson(null)
     if (pendingLeagueCelebrationRef.current) {
       setLeagueCelebration(pendingLeagueCelebrationRef.current)
       pendingLeagueCelebrationRef.current = null
+    } else if (pendingStreakMilestoneRef.current) {
+      setStreakMilestoneCelebration(pendingStreakMilestoneRef.current)
+      pendingStreakMilestoneRef.current = null
     }
   }
 
@@ -1061,6 +1108,13 @@ function App() {
           onViewRoadmap={viewRoadmapFromTransition}
           onExploreRoadmaps={exploreRoadmapsFromTransition}
           onReviewRoadmap={viewRoadmapFromTransition}
+        />
+      )}
+      {streakMilestoneCelebration && (
+        <StreakMilestoneCelebration
+          milestone={streakMilestoneCelebration.milestone}
+          streakDays={streakMilestoneCelebration.streakDays}
+          onClose={dismissStreakMilestoneCelebration}
         />
       )}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
