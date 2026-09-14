@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BRANCHES, branchTriage, roleSubQuiz, stackSubQuiz, startingPointOptions } from '../../data/onboarding';
 import {
     buildProfile,
@@ -174,6 +174,8 @@ export default function OnboardingView({ onComplete }) {
   const [index, setIndex] = useState(0)
   const [isRouteAssessment, setIsRouteAssessment] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showScrollHint, setShowScrollHint] = useState(false)
+  const scrollRef = useRef(null)
 
   const steps = getVisibleSteps(answers)
   const step = steps[Math.min(index, steps.length - 1)]
@@ -191,6 +193,25 @@ export default function OnboardingView({ onComplete }) {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = previousOverflow }
   }, [])
+
+  useEffect(() => {
+    const scrollArea = scrollRef.current
+    if (!scrollArea) return undefined
+
+    const updateScrollHint = () => {
+      setShowScrollHint(scrollArea.scrollHeight - scrollArea.clientHeight - scrollArea.scrollTop > 12)
+    }
+
+    const frame = window.requestAnimationFrame(updateScrollHint)
+    const observer = new ResizeObserver(updateScrollHint)
+    observer.observe(scrollArea)
+    scrollArea.addEventListener('scroll', updateScrollHint, { passive: true })
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer.disconnect()
+      scrollArea.removeEventListener('scroll', updateScrollHint)
+    }
+  }, [step.id, isGenerating, isRouteAssessment])
 
   useEffect(() => {
     if (step.id === 'starting_point' && !answers.startingPoint && placement) {
@@ -258,6 +279,7 @@ export default function OnboardingView({ onComplete }) {
   const isMulti = isMultiSelectStep(step.id)
   const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
   const isLast = step.id === 'daily_time_break'
+  const hasFooter = step.id !== 'welcome' && !isPlacementRecommendation && !isRouteAssessment && !isGenerating
 
   const primaryLabel = step.id === 'welcome'
     ? 'Let’s go'
@@ -290,7 +312,7 @@ export default function OnboardingView({ onComplete }) {
         </div>
       </header>
 
-      <main className={`onboarding-scrollbar grid justify-items-center gap-6 overflow-auto px-6 py-8 max-[680px]:px-4 ${isGenerating ? 'content-center' : isRouteAssessment ? 'content-start sm:content-center' : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time' ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
+      <main ref={scrollRef} className={`onboarding-scrollbar grid justify-items-center gap-6 overflow-auto px-6 py-8 max-[680px]:px-4 ${isGenerating ? 'content-center' : isRouteAssessment ? 'content-start sm:content-center' : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time' ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
         {isGenerating && (
           <GeneratingPath onDone={() => onComplete(buildProfile(answers))} />
         )}
@@ -367,7 +389,9 @@ export default function OnboardingView({ onComplete }) {
         )}
       </main>
 
-      {step.id !== 'welcome' && !isPlacementRecommendation && !isRouteAssessment && !isGenerating && <footer className="flex items-center justify-center px-6 pb-5 max-[680px]:px-4">
+      {showScrollHint && <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 z-10 h-10 bg-[linear-gradient(to_bottom,rgba(18,18,20,0)_0%,rgba(18,18,20,.06)_28%,rgba(18,18,20,.4)_76%,#121214_100%)] backdrop-blur-[0.5px] [mask-image:linear-gradient(to_bottom,transparent,black_20%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_34%)] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,rgba(250,250,248,0)_0%,rgba(250,250,248,.06)_28%,rgba(250,250,248,.4)_76%,#fafaf8_100%)] ${hasFooter ? 'bottom-24' : 'bottom-0'}`} />}
+
+      {hasFooter && <footer className="flex items-center justify-center px-6 pb-5 max-[680px]:px-4">
         <ActionButton
           variant="primary"
           className="w-[min(100%,520px)] min-h-[52px] text-[15px] font-medium"

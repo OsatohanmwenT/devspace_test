@@ -11,6 +11,7 @@ import { LessonPractice } from './LessonPractice'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
 import { ChecklistIcon, GemIcon } from '../ui/icons'
+import { DevyLottie } from '../ui/DevyLottie'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
@@ -89,9 +90,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [errorPulse, setErrorPulse] = useState(0)
   const [audioReadyForNext, setAudioReadyForNext] = useState(false)
   const [devyLine, setDevyLine] = useState(null)
-  const [isDevyTalking, setIsDevyTalking] = useState(false)
   const devyLineTimerRef = useRef(null)
-  const devyTalkTimerRef = useRef(null)
   const exitButtonRef = useRef(null)
   const stayButtonRef = useRef(null)
   const exitDialogRef = useRef(null)
@@ -216,21 +215,17 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
-  // Devy "says" a line above the footer avatar for a few seconds, with a
-  // matching bounce on the mascot itself — an ambient reaction, not the
-  // full chat panel. Each call replaces whatever was showing before it.
+  // Devy "says" a line above the footer avatar for a few seconds — an
+  // ambient reaction, not the full chat panel. Each call replaces whatever
+  // was showing before it.
   const sayDevyLine = (text) => {
     clearTimeout(devyLineTimerRef.current)
-    clearTimeout(devyTalkTimerRef.current)
     setDevyLine({ id: Date.now(), text })
-    setIsDevyTalking(true)
-    devyTalkTimerRef.current = window.setTimeout(() => setIsDevyTalking(false), 1400)
     devyLineTimerRef.current = window.setTimeout(() => setDevyLine(null), 4200)
   }
 
   useEffect(() => () => {
     clearTimeout(devyLineTimerRef.current)
-    clearTimeout(devyTalkTimerRef.current)
   }, [])
 
   const checkQuestion = () => {
@@ -593,18 +588,16 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           <div className="relative">
             <button
               type="button"
-              className={`relative grid size-[54px] max-[720px]:size-12 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
+              className={`relative grid size-[72px] max-[720px]:size-14 place-items-center border-0 bg-transparent p-0 ${focusRing}`}
               onClick={openDevy}
               aria-label="Open Devy chat"
               aria-expanded={isDevyOpen}
             >
               {/* Three right in a row already lights a ring here; letting Devy react
                   too is what makes the streak feel noticed rather than counted. */}
-              <DevyMood
-                key={showStreak ? 'streaking' : 'idle'}
-                mood={showStreak ? 'celebrating' : 'neutral'}
-                className={showStreak ? 'w-full h-full' : `w-full h-full ${isDevyTalking ? 'devy-talking-avatar' : 'devy-idle'}`}
-              />
+              {showStreak
+                ? <DevyMood key="streaking" mood="celebrating" className="w-full h-full" />
+                : <DevyLottie key="idle" clip="thinking" className="w-full h-full" />}
               {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
             </button>
             <DevySpeechBubble key={devyLine?.id} text={devyLine?.text} />

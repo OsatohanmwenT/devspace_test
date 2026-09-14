@@ -2,6 +2,7 @@ import { bind } from 'cuelume';
 import { MotionConfig } from 'motion/react';
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { PageWipe } from './components/layout/PageWipe';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
 import { ShortSessionRow } from './components/home/ShortSessionRow';
@@ -24,7 +25,10 @@ import { ActionButton } from './components/ui/ActionButton';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
 import { Badge } from './components/ui/Badge';
 import { DevyDrawer } from './components/ui/DevyDrawer';
+import { DevyLottie } from './components/ui/DevyLottie';
 import { DevyMood } from './components/ui/DevyMood';
+import { EventType, useRive } from '@rive-app/react-canvas';
+import { DevyRive } from './components/ui/DevyRive';
 import { BoltIcon, SirenIcon } from './components/ui/icons';
 import { InfoTooltip } from './components/ui/InfoTooltip';
 import { getLeague } from './data/leagues';
@@ -52,6 +56,43 @@ import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
 
+// Temporary debug view for judging the new .riv entrance clips — visit
+// ?preview=devy-riv&clip=<name>. Logs every play/pause/stop event so a
+// one-shot entrance that already finished before the first screenshot is
+// distinguishable from one that never played at all, and a Replay button
+// re-fires both state machines on demand instead of needing a reload.
+function RiveEntranceDebug({ clip }) {
+  const src = `/assets/animations/devy-${clip}.riv`
+  const dualStateMachine = clip !== 'walk'
+  const { rive, RiveComponent } = useRive({
+    src,
+    stateMachines: dualStateMachine ? ['State Machine 1', 'State Machine 2'] : 'State Machine 1',
+    autoplay: true,
+  })
+
+  useEffect(() => {
+    if (!rive) return undefined
+    const log = (event) => console.log(`[RiveEntranceDebug:${clip}]`, event.type, event.data ?? '')
+    Object.values(EventType).forEach((type) => rive.on(type, log))
+    console.log(`[RiveEntranceDebug:${clip}] bounds`, rive.contents)
+    return () => Object.values(EventType).forEach((type) => rive.off(type, log))
+  }, [rive, clip])
+
+  const replay = () => {
+    if (!rive) return
+    rive.reset({ stateMachines: dualStateMachine ? ['State Machine 1', 'State Machine 2'] : 'State Machine 1', autoplay: true })
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center gap-6 bg-[#121214]">
+      <div className="h-[500px] w-[500px] border border-[#404040]">
+        <RiveComponent className="h-full w-full" />
+      </div>
+      <button type="button" className="rounded-lg bg-[#2563eb] px-4 py-2 text-white" onClick={replay}>Replay</button>
+    </div>
+  )
+}
+
 function getInitialTheme() {
   const stored = window.localStorage.getItem('devspace-theme')
   if (stored === 'light' || stored === 'dark') return stored
@@ -78,6 +119,7 @@ function App() {
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   const [leagueCelebration, setLeagueCelebration] = useState(null)
   const [roadmapTransition, setRoadmapTransition] = useState(null)
+  const [pageTransition, setPageTransition] = useState(null)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -92,6 +134,16 @@ function App() {
   // A league celebration that qualifies while a roadmap transition is on
   // screen waits here rather than firing underneath it.
   const pendingLeagueCelebrationRef = useRef(null)
+
+  const runPageTransition = (onCovered) => {
+    if (pageTransition) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onCovered()
+      return
+    }
+    setPageTransition({ onCovered })
+  }
+
   useEffect(() => {
     bind()
   }, [])
@@ -510,12 +562,14 @@ function App() {
   }
 
   const completeOnboarding = (nextProfile) => {
-    setProgress((current) => {
-      const next = { ...current, profile: nextProfile }
-      saveProgress(next)
-      return next
+    runPageTransition(() => {
+      setProgress((current) => {
+        const next = { ...current, profile: nextProfile }
+        saveProgress(next)
+        return next
+      })
+      setShowFirstLessonWelcome(true)
     })
-    setShowFirstLessonWelcome(true)
   }
 
   const launchLesson = (lessonId) => {
@@ -667,11 +721,31 @@ function App() {
         />
       )
     }
+    // Temporary side-by-side viewer for the new native .riv exports, so they
+    // can be judged in-browser before wiring any of them into real UI. Visit
+    // ?preview=devy-riv. Remove once the five clips have a permanent home.
+    if (previewParam === 'devy-riv') {
+      const clips = ['walk', 'launchpad-intro', 'rope-into', 'side-pop-out-intro', 'up-down-pop-out']
+      const solo = new URLSearchParams(window.location.search).get('clip')
+      if (solo) {
+        return <RiveEntranceDebug clip={solo} />
+      }
+      return (
+        <div className="grid min-h-screen grid-cols-3 gap-8 bg-[#121214] p-10">
+          {clips.map((clip) => (
+            <div key={clip} className="grid justify-items-center gap-2 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-6">
+              <p className="m-0 text-sm font-medium text-[#f4f4f2]">{clip}</p>
+              <DevyRive clip={clip} className="h-40 w-40" ariaLabel={clip} />
+            </div>
+          ))}
+        </div>
+      )
+    }
   }
 
-  if (!profile) return <OnboardingView onComplete={completeOnboarding} />
-  if (showFirstLessonWelcome) return <FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />
-  if (loadingLesson) return <LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />
+  if (!profile) return <><OnboardingView onComplete={completeOnboarding} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
+  if (showFirstLessonWelcome) return <><FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
+  if (loadingLesson) return <><LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
 
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
@@ -1014,7 +1088,7 @@ function App() {
       {!openLesson && active !== 'Plans' && !customPathFullScreen && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
           <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
-            <img className="size-full object-contain" src="/assets/devy.svg" alt="" />
+            <DevyLottie clip="thinking" className="size-full" />
           </button>
         </div>
       )}
@@ -1063,6 +1137,7 @@ function App() {
         />
       )}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}
     </div>
   )
 }

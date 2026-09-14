@@ -1,5 +1,34 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Rethink+Sans:wght@400;500;600;700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 
+.page-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  pointer-events: none;
+}
+
+.page-wipe-column {
+  flex: 0 0 calc(100% / 18 + 1px);
+  margin-right: -1px;
+  background: #1c1930;
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  animation: page-wipe-cover var(--wipe-duration) steps(12, start) var(--wipe-delay) forwards;
+}
+
+[data-theme='light'] .page-wipe-column {
+  background: #e8effa;
+}
+
+@keyframes page-wipe-cover {
+  to { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-wipe { display: none; }
+}
+
 /* Profile/CV entrance — a quiet, single-run reveal, not a loop. */
 @media (prefers-reduced-motion: reduce) {
   .devy-orbit-card:nth-child(1) { transform: translate(-50%, calc(-50% + 78px)); }

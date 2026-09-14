@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
+import { DevyLottie } from '../ui/DevyLottie'
 
 export function LessonLoading({ title }) {
   const loaderRef = useRef(null)
@@ -23,7 +24,7 @@ export function LessonLoading({ title }) {
       aria-busy="true"
     >
       <main ref={loaderRef} className="grid w-full max-w-[520px] justify-items-center text-center">
-        <img data-lesson-loader-devy className="mb-7 h-32 w-24 object-contain max-[680px]:mb-6 max-[680px]:h-28 max-[680px]:w-20" src="/assets/Devy_walk.svg" alt="" />
+        <DevyLottie data-lesson-loader-devy clip="walk" className="mb-7 h-44 w-32 max-[680px]:mb-6 max-[680px]:h-36 max-[680px]:w-28" />
         <p data-lesson-loader-copy className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">Preparing your lesson</p>
         <h1 data-lesson-loader-copy className="mt-3 mb-0 font-rethink-sans text-[clamp(28px,4vw,38px)] font-semibold leading-[1.14]">
           {title}
