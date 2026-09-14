@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { useEffect, useState } from 'react';
 
 // Same idea as DevyMood, but for the motion-capture-style Devy clips (wave,
 // listening, thinking) instead of the static mood SVGs. Kept as its own
@@ -9,14 +9,12 @@ const SOURCES = {
   wave: '/assets/animations/wave.lottie',
   listening: '/assets/animations/listening.lottie',
   thinking: '/assets/animations/thinking.lottie',
-  walk: '/assets/animations/devy-walk-loop.lottie',
-  // This is a Rive-to-Lottie *capture* (rendered frame-by-frame from a .riv
-  // rig), not a native Lottie export — unlike the others, it bakes in an
-  // OPAQUE dark-gray background rather than transparency, so dropping it onto
-  // an adaptive light/dark screen leaves a visible gray box. It needs a
-  // matching dark card behind it before use anywhere. ('walk' used to need
-  // the same treatment when it pointed at this same idle-loop capture — its
-  // current devy-walk-loop.lottie export has real per-frame alpha instead.)
+  walk: '/assets/animations/devy-idle-loop.lottie',
+  // These two are Rive-to-Lottie *captures* (rendered frame-by-frame from the
+  // .riv rig), not native Lottie exports — unlike the three above, both bake
+  // in an OPAQUE dark-gray background rather than transparency, so dropping
+  // either onto an adaptive light/dark screen leaves a visible gray box.
+  // They need a matching dark card behind them before use anywhere.
   idle: '/assets/animations/devy-idle-loop.lottie',
   // Every one of this file's 72 frames is byte-identical — it plays as a
   // static coin/medallion icon, not a loop, despite the "loop-3s" export name.

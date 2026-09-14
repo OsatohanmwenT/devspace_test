@@ -1,5 +1,5 @@
-import { DevyMood } from '../ui/DevyMood'
-import { DevyLottie } from '../ui/DevyLottie'
+import { DevyLottie } from '../ui/DevyLottie';
+import { DevyMood } from '../ui/DevyMood';
 
 const FOCUS = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]'
 
