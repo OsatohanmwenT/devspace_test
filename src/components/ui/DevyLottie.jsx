@@ -9,12 +9,12 @@ const SOURCES = {
   wave: '/assets/animations/wave.lottie',
   listening: '/assets/animations/listening.lottie',
   thinking: '/assets/animations/thinking.lottie',
-  walk: '/assets/animations/devy-idle-loop.lottie',
+  walk: '/assets/animations/devy-walk-transparent.lottie',
   // These two are Rive-to-Lottie *captures* (rendered frame-by-frame from the
   // .riv rig), not native Lottie exports — unlike the three above, both bake
   // in an OPAQUE dark-gray background rather than transparency, so dropping
   // either onto an adaptive light/dark screen leaves a visible gray box.
-  // They need a matching dark card behind them before use anywhere.
+  // The idle clip needs a matching dark card behind it before use anywhere.
   idle: '/assets/animations/devy-idle-loop.lottie',
   // Every one of this file's 72 frames is byte-identical — it plays as a
   // static coin/medallion icon, not a loop, despite the "loop-3s" export name.

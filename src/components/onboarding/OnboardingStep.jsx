@@ -194,7 +194,7 @@ export function StepHeading({ title, subtitle, showDevy = true, devyClip }) {
     <div className="grid content-start justify-items-center gap-3 text-center">
       <div className="flex items-center justify-center gap-3">
         {showDevy && (devyClip
-          ? <DevyLottie clip={devyClip} className={`size-14 flex-none ${devyClip === 'walk' ? 'rounded-xl bg-[#29292b] p-1 [[data-theme=light]_&]:bg-[#29292b]' : ''}`} />
+          ? <DevyLottie clip={devyClip} className="size-14 flex-none" />
           : <DevyMood mood="neutral" className="devy-idle size-14 flex-none" alt="" />)}
         <h1 className="m-0 max-w-[25ch] font-rethink-sans text-3xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{title}</h1>
       </div>
