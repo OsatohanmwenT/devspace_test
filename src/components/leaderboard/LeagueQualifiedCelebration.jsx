@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getLeague } from '../../data/leagues'
 import { getStandings, USER_ID } from '../../lib/leagueSim'
 import { getSeasonIndex, now } from '../../lib/season'
@@ -9,7 +9,7 @@ import { LeaderboardRow } from './LeaderboardRow'
 import { SeasonDeadline } from './SeasonDeadline'
 import { TierMedal } from './TierMedal'
 
-const PEEK_ROWS = 3
+const PROMOTION_ROWS = 5
 
 // Earning your first coin of the season is what puts you on the board, and
 // that moment otherwise passed as a toast. This is the payoff screen for it:
@@ -18,14 +18,29 @@ const PEEK_ROWS = 3
 // abstraction.
 export function LeagueQualifiedCelebration({ leagueIndex = 0, seasonCoins, onClose }) {
   const [showExplainer, setShowExplainer] = useState(false)
+  const [hasPromoted, setHasPromoted] = useState(false)
   const league = getLeague(leagueIndex)
   const clock = now()
 
   const standings = getStandings(getSeasonIndex(clock), leagueIndex, seasonCoins, clock)
   const userIndex = standings.findIndex((entry) => entry.id === USER_ID)
-  // Window the board on the learner so their own row leads the peek, with the
-  // couple of rivals directly behind them for something to chase.
-  const peek = userIndex === -1 ? standings.slice(0, PEEK_ROWS) : standings.slice(userIndex, userIndex + PEEK_ROWS)
+  const userEntry = standings[userIndex]
+  const passedEntries = userEntry ? standings.slice(userIndex + 1, userIndex + PROMOTION_ROWS + 1) : []
+  const canShowPromotion = Boolean(userEntry && passedEntries.length)
+  const finalRows = userEntry
+    ? [userEntry, ...passedEntries.map((entry, index) => ({ ...entry, rank: userEntry.rank + index + 1 }))]
+    : standings.slice(0, PROMOTION_ROWS + 1)
+  const rows = canShowPromotion && !hasPromoted
+    ? [
+        ...passedEntries.map((entry, index) => ({ ...entry, rank: userEntry.rank + index })),
+        { ...userEntry, rank: userEntry.rank + passedEntries.length },
+      ]
+    : finalRows
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setHasPromoted(true), 700)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   if (showExplainer) return <LeaderboardIntroduction onComplete={() => setShowExplainer(false)} />
 
@@ -54,11 +69,27 @@ export function LeagueQualifiedCelebration({ leagueIndex = 0, seasonCoins, onClo
         </p>
         <SeasonDeadline timestamp={clock} className="mt-4" />
 
-        <div className="mt-8 w-full rounded-2xl border border-[#404040] bg-[#1f1f1f] p-1.5 text-left [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white" aria-label="Your place on the board">
-          {peek.map((entry) => (
-            <LeaderboardRow key={entry.id} entry={entry} isCurrentUser={entry.id === USER_ID} />
-          ))}
-        </div>
+        <motion.div
+          className="relative mt-8 h-[216px] w-full overflow-hidden rounded-2xl border border-[#404040] bg-[#1f1f1f] p-1.5 text-left [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+          aria-label="Your place on the board"
+        >
+          <motion.div
+            initial={false}
+            animate={{ y: hasPromoted || !canShowPromotion ? 0 : -204 }}
+            transition={{ duration: 0.9, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            {rows.map((entry) => (
+              <motion.div key={entry.id} layout className={entry.id === USER_ID ? 'relative z-10' : undefined} transition={{ duration: 0.9, ease: [0.22, 0.61, 0.36, 1] }}>
+                <LeaderboardRow entry={entry} isCurrentUser={entry.id === USER_ID} />
+              </motion.div>
+            ))}
+          </motion.div>
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-7 bg-gradient-to-b from-[#1f1f1f] to-transparent [[data-theme=light]_&]:from-white" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-7 bg-gradient-to-t from-[#1f1f1f] to-transparent [[data-theme=light]_&]:from-white" aria-hidden="true" />
+        </motion.div>
 
         <ActionButton variant="neutral" className="mt-8 min-h-13 w-[min(100%,350px)] text-[15px] font-semibold" onClick={() => setShowExplainer(true)}>
           What are leagues?

@@ -13,11 +13,14 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', badg
 
     const context = gsap.context(() => {
       const timeline = gsap.timeline({ defaults: { ease: 'power2.out' } })
-      timeline
-        .from('[data-transition-mark]', { autoAlpha: 0, y: 10, scale: 0.85, duration: 0.4, ease: 'back.out(2)' })
-        .from('[data-transition-eyebrow]', { autoAlpha: 0, y: 8, duration: 0.3 }, '-=0.15')
-        .from('[data-transition-title]', { autoAlpha: 0, y: 10, duration: 0.35 }, '-=0.15')
-        .from('[data-transition-body]', { autoAlpha: 0, y: 8, duration: 0.35 }, '-=0.2')
+      timeline.from('[data-transition-mark]', { autoAlpha: 0, y: 10, scale: 0.85, duration: 0.4, ease: 'back.out(2)' })
+
+      if (mood !== 'celebrating') {
+        timeline
+          .from('[data-transition-eyebrow]', { autoAlpha: 0, y: 8, duration: 0.3 }, '-=0.15')
+          .from('[data-transition-title]', { autoAlpha: 0, y: 10, duration: 0.35 }, '-=0.15')
+          .from('[data-transition-body]', { autoAlpha: 0, y: 8, duration: 0.35 }, '-=0.2')
+      }
 
       // The ongoing cheer only starts once GSAP is done writing to the mark —
       // starting it any earlier is exactly the conflict this component avoids.

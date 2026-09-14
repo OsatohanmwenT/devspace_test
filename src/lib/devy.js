@@ -53,6 +53,14 @@ export function getDevyLine({ event, streak }) {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
+export function getArticleDevyLines() {
+  return [
+    'Take this one at your pace.',
+    'Keep an eye on the part you could actually use.',
+    'You do not need to memorise it all yet.',
+  ]
+}
+
 // Framing lines spoken (when voice personality mode is on — see
 // useLessonNarration.js) just before a quiz or a single question starts.
 // Hand-authored per lesson via the content's own `spokenIntro` field,

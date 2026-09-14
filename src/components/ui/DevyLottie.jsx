@@ -9,7 +9,8 @@ const SOURCES = {
   wave: '/assets/animations/wave.lottie',
   listening: '/assets/animations/listening.lottie',
   thinking: '/assets/animations/thinking.lottie',
-  walk: '/assets/animations/devy-idle-loop.lottie',
+  'side-pop-out': '/assets/animations/side-pop-out.json',
+  walk: '/assets/animations/devy-walk-loop.lottie',
   // These two are Rive-to-Lottie *captures* (rendered frame-by-frame from the
   // .riv rig), not native Lottie exports — unlike the three above, both bake
   // in an OPAQUE dark-gray background rather than transparency, so dropping
@@ -37,31 +38,20 @@ function usePrefersReducedMotion() {
   return reduced
 }
 
-export function DevyLottie({ clip, loop = true, className = '', ariaLabel, ...rest }) {
+export function DevyLottie({ clip, loop = true, flip = false, holdAtPeak = false, className = '', ariaLabel, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
-  const [ready, setReady] = useState(false)
   const src = SOURCES[clip]
 
   if (!src) return null
 
-  // These clips run 3-4MB, so on a cold cache/slow connection there's a real
-  // gap between mount and first paint. Rather than leave that gap blank, the
-  // static mood art sits underneath and only fades out once the clip reports
-  // itself ready to render — a failed load just leaves the static art showing.
   return (
     <div
-      className={`relative ${className}`}
+      className={`relative ${flip ? '-scale-x-100' : ''} ${className}`}
       role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
       aria-hidden={ariaLabel ? undefined : 'true'}
       {...rest}
     >
-      <img
-        src="/assets/devy.svg"
-        alt=""
-        aria-hidden="true"
-        className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-200 ${ready ? 'opacity-0' : 'opacity-100'}`}
-      />
       <DotLottieReact
         src={src}
         loop={loop && !reducedMotion}
@@ -71,7 +61,23 @@ export function DevyLottie({ clip, loop = true, className = '', ariaLabel, ...re
         renderConfig={{ devicePixelRatio: Math.max(window.devicePixelRatio || 1, 2) }}
         dotLottieRefCallback={(instance) => {
           if (!instance) return
-          instance.addEventListener('ready', () => setReady(true))
+          // Several of these clips are cut from a loop that spends most of
+          // its length arriving (not a quick pop followed by a long hold) —
+          // measured frame-by-frame for 'side-pop-out', opaque pixel coverage
+          // keeps climbing all the way to ~65% of the timeline before it
+          // plateaus, so freezing at the midpoint (a reasonable-sounding
+          // guess) actually caught it still mostly hidden. ~70% is where it's
+          // fully arrived without yet looping back to invisible.
+          if (holdAtPeak) {
+            const onFrame = (event) => {
+              const total = instance.totalFrames
+              if (total > 0 && event.currentFrame >= total * 0.7) {
+                instance.pause()
+                instance.removeEventListener('frame', onFrame)
+              }
+            }
+            instance.addEventListener('frame', onFrame)
+          }
         }}
       />
     </div>

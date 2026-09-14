@@ -75,18 +75,39 @@ export function OptionList({ options, value, onSelect, layout = 'list' }) {
   if (layout === 'grid') {
     return (
       <div className="grid w-full max-w-[560px] grid-cols-2 gap-2.5" role="group">
-        {options.map((option) => {
+        {options.map((option, index) => {
           const selected = isChosen(value, option.value)
+          // Devy climbs out the same side the card sits on — left column,
+          // left side; right column, right side. The "inverted" variant is
+          // just the same clip mirrored, not a second asset.
+          const isLeftColumn = index % 2 === 0
+          const popRight = !isLeftColumn
           return (
             <button
               key={option.value}
               type="button"
-              className={`flex flex-col items-center gap-2.5 rounded-xl px-3 py-4 text-center text-[13px] font-medium leading-[1.3] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${FOCUS}`}
+              className={`relative flex flex-col items-center gap-2.5 rounded-xl px-3 py-4 text-center text-[13px] font-medium leading-[1.3] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${FOCUS}`}
               aria-pressed={selected}
               onClick={() => onSelect(option.value)}
             >
               {option.icon && <OptionIcon name={option.icon} selected={selected} />}
               <span>{option.label}</span>
+              {/* Devy pops out from behind the selected card — like he's just
+                  been disturbed — the card itself never changes shape or
+                  size to make room for him. */}
+              {selected && (
+                // DevyLottie always adds its own `relative` — nesting it
+                // inside this absolutely-positioned span (rather than handing
+                // it `absolute` directly) keeps that from winning the cascade
+                // and collapsing the pop-out back onto the card. Sized so
+                // half sits over the card and half spills past its edge —
+                // anything smaller or further out reads as a stray icon
+                // floating beside the card rather than Devy climbing out of
+                // it. A one-shot climb, not a loop — he doesn't keep popping.
+                <span className={`pointer-events-none absolute top-1/2 z-10 h-24 w-24 -translate-y-1/2 rotate-180 ${popRight ? '-right-24' : '-left-24'}`}>
+                  <DevyLottie clip="side-pop-out" loop={false} holdAtPeak className="h-full w-full" ariaLabel="" />
+                </span>
+              )}
             </button>
           )
         })}

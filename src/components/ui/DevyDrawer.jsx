@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { DevyLottie } from './DevyLottie'
+import { useState } from 'react';
+import { DevyLottie } from './DevyLottie';
 
 const pageCopy = {
   Home: {

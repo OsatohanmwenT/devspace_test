@@ -10,15 +10,14 @@ import { LessonQuestion } from './LessonQuestion'
 import { LessonPractice } from './LessonPractice'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
-import { ChecklistIcon, GemIcon } from '../ui/icons'
+import { ChecklistIcon } from '../ui/icons'
 import { DevyLottie } from '../ui/DevyLottie'
 import { DevyMood } from '../ui/DevyMood'
 import { getLesson, writingProgramsLesson } from './lessonContent'
 import { buildLessonFlow } from './lessonFlow'
 import { clearIncorrectBlanks, isFillType, isQuestionComplete, isQuestionCorrect } from './questionState'
-import { getDevyLine, getQuizIntro } from '../../lib/devy'
+import { getArticleDevyLines, getDevyLine, getQuizIntro } from '../../lib/devy'
 import { getPersistedRate, getPersistedVoice, speakText, useNarrationPersonality } from './useLessonNarration'
-import { LESSON_XP } from '../../lib/lessonMeta'
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
 import { getLessonTopics } from '../../data/learningResources'
@@ -90,7 +89,10 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const [errorPulse, setErrorPulse] = useState(0)
   const [audioReadyForNext, setAudioReadyForNext] = useState(false)
   const [devyLine, setDevyLine] = useState(null)
+  const [recentDevyMessages, setRecentDevyMessages] = useState([])
   const devyLineTimerRef = useRef(null)
+  const devyLineRef = useRef(null)
+  const articleTalkTimersRef = useRef([])
   const exitButtonRef = useRef(null)
   const stayButtonRef = useRef(null)
   const exitDialogRef = useRef(null)
@@ -215,17 +217,45 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
-  // Devy "says" a line above the footer avatar for a few seconds — an
-  // ambient reaction, not the full chat panel. Each call replaces whatever
-  // was showing before it.
+  const archiveDevyLine = (line) => {
+    if (!line) return
+    setRecentDevyMessages((current) => [...current, line].slice(-4))
+  }
+
+  // Devy's current thought appears by the footer first. Once it is replaced
+  // or expires, it becomes part of the recent conversation in the chat panel.
   const sayDevyLine = (text) => {
     clearTimeout(devyLineTimerRef.current)
-    setDevyLine({ id: Date.now(), text })
-    devyLineTimerRef.current = window.setTimeout(() => setDevyLine(null), 4200)
+    archiveDevyLine(devyLineRef.current)
+    const nextLine = { id: Date.now(), text }
+    devyLineRef.current = nextLine
+    setDevyLine(nextLine)
+    devyLineTimerRef.current = window.setTimeout(() => {
+      if (devyLineRef.current?.id !== nextLine.id) return
+      archiveDevyLine(nextLine)
+      devyLineRef.current = null
+      setDevyLine(null)
+    }, 4200)
   }
+
+  useEffect(() => {
+    articleTalkTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+    articleTalkTimersRef.current = []
+    if (currentStep?.type !== 'article') return undefined
+
+    const delays = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? [0] : [0, 2400, 4800]
+    articleTalkTimersRef.current = getArticleDevyLines(currentStep.content)
+      .slice(0, delays.length)
+      .map((line, index) => window.setTimeout(() => sayDevyLine(line), delays[index]))
+
+    return () => articleTalkTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+    // The article identity determines when a fresh conversation starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep?.id])
 
   useEffect(() => () => {
     clearTimeout(devyLineTimerRef.current)
+    articleTalkTimersRef.current.forEach((timer) => window.clearTimeout(timer))
   }, [])
 
   const checkQuestion = () => {
@@ -436,7 +466,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
   return (
     <section
-      className="fixed inset-0 z-20 grid grid-rows-[64px_minmax(0,1fr)_76px] max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px] overflow-hidden bg-[#121212] [[data-theme=light]_&]:bg-[#fafaf8] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800"
+      className="fixed inset-0 z-20 grid grid-rows-[64px_minmax(0,1fr)_76px] overflow-hidden bg-[#121212] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800 max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px]"
       aria-label="Lesson"
       style={{ '--devy-panel-width': `${devyPanelWidth}px` }}
     >
@@ -548,13 +578,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             badge={<ChecklistIcon className="size-5" />}
           />
         )}
-        {currentStep?.kind === 'complete' && (
-          <ConceptTransition
-            {...currentStep.completion}
-            mood="celebrating"
-            stats={[{ value: `+${LESSON_XP}`, label: 'XP' }, ...recapStats()]}
-          />
-        )}
+        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} mood="celebrating" />}
       </main>
 
       {!isMilestone && <aside
@@ -576,6 +600,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           step={currentStep}
           checked={isStepResolved}
           profile={lesson?.role ? { ...profile, role: lesson.role } : profile}
+          recentMessages={recentDevyMessages}
           onClose={() => setIsDevyOpen(false)}
           focusRing={focusRing}
         />
@@ -597,7 +622,12 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
                   too is what makes the streak feel noticed rather than counted. */}
               {showStreak
                 ? <DevyMood key="streaking" mood="celebrating" className="w-full h-full" />
-                : <DevyLottie key="idle" clip="thinking" className="w-full h-full" />}
+                : <DevyLottie
+                    key={devyLine ? `thought-${devyLine.id}` : 'idle'}
+                    clip={devyLine ? 'side-pop-out' : 'thinking'}
+                    loop={!devyLine}
+                    className={`${devyLine ? 'devy-talking-avatar' : ''} w-full h-full`}
+                  />}
               {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
             </button>
             <DevySpeechBubble key={devyLine?.id} text={devyLine?.text} />
@@ -664,7 +694,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             aria-modal="true"
             aria-labelledby="earn-it-first-title"
           >
-            <DevyMood mood="neutral" className="mb-4 h-[102px] w-[90px] object-contain" />
+            <DevyLottie clip="thinking" className="mb-4 h-[102px] w-[90px]" />
             <span className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#88bdf2]">Earn It First</span>
             <h2 id="earn-it-first-title" className="m-0 max-w-[22ch] font-rethink-sans text-[22px] font-semibold leading-[1.35] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
               Try it yourself first.

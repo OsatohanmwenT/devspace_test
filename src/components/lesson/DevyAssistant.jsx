@@ -20,7 +20,7 @@ function ThinkingBubble() {
   )
 }
 
-export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
+export function DevyAssistant({ step, checked, profile, recentMessages = [], onClose, focusRing }) {
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [isThinking, setIsThinking] = useState(false)
@@ -78,6 +78,12 @@ export function DevyAssistant({ step, checked, profile, onClose, focusRing }) {
 
       <div ref={conversationRef} className="scrollbar-hidden mt-5 min-h-0 flex-1 overflow-y-auto" aria-live="polite">
         <div className="grid min-h-full content-end gap-3">
+          {recentMessages.map((message, index) => (
+            <div key={message.id} className={index === recentMessages.length - 1 ? 'devy-message-in' : 'blur-[2px] opacity-35 transition-[filter,opacity] duration-300'}>
+              <Bubble>{message.text}</Bubble>
+            </div>
+          ))}
+
           <div className={messages.length ? 'blur-[2px] opacity-30 transition-[filter,opacity] duration-300' : ''}>
             <Bubble>{getGreeting(profile, { isHintOnly })}</Bubble>
           </div>

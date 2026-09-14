@@ -72,78 +72,93 @@ function stageIcon(stageValue) {
 // the branch break screen so "AI & Automation it is" is backed by something
 // concrete, the way Brilliant's onboarding shows a real code snippet instead
 // of an icon. Three short, independent cards per branch (not one multi-line
-// snippet) since only one faces the viewer at a time as they orbit.
+// snippet) since only one faces the viewer at a time as they orbit. A line
+// tagged `out()` renders as its own highlighted "result" row — a small
+// terminal-style chip, the same idea as a REPL printing what the code above
+// it produced — instead of just tinting the value inline like the rest.
 const T = 'text-[#8b7cf6]' // keyword/verb tint
 const V = 'text-[#4ade80]' // value/result tint
+const code = (node) => ({ out: false, node })
+const out = (node) => ({ out: true, node })
 const BRANCH_ORBIT_CARDS = {
   web: [
-    [<>&lt;<span className={T}>button</span> onClick={'{submit}'}&gt;</>, <>&nbsp;&nbsp;Send</>],
-    [<>fetch(<span className={V}>'/api/users'</span>)</>],
-    [<>useState(<span className={V}>0</span>)</>],
+    [code(<>&lt;<span className={T}>button</span> onClick={'{submit}'}&gt;</>), code(<>&nbsp;&nbsp;Send</>)],
+    [code(<>fetch(<span className={V}>'/api/users'</span>)</>)],
+    [code(<>useState(<span className={V}>0</span>)</>)],
   ],
   mobile: [
-    [<><span className={T}>Navigator</span>.push(Profile())</>],
-    [<>onTap: () =&gt; like()</>],
-    [<>StatusBar.setStyle(<span className={V}>'light'</span>)</>],
+    [code(<><span className={T}>Navigator</span>.push(Profile())</>)],
+    [code(<>onTap: () =&gt; like()</>)],
+    [code(<>StatusBar.setStyle(<span className={V}>'light'</span>)</>)],
   ],
   backend: [
-    [<><span className={T}>POST</span> /api/orders → <span className={V}>201</span></>],
-    [<><span className={T}>SELECT</span> * FROM users</>],
-    [<>cache.set(key, value)</>],
+    [code(<><span className={T}>POST</span> /api/orders</>), out(<>201 Created</>)],
+    [code(<><span className={T}>SELECT</span> * FROM users</>)],
+    [code(<>cache.set(key, value)</>)],
   ],
   data: [
-    [<><span className={T}>SELECT</span> avg(revenue)</>],
-    [<>df.groupby(<span className={V}>'region'</span>).sum()</>],
-    [<>chart.plot(x, y)</>],
+    [code(<><span className={T}>SELECT</span> avg(revenue)</>)],
+    [code(<>df.groupby(<span className={V}>'region'</span>).sum()</>)],
+    [code(<>chart.plot(x, y)</>)],
   ],
   ai: [
-    [<>model.fit(training_data)</>],
-    [<>predict(image) → <span className={V}>"cat" (98%)</span></>],
-    [<>automate(daily_report)</>],
+    [code(<>model.fit(training_data)</>)],
+    [code(<>predict(image)</>), out(<>"cat" (98%)</>)],
+    [code(<>automate(daily_report)</>)],
   ],
   product: [
-    [<><span className={T}>As a</span> user, I want</>, <>faster checkout.</>],
-    [<>Impact: <span className={V}>High</span> · Effort: Low</>],
-    [<>Sprint 12 — 8 stories</>],
+    [code(<><span className={T}>As a</span> user, I want</>), code(<>faster checkout.</>)],
+    [code(<>Impact: <span className={V}>High</span> · Effort: Low</>)],
+    [code(<>Sprint 12 — 8 stories</>)],
   ],
   marketing: [
-    [<><span className={T}>A/B test</span>: open rate <span className={V}>34% ↑</span></>],
-    [<>segment: age 18–24</>],
-    [<>CTR: 2.4% → <span className={V}>3.1%</span></>],
+    [code(<><span className={T}>A/B test</span>: Subject A</>), out(<>open rate 34% ↑</>)],
+    [code(<>segment: age 18–24</>)],
+    [code(<>CTR: 2.4%</>), out(<>3.1% ↑</>)],
   ],
   content_media: [
-    [<>00:12 — cut to B-roll</>],
-    [<>caption: "wait for it…"</>],
-    [<>publish: Tue 9am</>],
+    [code(<>00:12 — cut to B-roll</>)],
+    [code(<>caption: "wait for it…"</>)],
+    [code(<>publish: Tue 9am</>)],
   ],
   design: [
-    [<>spacing: <span className={V}>8px</span></>],
-    [<>radius: <span className={V}>12px</span></>],
-    [<>contrast: <span className={V}>4.6:1 ✓</span></>],
+    [code(<>spacing: <span className={V}>8px</span></>)],
+    [code(<>radius: <span className={V}>12px</span></>)],
+    [code(<>contrast: <span className={V}>4.6:1 ✓</span></>)],
   ],
   cloud: [
-    [<><span className={T}>docker build</span> .</>],
-    [<>kubectl apply -f api.yaml</>],
-    [<>uptime: <span className={V}>99.98%</span></>],
+    [code(<><span className={T}>docker build</span> .</>)],
+    [code(<>kubectl apply -f api.yaml</>)],
+    [code(<>uptime()</>), out(<>99.98%</>)],
   ],
 }
 
-// Cards stay facing the learner as they travel around one central Devy.
+// Cards stay facing the learner as they travel around one central Devy. The
+// wrapper clips at its own edge (`overflow-hidden`) so a card mid-swing never
+// spills past the break screen into whatever sits below it.
 function BranchOrbit({ branch }) {
   const cards = BRANCH_ORBIT_CARDS[branch]
   if (!cards) return null
 
   return (
-    <div className="relative mx-auto h-[260px] w-full max-w-[440px] [--orbit-radius:clamp(80px,24vw,145px)]" aria-hidden="true">
+    <div className="relative mx-auto h-[230px] w-full max-w-[420px] overflow-hidden [--orbit-radius:clamp(70px,22vw,130px)]" aria-hidden="true">
       <div className="absolute inset-0">
         {cards.map((lines, i) => (
           <div
             key={i}
-            className="devy-orbit-card absolute left-1/2 top-1/2 flex min-h-16 w-[140px] flex-col justify-center rounded-xl border border-[#555064] bg-[#222226] px-3 py-3 text-left font-mono text-[12px] leading-[1.5] text-[#e4e4e6] shadow-[0_8px_20px_rgba(0,0,0,.2)] [[data-theme=light]_&]:border-[#ded8ef] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#34343a]"
+            className="devy-orbit-card absolute left-1/2 top-1/2 w-[136px] overflow-hidden rounded-lg border border-[#43414d] bg-[#1c1c20] text-left font-mono text-[11px] leading-[1.5] shadow-[0_8px_20px_rgba(0,0,0,.25)] [[data-theme=light]_&]:border-[#e2ddf0] [[data-theme=light]_&]:bg-white"
             style={{ animationDelay: `${-i * 6}s` }}
             aria-hidden="true"
           >
-            {lines.map((line, j) => <div key={j}>{line}</div>)}
+            <div className="px-2.5 py-2 text-[#e4e4e6] [[data-theme=light]_&]:text-[#34343a]">
+              {lines.filter((line) => !line.out).map((line, j) => <div key={j}>{line.node}</div>)}
+            </div>
+            {lines.filter((line) => line.out).map((line, j) => (
+              <div key={j} className="border-t border-[#2c3a2e] bg-[#132318] px-2.5 py-1.5 text-[#4ade80] [[data-theme=light]_&]:border-[#cdeed6] [[data-theme=light]_&]:bg-[#eafcee] [[data-theme=light]_&]:text-[#1a8a4c]">
+                <p className="m-0 text-[9px] font-semibold uppercase tracking-[.08em] opacity-70">Output</p>
+                {line.node}
+              </div>
+            ))}
           </div>
         ))}
       </div>
