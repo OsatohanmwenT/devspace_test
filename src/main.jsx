@@ -938,6 +938,10 @@ function App() {
             currentPathTitle={currentPath.title}
             currentLessonTitle={nextLesson?.title}
             pathProgress={derived.percent}
+            currentRegionTitle={currentRegionCard?.title}
+            currentRegionProgress={currentRegionCard?.percent ?? 0}
+            currentRegionLessonsCompleted={currentRegionCard?.lessonsCompleted ?? 0}
+            currentRegionLessonsTotal={currentRegionCard?.lessonsTotal ?? 0}
             practiceSession={homePracticeSessions[0]}
             leagueName={currentLeague.name}
             leagueRank={leagueRank}

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DevyLottie } from "../ui/DevyLottie";
-import { CompassIcon, CrownIcon, DumbbellIcon, PlayIcon, PodiumIcon, RocketIcon, RouteIcon } from "../ui/icons";
+import { ArrowLeftIcon, CompassIcon, CrownIcon, DumbbellIcon, PlayIcon, PodiumIcon, RocketIcon, RouteIcon } from "../ui/icons";
 import { DevyPromptBand } from "./DevyPromptBand";
 
 // Shared card shell. Border colour, glow and the accent wash all come from
@@ -56,6 +56,10 @@ export default function HomeView({
   currentPathTitle,
   currentLessonTitle,
   pathProgress,
+  currentRegionTitle,
+  currentRegionProgress,
+  currentRegionLessonsCompleted,
+  currentRegionLessonsTotal,
   practiceSession,
   leagueName,
   leagueRank,
@@ -63,6 +67,7 @@ export default function HomeView({
 }) {
   const [mapMode, setMapMode] = useState("map");
   const [activeCard, setActiveCard] = useState("lesson");
+  const wheelLocked = useRef(false);
   const activeIndex = cardOrder.indexOf(activeCard);
 
   const getCardSlot = (cardId) => {
@@ -82,6 +87,21 @@ export default function HomeView({
     setActiveCard(cardOrder[(activeIndex + direction + cardOrder.length) % cardOrder.length]);
   };
 
+  const changeCard = (direction) => {
+    setMapMode("map");
+    setActiveCard(cardOrder[(activeIndex + direction + cardOrder.length) % cardOrder.length]);
+  };
+
+  const onSceneWheel = (event) => {
+    if (window.innerWidth <= 900 || wheelLocked.current || Math.abs(event.deltaY) < 12) return;
+    event.preventDefault();
+    wheelLocked.current = true;
+    changeCard(event.deltaY > 0 ? 1 : -1);
+    window.setTimeout(() => {
+      wheelLocked.current = false;
+    }, 430);
+  };
+
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:h-auto max-[900px]:overflow-visible max-[900px]:px-[18px] max-[680px]:px-[18px] max-[680px]:py-6">
       <div className="mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[900px]:h-auto">
@@ -89,6 +109,7 @@ export default function HomeView({
           className="home-map-scene relative h-[520px] max-[900px]:grid max-[900px]:h-auto max-[900px]:grid-cols-2 max-[900px]:gap-4 max-[680px]:grid-cols-1"
           data-mode={mapMode}
           aria-label="Learning map"
+          onWheel={onSceneWheel}
         >
           <span className="home-map-atmosphere" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
@@ -206,7 +227,8 @@ export default function HomeView({
                 setActiveCard("lesson");
                 return;
               }
-              onStartMission();
+              if (currentLessonTitle) onStartMission();
+              else onOpenCareerPath();
             }}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "59 130 246" }}
@@ -217,21 +239,33 @@ export default function HomeView({
           >
             <IconChip icon={PlayIcon} tone="blue" />
             <h1 className="home-map-card__title m-0 font-rubik text-[21px] font-medium leading-none">
-              Current Lesson
+              {currentRegionTitle ?? "Current Lesson"}
             </h1>
-            <span className="home-map-card__details">
-              <span>{currentLessonTitle ?? "Choose your next lesson"}</span>
-              <span>{pathProgress}% complete · Pick up where you left off</span>
+            <span className="home-map-card__lesson-details">
+              <strong className={currentLessonTitle ? undefined : "home-map-card__lesson-complete"}>{currentLessonTitle ?? "Current path complete"}</strong>
+              <span>{currentPathTitle} · {currentRegionLessonsCompleted}/{currentRegionLessonsTotal} lessons</span>
+              <span className="home-map-card__progress" aria-label={`${currentRegionProgress}% of this region complete`}>
+                <span style={{ width: `${currentRegionProgress}%` }} />
+              </span>
             </span>
           </button>
+
+          <div className="home-map-carousel-arrows" aria-label="Change card">
+            <button type="button" className="home-map-carousel-arrow" onClick={() => changeCard(-1)} aria-label="Show previous card">
+              <ArrowLeftIcon className="size-5" />
+            </button>
+            <button type="button" className="home-map-carousel-arrow" onClick={() => changeCard(1)} aria-label="Show next card">
+              <ArrowLeftIcon className="size-5 rotate-180" />
+            </button>
+          </div>
 
         </section>
 
         <section
-          className="relative mx-auto flex w-full max-w-[1040px] items-center justify-center py-6 max-[900px]:mt-6 max-[680px]:mt-4"
+          className="home-quick-actions relative mx-auto flex w-full max-w-[1040px] items-center justify-center py-6 max-[900px]:mt-6 max-[680px]:mt-4"
           aria-label="Quick actions"
         >
-          <div className="absolute left-0 flex gap-3 max-[680px]:static max-[680px]:mr-3">
+          <div className="home-quick-left absolute left-0 flex gap-3 max-[680px]:static max-[680px]:mr-3">
             <button
               type="button"
               onClick={onSeeAllPractice}
@@ -292,7 +326,7 @@ export default function HomeView({
             onOpen={onOpenDevy}
           />
 
-          <div className="absolute -right-8 flex gap-3 max-[680px]:static max-[680px]:ml-3">
+          <div className="home-quick-right absolute -right-20 flex gap-3 max-[680px]:static max-[680px]:ml-3">
             <button
               type="button"
               onClick={onOpenDevyPro}

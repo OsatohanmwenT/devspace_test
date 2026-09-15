@@ -556,6 +556,10 @@
   display: none;
 }
 
+.home-map-card__lesson-details {
+  display: none;
+}
+
 .home-prompt-glow {
   background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.28), rgb(var(--prompt-accent) / 0.1) 44%, transparent 76%);
 }
@@ -601,6 +605,48 @@
     transform-style: preserve-3d;
   }
 
+  .home-map-carousel-arrows {
+    position: absolute;
+    z-index: 4;
+    top: 330px;
+    right: 16px;
+    left: 16px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .home-map-carousel-arrow {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid #46464a;
+    border-radius: 999px;
+    background: #1f1f1f;
+    color: #f4f4f2;
+    box-shadow: 0 8px 22px -14px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .home-map-carousel-arrow:hover {
+    border-color: #88bdf2;
+    background: #292929;
+  }
+
+  .home-map-carousel-arrow:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 4px;
+  }
+
+  [data-theme='light'] .home-map-carousel-arrow {
+    border-color: #deded9;
+    background: #fdfcf9;
+    color: #262626;
+    box-shadow: 0 8px 22px -14px rgba(20, 20, 20, 0.28);
+  }
+
   .home-map-card {
     --hide-delay: 0ms;
     left: 50%;
@@ -642,6 +688,46 @@
     line-height: 1.32;
   }
 
+  .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+    color: #c9d3e8;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .home-map-card__lesson-details strong {
+    color: #f4f4f2;
+    font-size: 15px;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+
+  .home-map-card__lesson-details .home-map-card__lesson-complete {
+    color: #c9d3e8;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .home-map-card__progress {
+    display: block;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.16);
+  }
+
+  .home-map-card__progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #88bdf2;
+  }
+
   .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
     display: flex;
     align-items: center;
@@ -657,32 +743,48 @@
     color: #262626;
   }
 
+  [data-theme='light'] .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+    color: #526174;
+  }
+
+  [data-theme='light'] .home-map-card__lesson-details strong {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-map-card__lesson-details .home-map-card__lesson-complete {
+    color: #526174;
+  }
+
+  [data-theme='light'] .home-map-card__progress {
+    background: rgb(37 99 235 / 0.16);
+  }
+
   .home-map-card[data-slot='previous'] {
     z-index: 2;
-    transform: translate(calc(-50% - 342px), 24px) rotateY(34deg) scale(0.58);
+    transform: translate(calc(-50% - 320px), 14px) rotateY(42deg) scale(0.5);
     opacity: 0.72;
     filter: blur(0.35px);
   }
 
   .home-map-card[data-slot='next'] {
     z-index: 2;
-    transform: translate(calc(-50% + 342px), 24px) rotateY(-34deg) scale(0.58);
+    transform: translate(calc(-50% + 320px), 14px) rotateY(-42deg) scale(0.5);
     opacity: 0.72;
     filter: blur(0.35px);
   }
 
   .home-map-card[data-slot='far-previous'] {
     z-index: 1;
-    transform: translate(calc(-50% - 620px), 2px) rotateY(54deg) scale(0.4);
-    opacity: 0.42;
-    filter: blur(0.7px);
+    transform: translate(calc(-50% - 470px), -12px) translateZ(-180px) rotateY(58deg) scale(0.3);
+    opacity: 0.3;
+    filter: blur(1px);
   }
 
   .home-map-card[data-slot='far-next'] {
     z-index: 1;
-    transform: translate(calc(-50% + 620px), 2px) rotateY(-54deg) scale(0.4);
-    opacity: 0.42;
-    filter: blur(0.7px);
+    transform: translate(calc(-50% + 470px), -12px) translateZ(-180px) rotateY(-58deg) scale(0.3);
+    opacity: 0.3;
+    filter: blur(1px);
   }
 
   .home-map-devy,
@@ -739,15 +841,37 @@
 }
 
 @media (max-width: 900px) {
-  .home-map-card[data-slot='previous'],
-  .home-map-card[data-slot='next'],
-  .home-map-card[data-slot='far-previous'],
-  .home-map-card[data-slot='far-next'] {
+  .home-map-carousel-arrows {
     display: none;
   }
 
+  .home-map-atmosphere {
+    display: none;
+  }
+
+  .home-map-devy {
+    order: -1;
+  }
+
   .home-map-card[data-slot='front'] {
+    order: 0;
     grid-column: 1 / -1;
+  }
+
+  .home-map-card[data-slot='previous'] {
+    order: 1;
+  }
+
+  .home-map-card[data-slot='next'] {
+    order: 2;
+  }
+
+  .home-map-card[data-slot='far-previous'] {
+    order: 3;
+  }
+
+  .home-map-card[data-slot='far-next'] {
+    order: 4;
   }
 
   .home-map-card[data-slot='front'] .home-map-card__details {
@@ -759,6 +883,34 @@
     color: #b6bac4;
     font-size: 15px;
     font-weight: 500;
+  }
+
+  .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+    color: #c9d3e8;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .home-quick-actions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .home-quick-actions .home-quick-left,
+  .home-quick-actions .home-quick-right {
+    position: static;
+    margin: 0;
+  }
+
+  .home-quick-actions .home-prompt-band {
+    max-width: none;
   }
 
   .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
@@ -777,10 +929,30 @@
 
 }
 
+@media (max-width: 680px) {
+  .home-quick-actions {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .home-quick-actions .home-quick-left {
+    order: 2;
+  }
+
+  .home-quick-actions .home-prompt-band {
+    order: 1;
+  }
+
+  .home-quick-actions .home-quick-right {
+    order: 3;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-map-card,
   .home-map-devy,
-  .home-prompt-glow {
+  .home-prompt-glow,
+  .home-map-carousel-arrows {
     transition: none;
   }
 
