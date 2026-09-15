@@ -806,26 +806,33 @@
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'],
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'],
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    --hide-delay: 400ms;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    --hide-delay: 0ms;
+    filter: none;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='previous'] {
-    transform: translate(calc(-50% - 360px), 56px) rotateY(28deg) scale(0.5);
+    z-index: 2;
+    transform: translate(calc(-50% - 300px), 10px) rotateY(26deg) scale(0.46);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
-    transform: translate(calc(-50% + 360px), 56px) rotateY(-28deg) scale(0.5);
+    z-index: 2;
+    transform: translate(calc(-50% + 300px), 10px) rotateY(-26deg) scale(0.46);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'] {
-    transform: translate(calc(-50% - 520px), 56px) rotateY(36deg) scale(0.32);
+    z-index: 1;
+    transform: translate(calc(-50% - 370px), 112px) rotateY(34deg) scale(0.34);
+    opacity: 0.78;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
-    transform: translate(calc(-50% + 520px), 56px) rotateY(-36deg) scale(0.32);
+    z-index: 1;
+    transform: translate(calc(-50% + 370px), 112px) rotateY(-34deg) scale(0.34);
+    opacity: 0.78;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-devy {
