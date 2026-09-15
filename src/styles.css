@@ -825,14 +825,14 @@
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'] {
     z-index: 1;
-    transform: translate(calc(-50% - 370px), 112px) rotateY(34deg) scale(0.34);
-    opacity: 0.78;
+    transform: translate(calc(-50% - 390px), 112px) rotateY(30deg) scale(0.42);
+    opacity: 0.92;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
     z-index: 1;
-    transform: translate(calc(-50% + 370px), 112px) rotateY(-34deg) scale(0.34);
-    opacity: 0.78;
+    transform: translate(calc(-50% + 390px), 112px) rotateY(-30deg) scale(0.42);
+    opacity: 0.92;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-devy {
