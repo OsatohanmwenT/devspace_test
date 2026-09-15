@@ -20,6 +20,13 @@ const devyClips = {
   projects: "walk",
   paths: "wave",
 };
+const cardAccents = {
+  practice: "245 166 35",
+  leaderboard: "224 80 122",
+  lesson: "59 130 246",
+  projects: "139 124 246",
+  paths: "4 173 192",
+};
 
 // Small colored icon badge, top-left of each card — the same accent hues
 // Badge.jsx's TONES already use, reused here instead of new colors.
@@ -63,7 +70,8 @@ export default function HomeView({
     if (offset === 0) return "front";
     if (offset === 1) return "next";
     if (offset === cardOrder.length - 1) return "previous";
-    return "hidden";
+    if (offset === 2) return "far-next";
+    return "far-previous";
   };
 
   const onCardKeyDown = (event) => {
@@ -108,7 +116,7 @@ export default function HomeView({
             style={{ "--card-accent": "245 166 35" }}
             className={`${mapCard} home-map-card--practice ${mapCardSurface}`}
             data-slot={getCardSlot("practice")}
-            tabIndex={getCardSlot("practice") === "hidden" ? -1 : 0}
+            tabIndex={0}
             aria-current={getCardSlot("practice") === "front" ? "true" : undefined}
           >
             <IconChip icon={DumbbellIcon} tone="orange" />
@@ -132,7 +140,7 @@ export default function HomeView({
             style={{ "--card-accent": "4 173 192" }}
             className={`${mapCard} home-map-card--paths ${mapCardSurface}`}
             data-slot={getCardSlot("paths")}
-            tabIndex={getCardSlot("paths") === "hidden" ? -1 : 0}
+            tabIndex={0}
             aria-current={getCardSlot("paths") === "front" ? "true" : undefined}
           >
             <IconChip icon={CompassIcon} tone="teal" />
@@ -156,7 +164,7 @@ export default function HomeView({
             style={{ "--card-accent": "224 80 122" }}
             className={`${mapCard} home-map-card--leaderboard ${mapCardSurface}`}
             data-slot={getCardSlot("leaderboard")}
-            tabIndex={getCardSlot("leaderboard") === "hidden" ? -1 : 0}
+            tabIndex={0}
             aria-current={getCardSlot("leaderboard") === "front" ? "true" : undefined}
           >
             <IconChip icon={PodiumIcon} tone="pink" />
@@ -180,7 +188,7 @@ export default function HomeView({
             style={{ "--card-accent": "139 124 246" }}
             className={`${mapCard} home-map-card--projects ${mapCardSurface}`}
             data-slot={getCardSlot("projects")}
-            tabIndex={getCardSlot("projects") === "hidden" ? -1 : 0}
+            tabIndex={0}
             aria-current={getCardSlot("projects") === "front" ? "true" : undefined}
           >
             <IconChip icon={RocketIcon} tone="violet" />
@@ -204,7 +212,7 @@ export default function HomeView({
             style={{ "--card-accent": "59 130 246" }}
             className={`${mapCard} home-map-card--lesson bg-[#1c2a4d] text-[#f4f4f2] hover:bg-[#213762] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#e2edfc] max-[900px]:col-span-2 max-[680px]:col-span-1`}
             data-slot={getCardSlot("lesson")}
-            tabIndex={getCardSlot("lesson") === "hidden" ? -1 : 0}
+            tabIndex={0}
             aria-current={getCardSlot("lesson") === "front" ? "true" : undefined}
           >
             <IconChip icon={PlayIcon} tone="blue" />
@@ -278,6 +286,7 @@ export default function HomeView({
 
           <DevyPromptBand
             isComposing={mapMode === "compose"}
+            accent={cardAccents[activeCard]}
             onComposeStart={() => setMapMode("compose")}
             onComposeEnd={() => setMapMode("map")}
             onOpen={onOpenDevy}

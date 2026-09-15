@@ -556,6 +556,14 @@
   display: none;
 }
 
+.home-prompt-glow {
+  background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.28), rgb(var(--prompt-accent) / 0.1) 44%, transparent 76%);
+}
+
+[data-theme='light'] .home-prompt-glow {
+  background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.3), rgb(var(--prompt-accent) / 0.12) 44%, transparent 76%);
+}
+
 .home-map-card__title {
   margin-top: 16px;
 }
@@ -651,25 +659,30 @@
 
   .home-map-card[data-slot='previous'] {
     z-index: 2;
-    transform: translate(calc(-50% - 238px), 32px) rotateY(28deg) scale(0.56);
-    opacity: 0.7;
-    filter: blur(0.45px);
+    transform: translate(calc(-50% - 244px), 24px) rotateY(34deg) scale(0.58);
+    opacity: 0.72;
+    filter: blur(0.35px);
   }
 
   .home-map-card[data-slot='next'] {
     z-index: 2;
-    transform: translate(calc(-50% + 238px), 32px) rotateY(-28deg) scale(0.56);
-    opacity: 0.7;
-    filter: blur(0.45px);
+    transform: translate(calc(-50% + 244px), 24px) rotateY(-34deg) scale(0.58);
+    opacity: 0.72;
+    filter: blur(0.35px);
   }
 
-  .home-map-card[data-slot='hidden'] {
+  .home-map-card[data-slot='far-previous'] {
     z-index: 1;
-    transform: translate(calc(-50% + 430px), 56px) rotateY(-36deg) scale(0.5);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    --hide-delay: 400ms;
+    transform: translate(calc(-50% - 448px), 2px) rotateY(54deg) scale(0.4);
+    opacity: 0.42;
+    filter: blur(0.7px);
+  }
+
+  .home-map-card[data-slot='far-next'] {
+    z-index: 1;
+    transform: translate(calc(-50% + 448px), 2px) rotateY(-54deg) scale(0.4);
+    opacity: 0.42;
+    filter: blur(0.7px);
   }
 
   .home-map-devy,
@@ -688,7 +701,9 @@
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='previous'],
-  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'],
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'],
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -701,6 +716,14 @@
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
     transform: translate(calc(-50% + 360px), 56px) rotateY(-28deg) scale(0.5);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'] {
+    transform: translate(calc(-50% - 520px), 56px) rotateY(36deg) scale(0.32);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
+    transform: translate(calc(-50% + 520px), 56px) rotateY(-36deg) scale(0.32);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-devy {
@@ -718,7 +741,8 @@
 @media (max-width: 900px) {
   .home-map-card[data-slot='previous'],
   .home-map-card[data-slot='next'],
-  .home-map-card[data-slot='hidden'] {
+  .home-map-card[data-slot='far-previous'],
+  .home-map-card[data-slot='far-next'] {
     display: none;
   }
 
