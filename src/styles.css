@@ -173,6 +173,16 @@
     animation: devy-bubble-in 320ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
   }
 
+  @keyframes devy-bubble-text-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .devy-bubble-text-in {
+    display: block;
+    animation: devy-bubble-text-in 180ms ease-out both;
+  }
+
   @keyframes devy-caret-blink {
     0%, 49% { opacity: 1; }
     50%, 100% { opacity: 0; }
@@ -547,30 +557,6 @@
   box-shadow: 0 14px 28px -10px rgb(var(--card-accent) / 0.8);
 }
 
-.home-leaderboard-preview {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
-@media (max-width: 900px) {
-  .home-map-scene[data-preview='leaderboard'] .home-map-card--leaderboard {
-    display: none;
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-leaderboard-preview {
-    position: static;
-    display: block;
-    grid-column: 1 / -1;
-    width: min(100%, 280px);
-    justify-self: center;
-    transform: none;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
 [data-theme='light'] .home-map-card {
   border-color: rgb(var(--card-accent) / 0.5);
   box-shadow: 0 10px 20px -10px rgb(var(--card-accent) / 0.45);
@@ -579,24 +565,6 @@
 [data-theme='light'] .home-map-card:hover {
   border-color: rgb(var(--card-accent) / 0.85);
   box-shadow: 0 14px 26px -10px rgb(var(--card-accent) / 0.65);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  /* The one repeated cue on this screen, and it goes where the design notes
-     allow it: the card holding the current learning state. A slow swell of
-     its own glow, nothing that moves. */
-  @keyframes home-card-breathe {
-    0%, 100% { box-shadow: 0 10px 22px -10px rgb(var(--card-accent) / 0.6); }
-    50% { box-shadow: 0 14px 30px -10px rgb(var(--card-accent) / 0.9); }
-  }
-
-  .home-map-card-featured {
-    animation: home-card-breathe 4.8s ease-in-out infinite;
-  }
-
-  .home-map-card-featured:hover {
-    animation: none;
-  }
 }
 
 @media (min-width: 901px) {
@@ -612,30 +580,22 @@
     pointer-events: none;
   }
 
-  .home-map-card:not(.home-map-card--lesson) {
-    filter: blur(0.75px);
-    opacity: 0.82;
+  .home-map-scene {
+    perspective: 960px;
+    transform-style: preserve-3d;
   }
 
-  .home-map-card:not(.home-map-card--lesson):hover,
-  .home-map-card:not(.home-map-card--lesson):focus-visible {
-    filter: none;
-    opacity: 1;
-  }
-
-  /* Two separate transform channels, on purpose. `translate` owns the hover
-     lift, `transform` owns resting position and the compose shift, so the two
-     compose instead of overwriting one another — and a hover never has to wait
-     on the compose stagger. --shift-delay staggers only that shift; colour
-     response is never held up by it. */
   .home-map-card {
-    --shift-delay: 0ms;
     --hide-delay: 0ms;
+    left: 50%;
+    top: 266px;
+    transform-style: preserve-3d;
+    transform-origin: center;
     transition:
-      translate 380ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 420ms cubic-bezier(0.16, 1, 0.3, 1) var(--shift-delay),
-      opacity 420ms cubic-bezier(0.16, 1, 0.3, 1) var(--opacity-delay, var(--shift-delay)),
-      filter 160ms ease,
+      translate 220ms ease,
+      transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+      filter 220ms ease,
       visibility 0s linear var(--hide-delay),
       border-color 300ms ease,
       background-color 300ms ease,
@@ -647,6 +607,36 @@
     translate: 0 -6px;
   }
 
+  .home-map-card[data-slot='front'] {
+    z-index: 3;
+    transform: translateX(-50%) translateZ(48px) scale(1.25);
+    opacity: 1;
+    filter: none;
+  }
+
+  .home-map-card[data-slot='previous'] {
+    z-index: 2;
+    transform: translate(calc(-50% - 196px), 28px) rotateY(28deg) scale(0.92);
+    opacity: 0.7;
+    filter: blur(0.45px);
+  }
+
+  .home-map-card[data-slot='next'] {
+    z-index: 2;
+    transform: translate(calc(-50% + 196px), 28px) rotateY(-28deg) scale(0.92);
+    opacity: 0.7;
+    filter: blur(0.45px);
+  }
+
+  .home-map-card[data-slot='hidden'] {
+    z-index: 1;
+    transform: translate(calc(-50% + 430px), 56px) rotateY(-36deg) scale(0.78);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    --hide-delay: 400ms;
+  }
+
   .home-map-devy,
   .home-prompt-glow {
     transition:
@@ -654,60 +644,28 @@
       opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Coming back, the map refills from the outside in, so the lesson card lands
-     last and punctuates the return. */
-  .home-map-card--leaderboard,
-  .home-map-card--projects {
-    --shift-delay: 50ms;
-  }
-
-  .home-map-card--lesson {
-    --shift-delay: 100ms;
-    transform: translateX(-50%);
-    transform-origin: center;
-  }
-
-  /* Going in, the order reverses: the prompt displaces its nearest neighbour
-     first and the ripple travels outward. */
-  .home-map-scene[data-mode='compose'] .home-map-card--lesson {
-    --shift-delay: 0ms;
-  }
-
-  .home-map-scene[data-mode='compose'] .home-map-card--leaderboard,
-  .home-map-scene[data-mode='compose'] .home-map-card--projects {
-    --shift-delay: 60ms;
-  }
-
-  .home-map-scene[data-mode='compose'] .home-map-card--practice,
-  .home-map-scene[data-mode='compose'] .home-map-card--paths {
-    --shift-delay: 110ms;
-  }
-
-  /* Hidden, not merely transparent: opacity alone leaves an invisible button
-     for a keyboard user to tab onto. The visibility flip waits out the move,
-     so the card still fades on the way down and is back instantly on return. */
-  .home-map-scene[data-mode='compose'] .home-map-card--lesson {
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='front'] {
     transform: translate(-50%, 250px) scale(0.96);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    --hide-delay: 420ms;
+    --hide-delay: 400ms;
   }
 
-  .home-map-scene[data-mode='compose'] .home-map-card--practice {
-    transform: translate(-148px, 16px);
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='previous'],
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    --hide-delay: 400ms;
   }
 
-  .home-map-scene[data-mode='compose'] .home-map-card--leaderboard {
-    transform: translate(-308px, 80px);
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='previous'] {
+    transform: translate(calc(-50% - 360px), 56px) rotateY(28deg) scale(0.84);
   }
 
-  .home-map-scene[data-mode='compose'] .home-map-card--paths {
-    transform: translate(148px, 16px);
-  }
-
-  .home-map-scene[data-mode='compose'] .home-map-card--projects {
-    transform: translate(308px, 80px);
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
+    transform: translate(calc(-50% + 360px), 56px) rotateY(-28deg) scale(0.84);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-devy {
@@ -716,59 +674,28 @@
     pointer-events: none;
   }
 
-  .home-leaderboard-preview {
-    transform: translate(-50%, 12px) scale(0.98);
-    transition:
-      transform 260ms cubic-bezier(0.16, 1, 0.3, 1) 240ms,
-      opacity 220ms ease 240ms,
-      visibility 0s linear 460ms;
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-map-card--leaderboard {
-    --shift-delay: 0ms;
-    --opacity-delay: 220ms;
-    transform: translate(158px, 88px);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-map-card--lesson {
-    --shift-delay: 0ms;
-    transform: translate(-50%, -88px) translateX(-158px);
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-map-card:not(.home-map-card--leaderboard):not(.home-map-card--lesson) {
-    filter: blur(1.5px);
-    opacity: 0.42;
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-map-card-featured {
-    animation: none;
-  }
-
-  .home-map-scene[data-preview='leaderboard'] .home-leaderboard-preview {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, 0) scale(1);
-    transition-delay: 240ms, 240ms, 0s;
-  }
-
-  .home-map-scene[data-mode='compose'] .home-map-card-featured {
-    animation: none;
-  }
-
   .home-prompt-band[data-compose='true'] .home-prompt-glow {
     transform: scale(1.12);
     opacity: 1;
   }
 }
 
+@media (max-width: 900px) {
+  .home-map-card[data-slot='previous'],
+  .home-map-card[data-slot='next'],
+  .home-map-card[data-slot='hidden'] {
+    display: none;
+  }
+
+  .home-map-card[data-slot='front'] {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-map-card,
   .home-map-devy,
-  .home-prompt-glow,
-  .home-leaderboard-preview {
+  .home-prompt-glow {
     transition: none;
   }
 

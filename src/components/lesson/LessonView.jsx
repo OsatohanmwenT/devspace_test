@@ -623,14 +623,13 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               {showStreak
                 ? <DevyMood key="streaking" mood="celebrating" className="w-full h-full" />
                 : <DevyLottie
-                    key={devyLine ? `thought-${devyLine.id}` : 'idle'}
                     clip="thinking"
                     loop
                     className="w-full h-full"
                   />}
               {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
             </button>
-            <DevySpeechBubble key={devyLine?.id} text={devyLine?.text} />
+            <DevySpeechBubble text={devyLine?.text} />
           </div>
         )}
 

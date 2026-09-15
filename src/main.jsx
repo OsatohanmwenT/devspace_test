@@ -33,7 +33,7 @@ import { practiceSessions } from './data/practice';
 import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
 import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './lib/h2h';
-import { getStandings, resolveSeason, USER_ID } from './lib/leagueSim';
+import { resolveSeason } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
@@ -619,18 +619,6 @@ function App() {
   const activeToday = isActiveToday(lastActiveDate)
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
-  const homeLeaderboardPreview = useMemo(() => {
-    const timestamp = now()
-    const standings = getStandings(getSeasonIndex(timestamp), leagueIndex, seasonCoins, timestamp)
-    const learnerIndex = Math.max(0, standings.findIndex((entry) => entry.id === USER_ID))
-    const start = Math.max(0, Math.min(standings.length - 5, learnerIndex - 2))
-
-    return {
-      league: getLeague(leagueIndex),
-      entries: standings.slice(start, start + 5),
-    }
-  }, [leagueIndex, seasonCoins])
-
   // Paths the learner paused to focus on the current primary one — offered
   // back on Home so switching is a click, not a rebuild. If history is empty,
   // surface popular alternative catalog paths.
@@ -945,7 +933,6 @@ function App() {
             onOpenLeaderboard={() => setActive('Leaderboard')}
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
-            leaderboardPreview={homeLeaderboardPreview}
           />
         )}
       </main>
