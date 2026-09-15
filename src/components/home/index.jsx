@@ -6,7 +6,7 @@ import { DevyPromptBand } from "./DevyPromptBand";
 // Shared card shell. Border colour, glow and the accent wash all come from
 // .home-map-card in styles.css, driven by the --card-accent each card sets.
 const mapCard =
-  "home-map-card absolute flex h-[210px] w-[300px] flex-col items-start rounded-3xl border p-5 text-left text-[17px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[210px] max-[680px]:min-h-[160px]";
+  "home-map-card absolute flex h-[250px] w-[360px] flex-col items-start rounded-3xl border p-6 text-left text-[21px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[250px] max-[680px]:min-h-[180px]";
 
 const mapCardSurface =
   "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
@@ -93,7 +93,7 @@ export default function HomeView({
           <span className="home-map-atmosphere" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy absolute left-1/2 top-[72px] -translate-x-1/2 max-[900px]:static max-[900px]:col-span-2 max-[900px]:justify-self-center max-[900px]:translate-x-0 max-[680px]:col-span-1">
+          <div className="home-map-devy absolute left-1/2 top-[52px] -translate-x-1/2 max-[900px]:static max-[900px]:col-span-2 max-[900px]:justify-self-center max-[900px]:translate-x-0 max-[680px]:col-span-1">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
@@ -216,7 +216,7 @@ export default function HomeView({
             aria-current={getCardSlot("lesson") === "front" ? "true" : undefined}
           >
             <IconChip icon={PlayIcon} tone="blue" />
-            <h1 className="home-map-card__title m-0 font-rubik text-[17px] font-medium leading-none">
+            <h1 className="home-map-card__title m-0 font-rubik text-[21px] font-medium leading-none">
               Current Lesson
             </h1>
             <span className="home-map-card__details">
