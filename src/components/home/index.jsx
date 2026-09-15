@@ -6,7 +6,7 @@ import { DevyPromptBand } from "./DevyPromptBand";
 // Shared card shell. Border colour, glow and the accent wash all come from
 // .home-map-card in styles.css, driven by the --card-accent each card sets.
 const mapCard =
-  "home-map-card absolute flex h-[116px] w-36 flex-col items-start justify-between rounded-3xl border p-4 text-left text-[17px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[144px] max-[680px]:min-h-[96px]";
+  "home-map-card absolute flex h-[180px] w-[260px] flex-col items-start rounded-3xl border p-4 text-left text-[17px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[180px] max-[680px]:min-h-[148px]";
 
 const mapCardSurface =
   "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
@@ -46,6 +46,12 @@ export default function HomeView({
   onOpenLeaderboard,
   onSeeAllPractice,
   onOpenDevy,
+  currentPathTitle,
+  currentLessonTitle,
+  pathProgress,
+  practiceSession,
+  leagueName,
+  seasonCoins,
 }) {
   const [mapMode, setMapMode] = useState("map");
   const [activeCard, setActiveCard] = useState("lesson");
@@ -105,7 +111,11 @@ export default function HomeView({
             aria-current={getCardSlot("practice") === "front" ? "true" : undefined}
           >
             <IconChip icon={DumbbellIcon} tone="orange" />
-            Practice
+            <span className="home-map-card__title">Practice</span>
+            <span className="home-map-card__details">
+              <span>{practiceSession ? `${practiceSession.title} · ${practiceSession.minutes} min` : "Build confidence with a quick session"}</span>
+              <span>Start a session <b aria-hidden="true">→</b></span>
+            </span>
           </button>
           <button
             type="button"
@@ -125,7 +135,11 @@ export default function HomeView({
             aria-current={getCardSlot("paths") === "front" ? "true" : undefined}
           >
             <IconChip icon={CompassIcon} tone="teal" />
-            Paths
+            <span className="home-map-card__title">Paths</span>
+            <span className="home-map-card__details">
+              <span>Keep moving through {currentPathTitle}</span>
+              <span>{pathProgress}% complete <b aria-hidden="true">→</b></span>
+            </span>
           </button>
           <button
             type="button"
@@ -145,7 +159,11 @@ export default function HomeView({
             aria-current={getCardSlot("leaderboard") === "front" ? "true" : undefined}
           >
             <IconChip icon={PodiumIcon} tone="pink" />
-            Leaderboard
+            <span className="home-map-card__title">Leaderboard</span>
+            <span className="home-map-card__details">
+              <span>See where you stand in {leagueName}</span>
+              <span>{seasonCoins} coins this season <b aria-hidden="true">→</b></span>
+            </span>
           </button>
           <button
             type="button"
@@ -165,7 +183,11 @@ export default function HomeView({
             aria-current={getCardSlot("projects") === "front" ? "true" : undefined}
           >
             <IconChip icon={RocketIcon} tone="violet" />
-            Projects
+            <span className="home-map-card__title">Projects</span>
+            <span className="home-map-card__details">
+              <span>Turn your {currentPathTitle} skills into real work</span>
+              <span>Explore projects <b aria-hidden="true">→</b></span>
+            </span>
           </button>
           <button
             type="button"
@@ -185,9 +207,13 @@ export default function HomeView({
             aria-current={getCardSlot("lesson") === "front" ? "true" : undefined}
           >
             <IconChip icon={PlayIcon} tone="blue" />
-            <h1 className="m-0 font-rubik text-[17px] font-medium leading-none">
+            <h1 className="home-map-card__title m-0 font-rubik text-[17px] font-medium leading-none">
               Current Lesson
             </h1>
+            <span className="home-map-card__details">
+              <span>{currentLessonTitle ? `Continue with ${currentLessonTitle}` : "Choose where you want to learn next"}</span>
+              <span>{pathProgress}% complete <b aria-hidden="true">Continue →</b></span>
+            </span>
           </button>
 
         </section>

@@ -933,6 +933,12 @@ function App() {
             onOpenLeaderboard={() => setActive('Leaderboard')}
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
+            currentPathTitle={currentPath.title}
+            currentLessonTitle={nextLesson?.title}
+            pathProgress={derived.percent}
+            practiceSession={homePracticeSessions[0]}
+            leagueName={currentLeague.name}
+            seasonCoins={seasonCoins}
           />
         )}
       </main>
