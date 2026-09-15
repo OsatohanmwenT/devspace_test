@@ -164,6 +164,65 @@ export function PlayIcon({ className }) {
   )
 }
 
+// A crown with a jewel on each peak — the universal "premium tier" mark,
+// reads instantly next to a plan-upgrade CTA in a way a generic spark can't.
+export function CrownIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 9.2 7 12l2.6-5.4c.7-1.5 2.8-1.5 3.5 0L15.7 12l3.5-2.8-1.1 8.6a1.3 1.3 0 0 1-1.3 1.1H5.9a1.3 1.3 0 0 1-1.3-1.1L3.5 9.2Z"
+        fill="currentColor"
+      />
+      <circle cx="3.5" cy="8.2" r="1.7" fill="currentColor" />
+      <circle cx="20.5" cy="8.2" r="1.7" fill="currentColor" />
+      <circle cx="12" cy="5.2" r="1.7" fill="currentColor" />
+      <rect x="5.6" y="19" width="12.8" height="1.8" rx=".9" fill="currentColor" />
+    </svg>
+  )
+}
+
+// Three twinkles at falling size and opacity rather than one flat star — the
+// layering is what makes it read as an illustration instead of a glyph.
+export function SparkleIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M9.8 2.2C9.8 8 8.8 9 3 9c5.8 0 6.8 1 6.8 6.8 0-5.8 1-6.8 6.8-6.8-5.8 0-6.8-1-6.8-6.8Z"
+        fill="currentColor"
+      />
+      <path
+        d="M18.6 13.4c0 3.4-.6 4-4 4 3.4 0 4 .6 4 4 0-3.4.6-4 4-4-3.4 0-4-.6-4-4Z"
+        fill="currentColor"
+        opacity=".78"
+      />
+      <path
+        d="M5.6 16c0 2.4-.4 2.8-2.8 2.8 2.4 0 2.8.4 2.8 2.8 0-2.4.4-2.8 2.8-2.8-2.4 0-2.8-.4-2.8-2.8Z"
+        fill="currentColor"
+        opacity=".55"
+      />
+    </svg>
+  )
+}
+
+// A dotted trail climbing from a start marker to a flag — a route with a
+// destination, which is what a career path is.
+export function RouteIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4.6 16.8c0-3.4 3.6-3.9 6.4-4.6 2.8-.7 5.2-1.5 5.2-4.4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray="0.2 3.6"
+      />
+      <circle cx="4.6" cy="19.6" r="2.4" fill="currentColor" />
+      <path d="M16.2 8.2V2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M17.4 2.4h4.5l-1.5 2.2 1.5 2.2h-4.5z" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function HeadphonesIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">

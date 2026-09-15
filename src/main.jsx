@@ -619,11 +619,16 @@ function App() {
   const activeToday = isActiveToday(lastActiveDate)
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
-  const homeStandings = useMemo(() => {
-    const standings = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
-    const leaders = standings.slice(0, 3)
-    const learner = standings.find((entry) => entry.id === USER_ID)
-    return leaders.some((entry) => entry.id === USER_ID) ? leaders : [...leaders, learner]
+  const homeLeaderboardPreview = useMemo(() => {
+    const timestamp = now()
+    const standings = getStandings(getSeasonIndex(timestamp), leagueIndex, seasonCoins, timestamp)
+    const learnerIndex = Math.max(0, standings.findIndex((entry) => entry.id === USER_ID))
+    const start = Math.max(0, Math.min(standings.length - 5, learnerIndex - 2))
+
+    return {
+      league: getLeague(leagueIndex),
+      entries: standings.slice(start, start + 5),
+    }
   }, [leagueIndex, seasonCoins])
 
   // Paths the learner paused to focus on the current primary one — offered
@@ -940,6 +945,7 @@ function App() {
             onOpenLeaderboard={() => setActive('Leaderboard')}
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
+            leaderboardPreview={homeLeaderboardPreview}
           />
         )}
       </main>

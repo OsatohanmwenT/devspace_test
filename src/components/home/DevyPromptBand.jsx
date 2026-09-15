@@ -2,8 +2,8 @@
 // discovery-style prompt bar that opens the same DevyDrawer as the FAB.
 export function DevyPromptBand({ isComposing, onComposeStart, onComposeEnd, onOpen }) {
   return (
-    <div className="home-prompt-band relative mx-auto w-full max-w-[560px]" data-compose={isComposing}>
-      <span className="home-prompt-glow pointer-events-none absolute -inset-x-20 -inset-y-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.34),rgba(96,165,250,0.16)_44%,transparent_76%)] blur-3xl [[data-theme=light]_&]:bg-[radial-gradient(ellipse_at_center,rgba(129,140,248,0.38),rgba(96,165,250,0.18)_44%,transparent_76%)]" aria-hidden="true" />
+    <div className="home-prompt-band relative mx-auto w-full max-w-[520px]" data-compose={isComposing}>
+      <span className="home-prompt-glow pointer-events-none absolute -inset-x-14 -inset-y-8 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.28),rgba(96,165,250,0.12)_44%,transparent_76%)] blur-3xl [[data-theme=light]_&]:bg-[radial-gradient(ellipse_at_center,rgba(129,140,248,0.3),rgba(96,165,250,0.14)_44%,transparent_76%)]" aria-hidden="true" />
       <form
         className="relative flex w-full items-center rounded-full border border-[#404040] bg-[#1f1f1f] p-1.5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] max-[680px]:mt-4 [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_14px_32px_rgba(20,20,20,0.08)]"
         onSubmit={(event) => {

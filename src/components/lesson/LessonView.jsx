@@ -624,9 +624,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
                 ? <DevyMood key="streaking" mood="celebrating" className="w-full h-full" />
                 : <DevyLottie
                     key={devyLine ? `thought-${devyLine.id}` : 'idle'}
-                    clip={devyLine ? 'side-pop-out' : 'thinking'}
-                    loop={!devyLine}
-                    className={`${devyLine ? 'devy-talking-avatar' : ''} w-full h-full`}
+                    clip="thinking"
+                    loop
+                    className="w-full h-full"
                   />}
               {showStreak && <span className="absolute inset-0 rounded-full ring-2 ring-[#f0c964]" aria-hidden="true" />}
             </button>
