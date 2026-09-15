@@ -51,6 +51,7 @@ export default function HomeView({
   pathProgress,
   practiceSession,
   leagueName,
+  leagueRank,
   seasonCoins,
 }) {
   const [mapMode, setMapMode] = useState("map");
@@ -113,8 +114,8 @@ export default function HomeView({
             <IconChip icon={DumbbellIcon} tone="orange" />
             <span className="home-map-card__title">Practice</span>
             <span className="home-map-card__details">
-              <span>{practiceSession ? `${practiceSession.title} · ${practiceSession.minutes} min` : "Build confidence with a quick session"}</span>
-              <span>Start a session <b aria-hidden="true">→</b></span>
+              <span>{practiceSession?.title ?? "A recommended session"}</span>
+              <span>{practiceSession ? `${practiceSession.minutes} min · Recommended for you` : "Recommended for you"}</span>
             </span>
           </button>
           <button
@@ -137,8 +138,8 @@ export default function HomeView({
             <IconChip icon={CompassIcon} tone="teal" />
             <span className="home-map-card__title">Paths</span>
             <span className="home-map-card__details">
-              <span>Keep moving through {currentPathTitle}</span>
-              <span>{pathProgress}% complete <b aria-hidden="true">→</b></span>
+              <span>{currentPathTitle}</span>
+              <span>{pathProgress}% complete · Continue your path</span>
             </span>
           </button>
           <button
@@ -161,8 +162,8 @@ export default function HomeView({
             <IconChip icon={PodiumIcon} tone="pink" />
             <span className="home-map-card__title">Leaderboard</span>
             <span className="home-map-card__details">
-              <span>See where you stand in {leagueName}</span>
-              <span>{seasonCoins} coins this season <b aria-hidden="true">→</b></span>
+              <span>{leagueName} · #{leagueRank ?? "—"}</span>
+              <span>{seasonCoins} coins earned this season</span>
             </span>
           </button>
           <button
@@ -185,8 +186,8 @@ export default function HomeView({
             <IconChip icon={RocketIcon} tone="violet" />
             <span className="home-map-card__title">Projects</span>
             <span className="home-map-card__details">
-              <span>Turn your {currentPathTitle} skills into real work</span>
-              <span>Explore projects <b aria-hidden="true">→</b></span>
+              <span>Build something with your skills</span>
+              <span>Explore project ideas</span>
             </span>
           </button>
           <button
@@ -211,8 +212,8 @@ export default function HomeView({
               Current Lesson
             </h1>
             <span className="home-map-card__details">
-              <span>{currentLessonTitle ? `Continue with ${currentLessonTitle}` : "Choose where you want to learn next"}</span>
-              <span>{pathProgress}% complete <b aria-hidden="true">Continue →</b></span>
+              <span>{currentLessonTitle ?? "Choose your next lesson"}</span>
+              <span>{pathProgress}% complete · Pick up where you left off</span>
             </span>
           </button>
 

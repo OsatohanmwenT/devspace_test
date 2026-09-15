@@ -33,7 +33,7 @@ import { practiceSessions } from './data/practice';
 import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
 import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './lib/h2h';
-import { resolveSeason } from './lib/leagueSim';
+import { getStandings, resolveSeason } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
@@ -606,6 +606,8 @@ function App() {
   const testHooksEnabled = import.meta.env.VITE_ENABLE_TEST_HOOKS === 'true'
 
   const currentLeague = getLeague(leagueIndex)
+  const leagueRank = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
+    .find((entry) => entry.isCurrentUser)?.rank
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
   // Percentages and the "next up" pointer come from what the learner has
@@ -938,6 +940,7 @@ function App() {
             pathProgress={derived.percent}
             practiceSession={homePracticeSessions[0]}
             leagueName={currentLeague.name}
+            leagueRank={leagueRank}
             seasonCoins={seasonCoins}
           />
         )}
