@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { DevyMood } from "../ui/DevyMood";
-import { CompassIcon, DumbbellIcon, PlayIcon, PodiumIcon, RocketIcon, RouteIcon, SparkleIcon } from "../ui/icons";
+import { CompassIcon, CrownIcon, DumbbellIcon, PlayIcon, PodiumIcon, RocketIcon, RouteIcon } from "../ui/icons";
 import { DevyPromptBand } from "./DevyPromptBand";
 
 // Shared card shell. Border colour, glow and the accent wash all come from
@@ -126,86 +126,97 @@ export default function HomeView({
             <IconChip icon={RocketIcon} tone="violet" />
             Projects
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMapMode("map");
-              onStartMission();
-            }}
+          {/* A real 3D flip card, not a slide-and-swap: the hero slot is one
+              object with two faces glued back-to-back. Clicking Leaderboard
+              spins it around its own vertical axis to its back face rather
+              than sliding a separate panel over the top. */}
+          <div
             style={{ "--card-accent": "59 130 246" }}
-            className={`${mapCard} home-map-card--lesson home-map-card-featured left-1/2 top-[332px] bg-[#1c2a4d] text-[#f4f4f2] hover:bg-[#213762] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#e2edfc] max-[900px]:col-span-2 max-[680px]:col-span-1`}
+            className="home-flip absolute left-1/2 top-[300px] h-[300px] w-[280px] -translate-x-1/2 max-[900px]:static max-[900px]:h-auto max-[900px]:w-full max-[900px]:translate-x-0 max-[900px]:col-span-2 max-[680px]:col-span-1"
           >
-            <IconChip icon={PlayIcon} tone="blue" />
-            <h1 className="m-0 font-rubik text-[17px] font-medium leading-none">
-              Current Lesson
-            </h1>
-          </button>
-
-          <article
-            id="home-leaderboard-preview"
-            className="home-leaderboard-preview absolute left-1/2 top-[250px] z-10 w-[280px] -translate-x-1/2 rounded-3xl border border-[#e0507a]/70 bg-[#1f1f1f] p-4 text-[#f4f4f2] shadow-[0_18px_38px_-14px_rgba(224,80,122,0.7)] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:text-neutral-800"
-            aria-labelledby="home-leaderboard-preview-title"
-            aria-hidden={activePreview !== "leaderboard"}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="m-0 text-xs font-medium text-[#f5a6bc] [[data-theme=light]_&]:text-[#b22d58]">
-                  {leaderboardPreview?.league?.name}
-                </p>
-                <h2 id="home-leaderboard-preview-title" className="mt-1 text-lg font-semibold">
-                  Leaderboard
-                </h2>
-              </div>
+            <div className={`home-flip-inner ${activePreview === "leaderboard" ? "is-flipped" : ""}`}>
               <button
                 type="button"
                 onClick={() => {
-                  setActivePreview(null);
-                  window.requestAnimationFrame(() => leaderboardCardRef.current?.focus());
+                  setMapMode("map");
+                  onStartMission();
                 }}
-                className="grid size-9 place-items-center rounded-full text-[#b7b7bb] hover:bg-white/10 hover:text-white focus-visible:outline-3 focus-visible:outline-[#f5a6bc] focus-visible:outline-offset-2 [[data-theme=light]_&]:hover:bg-black/5 [[data-theme=light]_&]:hover:text-neutral-800"
-                aria-label="Close leaderboard preview"
-                tabIndex={activePreview === "leaderboard" ? 0 : -1}
+                className="home-flip-face home-flip-face--front home-map-card-featured flex flex-col items-start justify-between rounded-3xl border p-5 text-left text-[#f4f4f2] bg-[#1c2a4d] hover:bg-[#213762] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#e2edfc]"
+                tabIndex={activePreview === "leaderboard" ? -1 : 0}
               >
-                <span aria-hidden="true">×</span>
+                <IconChip icon={PlayIcon} tone="blue" />
+                <h1 className="m-0 font-rubik text-2xl font-medium leading-none">
+                  Current Lesson
+                </h1>
               </button>
-            </div>
 
-            <p className="mt-1 text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-              Your place this season
-            </p>
-
-            <ul className="mt-3 space-y-1.5" aria-label="Leaderboard standings around you">
-              {(leaderboardPreview?.entries ?? []).map((entry) => {
-                const isCurrentUser = entry.isCurrentUser;
-                return (
-                  <li
-                    key={entry.id}
-                    className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm ${isCurrentUser ? "border border-[#8bb5f5] bg-[#2a293c] font-semibold [[data-theme=light]_&]:border-[#b9d4f7] [[data-theme=light]_&]:bg-[#e9f2ff]" : "bg-black/10 [[data-theme=light]_&]:bg-black/[0.03]"}`}
+              <article
+                id="home-leaderboard-preview"
+                className="home-flip-face home-flip-face--back rounded-3xl border border-[#e0507a]/70 bg-[#1f1f1f] p-4 text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:text-neutral-800"
+                aria-labelledby="home-leaderboard-preview-title"
+                aria-hidden={activePreview !== "leaderboard"}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="m-0 text-xs font-medium text-[#f5a6bc] [[data-theme=light]_&]:text-[#b22d58]">
+                      {leaderboardPreview?.league?.name}
+                    </p>
+                    <h2 id="home-leaderboard-preview-title" className="mt-1 text-lg font-semibold">
+                      Leaderboard
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePreview(null);
+                      window.requestAnimationFrame(() => leaderboardCardRef.current?.focus());
+                    }}
+                    className="grid size-9 place-items-center rounded-full text-[#b7b7bb] hover:bg-white/10 hover:text-white focus-visible:outline-3 focus-visible:outline-[#f5a6bc] focus-visible:outline-offset-2 [[data-theme=light]_&]:hover:bg-black/5 [[data-theme=light]_&]:hover:text-neutral-800"
+                    aria-label="Close leaderboard preview"
+                    tabIndex={activePreview === "leaderboard" ? 0 : -1}
                   >
-                    <span className="w-5 text-center text-xs tabular-nums text-[#b7b7bb] [[data-theme=light]_&]:text-[#686968]">
-                      {entry.rank}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                    <span className="text-xs tabular-nums text-[#d8d8dc] [[data-theme=light]_&]:text-[#555556]">
-                      {entry.score.toLocaleString()}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setActivePreview(null);
-                onOpenLeaderboard();
-              }}
-              className="mt-3 min-h-11 w-full rounded-xl bg-[#6699ec] px-4 text-sm font-semibold text-white shadow-[inset_0_-3px_0_rgba(20,37,99,.3)] hover:bg-[#4f83db] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-2 [[data-theme=light]_&]:bg-[#2563eb] [[data-theme=light]_&]:hover:bg-[#1d4ed8]"
-              tabIndex={activePreview === "leaderboard" ? 0 : -1}
-            >
-              Proceed to Leaderboard
-            </button>
-          </article>
+                <p className="mt-1 text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                  Your place this season
+                </p>
+
+                <ul className="mt-3 space-y-1.5" aria-label="Leaderboard standings around you">
+                  {(leaderboardPreview?.entries ?? []).map((entry) => {
+                    const isCurrentUser = entry.isCurrentUser;
+                    return (
+                      <li
+                        key={entry.id}
+                        className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm ${isCurrentUser ? "border border-[#8bb5f5] bg-[#2a293c] font-semibold [[data-theme=light]_&]:border-[#b9d4f7] [[data-theme=light]_&]:bg-[#e9f2ff]" : "bg-black/10 [[data-theme=light]_&]:bg-black/[0.03]"}`}
+                      >
+                        <span className="w-5 text-center text-xs tabular-nums text-[#b7b7bb] [[data-theme=light]_&]:text-[#686968]">
+                          {entry.rank}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+                        <span className="text-xs tabular-nums text-[#d8d8dc] [[data-theme=light]_&]:text-[#555556]">
+                          {entry.score.toLocaleString()}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePreview(null);
+                    onOpenLeaderboard();
+                  }}
+                  className="mt-3 min-h-11 w-full rounded-xl bg-[#6699ec] px-4 text-sm font-semibold text-white shadow-[inset_0_-3px_0_rgba(20,37,99,.3)] hover:bg-[#4f83db] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-2 [[data-theme=light]_&]:bg-[#2563eb] [[data-theme=light]_&]:hover:bg-[#1d4ed8]"
+                  tabIndex={activePreview === "leaderboard" ? 0 : -1}
+                >
+                  Proceed to Leaderboard
+                </button>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section
@@ -281,7 +292,7 @@ export default function HomeView({
               onClick={onOpenDevyPro}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[linear-gradient(86deg,#748fff_0%,#ff90e0_44.8%,#f7c325_100%)] px-4 text-[13px] font-semibold text-neutral-900 shadow-[inset_0_-3px_0_rgba(20,37,99,.3)] hover:brightness-105 focus-visible:outline-3 focus-visible:outline-[#f7c325] focus-visible:outline-offset-2"
             >
-              <SparkleIcon className="size-[18px] flex-none" />
+              <CrownIcon className="size-[18px] flex-none" />
               Devy Pro
             </button>
             <button
