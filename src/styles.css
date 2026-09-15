@@ -363,6 +363,7 @@
      to a learner's action. */
   .motion-button,
   .home-path-pill,
+  .home-map-card,
   .lesson-answer,
   .lesson-token,
   .lesson-blank {
@@ -528,5 +529,123 @@
 
   .home-practice-dot {
     animation: home-practice-dot 2.2s ease-in-out infinite;
+  }
+}
+
+/* Each map card carries one hue of its own: a clear border in that colour and
+   a shadow cast in the same colour directly beneath it. Driven by
+   --card-accent (an "R G B" triplet), so one rule dresses all five. The
+   surface stays flat and theme-owned — no gradient wash, per the flat-colour
+   direction in docs/design-direction.md. */
+.home-map-card {
+  border-color: rgb(var(--card-accent) / 0.55);
+  box-shadow: 0 10px 22px -10px rgb(var(--card-accent) / 0.6);
+}
+
+.home-map-card:hover {
+  border-color: rgb(var(--card-accent) / 0.9);
+  box-shadow: 0 14px 28px -10px rgb(var(--card-accent) / 0.8);
+}
+
+[data-theme='light'] .home-map-card {
+  border-color: rgb(var(--card-accent) / 0.5);
+  box-shadow: 0 10px 20px -10px rgb(var(--card-accent) / 0.45);
+}
+
+[data-theme='light'] .home-map-card:hover {
+  border-color: rgb(var(--card-accent) / 0.85);
+  box-shadow: 0 14px 26px -10px rgb(var(--card-accent) / 0.65);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The one repeated cue on this screen, and it goes where the design notes
+     allow it: the card holding the current learning state. A slow swell of
+     its own glow, nothing that moves. */
+  @keyframes home-card-breathe {
+    0%, 100% { box-shadow: 0 10px 22px -10px rgb(var(--card-accent) / 0.6); }
+    50% { box-shadow: 0 14px 30px -10px rgb(var(--card-accent) / 0.9); }
+  }
+
+  .home-map-card-featured {
+    animation: home-card-breathe 4.8s ease-in-out infinite;
+  }
+
+  .home-map-card-featured:hover {
+    animation: none;
+  }
+}
+
+@media (min-width: 901px) {
+  .home-map-card {
+    transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+    will-change: transform, opacity;
+  }
+
+  .home-map-card--lesson {
+    transform: translateX(-50%);
+    transform-origin: center;
+  }
+
+  .home-map-devy {
+    transition: transform 260ms ease, opacity 220ms ease;
+  }
+
+  .home-prompt-glow {
+    transition: transform 280ms ease, opacity 280ms ease;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--practice,
+  .home-map-scene[data-mode='compose'] .home-map-card--paths {
+    transition-delay: 0ms;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--leaderboard,
+  .home-map-scene[data-mode='compose'] .home-map-card--projects {
+    transition-delay: 40ms;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--lesson {
+    transform: translate(-50%, 280px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition-delay: 80ms;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--practice {
+    transform: translate(-88px, 0);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--leaderboard {
+    transform: translate(-278px, 88px);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--paths {
+    transform: translate(84px, 0);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card--projects {
+    transform: translate(274px, 88px);
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-devy {
+    transform: translateX(-50%) translateY(-16px);
+    opacity: 0.65;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card-featured {
+    animation: none;
+  }
+
+  .home-prompt-band[data-compose='true'] .home-prompt-glow {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-map-card,
+  .home-map-devy,
+  .home-prompt-glow {
+    transition: none;
   }
 }
