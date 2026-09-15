@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { PageWipe } from './components/layout/PageWipe';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
-import { ShortSessionRow } from './components/home/ShortSessionRow';
+import HomeView from './components/home';
 import LeaderboardView from './components/leaderboard';
 import { LeagueQualifiedCelebration } from './components/leaderboard/LeagueQualifiedCelebration';
 import { PayoutCenter } from './components/leaderboard/PayoutCenter';
@@ -21,16 +21,12 @@ import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
 import ProfileView from './components/profile';
 import SettingsView from './components/settings';
-import { ActionButton } from './components/ui/ActionButton';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
-import { Badge } from './components/ui/Badge';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyLottie } from './components/ui/DevyLottie';
-import { DevyMood } from './components/ui/DevyMood';
 import { EventType, useRive } from '@rive-app/react-canvas';
 import { DevyRive } from './components/ui/DevyRive';
-import { BoltIcon, SirenIcon } from './components/ui/icons';
-import { InfoTooltip } from './components/ui/InfoTooltip';
+import { SirenIcon } from './components/ui/icons';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
@@ -51,7 +47,7 @@ import {
 } from './lib/privateLeagues';
 import { getRewardForRank, MIN_PAYOUT_THRESHOLD } from './lib/rewards';
 import { formatTimeRemaining, getSeasonIndex, getTimeRemaining, now } from './lib/season';
-import { getStreakMessage, getStreakWeek, isActiveToday, WEEK_LENGTH } from './lib/streak';
+import { getStreakMessage, getStreakWeek, isActiveToday } from './lib/streak';
 import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
@@ -855,7 +851,7 @@ function App() {
       </header>
       )}
 
-      <main className={active === 'Plans' ? 'min-h-screen' : ['Paths', 'Leaderboard', 'Practice', 'Settings', 'Profile', 'Payouts'].includes(active) ? 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14' : 'grid grid-cols-[360px_minmax(0,1fr)] max-[900px]:grid-cols-[300px_minmax(0,1fr)] gap-[22px] max-[900px]:gap-[18px] w-[min(100%,1160px)] mx-auto pt-10 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:flex max-[680px]:flex-col max-[680px]:gap-7 max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : active === 'Home' ? '' : 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
         {active === 'Paths' ? (
           <PathsView
             currentLearnerPath={currentPath}
@@ -937,155 +933,18 @@ function App() {
             currentPath={currentPath}
           />
         ) : (
-          <>
-        <aside className="flex flex-col gap-[18px] max-[680px]:order-2" aria-label="Learner support">
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[38px] font-medium">{streakDays}</span>
-                <BoltIcon className="w-[34px] h-[34px] p-2 rounded-full bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]" />
-              </div>
-              <button className="min-w-9 min-h-8 p-1 text-[#7d7d80] [[data-theme=light]_&]:text-[#737371] tracking-[2px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]" onClick={() => showNotice(`${xp} of ${xpGoal} XP earned`)} aria-label="View streak details">•••</button>
-            </div>
-            {/* Was the fixed string "Solve 3 problems to start a streak", which
-                contradicted the streak count rendered directly above it. */}
-            {/* Devy shows up here only when the streak is actually at risk.
-                Making it the one thing on the card that changes is what turns
-                a line of grey text into something the eye catches. */}
-            <div className="mt-3.5 mb-4 flex items-center gap-3">
-              {streakAtRisk && <DevyMood mood="annoyed" className="size-[52px] flex-none max-[900px]:size-11" />}
-              <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">
-                {streakMessage.emphasis && <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">{streakMessage.emphasis} </strong>}
-                {streakMessage.text}
-              </p>
-            </div>
-            {/* Seven fixed 40px circles overflow the 300px sidebar, so they size
-                themselves from the space available and cap at the original 40px. */}
-            <div className="flex justify-between gap-1.5" role="img" aria-label={`Activity for the last ${WEEK_LENGTH} days: ${streakWeek.filter((day) => day.isActive).length} active`}>
-              {streakWeek.map(({ key, label, isActive }) => (
-                <div
-                  className={
-                    isActive
-                      ? 'flex flex-1 min-w-0 flex-col items-center gap-[5px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
-                      : 'flex flex-1 min-w-0 flex-col items-center gap-[5px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
-                  }
-                  key={key}
-                >
-                  <span
-                    className={
-                    isActive
-                      ? 'home-streak-day grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#f5a623] bg-[#f5a623] text-white shadow-[0_0_0_3px_rgba(245,166,35,0.18)]'
-                        : 'grid place-items-center w-full max-w-10 aspect-square rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]'
-                    }
-                  >
-                    <BoltIcon className="w-[18px] h-[18px]" />
-                  </span>
-                  <small>{label}</small>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="overflow-hidden rounded-3xl p-[22px] bg-[#211a2b] [[data-theme=light]_&]:bg-[#f5edf4] border border-[#404040] [[data-theme=light]_&]:border-[#eadfea] [[data-theme=light]_&]:shadow-none">
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <span className="text-[#f0c964] text-[21px]" aria-hidden="true">✦</span>
-              <div className="grid gap-1">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-medium">Unlock all learning</strong>
-                <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">Get smarter, faster with Premium.</span>
-              </div>
-            </div>
-            <ActionButton variant="premium" className="w-full min-h-[52px] text-[15px] font-medium" onClick={() => openPlans()}>
-              Explore Premium
-            </ActionButton>
-          </section>
-
-          <section className="border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] rounded-3xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:shadow-none p-[22px]">
-            <div className="flex items-start justify-between gap-2 mb-3.5 text-left">
-              <div className="grid gap-0.5">
-                <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px] font-semibold">{currentLeague.name}</strong>
-              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{formatTimeRemaining(getTimeRemaining(now()))}</span>
-              </div>
-              <InfoTooltip label="How leagues work" align="end">
-                Earn Season Devy Coins to move up the leaderboard. Final standings update when the season ends.
-              </InfoTooltip>
-            </div>
-            <button type="button" className="grid w-full gap-2 rounded-2xl border border-[#404040] bg-[#171717] p-3.5 text-left transition-colors hover:border-[#5a5a60] hover:bg-[#1c1c1e] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:hover:border-[#d4d4d4]" onClick={() => setActive('Leaderboard')} aria-label="Open leaderboard">
-              <span className="flex items-center justify-between px-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
-                <span>Standings</span>
-                <span>🪙</span>
-              </span>
-              {homeStandings.map((entry) => (
-                <span key={entry.id} className={`grid min-h-8 grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-[13px] ${entry.id === USER_ID ? 'bg-[#2a293c] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#e9f2ff] [[data-theme=light]_&]:text-neutral-800' : ''}`}>
-                  <span className="text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">{entry.rank}</span>
-                  <span className="truncate font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{entry.id === USER_ID ? 'You' : entry.name}</span>
-                  <strong className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] tabular-nums">{entry.score.toLocaleString()}</strong>
-                </span>
-              ))}
-            </button>
-          </section>
-
-        </aside>
-
-        <section className="min-w-0 max-[680px]:order-1">
-          <h1 className="m-0 mb-4 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-[30px] max-[680px]:text-[27px] font-semibold">Your next mission</h1>
-
-          <div className="relative w-full pt-2.5 pl-2.5 max-[680px]:pt-2 max-[680px]:pl-0">
-            <article className="relative z-[1] flex w-full min-h-[530px] max-[680px]:min-h-0 flex-col items-center gap-[18px] p-7 max-[900px]:p-[22px] max-[680px]:pt-[22px] max-[680px]:px-[18px] max-[680px]:pb-5 overflow-hidden rounded-3xl text-center bg-[#1f1f1f]! [[data-theme=light]_&]:bg-[#f4f7fc]! border border-[#404040] [[data-theme=light]_&]:border-[#e3e9f2] [[data-theme=light]_&]:shadow-none">
-              <div className="w-full pt-1 text-center">
-                <Badge className="bg-neutral-700 text-neutral-100">{currentPath.level}</Badge>
-                <h2 className="max-w-[520px] mx-auto mt-3.5 mb-1.5 text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rubik text-3xl sm:text-3xl lg:text-4xl font-medium leading-[1.04] [overflow-wrap:anywhere] text-balance">{currentPath.title}</h2>
-                <p className="m-0 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs max-[680px]:leading-[1.5] font-medium tracking-[.04em]">{currentRegionCard.title} · {currentRegionCard.percent}% complete</p>
-              </div>
-
-              <div className="relative w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] max-[680px]:mx-auto flex-none">
-                <div className="relative grid place-items-center w-[220px] h-[220px] max-[900px]:w-[190px] max-[900px]:h-[190px] max-[680px]:w-[170px] max-[680px]:h-[170px] overflow-visible">
-                  <div className="absolute z-0 right-[14%] bottom-[-2%] left-[14%] h-[28%] rounded-full bg-[#525252] blur-[18px] opacity-25" />
-                  <img className="relative z-[1] block w-full h-full object-contain" src={currentPath.emblem} alt="A colorful symbolic illustration for the current path" />
-                </div>
-              </div>
-
-              <div className="w-full mt-auto">
-                <div className="flex items-center justify-center gap-1.5 mb-[9px]" role="img" aria-label={`Region ${currentStepIndex + 1} of ${derived.regionsTotal}`}>
-                  {derived.regions.map((region, index) => (
-                    <span className={`home-progress-dot w-2 h-2 rounded-full ${index === currentStepIndex ? 'bg-[#d4d4d4]' : 'bg-[#404040] [[data-theme=light]_&]:bg-[#eeeeeb]'}`} key={region.id} />
-                  ))}
-                </div>
-                {/* The dots count regions, so the label says so — "Step N of 6"
-                    followed by a lesson title read as though the lesson were the step. */}
-                <p className="max-w-full m-0 mb-[18px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-xs leading-[1.5] text-center"><strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-medium">Region {currentStepIndex + 1} of {derived.regionsTotal}</strong> · {nextLesson?.title}</p>
-                <ActionButton variant="primary" className="cta-idle w-full min-h-[52px] text-[15px] font-medium" onClick={startMission}>
-                  {started ? 'Continue mission' : 'Start mission'} <span className="cta-idle-arrow" aria-hidden="true">→</span>
-                </ActionButton>
-              </div>
-            </article>
-          </div>
-
-          <section className="mt-8" aria-labelledby="also-learning-title">
-            <p id="also-learning-title" className="m-0 text-[11px] font-semibold tracking-[0.1em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">ALSO LEARNING</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              {otherPaths.map((path) => (
-                <button key={path.id} type="button" className="home-path-pill min-h-11 rounded-full border border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white px-4 text-sm text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" onClick={() => resumePath(path.id)}>
-                  Resume {path.title}
-                </button>
-              ))}
-              <button type="button" className="home-path-pill min-h-11 rounded-full border border-transparent bg-[#1c2a4d] [[data-theme=light]_&]:bg-[#f0f5fd] px-4 text-sm font-medium text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb] hover:bg-[#213762] [[data-theme=light]_&]:hover:bg-[#e2edfc]" onClick={() => { setPathsInitialView('custom'); setActive('Paths') }}>
-                <span aria-hidden="true">＋</span> Create another
-              </button>
-            </div>
-          </section>
-
-          <ShortSessionRow
-            sessions={homePracticeSessions}
-            completedSessions={completedSessions}
-            onStartPractice={setOpenPractice}
-            onSeeAll={() => setActive('Practice')}
+          <HomeView
+            onStartMission={startMission}
+            onOpenCareerPath={() => setActive('Paths')}
+            onOpenDevyPro={openPlans}
+            onOpenLeaderboard={() => setActive('Leaderboard')}
+            onSeeAllPractice={() => setActive('Practice')}
+            onOpenDevy={() => setDevyOpen(true)}
           />
-        </section>
-          </>
         )}
       </main>
 
-      {!openLesson && active !== 'Plans' && !customPathFullScreen && (
+      {!openLesson && active !== 'Plans' && active !== 'Home' && !customPathFullScreen && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
           <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
             <DevyLottie clip="thinking" className="size-full" />

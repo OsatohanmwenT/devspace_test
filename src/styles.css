@@ -507,3 +507,26 @@
   animation: lesson-options-nudge 3.6s 500ms ease-in-out infinite;
   transform-origin: center;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes home-prompt-send {
+    0%, 72%, 100% { transform: scale(1) translateX(0); }
+    76% { transform: scale(1.08) translateX(-2px); }
+    80% { transform: scale(1.03) translateX(2px); }
+    84% { transform: scale(1.06) translateX(-1px); }
+    88% { transform: scale(1); }
+  }
+
+  @keyframes home-practice-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.55); }
+    50% { box-shadow: 0 0 0 5px rgba(251, 113, 133, 0); }
+  }
+
+  .home-prompt-send {
+    animation: home-prompt-send 5.5s ease-in-out infinite;
+  }
+
+  .home-practice-dot {
+    animation: home-practice-dot 2.2s ease-in-out infinite;
+  }
+}

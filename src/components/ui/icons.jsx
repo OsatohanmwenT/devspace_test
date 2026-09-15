@@ -104,6 +104,66 @@ export function BookOpenIcon({ className }) {
   )
 }
 
+export function LayersIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3 3 8l9 5 9-5-9-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M3 12l9 5 9-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 16l9 5 9-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function DumbbellIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="1.5" y="9" width="3" height="6" rx="1" fill="currentColor" />
+      <rect x="19.5" y="9" width="3" height="6" rx="1" fill="currentColor" />
+      <rect x="4.5" y="7" width="2.5" height="10" rx="1" fill="currentColor" />
+      <rect x="17" y="7" width="2.5" height="10" rx="1" fill="currentColor" />
+      <rect x="7" y="11" width="10" height="2" rx="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function CompassIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M15.3 8.7 12.8 13 8.5 15.3 11 11l4.3-2.3Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function PodiumIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2.5l1.5 3 3.3.4-2.4 2.3.6 3.3L12 9.9l-2.9 1.6.6-3.3-2.4-2.3 3.3-.4L12 2.5Z" fill="currentColor" />
+      <rect x="2.5" y="15" width="5.5" height="6.5" rx="1" fill="currentColor" opacity=".55" />
+      <rect x="9.2" y="11" width="5.5" height="10.5" rx="1" fill="currentColor" />
+      <rect x="16" y="13" width="5.5" height="8.5" rx="1" fill="currentColor" opacity=".55" />
+    </svg>
+  )
+}
+
+export function RocketIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2c2.8 1.6 4.6 5.2 4 9.4-.9 1-1.9 1.6-1.9 1.6v3.6a2.1 2.1 0 0 1-4.2 0V13c0 0-1-.6-1.9-1.6C7.4 7.2 9.2 3.6 12 2Z" fill="currentColor" />
+      <circle cx="12" cy="9.2" r="1.4" fill="#121214" />
+      <path d="M7.3 12.6 4.5 15.8M16.7 12.6l2.8 3.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function PlayIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 4.2v15.6a1 1 0 0 0 1.53.85l12.4-7.8a1 1 0 0 0 0-1.7L8.53 3.35A1 1 0 0 0 7 4.2Z" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function HeadphonesIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
