@@ -650,7 +650,7 @@
   .home-map-card {
     --hide-delay: 0ms;
     left: 50%;
-    top: 222px;
+    top: 200px;
     transform-style: preserve-3d;
     transform-origin: center;
     transition:
