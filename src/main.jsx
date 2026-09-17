@@ -28,7 +28,6 @@ import { DevyRive } from './components/ui/DevyRive';
 import { CompassIcon, DumbbellIcon, HomeIcon, PodiumIcon, SirenIcon } from './components/ui/icons';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
-import { practiceSessions } from './data/practice';
 import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
 import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './lib/h2h';
@@ -92,6 +91,7 @@ function App() {
   const [plansHighlight, setPlansHighlight] = useState(null)
   const [publicProfileView, setPublicProfileView] = useState(false)
   const [pathsInitialView, setPathsInitialView] = useState(null)
+  const [pathsInitialSelectedId, setPathsInitialSelectedId] = useState(null)
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   const [leagueCelebration, setLeagueCelebration] = useState(null)
   const [roadmapTransition, setRoadmapTransition] = useState(null)
@@ -349,12 +349,24 @@ function App() {
   const viewRoadmapFromTransition = () => {
     dismissRoadmapTransition()
     setPathsInitialView('detail')
+    setPathsInitialSelectedId(null)
     setActive('Paths')
   }
 
   const exploreRoadmapsFromTransition = () => {
     dismissRoadmapTransition()
     setPathsInitialView(null)
+    setPathsInitialSelectedId(null)
+    setActive('Paths')
+  }
+
+  // Home's Continue Learning course switcher jumps straight to that path's
+  // own roadmap when it isn't the primary one — the one thing "quickly
+  // switch what I'm continuing" needs — rather than dropping the learner on
+  // the generic explore grid to find it themselves.
+  const openPathFromHome = (pathId) => {
+    setPathsInitialSelectedId(pathId)
+    setPathsInitialView('detail')
     setActive('Paths')
   }
 
@@ -591,8 +603,9 @@ function App() {
   const showChrome = active !== 'Plans' && !openLesson && !openPractice && !customPathFullScreen
 
   const currentLeague = getLeague(leagueIndex)
-  const leagueRank = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
-    .find((entry) => entry.isCurrentUser)?.rank
+  const leagueStandings = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
+  const leagueRank = leagueStandings.find((entry) => entry.isCurrentUser)?.rank
+  const leagueRankDelta = leagueStandings.find((entry) => entry.isCurrentUser)?.delta
   const xpGoal = computeDailyGoal(profile?.dailyMinutes)
 
   // Percentages and the "next up" pointer come from what the learner has
@@ -624,36 +637,76 @@ function App() {
     return fallbacks.map((id) => getPath(id, customPaths)).filter(Boolean)
   }, [pathHistory, customPaths, profile?.pathId])
 
-  // Unfinished sessions prioritizing the learner's active path topic and tools
-  const homePracticeSessions = useMemo(() => {
-    const activeTools = (currentPath?.tools ?? []).map((t) => t.toLowerCase())
-    const pathTitle = (currentPath?.title ?? '').toLowerCase()
-
-    const isRecommended = (session) => {
-      const topicLower = session.topic.toLowerCase()
-      return activeTools.some((tool) => tool.includes(topicLower) || topicLower.includes(tool))
-        || pathTitle.includes(topicLower)
-        || (topicLower === 'python' && pathTitle.includes('learning'))
-        || (topicLower === 'data' && pathTitle.includes('data'))
-    }
-
-    const scored = practiceSessions.map((session) => {
-      const recommended = isRecommended(session)
-      const completed = Boolean(completedSessions[session.id])
+  // Home's Continue Learning card folds course-switching into itself — a
+  // dropdown over this list — rather than a separate Paths card, so juggling
+  // a few concurrent courses is a click on the card you're already looking
+  // at instead of a trip through the Paths tab.
+  const courseOptions = useMemo(() => {
+    const toOption = (path, isPrimary) => {
+      const info = derivePathProgress(path, completedLessons)
       return {
-        ...session,
-        isRecommended: recommended,
-        score: (recommended ? 2 : 0) + (completed ? 0 : 1),
+        id: path.id,
+        title: path.title,
+        percent: info.percent,
+        nextLessonTitle: info.currentLesson?.title ?? null,
+        regionPercent: info.currentRegion?.percent ?? 0,
+        regionLessonsCompleted: info.currentRegion?.lessonsCompleted ?? 0,
+        regionLessonsTotal: info.currentRegion?.lessonsTotal ?? 0,
+        isPrimary,
       }
-    })
+    }
+    // A custom path becomes switchable the moment it exists, even if it was
+    // just built via chat and never made primary — otherPaths alone (paused
+    // *former* primaries, or catalog suggestions) wouldn't surface it.
+    const ownCustomPaths = Object.values(customPaths).filter((path) => path.id !== profile?.pathId && !otherPaths.some((other) => other.id === path.id))
+    return [
+      toOption(currentPath, true),
+      ...otherPaths.map((path) => toOption(path, false)),
+      ...ownCustomPaths.map((path) => toOption(path, false)),
+    ]
+  }, [currentPath, otherPaths, customPaths, profile?.pathId, completedLessons])
 
-    scored.sort((a, b) => b.score - a.score)
-    return scored.slice(0, 2)
-  }, [completedSessions, currentPath])
+  // Home's Leaderboard card reveals the standings immediately around the
+  // learner's own row — one above, one below — rather than the whole league,
+  // since that's the only slice that answers "who am I actually racing".
+  const leagueNeighbors = useMemo(() => {
+    const userIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
+    if (userIndex === -1) return []
+    return leagueStandings.slice(Math.max(0, userIndex - 1), userIndex + 2)
+  }, [leagueStandings])
+  const userStandingIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
+  const coinsToNextRank = userStandingIndex > 0
+    ? leagueStandings[userStandingIndex - 1].score - leagueStandings[userStandingIndex].score
+    : 0
+
+  // The Leaderboard card's "what's actually at stake" line — promotion is a
+  // real mechanic (see data/leagues.js promotePercent), so this is the
+  // learner's real distance from it rather than an invented reward.
+  const promoteCount = Math.max(1, Math.round(leagueStandings.length * currentLeague.promotePercent))
+  const inPromotionZone = currentLeague.promotePercent > 0 && userStandingIndex !== -1 && userStandingIndex < promoteCount
+  const coinsToPromotion = currentLeague.promotePercent > 0 && !inPromotionZone && userStandingIndex > 0
+    ? leagueStandings[promoteCount - 1].score - leagueStandings[userStandingIndex].score
+    : 0
+  const seasonTimeLeft = formatTimeRemaining(getTimeRemaining(now()))
+
   // Reflects what the learner actually onboarded as, rather than ML for everyone.
   const homeHint = nextLesson
     ? `Next up on ${currentPath.title} is ${nextLesson.title}. ${seasonCoins > 0 ? 'You’re already on the board this season — keep the streak going.' : 'A single lesson is enough to join this season’s league.'}`
     : `You’re set up on ${currentPath.title}. Open Paths to pick where to go next.`
+
+  // Home's "What's New" card rotates through whichever single real signal
+  // matters most right now, in priority order, rather than trying to show
+  // everything — a finished path outranks a streak nudge, which outranks a
+  // routine checkpoint reminder.
+  const dynamicUpdate = derived.isComplete
+    ? { kind: 'path-complete', title: `You've finished ${currentPath.title}`, body: otherPaths[0] ? `Recommended next: ${otherPaths[0].title}` : 'Explore Paths to pick what\'s next.' }
+    : streakAtRisk
+      ? { kind: 'streak-risk', title: `${streakDays}-day streak`, body: 'One more lesson today keeps it alive.' }
+      : derived.nextCheckpoint && derived.nextCheckpoint.lessonsUntil <= 2
+        ? { kind: 'checkpoint', title: 'Checkpoint coming up', body: derived.nextCheckpoint.lesson.title }
+        : streakDays > 0
+          ? { kind: 'streak', title: `${streakDays}-day streak`, body: 'Keep it going with today’s lesson.' }
+          : { kind: 'welcome', title: 'Welcome back', body: homeHint }
 
   // A direct preview instead of driving real completion state to reach these
   // screens — that approach kept breaking on real data's own edge cases (an
@@ -784,7 +837,7 @@ function App() {
                     ? activeColor
                     : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-800'
                 }`}
-                onClick={() => { setActive(id); setPathsInitialView(null) }}
+                onClick={() => { setActive(id); setPathsInitialView(null); setPathsInitialSelectedId(null) }}
                 aria-label={label}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -814,7 +867,7 @@ function App() {
                     ? "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#6699ec] focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
                     : "relative h-16 px-0.5 border-0 bg-transparent text-sm font-medium text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-700 after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
                 }
-                onClick={() => { setActive(item); setPathsInitialView(null) }}
+                onClick={() => { setActive(item); setPathsInitialView(null); setPathsInitialSelectedId(null) }}
               >
                 {item}
               </button>
@@ -911,6 +964,7 @@ function App() {
             onOpenLesson={launchLesson}
             onChooseFramework={chooseFrontendFramework}
             initialView={pathsInitialView}
+            initialSelectedPathId={pathsInitialSelectedId}
             customPaths={customPaths}
             primaryPathId={profile?.pathId}
             profile={profile}
@@ -950,7 +1004,7 @@ function App() {
             currentPath={currentPath}
             pathProgress={derived}
             onSaveProfile={saveProfileFields}
-            onStartLearning={() => { setActive('Paths'); setPathsInitialView(null) }}
+            onStartLearning={() => { setActive('Paths'); setPathsInitialView(null); setPathsInitialSelectedId(null) }}
             isLoading={profileLoading}
             isPublicView={publicProfileView}
             onTogglePublicView={setPublicProfileView}
@@ -992,17 +1046,23 @@ function App() {
             onOpenLeaderboard={() => setActive('Leaderboard')}
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
-            currentPathTitle={currentPath.title}
-            currentLessonTitle={nextLesson?.title}
-            pathProgress={derived.percent}
-            currentRegionTitle={currentRegionCard?.title}
-            currentRegionProgress={currentRegionCard?.percent ?? 0}
-            currentRegionLessonsCompleted={currentRegionCard?.lessonsCompleted ?? 0}
+            onOpenPath={openPathFromHome}
+            courseOptions={courseOptions}
             currentRegionLessonsTotal={currentRegionCard?.lessonsTotal ?? 0}
-            practiceSession={homePracticeSessions[0]}
+            completedLessonsCount={Object.keys(completedLessons).length}
+            pathTools={currentPath.tools ?? []}
             leagueName={currentLeague.name}
+            leagueColor={currentLeague.color}
             leagueRank={leagueRank}
+            leagueRankDelta={leagueRankDelta}
+            leagueNeighbors={leagueNeighbors}
+            coinsToNextRank={coinsToNextRank}
+            coinsToPromotion={coinsToPromotion}
+            inPromotionZone={inPromotionZone}
+            canPromote={currentLeague.promotePercent > 0}
+            seasonTimeLeft={seasonTimeLeft}
             seasonCoins={seasonCoins}
+            dynamicUpdate={dynamicUpdate}
           />
         )}
       </main>

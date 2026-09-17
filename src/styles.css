@@ -520,21 +520,9 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes home-prompt-send {
-    0%, 72%, 100% { transform: scale(1) translateX(0); }
-    76% { transform: scale(1.08) translateX(-2px); }
-    80% { transform: scale(1.03) translateX(2px); }
-    84% { transform: scale(1.06) translateX(-1px); }
-    88% { transform: scale(1); }
-  }
-
   @keyframes home-practice-dot {
     0%, 100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.55); }
     50% { box-shadow: 0 0 0 5px rgba(251, 113, 133, 0); }
-  }
-
-  .home-prompt-send {
-    animation: home-prompt-send 5.5s ease-in-out infinite;
   }
 
   .home-practice-dot {
@@ -560,6 +548,299 @@
   display: none;
 }
 
+/* The compact teaser every card shows in its side (carousel) state — a big
+   stat, a one-line label, and (where real data supports it) a trend line.
+   Hidden once the card is front and center, where the fuller __details /
+   __lesson-details block above takes over instead. */
+.home-map-card__side {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  transition: transform 220ms ease;
+}
+
+.home-map-card[data-slot='front'] .home-map-card__side {
+  display: none;
+}
+
+.home-map-card__side-value {
+  font-family: var(--font-rubik, inherit);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #f4f4f2;
+}
+
+.home-map-card__side-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b6bac4;
+}
+
+.home-map-card__side-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a8f9c;
+}
+
+.home-map-card__side-trend[data-direction='up'] {
+  color: #4ade80;
+}
+
+.home-map-card__side-trend[data-direction='down'] {
+  color: #fb7185;
+}
+
+[data-theme='light'] .home-map-card__side-value {
+  color: #262626;
+}
+
+[data-theme='light'] .home-map-card__side-label {
+  color: #686968;
+}
+
+/* The little "there's more inside" cue in the corner — invisible until the
+   card is hovered, so it never competes with the icon chip for attention on
+   first glance. */
+.home-map-card__expand {
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  color: rgb(var(--card-accent));
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.home-map-card:hover .home-map-card__expand {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+
+/* Small per-category visual grammar — a rank strip, branching nodes, a
+   project grid, a mini roadmap — one clear glyph so a side card reads as a
+   distinct *kind* of thing, not just a colored label on the same template. */
+.home-map-card__glyph {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  margin-bottom: 8px;
+}
+
+.home-map-card__glyph-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(var(--card-accent) / 0.18);
+}
+
+.home-map-card__glyph-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(var(--card-accent));
+}
+
+.home-map-card__glyph-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgb(var(--card-accent) / 0.25);
+}
+
+.home-map-card__glyph-dot[data-filled='true'] {
+  background: rgb(var(--card-accent));
+}
+
+/* The front-state mini standings strip — one row per neighbor, "You"
+   visually picked out from Tobi/Ada either side of you. */
+.home-map-card__standings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.home-map-card__standings-row[data-self='true'] {
+  color: #f4f4f2;
+  font-weight: 700;
+}
+
+[data-theme='light'] .home-map-card__standings-row[data-self='true'] {
+  color: #262626;
+}
+
+/* The front-state mini roadmap — a row of lesson dots with the current one
+   picked out, standing in for the literal "Devy on a node" sketch without
+   needing a bespoke illustration. */
+.home-map-card__roadmap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.home-map-card__roadmap-node {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 999px;
+  border: 2px solid rgb(var(--card-accent) / 0.35);
+  background: transparent;
+}
+
+.home-map-card__roadmap-node[data-state='completed'] {
+  border-color: rgb(var(--card-accent));
+  background: rgb(var(--card-accent) / 0.25);
+}
+
+.home-map-card__roadmap-node[data-state='current'] {
+  border-color: rgb(var(--card-accent));
+  box-shadow: 0 0 0 3px rgb(var(--card-accent) / 0.2);
+}
+
+.home-map-card__roadmap-connector {
+  flex: 1;
+  height: 2px;
+  background: rgb(var(--card-accent) / 0.25);
+}
+
+/* The button now wrapping the primary lesson (added so the "Also learning"
+   rows below it can be independently clickable) needs the same
+   flex-column layout .home-map-card__lesson-details used to provide
+   directly to its strong/span children. */
+.home-map-card__primary-lesson {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The course switcher folded into Continue Learning — a pill that becomes a
+   dropdown once there's more than one course to switch between, so juggling
+   a couple of concurrent courses never needs a separate Paths card. */
+.home-map-card__course-switcher {
+  position: relative;
+  flex: none;
+}
+
+.home-map-card__course-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgb(var(--card-accent) / 0.14);
+  color: rgb(var(--card-accent));
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.home-map-card__course-pill--button {
+  border: 0;
+  cursor: pointer;
+}
+
+.home-map-card__course-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 210px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid #37373a;
+  background: #232324;
+  box-shadow: 0 16px 32px -12px rgb(0 0 0 / 0.5);
+}
+
+.home-map-card__course-menu-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  padding: 7px 9px;
+  color: #c9d3e8;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-map-card__course-menu-row:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #f4f4f2;
+}
+
+.home-map-card__course-menu-row[aria-current='true'] {
+  color: rgb(var(--card-accent));
+  font-weight: 700;
+}
+
+[data-theme='light'] .home-map-card__course-menu {
+  border-color: #e8e6e1;
+  background: #ffffff;
+}
+
+[data-theme='light'] .home-map-card__course-menu-row {
+  color: #526174;
+}
+
+[data-theme='light'] .home-map-card__course-menu-row:hover {
+  background: rgb(0 0 0 / 0.04);
+  color: #262626;
+}
+
+/* The Leaderboard card's real stake in the outcome — promotion, not an
+   invented reward — set apart from the plain standings text above it. */
+.home-map-card__promotion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  color: #8a8f9c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.home-map-card__promotion[data-active='true'] {
+  color: #ffcf8b;
+}
+
+[data-theme='light'] .home-map-card__promotion {
+  border-top-color: rgb(0 0 0 / 0.08);
+  color: #8a8a86;
+}
+
+[data-theme='light'] .home-map-card__promotion[data-active='true'] {
+  color: #b5791a;
+}
+
+/* The Dynamic card's teaser is a short sentence, not a stat — too long for
+   the 30px numeric __side-value size, so it gets its own smaller variant. */
+.home-map-card__side-value--text {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
 .home-prompt-glow {
   background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.28), rgb(var(--prompt-accent) / 0.1) 44%, transparent 76%);
 }
@@ -570,6 +851,14 @@
 
 .home-map-card__title {
   margin-top: 16px;
+}
+
+/* The category label only means something once the card has revealed its
+   fuller self — on the side, the __side block already carries the "what is
+   this" job (a stat, not a label), so the plain title would just repeat
+   underneath it. */
+.home-map-card:not([data-slot='front']) .home-map-card__title {
+  display: none;
 }
 
 .home-map-card:hover {
@@ -650,7 +939,7 @@
   .home-map-card {
     --hide-delay: 0ms;
     left: 50%;
-    top: 200px;
+    top: 190px;
     transform-style: preserve-3d;
     transform-origin: center;
     transition:
@@ -713,6 +1002,13 @@
     font-weight: 500;
   }
 
+  /* Continue Learning's title lives inside __lesson-details (so it can sit
+     next to the course switcher on the same row) — it still needs to read
+     as a heading, not the muted body-copy color the rest of the block uses. */
+  .home-map-card__lesson-details .home-map-card__title {
+    color: #f4f4f2;
+  }
+
   .home-map-card__progress {
     display: block;
     height: 6px;
@@ -751,6 +1047,10 @@
     color: #262626;
   }
 
+  [data-theme='light'] .home-map-card__lesson-details .home-map-card__title {
+    color: #262626;
+  }
+
   [data-theme='light'] .home-map-card__lesson-details .home-map-card__lesson-complete {
     color: #526174;
   }
@@ -761,30 +1061,66 @@
 
   .home-map-card[data-slot='previous'] {
     z-index: 2;
-    transform: translate(calc(-50% - 320px), 14px) rotateY(42deg) scale(0.5);
+    transform: translate(calc(-50% - 340px), 14px) rotateY(42deg) scale(0.5);
     opacity: 0.72;
     filter: blur(0.35px);
   }
 
   .home-map-card[data-slot='next'] {
     z-index: 2;
-    transform: translate(calc(-50% + 320px), 14px) rotateY(-42deg) scale(0.5);
+    transform: translate(calc(-50% + 340px), 14px) rotateY(-42deg) scale(0.5);
     opacity: 0.72;
     filter: blur(0.35px);
   }
 
   .home-map-card[data-slot='far-previous'] {
     z-index: 1;
-    transform: translate(calc(-50% - 470px), -12px) translateZ(-180px) rotateY(58deg) scale(0.3);
+    transform: translate(calc(-50% - 500px), -12px) translateZ(-180px) rotateY(58deg) scale(0.3);
     opacity: 0.3;
     filter: blur(1px);
   }
 
   .home-map-card[data-slot='far-next'] {
     z-index: 1;
-    transform: translate(calc(-50% + 470px), -12px) translateZ(-180px) rotateY(-58deg) scale(0.3);
+    transform: translate(calc(-50% + 500px), -12px) translateZ(-180px) rotateY(-58deg) scale(0.3);
     opacity: 0.3;
     filter: blur(1px);
+  }
+
+  /* A side card should visibly lean toward the viewer on hover — less tilt,
+     a touch bigger, content nudged up — so it reads as "pull me forward"
+     rather than just a smaller, decorative version of the front card. Faster
+     than the 400ms slot-change transition since this is a standing-invitation
+     cue, not the big carousel move. */
+  .home-map-card[data-slot='previous']:hover {
+    transition-duration: 220ms;
+    transform: translate(calc(-50% - 320px), 10px) rotateY(24deg) scale(0.53);
+    opacity: 0.92;
+    filter: none;
+  }
+
+  .home-map-card[data-slot='next']:hover {
+    transition-duration: 220ms;
+    transform: translate(calc(-50% + 320px), 10px) rotateY(-24deg) scale(0.53);
+    opacity: 0.92;
+    filter: none;
+  }
+
+  .home-map-card[data-slot='far-previous']:hover {
+    transition-duration: 220ms;
+    transform: translate(calc(-50% - 490px), -16px) translateZ(-180px) rotateY(46deg) scale(0.32);
+    opacity: 0.55;
+  }
+
+  .home-map-card[data-slot='far-next']:hover {
+    transition-duration: 220ms;
+    transform: translate(calc(-50% + 490px), -16px) translateZ(-180px) rotateY(-46deg) scale(0.32);
+    opacity: 0.55;
+  }
+
+  .home-map-card[data-slot='previous']:hover .home-map-card__side,
+  .home-map-card[data-slot='next']:hover .home-map-card__side {
+    transform: translateY(-3px);
   }
 
   .home-map-devy,
@@ -933,6 +1269,14 @@
   }
 
   [data-theme='light'] .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+    color: #526174;
+  }
+
+  [data-theme='light'] .home-map-card__lesson-details .home-map-card__title {
     color: #262626;
   }
 

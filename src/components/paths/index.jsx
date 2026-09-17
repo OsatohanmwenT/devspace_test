@@ -7,11 +7,15 @@ import { CustomPathIntroduction } from './CustomPathIntroduction'
 import { ExplorePathCard, PathPreviewModal } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, onChooseFramework, initialView, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile, onFullScreenChange }) {
-  const [view, setView] = useState(initialView ?? 'overview')
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, onChooseFramework, initialView, initialSelectedPathId, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile, onFullScreenChange }) {
+  // A caller (Home's "Also learning" quick-switch) can land directly on a
+  // specific path's detail rather than the overview — `path` only needs an
+  // `id`, since LearningPathDetail always re-fetches the full record via
+  // `getPath` below.
+  const [view, setView] = useState(initialView ?? (initialSelectedPathId ? 'detail' : 'overview'))
   const [type, setType] = useState('all')
   const [query, setQuery] = useState('')
-  const [selectedPath, setSelectedPath] = useState(null)
+  const [selectedPath, setSelectedPath] = useState(() => initialSelectedPathId ? { id: initialSelectedPathId } : null)
   const [selectedCustomPath, setSelectedCustomPath] = useState(null)
   const [previewPath, setPreviewPath] = useState(null)
   const [customPathToSwitch, setCustomPathToSwitch] = useState(null)
