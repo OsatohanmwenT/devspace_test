@@ -26,7 +26,7 @@ import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyLottie } from './components/ui/DevyLottie';
 import { EventType, useRive } from '@rive-app/react-canvas';
 import { DevyRive } from './components/ui/DevyRive';
-import { SirenIcon } from './components/ui/icons';
+import { CompassIcon, DumbbellIcon, HomeIcon, PodiumIcon, SirenIcon } from './components/ui/icons';
 import { getLeague } from './data/leagues';
 import { buildCustomPathRecord, getPath } from './data/paths';
 import { practiceSessions } from './data/practice';
@@ -605,6 +605,11 @@ function App() {
   // .env.development either way, so this is out of shipped builds regardless.
   const testHooksEnabled = import.meta.env.VITE_ENABLE_TEST_HOOKS === 'true'
 
+  // Same condition the header itself already gates on — the tab bar is that
+  // header's mobile nav, so it disappears everywhere the header does (a full
+  // path/practice session, Plans) rather than floating over a focused screen.
+  const showChrome = active !== 'Plans' && !openLesson && !openPractice && !customPathFullScreen
+
   const currentLeague = getLeague(leagueIndex)
   const leagueRank = getStandings(getSeasonIndex(now()), leagueIndex, seasonCoins, now())
     .find((entry) => entry.isCurrentUser)?.rank
@@ -740,8 +745,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
-      {active !== 'Plans' && !openLesson && !openPractice && !customPathFullScreen && (
-      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-[18px] border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
+      {showChrome && (
+      <header className="sticky top-0 z-30 flex items-center w-full h-16 px-[max(22px,calc((100vw-1160px)/2))] max-[680px]:px-4 border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#121214]/95 [[data-theme=light]_&]:bg-white/95 backdrop-blur-md">
+        {/* Devspace logo */}
         <button
           data-cuelume-press="pulse"
           data-cuelume-release="release"
@@ -749,10 +755,73 @@ function App() {
           onClick={() => setActive('Home')}
           aria-label="Devspace home"
         >
-          <img className="block w-[129px] h-[19px] [[data-theme=light]_&]:brightness-0" src="/assets/logo.svg" alt="Devspace" />
+          <img className="hidden w-[129px] h-[19px] min-[681px]:block [[data-theme=light]_&]:brightness-0" src="/assets/logo.svg" alt="Devspace" />
+          <span className="block h-5 w-[33px] overflow-hidden min-[681px]:hidden mr-6 min-[420px]:mr-8 min-[540px]:mr-10">
+            <img className="h-5 w-[135px] max-w-none [[data-theme=light]_&]:brightness-0" src="/assets/logo.svg" alt="Devspace" />
+          </span>
         </button>
 
-        <nav className="flex gap-6 ml-12 mr-auto max-[680px]:hidden" aria-label="Primary navigation">
+        {/* Mobile navigation tabs with active underline indicator */}
+        <nav className="flex items-center gap-1 sm:gap-1.5 min-[681px]:hidden" aria-label="Mobile navigation">
+          {[
+            {
+              id: 'Home',
+              label: 'Home',
+              Icon: HomeIcon,
+              activeColor: 'text-[#6699ec] [[data-theme=light]_&]:text-[#2563eb]',
+              barColor: 'bg-[#6699ec] [[data-theme=light]_&]:bg-[#2563eb]',
+            },
+            {
+              id: 'Paths',
+              label: 'Paths',
+              Icon: CompassIcon,
+              activeColor: 'text-[#04adc0] [[data-theme=light]_&]:text-[#028492]',
+              barColor: 'bg-[#04adc0] [[data-theme=light]_&]:bg-[#028492]',
+            },
+            {
+              id: 'Leaderboard',
+              label: 'Ranks',
+              Icon: PodiumIcon,
+              activeColor: 'text-[#e0507a] [[data-theme=light]_&]:text-[#c22d56]',
+              barColor: 'bg-[#e0507a] [[data-theme=light]_&]:bg-[#c22d56]',
+            },
+            {
+              id: 'Practice',
+              label: 'Practice',
+              Icon: DumbbellIcon,
+              activeColor: 'text-[#f5a623] [[data-theme=light]_&]:text-[#d97706]',
+              barColor: 'bg-[#f5a623] [[data-theme=light]_&]:bg-[#d97706]',
+            },
+          ].map(({ id, label, Icon, activeColor, barColor }) => {
+            const isActive = active === id
+            return (
+              <button
+                key={id}
+                type="button"
+                data-cuelume-toggle
+                className={`relative flex h-16 items-center px-1.5 min-[380px]:px-2.5 border-0 bg-transparent transition-colors focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${
+                  isActive
+                    ? activeColor
+                    : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:text-neutral-800'
+                }`}
+                onClick={() => { setActive(id); setPathsInitialView(null) }}
+                aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon className="size-7 max-[360px]:size-[25px]" />
+                {isActive && (
+                  <span
+                    className={`absolute inset-x-1 bottom-0 h-[3px] rounded-full ${barColor}`}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Desktop text navigation */}
+        <nav className="hidden min-[681px]:flex gap-6 ml-12 mr-auto" aria-label="Primary navigation">
           {['Home', 'Paths', 'Leaderboard', 'Practice'].map((item) => {
             const isActive = active === item
             return (
@@ -773,12 +842,17 @@ function App() {
           })}
         </nav>
 
-        <div className="flex gap-2 ml-3">
+        {/* Stats on the right */}
+        <div className="flex items-center gap-3.5 sm:gap-3 ml-auto">
           <div className="relative">
             <button
               ref={streakButtonRef}
               type="button"
-              className={`relative inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${streakAtRisk ? 'border-red-400/80 bg-red-500/10 text-red-200 hover:bg-red-500/15 [[data-theme=light]_&]:border-red-400 [[data-theme=light]_&]:bg-red-50 [[data-theme=light]_&]:text-red-700 [[data-theme=light]_&]:hover:bg-red-100' : 'border-[#404040] bg-[#262626] text-[#f4f4f2] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#686968]'}`}
+              className={`relative inline-flex items-center gap-1 sm:gap-1.5 cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] max-[680px]:h-auto max-[680px]:!bg-transparent max-[680px]:!border-0 max-[680px]:px-1 max-[680px]:text-[14px] max-[680px]:font-bold min-[681px]:h-[34px] min-[681px]:rounded-full min-[681px]:border min-[681px]:px-3 min-[681px]:text-[13px] min-[681px]:font-semibold ${
+                streakAtRisk
+                  ? 'max-[680px]:text-red-500 [[data-theme=light]_&]:max-[680px]:text-red-600 min-[681px]:border-red-400/80 min-[681px]:bg-red-500/10 min-[681px]:text-red-200 min-[681px]:hover:bg-red-500/15 [[data-theme=light]_&]:min-[681px]:border-red-400 [[data-theme=light]_&]:min-[681px]:bg-red-50 [[data-theme=light]_&]:min-[681px]:text-red-700 [[data-theme=light]_&]:min-[681px]:hover:bg-red-100'
+                  : 'max-[680px]:text-[#f4f4f2] [[data-theme=light]_&]:max-[680px]:text-neutral-900 min-[681px]:border-[#404040] min-[681px]:bg-[#262626] min-[681px]:text-[#f4f4f2] min-[681px]:hover:border-[#9a9a9d] [[data-theme=light]_&]:min-[681px]:border-[#eeeeeb] [[data-theme=light]_&]:min-[681px]:bg-white [[data-theme=light]_&]:min-[681px]:text-neutral-800 [[data-theme=light]_&]:min-[681px]:hover:border-[#686968]'
+              }`}
               onClick={() => {
                 setActivePopover(null)
                 setStreakJourneyOpen(true)
@@ -788,7 +862,7 @@ function App() {
               aria-controls="streak-journey-dialog"
               aria-label={streakAtRisk ? `Open streak journey. ${streakDays} day streak. Activity required today.` : activeToday ? `Open streak journey. ${streakDays} day streak. Today complete.` : 'Open streak journey and start your streak.'}
             >
-              {streakAtRisk ? <SirenIcon className="size-4" /> : <AnimatedBoltIcon className="size-4 text-[#f5a623]" />}
+              {streakAtRisk ? <SirenIcon className="size-4 max-[680px]:size-[18px]" /> : <AnimatedBoltIcon className="size-4 max-[680px]:size-[18px] text-[#f5a623]" />}
               <span aria-hidden="true">{streakDays}</span>
               {streakAtRisk && <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-[#121214] bg-red-400 motion-safe:animate-pulse [[data-theme=light]_&]:border-white" aria-hidden="true" />}
             </button>
@@ -798,12 +872,16 @@ function App() {
             <button
               ref={xpButtonRef}
               type="button"
-              className={`inline-flex items-center gap-[5px] h-[34px] border rounded-full px-3 text-[13px] font-semibold cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] ${activePopover === 'xp' ? 'border-[#6699ec] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800' : 'border-[#404040] text-[#9a9a9d] hover:border-[#9a9a9d] [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:border-[#686968]'} bg-[#262626] [[data-theme=light]_&]:bg-white`}
+              className={`inline-flex items-center gap-1 sm:gap-[5px] cursor-pointer font-[inherit] transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72] max-[680px]:h-auto max-[680px]:!bg-transparent max-[680px]:!border-0 max-[680px]:px-1 max-[680px]:text-[14px] max-[680px]:font-bold min-[681px]:h-[34px] min-[681px]:border min-[681px]:rounded-full min-[681px]:px-3 min-[681px]:text-[13px] min-[681px]:font-semibold min-[681px]:bg-[#262626] [[data-theme=light]_&]:min-[681px]:bg-white ${
+                activePopover === 'xp'
+                  ? 'max-[680px]:text-[#6699ec] min-[681px]:border-[#6699ec] min-[681px]:text-[#f4f4f2] [[data-theme=light]_&]:min-[681px]:text-neutral-800'
+                  : 'max-[680px]:text-[#f4f4f2] [[data-theme=light]_&]:max-[680px]:text-neutral-900 min-[681px]:border-[#404040] min-[681px]:text-[#9a9a9d] min-[681px]:hover:border-[#9a9a9d] [[data-theme=light]_&]:min-[681px]:border-[#eeeeeb] [[data-theme=light]_&]:min-[681px]:text-[#686968] [[data-theme=light]_&]:min-[681px]:hover:border-[#686968]'
+              }`}
               onClick={() => setActivePopover((current) => (current === 'xp' ? null : 'xp'))}
               aria-haspopup="dialog"
               aria-expanded={activePopover === 'xp'}
             >
-              <AnimatedGemIcon className="w-3.5 h-3.5 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
+              <AnimatedGemIcon className="w-3.5 h-3.5 max-[680px]:w-4 max-[680px]:h-4 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
               <span aria-hidden="true">{xp}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
@@ -813,18 +891,18 @@ function App() {
               </div>
             )}
           </div>
-        </div>
 
-        <button
-          ref={menuButtonRef}
-          data-cuelume-toggle
-          className="min-w-11 min-h-11 max-[680px]:ml-auto p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
-          aria-expanded={menuOpen}
-        >
-          ☰
-        </button>
+          <button
+            ref={menuButtonRef}
+            data-cuelume-toggle
+            className="min-w-9 min-h-9 sm:min-w-11 sm:min-h-11 p-1 sm:p-2 text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[20px] sm:text-[21px] border-0 bg-transparent focus-visible:rounded-lg focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[3px] focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? 'Close account menu' : 'Open account menu'}
+            aria-expanded={menuOpen}
+          >
+            ☰
+          </button>
+        </div>
 
         {menuOpen && (
           <div
@@ -845,8 +923,7 @@ function App() {
         )}
       </header>
       )}
-
-      <main className={active === 'Plans' ? 'min-h-screen' : active === 'Home' ? '' : 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-14'}>
+      <main className={active === 'Plans' ? 'min-h-screen' : active === 'Home' ? '' : 'w-[min(100%,1160px)] mx-auto pt-8 px-[22px] max-[900px]:px-[18px] pb-[72px] max-[680px]:pt-6 max-[680px]:px-[18px] max-[680px]:pb-10'}>
         {active === 'Paths' ? (
           <PathsView
             currentLearnerPath={currentPath}
@@ -951,7 +1028,7 @@ function App() {
       </main>
 
       {!openLesson && active !== 'Plans' && active !== 'Home' && !customPathFullScreen && (
-        <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[680px]:right-[18px] max-[680px]:bottom-[18px]">
+        <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[900px]:right-[18px] max-[900px]:bottom-[18px]">
           <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
             <DevyLottie clip="thinking" className="size-full" />
           </button>

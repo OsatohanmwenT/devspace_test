@@ -903,11 +903,13 @@
     font-weight: 500;
   }
 
+  /* Below 900px the floating "Ask Devy" button (main.jsx) and the bottom tab
+     bar take over this row's jobs — Devy Pro / Career Path stay reachable
+     from the account menu and the Paths tab. display:none here is what
+     actually wins: it has the same specificity as Tailwind's max-[900px]:
+     utilities and sits later in the stylesheet, so it was overriding them. */
   .home-quick-actions {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 16px;
+    display: none;
   }
 
   .home-quick-actions .home-quick-left,
@@ -937,6 +939,14 @@
 }
 
 @media (max-width: 680px) {
+  /* Home on mobile is one focal card, not a dashboard grid — Leaderboard,
+     Practice and Paths are exactly the bottom tab bar's job now, so showing
+     them again here as shortcut tiles was just the same four destinations
+     twice. Only the current lesson stays. */
+  .home-map-card:not(.home-map-card--lesson) {
+    display: none;
+  }
+
   .home-quick-actions {
     grid-template-columns: 1fr;
     justify-items: center;

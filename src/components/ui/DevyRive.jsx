@@ -42,6 +42,12 @@ function usePrefersReducedMotion() {
 // Machine 2" is the actual entrance motion and takes no inputs of its own —
 // it just plays through once things mount. Both need to be active, or the
 // motion one never runs and only the face rig's idle pose ever shows.
+//
+// The `stateMachines` (plural) config option looks like the way to start two
+// at once, but it's deprecated and — confirmed by actually watching a clip
+// render — doesn't reliably activate both; only State Machine 1's idle pose
+// ever showed. `rive.play([...])`, the instance method it deprecated in
+// favor of, is what actually starts every name you give it.
 const DUAL_STATE_MACHINE_CLIPS = new Set(['launchpad-intro', 'rope-into', 'side-pop-out-intro', 'up-down-pop-out'])
 
 // Same shape as DevyLottie: a static fallback shows immediately and fades
@@ -51,13 +57,19 @@ export function DevyRive({ clip, className = '', ariaLabel, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
   const [ready, setReady] = useState(false)
   const src = SOURCES[clip]
+  const isDual = DUAL_STATE_MACHINE_CLIPS.has(clip)
 
-  const { RiveComponent } = useRive({
+  const { rive, RiveComponent } = useRive({
     src,
-    stateMachines: DUAL_STATE_MACHINE_CLIPS.has(clip) ? ['State Machine 1', 'State Machine 2'] : 'State Machine 1',
-    autoplay: !reducedMotion,
+    stateMachine: isDual ? undefined : 'State Machine 1',
+    autoplay: !isDual && !reducedMotion,
     onLoad: () => setReady(true),
   })
+
+  useEffect(() => {
+    if (!rive || !isDual || reducedMotion) return
+    rive.play(['State Machine 1', 'State Machine 2'])
+  }, [rive, isDual, reducedMotion])
 
   if (!src) return null
 

@@ -6,10 +6,10 @@ import { DevyPromptBand } from "./DevyPromptBand";
 // Shared card shell. Border colour, glow and the accent wash all come from
 // .home-map-card in styles.css, driven by the --card-accent each card sets.
 const mapCard =
-  "home-map-card absolute flex h-[250px] w-[360px] flex-col items-start rounded-3xl border p-6 text-left text-[21px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[250px] max-[680px]:min-h-[180px]";
+  "home-map-card absolute flex h-[250px] w-[360px] flex-col items-start rounded-3xl border p-6 text-left text-[21px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 max-[900px]:static max-[900px]:size-auto max-[900px]:min-h-[250px]";
 
 const mapCardSurface =
-  "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-[#fdfcf9] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
+  "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
 
 const chipClass = "grid size-9 flex-none place-items-center rounded-xl";
 const cardOrder = ["practice", "leaderboard", "lesson", "projects", "paths"];
@@ -79,6 +79,19 @@ export default function HomeView({
     return "far-previous";
   };
 
+  // Below 680px, cards are a plain stacked list, not a carousel — tapping a
+  // secondary card should go straight to its screen, not "select it" first
+  // the way it does on desktop where bringing a card to front is itself part
+  // of the carousel interaction.
+  const openOrSelect = (cardId, onOpen) => {
+    if (window.innerWidth > 680 && getCardSlot(cardId) !== 'front') {
+      setMapMode('map')
+      setActiveCard(cardId)
+      return
+    }
+    onOpen()
+  }
+
   const onCardKeyDown = (event) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
@@ -103,10 +116,10 @@ export default function HomeView({
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:h-auto max-[900px]:overflow-visible max-[900px]:px-[18px] max-[680px]:px-[18px] max-[680px]:py-6">
-      <div className="mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[900px]:h-auto">
+    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:h-auto max-[900px]:overflow-visible max-[900px]:px-[18px] max-[900px]:pb-8 max-[680px]:min-h-[calc(100dvh-64px)] max-[680px]:h-auto max-[680px]:flex max-[680px]:flex-col max-[680px]:justify-center max-[680px]:px-[18px] max-[680px]:py-6">
+      <div className="mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[900px]:h-auto max-[680px]:my-auto max-[680px]:w-full max-[680px]:items-center">
         <section
-          className="home-map-scene relative h-[520px] max-[900px]:grid max-[900px]:h-auto max-[900px]:grid-cols-2 max-[900px]:gap-4 max-[680px]:grid-cols-1"
+          className="home-map-scene relative h-[520px] max-[900px]:grid max-[900px]:h-auto max-[900px]:grid-cols-2 max-[900px]:gap-4 max-[680px]:flex max-[680px]:flex-col max-[680px]:items-center max-[680px]:justify-center max-[680px]:w-full max-[680px]:gap-4"
           data-mode={mapMode}
           aria-label="Learning map"
           onWheel={onSceneWheel}
@@ -114,25 +127,18 @@ export default function HomeView({
           <span className="home-map-atmosphere" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy absolute left-1/2 top-[30px] -translate-x-1/2 max-[900px]:static max-[900px]:col-span-2 max-[900px]:justify-self-center max-[900px]:translate-x-0 max-[680px]:col-span-1">
+          <div className="home-map-devy absolute left-1/2 top-[30px] -translate-x-1/2 max-[900px]:static max-[900px]:col-span-2 max-[900px]:justify-self-center max-[900px]:translate-x-0">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
               flip={activeCard === "paths"}
-              className="size-36"
+              className="size-36 max-[680px]:size-20"
             />
           </div>
 
           <button
             type="button"
-            onClick={() => {
-              if (getCardSlot("practice") !== "front") {
-                setMapMode("map");
-                setActiveCard("practice");
-                return;
-              }
-              onSeeAllPractice();
-            }}
+            onClick={() => openOrSelect("practice", onSeeAllPractice)}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "245 166 35" }}
             className={`${mapCard} home-map-card--practice ${mapCardSurface}`}
@@ -149,14 +155,7 @@ export default function HomeView({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (getCardSlot("paths") !== "front") {
-                setMapMode("map");
-                setActiveCard("paths");
-                return;
-              }
-              onOpenCareerPath();
-            }}
+            onClick={() => openOrSelect("paths", onOpenCareerPath)}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "4 173 192" }}
             className={`${mapCard} home-map-card--paths ${mapCardSurface}`}
@@ -173,14 +172,7 @@ export default function HomeView({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (getCardSlot("leaderboard") !== "front") {
-                setMapMode("map");
-                setActiveCard("leaderboard");
-                return;
-              }
-              onOpenLeaderboard();
-            }}
+            onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "224 80 122" }}
             className={`${mapCard} home-map-card--leaderboard ${mapCardSurface}`}
@@ -197,14 +189,7 @@ export default function HomeView({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (getCardSlot("projects") !== "front") {
-                setMapMode("map");
-                setActiveCard("projects");
-                return;
-              }
-              onOpenCareerPath();
-            }}
+            onClick={() => openOrSelect("projects", onOpenCareerPath)}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "139 124 246" }}
             className={`${mapCard} home-map-card--projects ${mapCardSurface}`}
@@ -221,18 +206,10 @@ export default function HomeView({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (getCardSlot("lesson") !== "front") {
-                setMapMode("map");
-                setActiveCard("lesson");
-                return;
-              }
-              if (currentLessonTitle) onStartMission();
-              else onOpenCareerPath();
-            }}
+            onClick={() => openOrSelect("lesson", () => { if (currentLessonTitle) onStartMission(); else onOpenCareerPath() })}
             onKeyDown={onCardKeyDown}
             style={{ "--card-accent": "59 130 246" }}
-            className={`${mapCard} home-map-card--lesson bg-[#1c2a4d] text-[#f4f4f2] hover:bg-[#213762] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-[#e2edfc] max-[900px]:col-span-2 max-[680px]:col-span-1`}
+            className={`${mapCard} home-map-card--lesson bg-[#1c2a4d] text-[#f4f4f2] hover:bg-[#213762] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white max-[900px]:col-span-2 max-[680px]:min-h-[190px] max-[680px]:w-full max-[680px]:max-w-[480px] max-[680px]:mx-auto`}
             data-slot={getCardSlot("lesson")}
             tabIndex={0}
             aria-current={getCardSlot("lesson") === "front" ? "true" : undefined}
@@ -261,8 +238,11 @@ export default function HomeView({
 
         </section>
 
+        {/* Below 680px the floating "Ask Devy" button (rendered globally in
+            main.jsx) takes over for this whole band — Devy Pro and Career
+            Path stay reachable from the account menu and the Paths tab. */}
         <section
-          className="home-quick-actions relative mx-auto flex w-full max-w-[1040px] items-center justify-center py-6 max-[900px]:mt-6 max-[680px]:mt-4"
+          className="home-quick-actions relative mx-auto flex w-full max-w-[1040px] items-center justify-center py-6"
           aria-label="Quick actions"
         >
           <div className="home-quick-left absolute left-0 flex gap-3 max-[680px]:static max-[680px]:mr-3">

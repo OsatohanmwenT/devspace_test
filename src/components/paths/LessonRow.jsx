@@ -1,11 +1,10 @@
 import { motion } from 'motion/react'
+import { DevyRive } from '../ui/DevyRive'
 import { LessonPedestalIcon } from '../ui/icons'
 
 // The current-lesson tile is the one thing on the roadmap worth acting on
-// next, so it gets a beacon: a soft halo breathing behind it and the pedestal
-// itself drifting and tilting, like it's gently calling for a tap. Lives on a
-// wrapper, not the icon, so it never fights the icon's own hover/active
-// transform classes below.
+// next, so it gets a beacon: a soft halo breathing behind it and the icon
+// itself drifting and tilting, like it's gently calling for a tap.
 function CurrentTileBeacon({ children }) {
   return (
     <span className="relative grid place-items-center">
@@ -37,7 +36,13 @@ export function LessonRow({ lesson, index, isSelected, onSelect }) {
         ? 'Locked'
         : 'Available'
   const alignment = ['justify-start', 'justify-end', 'justify-center'][index % 3]
-  const icon = <LessonPedestalIcon className="group-hover:-translate-y-1 group-hover:scale-105 group-active:translate-y-0.5 group-active:scale-100" state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
+  // devy-launchpad-intro.riv already draws its own launch platform, so for
+  // the current lesson it replaces the pedestal icon rather than sitting on
+  // top of it (which read as two stacked platforms). First real home for
+  // this clip — previously only in the ?preview=devy-riv harness in main.jsx.
+  const icon = isCurrent
+    ? <DevyRive clip="launchpad-intro" className="h-[134px] w-32 group-hover:-translate-y-1 group-hover:scale-105 group-active:translate-y-0.5 group-active:scale-100" ariaLabel="" />
+    : <LessonPedestalIcon className="group-hover:-translate-y-1 group-hover:scale-105 group-active:translate-y-0.5 group-active:scale-100" state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
 
   return (
     <div className={`relative z-[1] flex min-h-[126px] w-full ${alignment}`}>
