@@ -24,7 +24,6 @@ import SettingsView from './components/settings';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyLottie } from './components/ui/DevyLottie';
-import { EventType, useRive } from '@rive-app/react-canvas';
 import { DevyRive } from './components/ui/DevyRive';
 import { CompassIcon, DumbbellIcon, HomeIcon, PodiumIcon, SirenIcon } from './components/ui/icons';
 import { getLeague } from './data/leagues';
@@ -58,33 +57,14 @@ import './tailwind.css';
 // distinguishable from one that never played at all, and a Replay button
 // re-fires both state machines on demand instead of needing a reload.
 function RiveEntranceDebug({ clip }) {
-  const src = `/assets/animations/devy-${clip}.riv`
-  const dualStateMachine = clip !== 'walk'
-  const { rive, RiveComponent } = useRive({
-    src,
-    stateMachines: dualStateMachine ? ['State Machine 1', 'State Machine 2'] : 'State Machine 1',
-    autoplay: true,
-  })
-
-  useEffect(() => {
-    if (!rive) return undefined
-    const log = (event) => console.log(`[RiveEntranceDebug:${clip}]`, event.type, event.data ?? '')
-    Object.values(EventType).forEach((type) => rive.on(type, log))
-    console.log(`[RiveEntranceDebug:${clip}] bounds`, rive.contents)
-    return () => Object.values(EventType).forEach((type) => rive.off(type, log))
-  }, [rive, clip])
-
-  const replay = () => {
-    if (!rive) return
-    rive.reset({ stateMachines: dualStateMachine ? ['State Machine 1', 'State Machine 2'] : 'State Machine 1', autoplay: true })
-  }
+  const [key, setKey] = useState(0)
 
   return (
     <div className="grid min-h-screen place-items-center gap-6 bg-[#121214]">
       <div className="h-[500px] w-[500px] border border-[#404040]">
-        <RiveComponent className="h-full w-full" />
+        <DevyRive key={key} clip={clip} className="h-full w-full" ariaLabel={clip} />
       </div>
-      <button type="button" className="rounded-lg bg-[#2563eb] px-4 py-2 text-white" onClick={replay}>Replay</button>
+      <button type="button" className="rounded-lg bg-[#2563eb] px-4 py-2 text-white" onClick={() => setKey((k) => k + 1)}>Replay</button>
     </div>
   )
 }
