@@ -1383,18 +1383,12 @@
     padding: 24px;
   }
 
-  /* The front card is the drag target on mobile (see the motion.div drag
-     props in index.jsx) — Motion owns this element's `transform` while
-     dragging, so centering here is done with `left` instead of the usual
-     left:50%+translateX(-50%) trick, which would otherwise fight Motion's
-     own transform and get overwritten by it every render. */
   .home-map-card[data-slot='front'] {
     top: 90px;
-    left: 22px;
     width: calc(100vw - 44px);
     height: 350px;
     padding: 14px 24px 24px;
-    transform: none;
+    transform: translateX(-50%);
   }
 
   .home-map-card[data-slot='previous'] {

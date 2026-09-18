@@ -523,6 +523,16 @@ export default function HomeView({
           </div>
 
           <motion.div
+            className="absolute inset-0"
+            drag={isMobile ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragStart={onCardDragStart}
+            onDrag={onCardDrag}
+            onDragEnd={onCardDragEnd}
+          >
+          <div
             className={`${mapCard} home-map-card--continue-learning home-map-card--lesson ${mapCardSurface} ${isFront("continueLearning") ? "!pt-3 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
@@ -534,13 +544,6 @@ export default function HomeView({
             onClick={() =>
               openOrSelect("continueLearning", continueSelectedCourse)
             }
-            drag={isMobile && isFront("continueLearning") ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            dragMomentum={false}
-            onDragStart={onCardDragStart}
-            onDrag={onCardDrag}
-            onDragEnd={onCardDragEnd}
           >
             {!isFront("continueLearning") && (
               <div className="home-map-card__header-row flex w-full items-center justify-between gap-2">
@@ -612,9 +615,9 @@ export default function HomeView({
                   ? "See what's next"
                   : "Open path"}
             </CardCtaButton>
-          </motion.div>
+          </div>
 
-          <motion.div
+          <div
             className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
@@ -624,13 +627,6 @@ export default function HomeView({
             aria-current={isFront("leaderboard") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
-            drag={isMobile && isFront("leaderboard") ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            dragMomentum={false}
-            onDragStart={onCardDragStart}
-            onDrag={onCardDrag}
-            onDragEnd={onCardDragEnd}
           >
             {(!isFront("leaderboard") || !leagueUnlocked) && (
               <div className="flex w-full items-center justify-between gap-2">
@@ -831,9 +827,9 @@ export default function HomeView({
             >
               View leaderboard
             </CardCtaButton>
-          </motion.div>
+          </div>
 
-          <motion.div
+          <div
             className={`${mapCard} home-map-card--portfolio ${mapCardSurface} ${isFront("portfolio") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.portfolio }}
             data-slot={getCardSlot("portfolio")}
@@ -843,13 +839,6 @@ export default function HomeView({
             aria-current={isFront("portfolio") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
-            drag={isMobile && isFront("portfolio") ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            dragMomentum={false}
-            onDragStart={onCardDragStart}
-            onDrag={onCardDrag}
-            onDragEnd={onCardDragEnd}
           >
             <div className="flex w-full items-center justify-between gap-2">
               <span className="flex items-center gap-2.5">
@@ -933,9 +922,9 @@ export default function HomeView({
                 ? "Explore first project"
                 : "View portfolio"}
             </CardCtaButton>
-          </motion.div>
+          </div>
 
-          <motion.div
+          <div
             className={`${mapCard} home-map-card--dynamic ${mapCardSurface} ${isFront("dynamic") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
@@ -945,13 +934,6 @@ export default function HomeView({
             aria-current={isFront("dynamic") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("dynamic", dynamicAction)}
-            drag={isMobile && isFront("dynamic") ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            dragMomentum={false}
-            onDragStart={onCardDragStart}
-            onDrag={onCardDrag}
-            onDragEnd={onCardDragEnd}
           >
             <div className="flex w-full items-center justify-between gap-2">
               <span className="flex items-center gap-2.5">
@@ -985,6 +967,7 @@ export default function HomeView({
             >
               {dynamicUpdate?.cta ?? "Open"}
             </CardCtaButton>
+          </div>
           </motion.div>
         </section>
 
