@@ -105,7 +105,7 @@ export function OptionList({ options, value, onSelect, layout = 'list' }) {
                 // floating beside the card rather than Devy climbing out of
                 // it. A one-shot climb, not a loop — he doesn't keep popping.
                 <span className={`pointer-events-none absolute top-1/2 z-10 h-24 w-24 -translate-y-1/2 rotate-180 ${popRight ? '-right-24' : '-left-24'}`}>
-                  <DevyLottie clip="side-pop-out" loop={false} holdAtPeak className="h-full w-full" ariaLabel="" />
+                  <DevyLottie clip="side-pop-out" loop={false} holdAtPeak flip={popRight} speed={4} className="h-full w-full" ariaLabel="" />
                 </span>
               )}
             </button>
