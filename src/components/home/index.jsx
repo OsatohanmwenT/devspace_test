@@ -346,6 +346,10 @@ export default function HomeView({
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
+  const touchStart = useRef(null);
+  const dragMoved = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const activeIndex = cardOrder.indexOf(activeCard);
 
   const getCardSlot = (cardId) => {
@@ -409,6 +413,75 @@ export default function HomeView({
     }, 430);
   };
 
+  // Mobile-only swipe: the stacked cards below 680px still peek their
+  // neighbors at the sides, so dragging horizontally moves the whole stack
+  // with the finger (via the --swipe-x variable the mobile stylesheet reads)
+  // and releasing past SWIPE_THRESHOLD advances the carousel, continuing the
+  // same motion into the slot-change transition. A vertical drag bails out
+  // immediately so it doesn't fight the page's own scroll.
+  const SWIPE_THRESHOLD = 55;
+
+  const onSceneTouchStart = (event) => {
+    if (window.innerWidth > 680) return;
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY, locked: null };
+    dragMoved.current = false;
+    setIsSwiping(true);
+    setSwipeOffset(0);
+  };
+
+  const onSceneTouchMove = (event) => {
+    if (window.innerWidth > 680 || !touchStart.current) return;
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - touchStart.current.x;
+    const deltaY = touch.clientY - touchStart.current.y;
+
+    if (
+      touchStart.current.locked === null &&
+      (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)
+    ) {
+      touchStart.current.locked =
+        Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+    }
+    if (touchStart.current.locked === "y") {
+      touchStart.current = null;
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
+    if (touchStart.current.locked === "x") {
+      dragMoved.current = true;
+      setSwipeOffset(deltaX);
+    }
+  };
+
+  const onSceneTouchEnd = () => {
+    if (window.innerWidth > 680 || !touchStart.current) {
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
+    const finalOffset = swipeOffset;
+    touchStart.current = null;
+    setIsSwiping(false);
+    setSwipeOffset(0);
+    if (Math.abs(finalOffset) > SWIPE_THRESHOLD) {
+      changeCard(finalOffset < 0 ? 1 : -1);
+    }
+  };
+
+  // A browser doesn't know to skip the click it normally synthesizes after a
+  // touch drag ends on the same element it started on — nothing here ever
+  // scrolls, so it fires anyway. Without this, releasing a swipe on the
+  // front card would open it instead of just changing the slot.
+  const onSceneClickCapture = (event) => {
+    if (dragMoved.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      dragMoved.current = false;
+    }
+  };
+
   const primaryCourse = courseOptions[0];
   const selectedCourse =
     courseOptions.find((option) => option.id === selectedCourseId) ??
@@ -463,8 +536,14 @@ export default function HomeView({
         <section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2"
           data-mode={mapMode}
+          data-swiping={isSwiping || undefined}
+          style={{ "--swipe-x": `${swipeOffset}px` }}
           aria-label="Learning map"
           onWheel={onSceneWheel}
+          onTouchStart={onSceneTouchStart}
+          onTouchMove={onSceneTouchMove}
+          onTouchEnd={onSceneTouchEnd}
+          onClickCapture={onSceneClickCapture}
         >
           <span className="home-map-atmosphere" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
