@@ -1,4 +1,4 @@
-import { PracticeCard } from '../practice/PracticeCard'
+import { PracticeCard } from '../practice/PracticeCard';
 
 // Home's second reason to exist: something worth doing when there isn't time
 // for a full lesson. Every card here is backed by real data.

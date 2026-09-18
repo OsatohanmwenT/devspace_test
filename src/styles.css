@@ -537,7 +537,14 @@
    direction in docs/design-direction.md. */
 .home-map-card {
   border-color: rgb(var(--card-accent) / 0.55);
-  box-shadow: 0 10px 22px -10px rgb(var(--card-accent) / 0.6);
+}
+
+/* The section label sits beside the icon chip on every card now (not just
+   the front one) so a side card still reads as "Leaderboard", not just a
+   colored icon — it just steps back in size/weight once the card recedes. */
+.home-map-card:not([data-slot='front']) .home-map-card__section-label {
+  font-size: 12px;
+  opacity: 0.65;
 }
 
 .home-map-card__details {
@@ -677,51 +684,162 @@
   color: #262626;
 }
 
-/* The front-state mini roadmap — a row of lesson dots with the current one
-   picked out, standing in for the literal "Devy on a node" sketch without
-   needing a bespoke illustration. */
-.home-map-card__roadmap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
+/* The top-of-card label beside the icon chip — "Continue learning",
+   "Leaderboard", etc. — shown only once the card is front, so the side
+   state's icon stays alone (its job there is just a category cue). */
+.home-map-card__section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #b6bac4;
 }
 
-.home-map-card__roadmap-node {
+[data-theme='light'] .home-map-card__section-label {
+  color: #686968;
+}
+
+/* Continue Learning's content, rebuilt around one clear read order instead
+   of several same-weight fragments: a centered course name anchors the
+   card (Brilliant's "Thinking in Code" pattern), a small centered progress
+   line under it, one calm icon standing in for an illustration, then a
+   plain two-row list — current lesson, then what's next — instead of a
+   bolded heading plus a separately-styled "up next" block that competed
+   with it for attention. */
+.home-map-card__course-heading {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+/* The region title adds real height the fixed card size wasn't sized for —
+   grow just this card, just in its front state, rather than compressing
+   everything else to fit the old height. */
+@media (min-width: 0px) {
+  .home-map-card--continue-learning[data-slot='front'] {
+    height: 374px;
+  }
+}
+
+.home-map-card__course-title {
+  color: #f4f4f2;
+  font-family: var(--font-rubik, inherit);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.home-map-card__course-level {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--card-accent));
+}
+
+.home-map-card__course-progress {
+  display: flex;
+  width: 100%;
+  max-width: 260px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.home-map-card__course-progress .home-map-card__progress {
+  flex: 1;
+}
+
+.home-map-card__course-progress-value {
+  flex: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: #b6bac4;
+}
+
+[data-theme='light'] .home-map-card__course-title {
+  color: #262626;
+}
+
+[data-theme='light'] .home-map-card__course-progress-value {
+  color: #686968;
+}
+
+.home-map-card__lesson-illustration {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border-radius: 999px;
-  border: 2px solid rgb(var(--card-accent) / 0.35);
-  background: transparent;
+  width: 96px;
+  height: 96px;
+  margin: 10px 0;
 }
 
-.home-map-card__roadmap-node[data-state='completed'] {
-  border-color: rgb(var(--card-accent));
-  background: rgb(var(--card-accent) / 0.25);
+.home-map-card__lesson-illustration img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.home-map-card__roadmap-node[data-state='current'] {
-  border-color: rgb(var(--card-accent));
-  box-shadow: 0 0 0 3px rgb(var(--card-accent) / 0.2);
+.home-map-card__lesson-illustration--fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgb(var(--card-accent) / 0.15);
+  color: rgb(var(--card-accent));
 }
 
-.home-map-card__roadmap-connector {
-  flex: 1;
-  height: 2px;
-  background: rgb(var(--card-accent) / 0.25);
-}
-
-/* The button now wrapping the primary lesson (added so the "Also learning"
-   rows below it can be independently clickable) needs the same
-   flex-column layout .home-map-card__lesson-details used to provide
-   directly to its strong/span children. */
-.home-map-card__primary-lesson {
+.home-map-card__lesson-list {
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.home-map-card__lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  color: #a6aab4;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.home-map-card__lesson-row[data-state='current'] {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* The current-lesson row uses <strong> for semantics, but its UA-default
+   bold (700) reads heavier than the row's own 600 — pin it back down. */
+.home-map-card__lesson-row strong {
+  font-weight: 600;
+}
+
+[data-theme='light'] .home-map-card__lesson-row {
+  color: #8a8a86;
+}
+
+[data-theme='light'] .home-map-card__lesson-row[data-state='current'] {
+  color: #262626;
+}
+
+/* The one obvious, full-width action every front card ends on — hidden on
+   the side/peripheral states, where a card should only ever be a teaser.
+   Appearance (background, border, shadow) comes from ActionButton's own
+   "primary" variant classes plus the inline --card-accent override passed
+   alongside this class — this rule only handles visibility and layout. */
+.home-map-card__cta-bar {
+  display: none;
+}
+
+.home-map-card[data-slot='front'] .home-map-card__cta-bar {
+  display: flex;
+  min-height: 52px;
+  margin-top: auto;
+  font-size: 17px;
 }
 
 /* The course switcher folded into Continue Learning — a pill that becomes a
@@ -863,35 +981,31 @@
 
 .home-map-card:hover {
   border-color: rgb(var(--card-accent) / 0.9);
-  box-shadow: 0 14px 28px -10px rgb(var(--card-accent) / 0.8);
 }
 
 [data-theme='light'] .home-map-card {
   border-color: rgb(var(--card-accent) / 0.5);
-  box-shadow: 0 10px 20px -10px rgb(var(--card-accent) / 0.45);
 }
 
 [data-theme='light'] .home-map-card:hover {
   border-color: rgb(var(--card-accent) / 0.85);
-  box-shadow: 0 14px 26px -10px rgb(var(--card-accent) / 0.65);
 }
 
-@media (min-width: 901px) {
+@media (min-width: 0px) {
+  .home-map-scene {
+    overflow: visible;
+  }
+
   .home-map-atmosphere {
     position: absolute;
     left: 50%;
-    top: 46%;
-    width: 760px;
-    height: 430px;
+    top: 44%;
+    width: 620px;
+    height: 400px;
     transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.035) 42%, transparent 72%);
-    filter: blur(26px);
+    filter: none;
     pointer-events: none;
-  }
-
-  .home-map-scene {
-    perspective: 960px;
-    transform-style: preserve-3d;
   }
 
   .home-map-carousel-arrows {
@@ -939,30 +1053,46 @@
   .home-map-card {
     --hide-delay: 0ms;
     left: 50%;
-    top: 190px;
-    transform-style: preserve-3d;
-    transform-origin: center;
+    top: 100px;
+    transform-origin: center bottom;
     transition:
       translate 220ms ease,
-      transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
-      filter 220ms ease,
+      transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 380ms ease,
       visibility 0s linear var(--hide-delay),
       border-color 300ms ease,
       background-color 300ms ease,
-      box-shadow 300ms ease;
-    will-change: transform, opacity, filter;
+      box-shadow 380ms ease;
+    will-change: transform, opacity, box-shadow;
   }
 
   .home-map-card:hover {
     translate: 0 -6px;
   }
 
+  /* The front card is the "stage" — it steps forward and lifts clear of the
+     fan behind it, with a shadow tinted in its own accent so the swap reads
+     as depth changing, not just a flat crossfade. A slight spring overshoot
+     (rather than the fan's plain ease) is what sells "this one just landed". */
   .home-map-card[data-slot='front'] {
     z-index: 3;
-    transform: translateX(-50%) translateZ(48px);
+    top: 50px;
+    width: 620px;
+    height: 420px;
+    padding: 32px;
+    transform: translateX(-50%) translateY(-14px) scale(1.015);
     opacity: 1;
     filter: none;
+    box-shadow:
+      0 32px 60px -26px rgb(var(--card-accent) / 0.55),
+      0 16px 30px -18px rgba(0, 0, 0, 0.5);
+    transition:
+      translate 220ms ease,
+      transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 380ms ease,
+      border-color 300ms ease,
+      background-color 300ms ease,
+      box-shadow 380ms ease;
   }
 
   .home-map-card[data-slot='front'] .home-map-card__details {
@@ -975,6 +1105,25 @@
     font-size: 15px;
     font-weight: 500;
     line-height: 1.32;
+  }
+
+  /* The Leaderboard card hides its icon+"Leaderboard" header row once
+     unlocked and front (the masthead below already names it), so nothing
+     up top is left to push this block down from — sit it flush at the
+     top instead of drifting toward the CTA with a big empty gap above it. */
+  .home-map-card[data-slot='front'] .home-map-card__details.home-map-card__details--leaderboard {
+    margin-top: 0;
+  }
+
+  /* The locked-leaderboard hero: an illustration and a couple of short
+     words centered in the same space the standings list would otherwise
+     fill, instead of a small left-aligned sentence lost in the card. */
+  .home-map-card[data-slot='front'] .home-map-card__details.home-map-card__details--centered {
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 12px;
   }
 
   .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
@@ -1059,63 +1208,54 @@
     background: rgb(37 99 235 / 0.16);
   }
 
+  /* A three-card stage: the active card owns the centre while its immediate
+     neighbours are deliberately clipped by the scene edges. That makes the
+     carousel discoverable without competing with the detailed centre card. */
   .home-map-card[data-slot='previous'] {
     z-index: 2;
-    transform: translate(calc(-50% - 340px), 14px) rotateY(42deg) scale(0.5);
-    opacity: 0.72;
-    filter: blur(0.35px);
+    transform: translate(calc(-50% - 50vw), 36px) scale(0.88);
+    opacity: 0.9;
   }
 
   .home-map-card[data-slot='next'] {
     z-index: 2;
-    transform: translate(calc(-50% + 340px), 14px) rotateY(-42deg) scale(0.5);
-    opacity: 0.72;
-    filter: blur(0.35px);
+    transform: translate(calc(-50% + 50vw), 36px) scale(0.88);
+    opacity: 0.9;
   }
 
   .home-map-card[data-slot='far-previous'] {
-    z-index: 1;
-    transform: translate(calc(-50% - 500px), -12px) translateZ(-180px) rotateY(58deg) scale(0.3);
-    opacity: 0.3;
-    filter: blur(1px);
+    z-index: 0;
+    transform: translate(calc(-50% - 50vw), 36px) scale(0.88);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    --hide-delay: 380ms;
   }
 
   .home-map-card[data-slot='far-next'] {
-    z-index: 1;
-    transform: translate(calc(-50% + 500px), -12px) translateZ(-180px) rotateY(-58deg) scale(0.3);
-    opacity: 0.3;
-    filter: blur(1px);
+    z-index: 0;
+    transform: translate(calc(-50% + 50vw), 36px) scale(0.88);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    --hide-delay: 380ms;
   }
 
-  /* A side card should visibly lean toward the viewer on hover — less tilt,
-     a touch bigger, content nudged up — so it reads as "pull me forward"
-     rather than just a smaller, decorative version of the front card. Faster
-     than the 400ms slot-change transition since this is a standing-invitation
-     cue, not the big carousel move. */
+  /* A side card should visibly rise toward the viewer on hover — a touch
+     bigger, content nudged up — so it reads as "pull me forward" rather
+     than just a smaller, decorative version of the front card. Faster than
+     the slot-change transition since this is a standing-invitation cue,
+     not the big carousel move. */
   .home-map-card[data-slot='previous']:hover {
     transition-duration: 220ms;
-    transform: translate(calc(-50% - 320px), 10px) rotateY(24deg) scale(0.53);
-    opacity: 0.92;
-    filter: none;
+    transform: translate(calc(-50% - 50vw), 28px) scale(0.92);
+    opacity: 1;
   }
 
   .home-map-card[data-slot='next']:hover {
     transition-duration: 220ms;
-    transform: translate(calc(-50% + 320px), 10px) rotateY(-24deg) scale(0.53);
-    opacity: 0.92;
-    filter: none;
-  }
-
-  .home-map-card[data-slot='far-previous']:hover {
-    transition-duration: 220ms;
-    transform: translate(calc(-50% - 490px), -16px) translateZ(-180px) rotateY(46deg) scale(0.32);
-    opacity: 0.55;
-  }
-
-  .home-map-card[data-slot='far-next']:hover {
-    transition-duration: 220ms;
-    transform: translate(calc(-50% + 490px), -16px) translateZ(-180px) rotateY(-46deg) scale(0.32);
-    opacity: 0.55;
+    transform: translate(calc(-50% + 50vw), 28px) scale(0.92);
+    opacity: 1;
   }
 
   .home-map-card[data-slot='previous']:hover .home-map-card__side,
@@ -1151,23 +1291,23 @@
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='previous'] {
     z-index: 2;
-    transform: translate(calc(-50% - 300px), 10px) rotateY(26deg) scale(0.46);
+    transform: translate(calc(-50% - 150px), 100px) scale(0.56);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='next'] {
     z-index: 2;
-    transform: translate(calc(-50% + 300px), 10px) rotateY(-26deg) scale(0.46);
+    transform: translate(calc(-50% + 150px), 100px) scale(0.56);
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-previous'] {
     z-index: 1;
-    transform: translate(calc(-50% - 390px), 112px) rotateY(30deg) scale(0.42);
+    transform: translate(calc(-50% - 180px), 140px) scale(0.5);
     opacity: 0.92;
   }
 
   .home-map-scene[data-mode='compose'] .home-map-card[data-slot='far-next'] {
     z-index: 1;
-    transform: translate(calc(-50% + 390px), 112px) rotateY(-30deg) scale(0.42);
+    transform: translate(calc(-50% + 180px), 140px) scale(0.5);
     opacity: 0.92;
   }
 
@@ -1183,129 +1323,41 @@
   }
 }
 
-@media (max-width: 900px) {
-  .home-map-carousel-arrows {
-    display: none;
+@media (max-width: 680px) {
+  .home-map-scene {
+    height: 440px;
   }
 
-  .home-map-atmosphere {
-    display: none;
-  }
-
-  .home-map-devy {
-    order: -1;
+  .home-map-card {
+    top: 36px;
+    width: calc(100vw - 44px);
+    height: 320px;
+    padding: 24px;
   }
 
   .home-map-card[data-slot='front'] {
-    order: 0;
-    grid-column: 1 / -1;
+    width: calc(100vw - 44px);
+    height: 320px;
+    padding: 14px 24px 24px;
+    transform: translateX(-50%);
   }
 
+
   .home-map-card[data-slot='previous'] {
-    order: 1;
+    transform: translate(calc(-50% - 50vw), 30px) scale(0.72);
   }
 
   .home-map-card[data-slot='next'] {
-    order: 2;
+    transform: translate(calc(-50% + 50vw), 30px) scale(0.72);
   }
 
-  .home-map-card[data-slot='far-previous'] {
-    order: 3;
-  }
-
-  .home-map-card[data-slot='far-next'] {
-    order: 4;
-  }
-
-  .home-map-card[data-slot='front'] .home-map-card__details {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: auto;
-    color: #b6bac4;
-    font-size: 15px;
-    font-weight: 500;
-  }
-
-  .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: auto;
-    color: #c9d3e8;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  /* Below 900px the floating "Ask Devy" button (main.jsx) and the bottom tab
-     bar take over this row's jobs — Devy Pro / Career Path stay reachable
-     from the account menu and the Paths tab. display:none here is what
-     actually wins: it has the same specificity as Tailwind's max-[900px]:
-     utilities and sits later in the stylesheet, so it was overriding them. */
-  .home-quick-actions {
-    display: none;
-  }
-
-  .home-quick-actions .home-quick-left,
-  .home-quick-actions .home-quick-right {
-    position: static;
-    margin: 0;
-  }
-
-  .home-quick-actions .home-prompt-band {
-    max-width: none;
-  }
-
-  .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
-    display: flex;
-    justify-content: space-between;
-    color: #f4f4f2;
-  }
-
-  [data-theme='light'] .home-map-card[data-slot='front'] .home-map-card__details {
-    color: #686968;
-  }
-
-  [data-theme='light'] .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
-    color: #262626;
-  }
-
-  [data-theme='light'] .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
-    color: #526174;
-  }
-
-  [data-theme='light'] .home-map-card__lesson-details .home-map-card__title {
-    color: #262626;
-  }
-
-}
-
-@media (max-width: 680px) {
-  /* Home on mobile is one focal card, not a dashboard grid — Leaderboard,
-     Practice and Paths are exactly the bottom tab bar's job now, so showing
-     them again here as shortcut tiles was just the same four destinations
-     twice. Only the current lesson stays. */
-  .home-map-card:not(.home-map-card--lesson) {
-    display: none;
+  .home-map-card--continue-learning[data-slot='front'] {
+    height: 320px;
   }
 
   .home-quick-actions {
-    grid-template-columns: 1fr;
-    justify-items: center;
-  }
-
-  .home-quick-actions .home-quick-left {
-    order: 2;
-  }
-
-  .home-quick-actions .home-prompt-band {
-    order: 1;
-  }
-
-  .home-quick-actions .home-quick-right {
-    order: 3;
+    margin-top: 0;
+    padding: 0;
   }
 }
 

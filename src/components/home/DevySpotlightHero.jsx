@@ -1,4 +1,4 @@
-import { DevyMood } from '../ui/DevyMood'
+import { DevyMood } from '../ui/DevyMood';
 
 // The page's visual anchor: a jagged spark flourish, then Devy center-stage
 // under a soft spotlight glow — the sketch's "spark → mascot" pairing, built

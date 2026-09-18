@@ -644,14 +644,27 @@ function App() {
   const courseOptions = useMemo(() => {
     const toOption = (path, isPrimary) => {
       const info = derivePathProgress(path, completedLessons)
+      const regionLessons = info.currentRegion?.lessons ?? []
+      const currentIndexInRegion = regionLessons.findIndex((lesson) => lesson.id === info.currentLesson?.id)
       return {
         id: path.id,
         title: path.title,
+        // The region/chapter name — the actual heading Home's Continue
+        // Learning card leads with, distinct from the path title shown in
+        // the course switcher pill.
+        regionTitle: info.currentRegion?.title ?? null,
         percent: info.percent,
         nextLessonTitle: info.currentLesson?.title ?? null,
+        // The lesson after the one already in progress — distinct from
+        // nextLessonTitle, which is the in-progress lesson itself.
+        upNextTitle: currentIndexInRegion !== -1 ? regionLessons[currentIndexInRegion + 1]?.title ?? null : null,
         regionPercent: info.currentRegion?.percent ?? 0,
         regionLessonsCompleted: info.currentRegion?.lessonsCompleted ?? 0,
         regionLessonsTotal: info.currentRegion?.lessonsTotal ?? 0,
+        // The same topic illustration the region already uses on the Paths
+        // roadmap — real art tied to what's actually being learned, not a
+        // generic icon repeated on every card.
+        regionImage: info.currentRegion?.image ?? path.emblem ?? null,
         isPrimary,
       }
     }
@@ -673,6 +686,15 @@ function App() {
     const userIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
     if (userIndex === -1) return []
     return leagueStandings.slice(Math.max(0, userIndex - 1), userIndex + 2)
+  }, [leagueStandings])
+  // A wider real slice (still your actual neighbors, just two deep on each
+  // side instead of one) so the Home card's standings list can peek a
+  // partial row at the top and bottom, like there's a real list to scroll —
+  // leagueNeighbors itself stays a tight 3 for the compact side-state.
+  const leagueNeighborsWide = useMemo(() => {
+    const userIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
+    if (userIndex === -1) return []
+    return leagueStandings.slice(Math.max(0, userIndex - 2), userIndex + 3)
   }, [leagueStandings])
   const userStandingIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
   const coinsToNextRank = userStandingIndex > 0
@@ -699,14 +721,14 @@ function App() {
   // everything — a finished path outranks a streak nudge, which outranks a
   // routine checkpoint reminder.
   const dynamicUpdate = derived.isComplete
-    ? { kind: 'path-complete', title: `You've finished ${currentPath.title}`, body: otherPaths[0] ? `Recommended next: ${otherPaths[0].title}` : 'Explore Paths to pick what\'s next.' }
+    ? { kind: 'path-complete', title: `You've finished ${currentPath.title}`, body: otherPaths[0] ? `Recommended next: ${otherPaths[0].title}` : 'Explore Paths to pick what\'s next.', cta: 'See what’s next' }
     : streakAtRisk
-      ? { kind: 'streak-risk', title: `${streakDays}-day streak`, body: 'One more lesson today keeps it alive.' }
+      ? { kind: 'streak-risk', title: `${streakDays}-day streak`, body: 'One more lesson today keeps it alive.', cta: 'Keep it going' }
       : derived.nextCheckpoint && derived.nextCheckpoint.lessonsUntil <= 2
-        ? { kind: 'checkpoint', title: 'Checkpoint coming up', body: derived.nextCheckpoint.lesson.title }
+        ? { kind: 'checkpoint', title: 'Checkpoint coming up', body: derived.nextCheckpoint.lesson.title, cta: 'Continue lesson' }
         : streakDays > 0
-          ? { kind: 'streak', title: `${streakDays}-day streak`, body: 'Keep it going with today’s lesson.' }
-          : { kind: 'welcome', title: 'Welcome back', body: homeHint }
+          ? { kind: 'streak', title: `${streakDays}-day streak`, body: 'Keep it going with today’s lesson.', cta: 'Continue lesson' }
+          : { kind: 'welcome', title: 'Welcome back', body: homeHint, cta: 'Explore Paths' }
 
   // A direct preview instead of driving real completion state to reach these
   // screens — that approach kept breaking on real data's own edge cases (an
@@ -1048,7 +1070,6 @@ function App() {
             onOpenDevy={() => setDevyOpen(true)}
             onOpenPath={openPathFromHome}
             courseOptions={courseOptions}
-            currentRegionLessonsTotal={currentRegionCard?.lessonsTotal ?? 0}
             completedLessonsCount={Object.keys(completedLessons).length}
             pathTools={currentPath.tools ?? []}
             leagueName={currentLeague.name}
@@ -1056,10 +1077,12 @@ function App() {
             leagueRank={leagueRank}
             leagueRankDelta={leagueRankDelta}
             leagueNeighbors={leagueNeighbors}
+            leagueNeighborsWide={leagueNeighborsWide}
             coinsToNextRank={coinsToNextRank}
             coinsToPromotion={coinsToPromotion}
             inPromotionZone={inPromotionZone}
             canPromote={currentLeague.promotePercent > 0}
+            promoteCount={promoteCount}
             seasonTimeLeft={seasonTimeLeft}
             seasonCoins={seasonCoins}
             dynamicUpdate={dynamicUpdate}

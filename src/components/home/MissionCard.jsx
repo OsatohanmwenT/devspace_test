@@ -1,6 +1,6 @@
-import { ActionButton } from '../ui/ActionButton'
-import { Badge } from '../ui/Badge'
-import { InfoTooltip } from '../ui/InfoTooltip'
+import { ActionButton } from '../ui/ActionButton';
+import { Badge } from '../ui/Badge';
+import { InfoTooltip } from '../ui/InfoTooltip';
 
 // The hero card: the sketch's central "device" mockup, filling its grid
 // cell so it reads as the tall center card flanked by the smaller ones.
