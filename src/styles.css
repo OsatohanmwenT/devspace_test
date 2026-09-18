@@ -1053,7 +1053,7 @@
   .home-map-card {
     --hide-delay: 0ms;
     left: 50%;
-    top: 100px;
+    top: 40px;
     transform-origin: center bottom;
     transition:
       translate 220ms ease,

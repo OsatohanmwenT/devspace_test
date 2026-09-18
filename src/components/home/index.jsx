@@ -44,9 +44,9 @@ const devyClips = {
 };
 const cardAccents = {
   continueLearning: "59 130 246",
-  leaderboard: "224 80 122",
+  leaderboard: "249 115 22",
   portfolio: "139 124 246",
-  dynamic: "4 173 192",
+  dynamic: "34 197 94",
 };
 const cardLabels = {
   continueLearning: "Continue learning",
