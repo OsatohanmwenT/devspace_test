@@ -38,7 +38,7 @@ function usePrefersReducedMotion() {
   return reduced
 }
 
-export function DevyLottie({ clip, loop = true, flip = false, holdAtPeak = false, className = '', ariaLabel, ...rest }) {
+export function DevyLottie({ clip, loop = true, flip = false, holdAtPeak = false, speed = 1, className = '', ariaLabel, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
   const src = SOURCES[clip]
 
@@ -56,6 +56,7 @@ export function DevyLottie({ clip, loop = true, flip = false, holdAtPeak = false
         src={src}
         loop={loop && !reducedMotion}
         autoplay={!reducedMotion}
+        speed={speed}
         className="relative h-full w-full"
         layout={{ fit: 'contain', align: [0.5, 0.5] }}
         renderConfig={{ devicePixelRatio: Math.max(window.devicePixelRatio || 1, 2) }}
