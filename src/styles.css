@@ -1383,27 +1383,26 @@
     padding: 24px;
   }
 
+  /* The front card is the drag target on mobile (see the motion.div drag
+     props in index.jsx) — Motion owns this element's `transform` while
+     dragging, so centering here is done with `left` instead of the usual
+     left:50%+translateX(-50%) trick, which would otherwise fight Motion's
+     own transform and get overwritten by it every render. */
   .home-map-card[data-slot='front'] {
     top: 90px;
+    left: 22px;
     width: calc(100vw - 44px);
     height: 350px;
     padding: 14px 24px 24px;
-    transform: translateX(calc(-50% + var(--swipe-x, 0px)));
+    transform: none;
   }
 
   .home-map-card[data-slot='previous'] {
-    transform: translate(calc(-50% - 50vw + var(--swipe-x, 0px)), 30px) scale(0.72);
+    transform: translate(calc(-50% - 50vw), 30px) scale(0.72);
   }
 
   .home-map-card[data-slot='next'] {
-    transform: translate(calc(-50% + 50vw + var(--swipe-x, 0px)), 30px) scale(0.72);
-  }
-
-  /* While a finger is actively dragging, the card should track it 1:1 with
-     no easing lag — the spring transition only kicks back in on release, to
-     either snap into the new slot or rubber-band back to the old one. */
-  .home-map-scene[data-swiping='true'] .home-map-card {
-    transition: none !important;
+    transform: translate(calc(-50% + 50vw), 30px) scale(0.72);
   }
 
   .home-map-card--continue-learning[data-slot='front'] {

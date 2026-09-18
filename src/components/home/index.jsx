@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { AnimatedBoltIcon, AnimatedGemIcon } from "../ui/AnimatedIcons";
@@ -346,10 +347,16 @@ export default function HomeView({
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
-  const touchStart = useRef(null);
   const dragMoved = useRef(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 680,
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 680);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const activeIndex = cardOrder.indexOf(activeCard);
 
   const getCardSlot = (cardId) => {
@@ -414,68 +421,30 @@ export default function HomeView({
   };
 
   // Mobile-only swipe: the stacked cards below 680px still peek their
-  // neighbors at the sides, so dragging horizontally moves the whole stack
-  // with the finger (via the --swipe-x variable the mobile stylesheet reads)
-  // and releasing past SWIPE_THRESHOLD advances the carousel, continuing the
-  // same motion into the slot-change transition. A vertical drag bails out
-  // immediately so it doesn't fight the page's own scroll.
-  const SWIPE_THRESHOLD = 55;
-
-  const onSceneTouchStart = (event) => {
-    if (window.innerWidth > 680) return;
-    const touch = event.touches[0];
-    touchStart.current = { x: touch.clientX, y: touch.clientY, locked: null };
+  // neighbors at the sides, so the whole stack is wrapped in one draggable
+  // Motion element below (pointer-based, so it works for touch, mouse and
+  // pen alike) that moves 1:1 with the gesture and snaps back to center via
+  // dragConstraints. A plain tap never reaches the offset threshold in
+  // onDrag, so dragMoved stays false and the card's own onClick still opens
+  // it as before; a real drag flips dragMoved so the browser's post-drag
+  // ghost click (fired on whatever card sits under the finger at release)
+  // gets swallowed instead of opening that card.
+  const onCardDragStart = () => {
     dragMoved.current = false;
-    setIsSwiping(true);
-    setSwipeOffset(0);
   };
 
-  const onSceneTouchMove = (event) => {
-    if (window.innerWidth > 680 || !touchStart.current) return;
-    const touch = event.touches[0];
-    const deltaX = touch.clientX - touchStart.current.x;
-    const deltaY = touch.clientY - touchStart.current.y;
-
-    if (
-      touchStart.current.locked === null &&
-      (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)
-    ) {
-      touchStart.current.locked =
-        Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
-    }
-    if (touchStart.current.locked === "y") {
-      touchStart.current = null;
-      setIsSwiping(false);
-      setSwipeOffset(0);
-      return;
-    }
-    if (touchStart.current.locked === "x") {
+  const onCardDrag = (event, info) => {
+    if (Math.abs(info.offset.x) > 5) {
       dragMoved.current = true;
-      setSwipeOffset(deltaX);
     }
   };
 
-  const onSceneTouchEnd = (event) => {
-    if (window.innerWidth > 680 || !touchStart.current) {
-      setIsSwiping(false);
-      setSwipeOffset(0);
-      return;
-    }
-    const touch = event.changedTouches[0];
-    const finalOffset = touch.clientX - touchStart.current.x;
-    const wasHorizontal = touchStart.current.locked === "x";
-    touchStart.current = null;
-    setIsSwiping(false);
-    setSwipeOffset(0);
-    if (wasHorizontal && Math.abs(finalOffset) > SWIPE_THRESHOLD) {
-      changeCard(finalOffset < 0 ? 1 : -1);
+  const onCardDragEnd = (event, info) => {
+    if (Math.abs(info.offset.x) > 55) {
+      changeCard(info.offset.x < 0 ? 1 : -1);
     }
   };
 
-  // A browser doesn't know to skip the click it normally synthesizes after a
-  // touch drag ends on the same element it started on — nothing here ever
-  // scrolls, so it fires anyway. Without this, releasing a swipe on the
-  // front card would open it instead of just changing the slot.
   const onSceneClickCapture = (event) => {
     if (dragMoved.current) {
       event.preventDefault();
@@ -538,13 +507,8 @@ export default function HomeView({
         <section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2"
           data-mode={mapMode}
-          data-swiping={isSwiping || undefined}
-          style={{ "--swipe-x": `${swipeOffset}px` }}
           aria-label="Learning map"
           onWheel={onSceneWheel}
-          onTouchStart={onSceneTouchStart}
-          onTouchMove={onSceneTouchMove}
-          onTouchEnd={onSceneTouchEnd}
           onClickCapture={onSceneClickCapture}
         >
           <span className="home-map-atmosphere" aria-hidden="true" />
@@ -558,7 +522,7 @@ export default function HomeView({
             />
           </div>
 
-          <div
+          <motion.div
             className={`${mapCard} home-map-card--continue-learning home-map-card--lesson ${mapCardSurface} ${isFront("continueLearning") ? "!pt-3 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
@@ -570,6 +534,13 @@ export default function HomeView({
             onClick={() =>
               openOrSelect("continueLearning", continueSelectedCourse)
             }
+            drag={isMobile && isFront("continueLearning") ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragStart={onCardDragStart}
+            onDrag={onCardDrag}
+            onDragEnd={onCardDragEnd}
           >
             {!isFront("continueLearning") && (
               <div className="home-map-card__header-row flex w-full items-center justify-between gap-2">
@@ -641,9 +612,9 @@ export default function HomeView({
                   ? "See what's next"
                   : "Open path"}
             </CardCtaButton>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
             className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
@@ -653,6 +624,13 @@ export default function HomeView({
             aria-current={isFront("leaderboard") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
+            drag={isMobile && isFront("leaderboard") ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragStart={onCardDragStart}
+            onDrag={onCardDrag}
+            onDragEnd={onCardDragEnd}
           >
             {(!isFront("leaderboard") || !leagueUnlocked) && (
               <div className="flex w-full items-center justify-between gap-2">
@@ -853,9 +831,9 @@ export default function HomeView({
             >
               View leaderboard
             </CardCtaButton>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
             className={`${mapCard} home-map-card--portfolio ${mapCardSurface} ${isFront("portfolio") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.portfolio }}
             data-slot={getCardSlot("portfolio")}
@@ -865,6 +843,13 @@ export default function HomeView({
             aria-current={isFront("portfolio") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
+            drag={isMobile && isFront("portfolio") ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragStart={onCardDragStart}
+            onDrag={onCardDrag}
+            onDragEnd={onCardDragEnd}
           >
             <div className="flex w-full items-center justify-between gap-2">
               <span className="flex items-center gap-2.5">
@@ -948,9 +933,9 @@ export default function HomeView({
                 ? "Explore first project"
                 : "View portfolio"}
             </CardCtaButton>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
             className={`${mapCard} home-map-card--dynamic ${mapCardSurface} ${isFront("dynamic") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
             style={{ "--card-accent": cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
@@ -960,6 +945,13 @@ export default function HomeView({
             aria-current={isFront("dynamic") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("dynamic", dynamicAction)}
+            drag={isMobile && isFront("dynamic") ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            dragMomentum={false}
+            onDragStart={onCardDragStart}
+            onDrag={onCardDrag}
+            onDragEnd={onCardDragEnd}
           >
             <div className="flex w-full items-center justify-between gap-2">
               <span className="flex items-center gap-2.5">
@@ -993,8 +985,7 @@ export default function HomeView({
             >
               {dynamicUpdate?.cta ?? "Open"}
             </CardCtaButton>
-          </div>
-
+          </motion.div>
         </section>
 
         <ScenePager
