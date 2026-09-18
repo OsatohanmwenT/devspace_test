@@ -897,9 +897,10 @@ function App() {
           })}
         </nav>
 
-        {/* Stats on the right */}
+        {/* Stats on the right — hidden on mobile, where the same numbers
+            show at the top of the page's own content instead (Home). */}
         <div className="flex items-center gap-3.5 sm:gap-3 ml-auto">
-          <div className="relative">
+          <div className="relative max-[680px]:hidden">
             <button
               ref={streakButtonRef}
               type="button"
@@ -923,7 +924,7 @@ function App() {
             </button>
           </div>
 
-          <div className="relative">
+          <div className="relative max-[680px]:hidden">
             <button
               ref={xpButtonRef}
               type="button"
@@ -1083,6 +1084,8 @@ function App() {
             inPromotionZone={inPromotionZone}
             canPromote={currentLeague.promotePercent > 0}
             promoteCount={promoteCount}
+            streakDays={streakDays}
+            xp={xp}
             seasonTimeLeft={seasonTimeLeft}
             seasonCoins={seasonCoins}
             dynamicUpdate={dynamicUpdate}

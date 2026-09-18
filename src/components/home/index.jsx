@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
+import { AnimatedBoltIcon, AnimatedGemIcon } from "../ui/AnimatedIcons";
 import { DevyLottie } from "../ui/DevyLottie";
 import {
     ArrowLeftIcon,
@@ -19,10 +20,33 @@ const leaderboardMedalColor = "#e0507a";
 // (and don't need) a real per-person color.
 const avatarPalette = ["#f5b400", "#8b5cf6", "#04adc0", "#3b82f6"];
 
+// A small shared type scale — three tiers, each responsive across the same
+// three breakpoints the carousel already uses (mobile/tablet/desktop) — so
+// every card leans on the same few sizes instead of one-off pixel values,
+// and hierarchy (what leads, what blends) reads the same everywhere.
+// Marked `!important` on every breakpoint so this reliably wins even where
+// the element also carries a BEM class (e.g. .home-map-card__course-title)
+// with its own font-size rule in styles.css — the same reason the code
+// this replaces already used Tailwind's `!` modifier on those elements.
+const textTitle =
+  "max-[680px]:!text-[16px] min-[681px]:max-[1200px]:!text-[19px] !text-[22px]";
+const textBody =
+  "max-[680px]:!text-[12px] min-[681px]:max-[1200px]:!text-[14px] !text-[15px]";
+const textCaption =
+  "max-[680px]:!text-[10px] min-[681px]:max-[1200px]:!text-[11px] !text-[12px]";
+
+// A small shared badge scale for TierMedal — compact (side/peeking state),
+// standard (front-card header/masthead), and one deliberately oversized
+// "hero" size reserved for the locked-state illustration alone, so no two
+// badges on screen ever compete at the same visual weight by accident.
+const badgeSm = 22;
+const badgeMd = 34;
+const badgeLg = 64;
+
 // Shared card shell. Border colour, glow and the accent wash all come from
 // .home-map-card in styles.css, driven by the --card-accent each card sets.
 const mapCard =
-  "home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border p-7 text-left text-[21px] font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px]";
+  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border p-7 text-left font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] ${textBody}`;
 
 const mapCardSurface =
   "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
@@ -212,7 +236,7 @@ function CardCtaButton({ children, onClick }) {
   return (
     <ActionButton
       variant="primary"
-      className="home-map-card__cta-bar flex min-h-[44px] w-full items-center justify-center gap-2 text-center text-[15px] font-medium"
+      className={`home-map-card__cta-bar flex min-h-[44px] w-full items-center justify-center gap-2 text-center font-medium ${textBody}`}
       style={{
         background: "rgb(var(--card-accent))",
         borderColor: "rgb(var(--card-accent))",
@@ -315,6 +339,8 @@ export default function HomeView({
   seasonTimeLeft,
   seasonCoins,
   dynamicUpdate,
+  streakDays = 0,
+  xp = 0,
 }) {
   const [mapMode, setMapMode] = useState("map");
   const [activeCard, setActiveCard] = useState("continueLearning");
@@ -417,6 +443,22 @@ export default function HomeView({
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:px-[18px] max-[680px]:px-[18px] max-[680px]:py-4">
+      {/* Header hides the streak/gem counters below 680px (main.jsx) — same
+          numbers, shown here instead so they're not lost, just relocated
+          from the header chrome into the page's own content. */}
+      <div className="hidden max-[680px]:flex items-center justify-end pb-2">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white px-2 py-1 shadow-sm">
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-bold text-neutral-800">
+            <AnimatedBoltIcon className="size-4 text-[#f5a623]" />
+            {streakDays}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-bold text-neutral-800">
+            <AnimatedGemIcon className="size-4 text-[#6699ec]" />
+            {xp}
+          </span>
+        </div>
+      </div>
+
       <div className="mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center">
         <section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2"
@@ -427,7 +469,7 @@ export default function HomeView({
           <span className="home-map-atmosphere" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy hidden absolute left-1/2 top-[30px] -translate-x-1/2">
+          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
@@ -472,11 +514,11 @@ export default function HomeView({
 
             <span className="home-map-card__lesson-details !mt-0">
               <span className="home-map-card__course-heading !gap-2 pt-3! !pb-2">
-                <strong className="home-map-card__course-title !text-xl">
+                <strong className={`home-map-card__course-title ${textTitle}`}>
                   {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Continue learning"}
                 </strong>
                 {selectedCourse?.regionLessonsTotal > 0 && (
-                  <span className="home-map-card__course-level !text-sm">
+                  <span className={`home-map-card__course-level ${textCaption}`}>
                     Lesson {(selectedCourse?.regionLessonsCompleted ?? 0) + 1} of{" "}
                     {selectedCourse.regionLessonsTotal}
                   </span>
@@ -485,7 +527,7 @@ export default function HomeView({
                   <span className="home-map-card__progress">
                     <span style={{ width: `${selectedCourse?.regionPercent ?? 0}%` }} />
                   </span>
-                  <span className="home-map-card__course-progress-value !text-base">{selectedCourse?.regionPercent ?? 0}%</span>
+                  <span className={`home-map-card__course-progress-value ${textCaption}`}>{selectedCourse?.regionPercent ?? 0}%</span>
                 </span>
                 <LessonIllustration src={selectedCourse?.regionImage} />
               </span>
@@ -537,7 +579,7 @@ export default function HomeView({
                   <TierMedal
                     league={{ color: leagueColor || leaderboardMedalColor }}
                     state="current"
-                    size={32}
+                    size={badgeMd}
                   />
                   <span className="home-map-card__section-label">
                     Leaderboard
@@ -568,14 +610,14 @@ export default function HomeView({
                       <TierMedal
                         league={{ color: leagueColor || leaderboardMedalColor }}
                         state="locked"
-                        size={64}
+                        size={badgeLg}
                       />
                     </span>
                   </span>
-                  <strong className="text-2xl font-bold text-[#f4f4f2]">
+                  <strong className={`font-bold text-[#f4f4f2] ${textTitle}`}>
                     Locked
                   </strong>
-                  <span className="text-[13px] font-medium text-[#8a8f9c]">
+                  <span className={`font-medium text-[#8a8f9c] ${textCaption}`}>
                     Finish a lesson to unlock
                   </span>
                 </span>
@@ -587,14 +629,14 @@ export default function HomeView({
                     <TierMedal
                       league={{ color: leagueColor || leaderboardMedalColor }}
                       state="default"
-                      size={20}
+                      size={badgeSm}
                     />
                     <span className="flex flex-col leading-tight">
-                      <strong className="text-[13px] font-bold text-[#f4f4f2]">
+                      <strong className={`font-bold text-[#f4f4f2] ${textBody}`}>
                         {leagueName}
                       </strong>
                       <span
-                        className="text-[10px] font-bold"
+                        className={`font-bold ${textCaption}`}
                         style={{ color: "rgb(var(--card-accent))" }}
                       >
                         #{leagueRank ?? "—"} &middot; {rankTrend}
@@ -608,13 +650,13 @@ export default function HomeView({
                         key={entry.id}
                         className="flex items-center gap-2 py-[3px]"
                       >
-                        <span className="grid size-[22px] flex-none place-items-center rounded-full bg-white/10 text-[10px] font-bold text-[#d0d3da]">
+                        <span className={`grid size-[22px] flex-none place-items-center rounded-full bg-white/10 font-bold text-[#d0d3da] ${textCaption}`}>
                           {entry.name?.[0]?.toUpperCase()}
                         </span>
-                        <span className="flex-1 text-[11px] font-semibold text-[#8a8f9c]">
+                        <span className={`flex-1 font-semibold text-[#8a8f9c] ${textCaption}`}>
                           {entry.name}
                         </span>
-                        <span className="text-[11px] font-bold text-[#8a8f9c]">
+                        <span className={`font-bold text-[#8a8f9c] ${textCaption}`}>
                           {entry.score}
                         </span>
                       </span>
@@ -634,10 +676,10 @@ export default function HomeView({
                     >
                       You
                     </span>
-                    <span className="flex-1 text-[12px] font-bold text-[#f4f4f2]">
+                    <span className={`flex-1 font-bold text-[#f4f4f2] ${textBody}`}>
                       #{leagueRank ?? "—"}
                     </span>
-                    <span className="text-[12px] font-bold text-[#f4f4f2]">
+                    <span className={`font-bold text-[#f4f4f2] ${textBody}`}>
                       {seasonCoins}
                     </span>
                   </span>
@@ -648,13 +690,13 @@ export default function HomeView({
                     <TierMedal
                       league={{ color: leagueColor || leaderboardMedalColor }}
                       state="current"
-                      size={48}
+                      size={badgeMd}
                     />
                     <span className="flex-1">
-                      <strong className="block font-rubik text-[16px] font-extrabold uppercase tracking-[0.02em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+                      <strong className={`block font-rubik font-extrabold uppercase tracking-[0.02em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 ${textTitle}`}>
                         {leagueName}
                       </strong>
-                      <span className="block text-[13px] font-semibold text-[#8a8f9c]">
+                      <span className={`block font-semibold text-[#8a8f9c] ${textCaption}`}>
                         Top {promoteCount} advance &middot; {seasonTimeLeft}
                       </span>
                     </span>
@@ -687,7 +729,7 @@ export default function HomeView({
                       {leagueNeighborsWide.map((entry, index) => (
                         <span
                           key={entry.id}
-                          className={`home-map-card__standings-row items-center gap-3 px-4! py-3! text-[15px] ${entry.isCurrentUser ? "rounded-xl bg-[rgb(var(--card-accent)/0.15)]" : ""}`}
+                          className={`home-map-card__standings-row items-center gap-3 px-4! py-3! ${textBody} ${entry.isCurrentUser ? "rounded-xl bg-[rgb(var(--card-accent)/0.15)]" : ""}`}
                           data-self={entry.isCurrentUser}
                         >
                           <span className="flex flex-1 items-center gap-3">
@@ -788,7 +830,7 @@ export default function HomeView({
                       {pathTools.slice(0, 3).map((tool) => (
                         <span
                           key={tool}
-                          className="rounded-full px-2 py-[3px] text-[10px] font-bold"
+                          className={`rounded-full px-2 py-[3px] font-bold ${textCaption}`}
                           style={{
                             background: "rgb(var(--card-accent) / 0.15)",
                             color: "rgb(var(--card-accent))",

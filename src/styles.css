@@ -1323,25 +1323,73 @@
   }
 }
 
-@media (max-width: 680px) {
-  .home-map-scene {
-    height: 440px;
+/* Tablet tier for the handful of type rules that are purely CSS-driven
+   (elements carrying index.jsx's textTitle/textBody/textCaption constants
+   already cover their own tablet size inline, via the same 681-1200px
+   band) — this closes the gap for the rest so no BEM class jumps straight
+   from its desktop size to its mobile size with nothing in between. */
+@media (min-width: 681px) and (max-width: 1200px) {
+  .home-map-card__lesson-details strong {
+    font-size: 14px;
   }
 
+  .home-map-card__lesson-details .home-map-card__lesson-complete {
+    font-size: 11px;
+  }
+
+  .home-map-card__side-label {
+    font-size: 11px;
+  }
+
+  .home-map-card:not([data-slot='front']) .home-map-card__section-label {
+    font-size: 11px;
+  }
+
+  .home-map-card__promotion {
+    font-size: 11px;
+  }
+
+  .home-map-card__course-pill {
+    font-size: 11px;
+  }
+
+  /* Documented exceptions (don't fit the 3-tier scale) — interpolated
+     between their desktop and mobile values rather than snapping to a tier. */
+  .home-map-card__side-value {
+    font-size: 26px;
+  }
+
+  .home-map-card__lesson-row {
+    font-size: 14px;
+  }
+
+  .home-map-card__side-value--text {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 680px) {
+  .home-map-scene {
+    height: 500px;
+  }
+
+  /* Devy sits above the stack here (top-[30px], 80px tall) — measured
+     scene-relative bottom edge ≈110px, so the cards start below him with
+     a small gap instead of overlapping. */
   .home-map-card {
-    top: 36px;
+    top: 90px;
     width: calc(100vw - 44px);
-    height: 320px;
+    height: 350px;
     padding: 24px;
   }
 
   .home-map-card[data-slot='front'] {
+    top: 90px;
     width: calc(100vw - 44px);
-    height: 320px;
+    height: 350px;
     padding: 14px 24px 24px;
     transform: translateX(-50%);
   }
-
 
   .home-map-card[data-slot='previous'] {
     transform: translate(calc(-50% - 50vw), 30px) scale(0.72);
@@ -1352,12 +1400,76 @@
   }
 
   .home-map-card--continue-learning[data-slot='front'] {
-    height: 320px;
+    height: 350px;
   }
 
   .home-quick-actions {
     margin-top: 0;
     padding: 0;
+  }
+
+  /* Card dimensions collapse ~1.3-1.9x at this width, but their font sizes
+     never did — text kept its desktop size while the box around it shrank,
+     the core "mobile hierarchy" bug this pass fixes. Shrink each one in
+     proportion, reusing the same three tiers index.jsx's textTitle/
+     textBody/textCaption constants use, so mobile isn't a fourth one-off
+     scale. */
+  .home-map-card__course-title {
+    font-size: 16px;
+  }
+
+  .home-map-card__course-level {
+    font-size: 10px;
+  }
+
+  .home-map-card__course-progress-value {
+    font-size: 10px;
+  }
+
+  .home-map-card__lesson-details strong {
+    font-size: 12px;
+  }
+
+  .home-map-card__lesson-details .home-map-card__lesson-complete {
+    font-size: 10px;
+  }
+
+  .home-map-card__side-label {
+    font-size: 10px;
+  }
+
+  .home-map-card__section-label {
+    font-size: 12px;
+  }
+
+  .home-map-card:not([data-slot='front']) .home-map-card__section-label {
+    font-size: 10px;
+  }
+
+  .home-map-card__promotion {
+    font-size: 10px;
+  }
+
+  .home-map-card__course-pill {
+    font-size: 10px;
+  }
+
+  .home-map-card[data-slot='front'] .home-map-card__cta-bar {
+    font-size: 15px;
+  }
+
+  /* The one "hero stat" number — not part of the 3-tier scale, so it shrinks
+     proportionally to the card's own collapse instead of snapping to a tier. */
+  .home-map-card__side-value {
+    font-size: 22px;
+  }
+
+  .home-map-card__lesson-row {
+    font-size: 13px;
+  }
+
+  .home-map-card__side-value--text {
+    font-size: 13px;
   }
 }
 
