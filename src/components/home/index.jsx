@@ -455,17 +455,19 @@ export default function HomeView({
     }
   };
 
-  const onSceneTouchEnd = () => {
+  const onSceneTouchEnd = (event) => {
     if (window.innerWidth > 680 || !touchStart.current) {
       setIsSwiping(false);
       setSwipeOffset(0);
       return;
     }
-    const finalOffset = swipeOffset;
+    const touch = event.changedTouches[0];
+    const finalOffset = touch.clientX - touchStart.current.x;
+    const wasHorizontal = touchStart.current.locked === "x";
     touchStart.current = null;
     setIsSwiping(false);
     setSwipeOffset(0);
-    if (Math.abs(finalOffset) > SWIPE_THRESHOLD) {
+    if (wasHorizontal && Math.abs(finalOffset) > SWIPE_THRESHOLD) {
       changeCard(finalOffset < 0 ? 1 : -1);
     }
   };
