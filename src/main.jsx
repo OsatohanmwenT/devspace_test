@@ -21,6 +21,7 @@ import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
 import ProfileView from './components/profile';
 import SettingsView from './components/settings';
+import { StreakMilestoneTransition } from './components/streak/StreakMilestoneTransition';
 import { AnimatedBoltIcon, AnimatedGemIcon } from './components/ui/AnimatedIcons';
 import { DevyDrawer } from './components/ui/DevyDrawer';
 import { DevyLottie } from './components/ui/DevyLottie';
@@ -45,7 +46,7 @@ import {
 } from './lib/privateLeagues';
 import { getRewardForRank, MIN_PAYOUT_THRESHOLD } from './lib/rewards';
 import { formatTimeRemaining, getSeasonIndex, getTimeRemaining, now } from './lib/season';
-import { getStreakMessage, getStreakWeek, isActiveToday } from './lib/streak';
+import { getStreakMessage, getStreakWeek, highestNewMilestone, isActiveToday } from './lib/streak';
 import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
@@ -95,6 +96,7 @@ function App() {
   const [customPathFullScreen, setCustomPathFullScreen] = useState(false)
   const [leagueCelebration, setLeagueCelebration] = useState(null)
   const [roadmapTransition, setRoadmapTransition] = useState(null)
+  const [streakMilestone, setStreakMilestone] = useState(null)
   const [pageTransition, setPageTransition] = useState(null)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
@@ -110,6 +112,11 @@ function App() {
   // A league celebration that qualifies while a roadmap transition is on
   // screen waits here rather than firing underneath it.
   const pendingLeagueCelebrationRef = useRef(null)
+  // A streak milestone is the lowest-priority of the three full-screen
+  // moments — a frequent small win should never cut in front of a rarer,
+  // bigger one — so it waits here behind whichever of the other two is on
+  // screen, and is only promoted once both are clear.
+  const pendingStreakMilestoneRef = useRef(null)
 
   const runPageTransition = (onCovered) => {
     if (pageTransition) return
@@ -253,6 +260,7 @@ function App() {
       // (lib/coins) is computed against the same completedSessions record but
       // has no Premium replay exception — a repeat is worth 0 coins to anyone.
       const withXp = applyActivity(current, getPracticeXpAward(current, sessionId, today), today)
+      const newStreakMilestone = highestNewMilestone(current.earnedStreakMilestones, withXp.earnedStreakMilestones)
       const next = {
         ...applyCoins(withXp, getPracticeCoinAward(current, sessionId)),
         completedSessions: {
@@ -260,6 +268,9 @@ function App() {
           [sessionId]: { correctCount, total, completedAt: today },
         },
       }
+      // Practice has no other full-screen moment competing for the screen,
+      // so a milestone earned here can always show right away.
+      if (newStreakMilestone) setStreakMilestone(newStreakMilestone)
       saveProgress(next)
       return next
     })
@@ -291,6 +302,11 @@ function App() {
         : null
       if (transition) setRoadmapTransition(transition)
 
+      // Computed unconditionally (not gated on isFirstCompletion) — applyActivity
+      // runs on every completion, including replays, and a streak tier can be
+      // crossed by a replay on a new day just as well as a first completion.
+      const newStreakMilestone = highestNewMilestone(current.earnedStreakMilestones, next.earnedStreakMilestones)
+
       // Earning your first coin puts a learner on the board (LeaderboardView
       // gates on `seasonCoins > 0`) — starting a mission doesn't count, only
       // a verified first completion does, per the anti-farming rule. Rather
@@ -299,16 +315,22 @@ function App() {
       // board, once ever. A roadmap transition takes the screen first when
       // both happen on the same completion — the league celebration queues
       // and fires only once that transition closes, rather than stacking on
-      // top of it.
+      // top of it. A streak milestone is lower priority than both, so it
+      // queues behind whichever of the two claims the screen this time.
       const isOnBoard = next.seasonCoins > 0
       const alreadyCelebrated = Boolean(current.seenPageIntroductions?.['league-qualified'])
       if (isOnBoard && !alreadyCelebrated) {
         const celebration = { leagueIndex: next.leagueIndex, seasonCoins: next.seasonCoins }
         if (transition) pendingLeagueCelebrationRef.current = celebration
         else setLeagueCelebration(celebration)
+        if (newStreakMilestone) pendingStreakMilestoneRef.current = newStreakMilestone
         const seen = markPageIntroductionSeen(next, 'league-qualified')
         saveProgress(seen)
         return seen
+      }
+      if (newStreakMilestone) {
+        if (transition) pendingStreakMilestoneRef.current = newStreakMilestone
+        else setStreakMilestone(newStreakMilestone)
       }
       saveProgress(next)
       return next
@@ -323,18 +345,40 @@ function App() {
     setLeagueCelebration(null)
     setOpenLesson(null)
     setActive('Leaderboard')
+    // A streak milestone that queued behind this celebration (whether it
+    // fired directly or was itself promoted from behind a roadmap
+    // transition) is released once this closes.
+    if (pendingStreakMilestoneRef.current) {
+      setStreakMilestone(pendingStreakMilestoneRef.current)
+      pendingStreakMilestoneRef.current = null
+    }
   }
 
   // Closes the lesson underneath the transition and hands off to any league
   // celebration that queued while it was on screen, so a qualifying moment
-  // is never silently dropped — it just waits its turn.
+  // is never silently dropped — it just waits its turn. A streak milestone
+  // queued behind this transition is released only if there is no league
+  // celebration ahead of it too — that still has to go first.
   const dismissRoadmapTransition = () => {
     setRoadmapTransition(null)
     setOpenLesson(null)
     if (pendingLeagueCelebrationRef.current) {
       setLeagueCelebration(pendingLeagueCelebrationRef.current)
       pendingLeagueCelebrationRef.current = null
+    } else if (pendingStreakMilestoneRef.current) {
+      setStreakMilestone(pendingStreakMilestoneRef.current)
+      pendingStreakMilestoneRef.current = null
     }
+  }
+
+  const dismissStreakMilestone = () => {
+    setStreakMilestone(null)
+    setOpenLesson(null)
+  }
+
+  const viewJourneyFromMilestone = () => {
+    dismissStreakMilestone()
+    setStreakJourneyOpen(true)
   }
 
   const startNextRegionLesson = (lessonId) => {
@@ -687,14 +731,12 @@ function App() {
     if (userIndex === -1) return []
     return leagueStandings.slice(Math.max(0, userIndex - 1), userIndex + 2)
   }, [leagueStandings])
-  // A wider real slice (still your actual neighbors, just two deep on each
-  // side instead of one) so the Home card's standings list can peek a
-  // partial row at the top and bottom, like there's a real list to scroll —
-  // leagueNeighbors itself stays a tight 3 for the compact side-state.
+  // The Home card shows a short, scannable four-person window around the
+  // learner instead of mimicking a full leaderboard.
   const leagueNeighborsWide = useMemo(() => {
     const userIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
     if (userIndex === -1) return []
-    return leagueStandings.slice(Math.max(0, userIndex - 2), userIndex + 3)
+    return leagueStandings.slice(Math.max(0, userIndex - 2), userIndex + 2)
   }, [leagueStandings])
   const userStandingIndex = leagueStandings.findIndex((entry) => entry.isCurrentUser)
   const coinsToNextRank = userStandingIndex > 0
@@ -1142,6 +1184,13 @@ function App() {
           onViewRoadmap={viewRoadmapFromTransition}
           onExploreRoadmaps={exploreRoadmapsFromTransition}
           onReviewRoadmap={viewRoadmapFromTransition}
+        />
+      )}
+      {streakMilestone && (
+        <StreakMilestoneTransition
+          milestone={streakMilestone}
+          onContinue={dismissStreakMilestone}
+          onViewJourney={viewJourneyFromMilestone}
         />
       )}
       {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}

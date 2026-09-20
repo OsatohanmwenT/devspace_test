@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applyStreakDecay, DAY_INITIALS, WEEK_LENGTH, earnMilestones, getStreakHistory, getStreakMessage, getStreakWeek, isActiveToday, resolveStreak, STREAK_MILESTONES } from './streak.js'
+import { applyStreakDecay, DAY_INITIALS, WEEK_LENGTH, earnMilestones, getStreakHistory, getStreakMessage, getStreakWeek, highestNewMilestone, isActiveToday, resolveStreak, STREAK_MILESTONES } from './streak.js'
 
 // A fixed Friday so the labels are predictable regardless of when tests run.
 const FRIDAY = new Date(2026, 7, 7)
@@ -154,4 +154,18 @@ test('a gap that does not break the streak spends nothing', () => {
   const next = applyStreakDecay({ streakDays: 5, lastActiveDate: YESTERDAY, streakShieldWeek: null, weekIndex: 40 }, TODAY, true)
   assert.equal(next.streakDays, 5)
   assert.equal(next.streakShieldWeek, null, 'a shield should not be spent when nothing needed saving')
+})
+
+test('nothing to celebrate when no new tier was crossed', () => {
+  assert.equal(highestNewMilestone([], []), null)
+  assert.equal(highestNewMilestone([3, 7], [3, 7]), null)
+})
+
+test('a single tier crossed celebrates that tier', () => {
+  assert.deepEqual(highestNewMilestone([], [3]), { days: 3, restores: 1, label: 'Getting going' })
+  assert.deepEqual(highestNewMilestone([3, 7], [3, 7, 14]), { days: 14, restores: 1, label: 'Two weeks' })
+})
+
+test('a leap past several tiers celebrates only the highest one', () => {
+  assert.deepEqual(highestNewMilestone([], [3, 7, 14, 30]), { days: 30, restores: 2, label: 'One month' })
 })

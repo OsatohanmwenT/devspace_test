@@ -28,6 +28,19 @@ export function earnMilestones(streakDays, earnedDays = []) {
     restores: earned.reduce((total, tier) => total + tier.restores, 0),
   }
 }
+
+// A celebration can only show one moment at a time, so a jump that crosses
+// several tiers in one update (a restore/shield recovery, or the artificial
+// storage edits used to test this) is collapsed down to the highest one —
+// the smaller tiers it also earned are still recorded, just not celebrated
+// individually.
+export function highestNewMilestone(beforeEarned = [], afterEarned = []) {
+  const before = new Set(beforeEarned)
+  const newDays = afterEarned.filter((day) => !before.has(day))
+  if (!newDays.length) return null
+  const highestDay = Math.max(...newDays)
+  return STREAK_MILESTONES.find((tier) => tier.days === highestDay) ?? null
+}
 const DAY_MS = 24 * 60 * 60 * 1000
 
 function startOfDay(value) {

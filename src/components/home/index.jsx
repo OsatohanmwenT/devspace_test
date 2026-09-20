@@ -53,7 +53,7 @@ const badgeLg = 64;
 // written per-frame by useCardCarousel's paint(), which is why it's absent
 // from this class list even though transform-origin/backface-visibility are.
 const mapCard =
-  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border p-7 text-left font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] max-[680px]:!top-[96px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:14px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
+  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border !border-white/10 p-7 text-left font-medium hover:!border-white/20 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:!border-neutral-200 [[data-theme=light]_&]:hover:!border-neutral-300 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] max-[680px]:!top-[96px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:10px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
 
 const lightFrontElevation =
   "[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.31)_0px_1.67px_4.18px_0px,rgba(183,181,203,0.27)_0px_8.37px_8.37px_0px,rgba(183,181,203,0.16)_0px_17.57px_10.88px_0px,rgba(183,181,203,0.05)_0px_31.8px_12.55px_0px,rgba(183,181,203,0.01)_0px_50.21px_14.23px_0px,rgb(var(--card-accent)_/_0.12)_0px_18px_36px_-28px] max-[680px]:[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.24)_0px_1px_3px_0px,rgba(183,181,203,0.2)_0px_5px_6px_0px,rgba(183,181,203,0.1)_0px_11px_8px_0px,rgb(var(--card-accent)_/_0.08)_0px_12px_28px_-24px]";
@@ -532,7 +532,7 @@ export default function HomeView({
           <span className="home-map-atmosphere max-[680px]:opacity-50" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block max-[680px]:!-top-4">
+          <div className="home-map-devy pointer-events-none hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:z-0 max-[680px]:block max-[680px]:!top-14">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
@@ -631,7 +631,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[1]}
-            className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? `${lightFrontElevation} ${darkMobileFrontDepth} !pt-6 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
             data-layout={isFrontLayout("leaderboard") ? "front" : getCardSlot("leaderboard")}
@@ -756,7 +756,7 @@ export default function HomeView({
                   </span>
                 </span>
 
-                <span className="home-map-card__details home-map-card__details--leaderboard">
+                <span className="home-map-card__details home-map-card__details--leaderboard flex-1 justify-start">
                   <span className="flex items-center gap-3 pb-2">
                     <TierMedal
                       league={{ color: leagueColor || leaderboardMedalColor }}
@@ -793,19 +793,19 @@ export default function HomeView({
                   </span>
 
                   <span
-                    className="relative -mx-1 h-[150px] overflow-hidden border-t border-white/[0.08]"
+                    className="relative -mx-1 h-[184px] overflow-hidden border-t border-white/[0.08] min-[681px]:h-[224px]"
                     style={{ display: "block" }}
                   >
                     <span className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col">
                       {leagueNeighborsWide.map((entry, index) => (
                         <span
                           key={entry.id}
-                          className={`home-map-card__standings-row items-center gap-3 px-4! py-3! ${textBody} ${entry.isCurrentUser ? "rounded-xl bg-[rgb(var(--card-accent)/0.15)]" : ""}`}
+                          className={`home-map-card__standings-row items-center gap-3 px-4! py-2! min-[681px]:py-3! ${textBody} ${entry.isCurrentUser ? "rounded-xl bg-[rgb(var(--card-accent)/0.15)]" : ""}`}
                           data-self={entry.isCurrentUser}
                         >
                           <span className="flex flex-1 items-center gap-3">
                             <span
-                              className="grid size-8 flex-none place-items-center rounded-full text-[12px] font-bold text-white"
+                              className="grid size-7 flex-none place-items-center rounded-full text-[12px] font-bold text-white"
                               style={{
                                 background: entry.isCurrentUser
                                   ? "rgb(var(--card-accent))"

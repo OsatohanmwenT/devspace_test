@@ -4,10 +4,7 @@ import { motion } from 'motion/react'
 import { ActionButton } from '../ui/ActionButton'
 import { DevyMood } from '../ui/DevyMood'
 import { CheckIcon } from '../ui/icons'
-
-// The app's own accent palette rather than confetti's rainbow default, so the
-// burst reads as this product's celebration and not a generic effect.
-const CONFETTI_COLORS = ['#4169e1', '#04adc0', '#8b7cf6', '#f59e0b', '#6ee7a8']
+import { CONFETTI_COLORS } from '../../lib/confetti'
 
 // One full-screen handoff for both levels of roadmap progression — unlocking
 // the next region and finishing the whole roadmap — so a milestone always
