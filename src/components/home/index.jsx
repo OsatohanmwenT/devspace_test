@@ -532,7 +532,7 @@ export default function HomeView({
           <span className="home-map-atmosphere max-[680px]:opacity-50" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block max-[680px]:!-top-9">
+          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block max-[680px]:!-top-4">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
