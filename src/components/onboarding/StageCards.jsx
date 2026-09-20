@@ -14,14 +14,14 @@ function slotFor(offset) {
   return { x: `${side * 160}%`, scale: 0.85, rotate: side * 2, opacity: 0 }
 }
 
-// One of the app's own accents per card — green, orange, blue, amber,
-// purple — like every Vybe having its own colour. The neighbours are the
-// same material, just dimmed and behind, so the active step still leads.
-const CARD_TINTS = ['#168a46', '#e8702a', '#2563eb', '#d4a017', '#7c3aed']
+// One colour for the route: the app's green, like the reference's Gut
+// Health card. The neighbours are the same material, dimmed and behind, so
+// the active step still leads.
+const CARD_TINT = '#168a46'
 
 function StageCard({ stage, index, active, onClick }) {
   const icon = stageIcon(stage.value)
-  const tint = CARD_TINTS[index % CARD_TINTS.length]
+  const tint = CARD_TINT
   return (
     <button
       type="button"
