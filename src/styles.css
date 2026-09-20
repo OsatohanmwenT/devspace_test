@@ -1462,3 +1462,190 @@
     translate: 0 0;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Onboarding card depth. The reference cards aren't "a gradient" — they're a
+   stack: a faint inner top-light, a bright top-edge hairline, a dark
+   bottom-edge shade, a tight contact shadow and a soft ambient drop. One
+   family, used by every card in onboarding so options, route rows, the path
+   card and the fan cards all read as the same material.
+   --------------------------------------------------------------------------- */
+.onb-card {
+  --card-tint: #6699ec;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0) 45%),
+    #1b1b1f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 14px 32px -12px rgba(0, 0, 0, 0.55);
+}
+
+.onb-card--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 24px 48px -16px rgba(0, 0, 0, 0.7);
+}
+
+.onb-card--selected {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 55%),
+    #2563eb;
+  border-color: #3b82f6;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 14px 32px -12px rgba(37, 99, 235, 0.55);
+}
+
+/* A branch-coloured header block — the "Gut Health" green card. The tint is
+   set per card via --card-tint; the header gets a top-light of its own so it
+   reads as a lit surface rather than a flat fill. */
+.onb-card--tinted {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 18px 40px -14px color-mix(in srgb, var(--card-tint) 55%, transparent);
+}
+
+.onb-card-header {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 60%),
+    var(--card-tint);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='light'] .onb-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 45%),
+    #fbfbfa;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(20, 20, 40, 0.06),
+    0 1px 2px rgba(20, 20, 40, 0.08),
+    0 14px 32px -12px rgba(20, 20, 40, 0.14);
+}
+
+[data-theme='light'] .onb-card--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(20, 20, 40, 0.08),
+    0 2px 4px rgba(20, 20, 40, 0.08),
+    0 24px 48px -16px rgba(20, 20, 40, 0.22);
+}
+
+[data-theme='light'] .onb-card--selected {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 55%),
+    #2563eb;
+  border-color: #3b82f6;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(20, 20, 40, 0.12),
+    0 14px 32px -12px rgba(37, 99, 235, 0.4);
+}
+
+[data-theme='light'] .onb-card--tinted {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(20, 20, 40, 0.06),
+    0 1px 2px rgba(20, 20, 40, 0.08),
+    0 18px 40px -14px color-mix(in srgb, var(--card-tint) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* P6 — select pop. Runs once when an option becomes selected; the colour
+     change itself is instant, only the scale is animated. */
+  @keyframes onb-select-pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(var(--pop-scale, 1.035)); }
+    100% { transform: scale(1); }
+  }
+
+  .onb-select-pop {
+    animation: onb-select-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Siblings of a just-selected option soften for the pop's duration so the
+     chosen one is the only thing moving. The transition lives only on the
+     dimmed state — an always-on opacity transition on the options would
+     fight the gsap cascade that fades them in. */
+  .onb-option-group[data-just-selected] > :not([aria-pressed='true']):not([data-selected]) {
+    opacity: 0.75;
+    transition: opacity 120ms ease-out;
+  }
+
+  /* A one-shot sheen when the footer CTA first becomes enabled — the button
+     "lights up" the moment an answer makes it usable. Same shape as the
+     mission CTA's idle sheen, but it plays once. */
+  .onb-cta-lit {
+    overflow: hidden;
+  }
+
+  .onb-cta-lit::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 42%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+    animation: cta-sheen 1.1s ease-in-out both;
+  }
+
+  /* Progress bar: a brighter leading edge that fades after each advance. */
+  .onb-progress-fill {
+    position: relative;
+    transition: width 480ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .onb-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55));
+    opacity: 0;
+  }
+
+  .onb-progress-fill[data-moved]::after {
+    animation: onb-progress-edge 640ms ease-out both;
+  }
+
+  @keyframes onb-progress-edge {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
+/* Role-reveal carousel. The stage gets a barely-there radial wash so the
+   cards sit on something rather than on a blank canvas — on the dark theme
+   the tints already glow, so it's lighter there. The cavity is the recessed
+   panel inside each card that holds the artwork. */
+.onb-stage {
+  background: radial-gradient(circle at 50% 55%, rgba(102, 153, 236, 0.1), rgba(102, 153, 236, 0.03) 35%, transparent 68%);
+}
+
+[data-theme='light'] .onb-stage {
+  background: radial-gradient(circle at 50% 55%, rgba(49, 112, 238, 0.08), rgba(49, 112, 238, 0.025) 35%, transparent 68%);
+}
+
+.onb-stage-cavity {
+  background: rgba(8, 20, 14, 0.42);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.22),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}

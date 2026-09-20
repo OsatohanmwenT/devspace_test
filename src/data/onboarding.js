@@ -23,6 +23,22 @@ export const BRANCHES = [
   { value: 'cloud', label: 'Cloud, Security & Deployment', icon: 'cloud' },
 ]
 
+// One accent per branch — the header colour of the path card and the tinted
+// shadow under it, the way each Vybe has its own colour. Chosen to sit on the
+// dark ground without matching the blue used for selection.
+export const branchTint = {
+  web: '#2563eb',
+  mobile: '#7c3aed',
+  backend: '#0f766e',
+  data: '#0891b2',
+  ai: '#8b7cf6',
+  product: '#d97706',
+  marketing: '#e11d48',
+  content_media: '#db2777',
+  design: '#f59e0b',
+  cloud: '#059669',
+}
+
 export const roleOptions = {
   web: [
     { value: 'help_me_choose', label: 'Help me choose' },
@@ -366,7 +382,7 @@ const branchInsights = {
   not_sure: 'Exploring is how the right direction becomes clear.',
 }
 
-const roleInsights = {
+export const roleInsights = {
   web: 'Web roles blend logic with visual craft.',
   mobile: 'Mobile roles design for life beyond the desk.',
   backend: 'Backend roles keep data moving safely.',

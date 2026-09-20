@@ -1,14 +1,47 @@
+import { useEffect, useState } from 'react';
+import { POP } from '../../lib/onboardingMotion';
 import { DevyLottie } from '../ui/DevyLottie';
 import { DevyMood } from '../ui/DevyMood';
 
 const FOCUS = 'focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:focus-visible:outline-[#073c72]'
 
 // A filled surface when unselected and a solid accent when selected, matching
-// the Practice topic pills — rather than a thin border on near-black.
+// the Practice topic pills — rather than a thin border on near-black. Kept
+// flat on purpose: the layered .onb-card depth is reserved for content cards
+// (previews, snippets, the break bubble), not for things you pick from.
 function surface(isSelected) {
   return isSelected
     ? 'border border-[#2563eb] bg-[#2563eb] text-white'
     : 'border border-transparent [[data-theme=light]_&]:border-[#d4d4d4] bg-neutral-700/80 [[data-theme=light]_&]:bg-white text-[#e4e4e6] [[data-theme=light]_&]:text-neutral-800 hover:bg-neutral-600/80 [[data-theme=light]_&]:hover:border-[#737371]'
+}
+
+// P6 — select pop. Tracks which option was just chosen so it can play its
+// one-shot scale bump while its siblings soften for the same beat. The
+// colour change is left to the normal render; only the pop is timed.
+function useSelectPop() {
+  const [popping, setPopping] = useState(null)
+
+  useEffect(() => {
+    if (popping === null) return undefined
+    const timer = window.setTimeout(() => setPopping(null), POP.duration * 1000 + 20)
+    return () => window.clearTimeout(timer)
+  }, [popping])
+
+  return [popping, setPopping]
+}
+
+// `value`, but only after it has held for `ms` — used to let Devy's pop-out
+// start a beat after the card's own pop, so it reads as caused by it.
+function useDelayed(value, ms) {
+  const [delayed, setDelayed] = useState(value)
+
+  useEffect(() => {
+    if (value === delayed) return undefined
+    const timer = window.setTimeout(() => setDelayed(value), ms)
+    return () => window.clearTimeout(timer)
+  }, [value, delayed, ms])
+
+  return delayed
 }
 
 function isChosen(value, optionValue) {
@@ -72,11 +105,19 @@ const ICON_PATHS = {
 const BRAND_ICON_NAMES = new Set(['js', 'typescript', 'react', 'vue', 'angular', 'python', 'swift', 'kotlin', 'java', 'csharp', 'docker', 'git'])
 
 export function OptionList({ options, value, onSelect, layout = 'list' }) {
+  const [popping, setPopping] = useSelectPop()
+  const settledValue = useDelayed(value, 120)
+  const choose = (optionValue) => {
+    setPopping(optionValue)
+    onSelect(optionValue)
+  }
+
   if (layout === 'grid') {
     return (
-      <div className="grid w-full max-w-[560px] grid-cols-2 gap-2.5" role="group">
+      <div className="onb-option-group grid w-full max-w-[560px] grid-cols-2 gap-2.5" role="group" data-just-selected={popping !== null ? '' : undefined}>
         {options.map((option, index) => {
           const selected = isChosen(value, option.value)
+          const devyOut = selected && isChosen(settledValue, option.value)
           // Devy climbs out the same side the card sits on — left column,
           // left side; right column, right side. The "inverted" variant is
           // just the same clip mirrored, not a second asset.
@@ -86,16 +127,17 @@ export function OptionList({ options, value, onSelect, layout = 'list' }) {
             <button
               key={option.value}
               type="button"
-              className={`relative flex flex-col items-center gap-2.5 rounded-xl px-3 py-4 text-center text-[13px] font-medium leading-[1.3] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${FOCUS}`}
+              data-build
+              className={`relative flex flex-col items-center gap-2.5 rounded-xl px-3 py-4 text-center text-[13px] font-medium leading-[1.3] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${popping === option.value ? 'onb-select-pop' : ''} ${FOCUS}`}
               aria-pressed={selected}
-              onClick={() => onSelect(option.value)}
+              onClick={() => choose(option.value)}
             >
               {option.icon && <OptionIcon name={option.icon} selected={selected} />}
               <span>{option.label}</span>
               {/* Devy pops out from behind the selected card — like he's just
                   been disturbed — the card itself never changes shape or
                   size to make room for him. */}
-              {selected && (
+              {devyOut && (
                 // DevyLottie always adds its own `relative` — nesting it
                 // inside this absolutely-positioned span (rather than handing
                 // it `absolute` directly) keeps that from winning the cascade
@@ -115,17 +157,21 @@ export function OptionList({ options, value, onSelect, layout = 'list' }) {
     )
   }
 
+  // Only genuinely long lists (8+) split into two columns on wider screens;
+  // anything shorter reads better as one straight column.
+  const twoColumn = options.length > 7
   return (
-    <div className="grid w-full max-w-[520px] gap-2.5" role="group">
+    <div className={`onb-option-group grid w-full gap-2.5 ${twoColumn ? 'max-w-[640px] min-[720px]:grid-cols-2' : 'max-w-[520px]'}`} role="group" data-just-selected={popping !== null ? '' : undefined}>
       {options.map((option) => {
         const selected = isChosen(value, option.value)
         return (
           <button
             key={option.value}
             type="button"
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[14px] leading-[1.45] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${FOCUS}`}
+            data-build
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[14px] leading-[1.45] transition-[background,border-color] duration-[120ms] ${surface(selected)} ${popping === option.value ? 'onb-select-pop' : ''} ${FOCUS}`}
             aria-pressed={selected}
-            onClick={() => onSelect(option.value)}
+            onClick={() => choose(option.value)}
           >
             {option.icon && <OptionIcon name={option.icon} selected={selected} />}
             <span className="min-w-0 flex-1">
@@ -185,17 +231,21 @@ export function MiniIcon({ name, className = 'size-3' }) {
 }
 
 export function ChipList({ options, value, onSelect }) {
+  // Chips pop a touch harder than cards (they're smaller) and don't dim
+  // their siblings — multi-select means the others are still live choices.
+  const [popping, setPopping] = useSelectPop()
   return (
-    <div className="flex max-w-[520px] flex-wrap justify-center gap-2.5" role="group">
+    <div className="flex max-w-[520px] flex-wrap justify-center gap-2.5" role="group" style={{ '--pop-scale': 1.06 }}>
       {options.map((option) => {
         const selected = isChosen(value, option.value)
         return (
           <button
             key={option.value}
             type="button"
+            data-build
             aria-pressed={selected}
-            onClick={() => onSelect(option.value)}
-            className={`min-h-10 rounded-full px-4 text-sm transition-[background,border-color] duration-[120ms] ${surface(selected)} ${FOCUS}`}
+            onClick={() => { setPopping(option.value); onSelect(option.value) }}
+            className={`min-h-10 rounded-full px-4 text-sm transition-[background,border-color] duration-[120ms] ${surface(selected)} ${popping === option.value ? 'onb-select-pop' : ''} ${FOCUS}`}
           >
             {option.label}
           </button>
@@ -214,12 +264,16 @@ export function StepHeading({ title, subtitle, showDevy = true, devyClip }) {
   return (
     <div className="grid content-start justify-items-center gap-3 text-center">
       <div className="flex items-center justify-center gap-3">
-        {showDevy && (devyClip
-          ? <DevyLottie clip={devyClip} className={`flex-none ${devyClip === 'walk' || devyClip === 'thinking' ? 'size-20' : 'size-14'}`} />
-          : <DevyMood mood="neutral" className="devy-idle size-14 flex-none" alt="" />)}
-        <h1 className="m-0 max-w-[25ch] font-rethink-sans text-3xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{title}</h1>
+        {showDevy && (
+          <span data-build data-build-order="0" className="flex-none">
+            {devyClip
+              ? <DevyLottie clip={devyClip} className={`flex-none ${devyClip === 'walk' || devyClip === 'thinking' ? 'size-20' : 'size-14'}`} />
+              : <DevyMood mood="neutral" className="devy-idle size-14 flex-none" alt="" />}
+          </span>
+        )}
+        <h1 data-build data-build-order="1" className="m-0 max-w-[25ch] font-rethink-sans text-3xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{title}</h1>
       </div>
-      {subtitle && <p className="m-0 max-w-[60ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
+      {subtitle && <p data-build data-build-order="2" className="m-0 max-w-[60ch] text-[15px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{subtitle}</p>}
     </div>
   )
 }

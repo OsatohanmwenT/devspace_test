@@ -1,4 +1,6 @@
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { WORD } from '../../lib/onboardingMotion'
 import { DevyLottie } from '../ui/DevyLottie'
 
 const DEFAULT_LINES = [
@@ -31,7 +33,22 @@ export default function GeneratingPath({ lines = DEFAULT_LINES, lineIntervalMs =
     <div className="grid w-full max-w-[420px] justify-items-center gap-1 self-center text-center" role="status" aria-live="polite">
       <DevyLottie clip="thinking" className="onb-devy-loading h-[104px] w-[104px]" />
       <h1 className="m-0 mt-4 font-rethink-sans text-[24px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Building your route</h1>
-      <p className="m-0 mt-3 min-h-[22px] text-[15px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{lines[lineIndex]}</p>
+      {/* Each status line rises in and the previous one lifts away blurred —
+          the same word-reveal beat as the hero titles, one line at a time. */}
+      <div className="relative mt-3 min-h-[22px] w-full">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={lineIndex}
+            className="m-0 text-[15px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]"
+            initial={{ opacity: 0, y: WORD.y, filter: `blur(${WORD.blur}px)` }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -WORD.y, filter: `blur(${WORD.blur}px)` }}
+            transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            {lines[lineIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
       <span className="mt-2 flex items-center gap-1.5 text-[#8b7cf6]" aria-hidden="true">
         <i className="devy-thinking-dot size-1.5 rounded-full bg-current" />
         <i className="devy-thinking-dot size-1.5 rounded-full bg-current" />

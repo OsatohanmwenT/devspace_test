@@ -1,7 +1,10 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
+import { motion } from 'motion/react'
+import { CASCADE, SWAP } from '../../lib/onboardingMotion'
 import { ActionButton } from '../ui/ActionButton'
 import { DevyLottie } from '../ui/DevyLottie'
+import { WordReveal } from './motion/WordReveal'
 
 export function FirstLessonWelcome({ path, lesson, onBegin }) {
   const welcomeRef = useRef(null)
@@ -9,16 +12,21 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
 
+    // Same cascade (P2) as the rest of onboarding, so the handoff from the
+    // generating screen reads as one more step of the same flow.
     const context = gsap.context(() => {
       gsap.from('[data-welcome-devy]', { autoAlpha: 0, scale: 0.86, duration: 0.55, ease: 'power2.out' })
-      gsap.from('[data-welcome-step]', { autoAlpha: 0, y: 18, duration: 0.45, ease: 'power2.out', stagger: 0.1, delay: 0.16 })
+      gsap.from('[data-welcome-step]', { autoAlpha: 0, y: CASCADE.y, filter: `blur(${CASCADE.blur}px)`, duration: CASCADE.duration, ease: CASCADE.ease, stagger: CASCADE.stagger, delay: 0.16, clearProps: 'filter' })
     }, welcomeRef)
 
     return () => context.revert()
   }, [])
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: SWAP.in, ease: SWAP.ease }}
       className="fixed inset-0 z-30 grid min-h-screen place-items-center bg-[linear-gradient(to_bottom,#121214_0%,#121214_42%,#3a2d0d_100%)] px-6 py-8 text-[#f4f4f2] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,#fafaf8_0%,#fafaf8_42%,#fff1bd_100%)] [[data-theme=light]_&]:text-neutral-800 max-[680px]:px-4"
       aria-label="Your first lesson"
     >
@@ -38,7 +46,7 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
           Your first lesson is ready
         </h1>
         <p data-welcome-step className="m-0 text-[17px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
-          {path.title} starts with <strong className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{lesson?.title ?? 'your first lesson'}</strong>.
+          {path.title} starts with <WordReveal as="strong" text={lesson?.title ?? 'your first lesson'} delay={0.5} className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" />.
         </p>
         <ActionButton
           data-welcome-step
@@ -48,6 +56,6 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
           Let’s begin
         </ActionButton>
       </main>
-    </section>
+    </motion.section>
   )
 }
