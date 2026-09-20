@@ -519,7 +519,7 @@ export default function HomeView({
         : `${leagueRankDelta > 0 ? "↑" : "↓"} ${Math.abs(leagueRankDelta)} today`;
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:px-[18px] max-[680px]:px-[18px] max-[680px]:py-4">
+    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
       <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[680px]:justify-start max-[680px]:pt-14">
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
