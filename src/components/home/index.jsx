@@ -356,6 +356,7 @@ export default function HomeView({
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
+  const hoverTimer = useRef(null);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 680,
   );
@@ -394,6 +395,49 @@ export default function HomeView({
   // to the side: if the contents swapped at the moment the slot changed, that
   // pop would land in the middle of the swipe and undo the smooth motion.
   const isFrontLayout = (cardId) => isMobile || isFront(cardId);
+  const cardTabIndex = (cardId) =>
+    ["front", "previous", "next"].includes(getCardSlot(cardId)) ? 0 : -1;
+
+  const changeCard = useCallback(
+    (direction) => {
+      setMapMode("map");
+      setActiveCard(
+        cardOrder[
+          (activeIndex + direction + cardOrder.length) % cardOrder.length
+        ],
+      );
+    },
+    [activeIndex],
+  );
+
+  const promoteOnHover = (cardId) => {
+    if (window.innerWidth <= 900 || isFront(cardId)) return;
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      setMapMode("map");
+      setActiveCard(cardId);
+    }, 160);
+  };
+
+  const clearHoverPromotion = () => window.clearTimeout(hoverTimer.current);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (
+        isMobile ||
+        event.defaultPrevented ||
+        !["ArrowLeft", "ArrowRight"].includes(event.key) ||
+        event.target.matches("input, textarea, select, [contenteditable='true']")
+      )
+        return;
+      event.preventDefault();
+      changeCard(event.key === "ArrowRight" ? 1 : -1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [changeCard, isMobile]);
+
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   // Bringing a card to the front is itself part of the carousel interaction,
   // so a tap on a peeking card focuses it rather than jumping straight to its
@@ -410,22 +454,7 @@ export default function HomeView({
   const onCardKeyDown = (event) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const direction = event.key === "ArrowRight" ? 1 : -1;
-    setMapMode("map");
-    setActiveCard(
-      cardOrder[
-        (activeIndex + direction + cardOrder.length) % cardOrder.length
-      ],
-    );
-  };
-
-  const changeCard = (direction) => {
-    setMapMode("map");
-    setActiveCard(
-      cardOrder[
-        (activeIndex + direction + cardOrder.length) % cardOrder.length
-      ],
-    );
+    changeCard(event.key === "ArrowRight" ? 1 : -1);
   };
 
   const onSceneWheel = (event) => {
@@ -517,11 +546,13 @@ export default function HomeView({
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
             data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
-            tabIndex={0}
+            tabIndex={cardTabIndex("continueLearning")}
             role="group"
             aria-label="Continue learning"
             aria-current={isFront("continueLearning") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
+            onMouseEnter={() => promoteOnHover("continueLearning")}
+            onMouseLeave={clearHoverPromotion}
             onClick={() =>
               openOrSelect("continueLearning", continueSelectedCourse)
             }
@@ -604,11 +635,13 @@ export default function HomeView({
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
             data-layout={isFrontLayout("leaderboard") ? "front" : getCardSlot("leaderboard")}
-            tabIndex={0}
+            tabIndex={cardTabIndex("leaderboard")}
             role="group"
             aria-label="Leaderboard"
             aria-current={isFront("leaderboard") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
+            onMouseEnter={() => promoteOnHover("leaderboard")}
+            onMouseLeave={clearHoverPromotion}
             onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
           >
             {(!isFrontLayout("leaderboard") || !leagueUnlocked) && (
@@ -818,11 +851,13 @@ export default function HomeView({
             style={{ "--card-accent": cardAccents.portfolio }}
             data-slot={getCardSlot("portfolio")}
             data-layout={isFrontLayout("portfolio") ? "front" : getCardSlot("portfolio")}
-            tabIndex={0}
+            tabIndex={cardTabIndex("portfolio")}
             role="group"
             aria-label="Your work"
             aria-current={isFront("portfolio") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
+            onMouseEnter={() => promoteOnHover("portfolio")}
+            onMouseLeave={clearHoverPromotion}
             onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
           >
             <div className="flex w-full items-center justify-between gap-2">
@@ -915,11 +950,13 @@ export default function HomeView({
             style={{ "--card-accent": cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
             data-layout={isFrontLayout("dynamic") ? "front" : getCardSlot("dynamic")}
-            tabIndex={0}
+            tabIndex={cardTabIndex("dynamic")}
             role="group"
             aria-label="What's new"
             aria-current={isFront("dynamic") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
+            onMouseEnter={() => promoteOnHover("dynamic")}
+            onMouseLeave={clearHoverPromotion}
             onClick={() => openOrSelect("dynamic", dynamicAction)}
           >
             <div className="flex w-full items-center justify-between gap-2">
