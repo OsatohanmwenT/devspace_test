@@ -542,7 +542,7 @@
 /* The section label sits beside the icon chip on every card now (not just
    the front one) so a side card still reads as "Leaderboard", not just a
    colored icon — it just steps back in size/weight once the card recedes. */
-.home-map-card:not([data-slot='front']) .home-map-card__section-label {
+.home-map-card:not([data-layout='front']) .home-map-card__section-label {
   font-size: 12px;
   opacity: 0.65;
 }
@@ -569,7 +569,7 @@
   transition: transform 220ms ease;
 }
 
-.home-map-card[data-slot='front'] .home-map-card__side {
+.home-map-card[data-layout='front'] .home-map-card__side {
   display: none;
 }
 
@@ -835,7 +835,7 @@
   display: none;
 }
 
-.home-map-card[data-slot='front'] .home-map-card__cta-bar {
+.home-map-card[data-layout='front'] .home-map-card__cta-bar {
   display: flex;
   min-height: 52px;
   margin-top: auto;
@@ -975,7 +975,7 @@
    fuller self — on the side, the __side block already carries the "what is
    this" job (a stat, not a label), so the plain title would just repeat
    underneath it. */
-.home-map-card:not([data-slot='front']) .home-map-card__title {
+.home-map-card:not([data-layout='front']) .home-map-card__title {
   display: none;
 }
 
@@ -1070,6 +1070,13 @@
     translate: 0 -6px;
   }
 
+  /* Press feedback goes through the independent `scale` property, not
+     `transform`: it composes with whatever transform the desktop slot rules
+     or the mobile carousel's inline style set, instead of replacing it. */
+  .home-map-card:active {
+    scale: 0.99;
+  }
+
   /* The front card is the "stage" — it steps forward and lifts clear of the
      fan behind it, with a shadow tinted in its own accent so the swap reads
      as depth changing, not just a flat crossfade. A slight spring overshoot
@@ -1095,7 +1102,7 @@
       box-shadow 380ms ease;
   }
 
-  .home-map-card[data-slot='front'] .home-map-card__details {
+  .home-map-card[data-layout='front'] .home-map-card__details {
     display: flex;
     width: 100%;
     flex-direction: column;
@@ -1111,14 +1118,14 @@
      unlocked and front (the masthead below already names it), so nothing
      up top is left to push this block down from — sit it flush at the
      top instead of drifting toward the CTA with a big empty gap above it. */
-  .home-map-card[data-slot='front'] .home-map-card__details.home-map-card__details--leaderboard {
+  .home-map-card[data-layout='front'] .home-map-card__details.home-map-card__details--leaderboard {
     margin-top: 0;
   }
 
   /* The locked-leaderboard hero: an illustration and a couple of short
      words centered in the same space the standings list would otherwise
      fill, instead of a small left-aligned sentence lost in the card. */
-  .home-map-card[data-slot='front'] .home-map-card__details.home-map-card__details--centered {
+  .home-map-card[data-layout='front'] .home-map-card__details.home-map-card__details--centered {
     flex: 1;
     align-items: center;
     justify-content: center;
@@ -1126,7 +1133,7 @@
     gap: 12px;
   }
 
-  .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+  .home-map-card[data-layout='front'].home-map-card--lesson .home-map-card__lesson-details {
     display: flex;
     width: 100%;
     flex-direction: column;
@@ -1173,22 +1180,22 @@
     background: #88bdf2;
   }
 
-  .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
+  .home-map-card[data-layout='front'] .home-map-card__details > span:last-child {
     display: flex;
     align-items: center;
     justify-content: space-between;
     color: #f4f4f2;
   }
 
-  [data-theme='light'] .home-map-card[data-slot='front'] .home-map-card__details {
+  [data-theme='light'] .home-map-card[data-layout='front'] .home-map-card__details {
     color: #686968;
   }
 
-  [data-theme='light'] .home-map-card[data-slot='front'] .home-map-card__details > span:last-child {
+  [data-theme='light'] .home-map-card[data-layout='front'] .home-map-card__details > span:last-child {
     color: #262626;
   }
 
-  [data-theme='light'] .home-map-card[data-slot='front'].home-map-card--lesson .home-map-card__lesson-details {
+  [data-theme='light'] .home-map-card[data-layout='front'].home-map-card--lesson .home-map-card__lesson-details {
     color: #526174;
   }
 
@@ -1214,13 +1221,13 @@
   .home-map-card[data-slot='previous'] {
     z-index: 2;
     transform: translate(calc(-50% - 50vw), 36px) scale(0.88);
-    opacity: 0.9;
+    opacity: 0.65;
   }
 
   .home-map-card[data-slot='next'] {
     z-index: 2;
     transform: translate(calc(-50% + 50vw), 36px) scale(0.88);
-    opacity: 0.9;
+    opacity: 0.65;
   }
 
   .home-map-card[data-slot='far-previous'] {
@@ -1341,7 +1348,7 @@
     font-size: 11px;
   }
 
-  .home-map-card:not([data-slot='front']) .home-map-card__section-label {
+  .home-map-card:not([data-layout='front']) .home-map-card__section-label {
     font-size: 11px;
   }
 
@@ -1369,44 +1376,18 @@
 }
 
 @media (max-width: 680px) {
-  .home-map-scene {
-    height: 500px;
-  }
-
-  /* Devy sits above the stack here (top-[30px], 80px tall) — measured
-     scene-relative bottom edge ≈110px, so the cards start below him with
-     a small gap instead of overlapping. */
-  .home-map-card {
-    top: 90px;
-    width: calc(100vw - 44px);
-    height: 350px;
-    padding: 24px;
-  }
-
-  .home-map-card[data-slot='front'] {
-    top: 90px;
-    width: calc(100vw - 44px);
-    height: 350px;
-    padding: 14px 24px 24px;
-    transform: translateX(-50%);
-  }
-
-  .home-map-card[data-slot='previous'] {
-    transform: translate(calc(-50% - 50vw), 30px) scale(0.72);
-  }
-
-  .home-map-card[data-slot='next'] {
-    transform: translate(calc(-50% + 50vw), 30px) scale(0.72);
-  }
-
-  .home-map-card--continue-learning[data-slot='front'] {
-    height: 350px;
-  }
-
-  .home-quick-actions {
-    margin-top: 0;
-    padding: 0;
-  }
+  /* The stack is a 3D stage here: every card's placement comes from the one
+     `position` value in useCardCarousel. While dragging, `paint()` writes
+     transform/opacity/z-index straight to each card's inline style on every
+     pointer move (transitions disabled), so the whole stack tracks the
+     finger exactly. On release it writes the final resting values once and
+     the `transition` below eases there — the browser's own compositor does
+     the settle, not a JS animation loop, so it can't stall or desync. */
+  /* Scene sizing, card positioning and quick-actions spacing at this
+     breakpoint now live as Tailwind classes directly on the elements in
+     index.jsx (max-[680px]:... with !important where specificity requires
+     it) instead of here — one place to adjust instead of two files that can
+     silently fight each other on cascade order. */
 
   /* Card dimensions collapse ~1.3-1.9x at this width, but their font sizes
      never did — text kept its desktop size while the box around it shrank,
@@ -1442,10 +1423,6 @@
     font-size: 12px;
   }
 
-  .home-map-card:not([data-slot='front']) .home-map-card__section-label {
-    font-size: 10px;
-  }
-
   .home-map-card__promotion {
     font-size: 10px;
   }
@@ -1454,7 +1431,7 @@
     font-size: 10px;
   }
 
-  .home-map-card[data-slot='front'] .home-map-card__cta-bar {
+  .home-map-card[data-layout='front'] .home-map-card__cta-bar {
     font-size: 15px;
   }
 

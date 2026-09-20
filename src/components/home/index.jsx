@@ -1,8 +1,7 @@
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
-import { AnimatedBoltIcon, AnimatedGemIcon } from "../ui/AnimatedIcons";
 import { DevyLottie } from "../ui/DevyLottie";
 import {
     ArrowLeftIcon,
@@ -11,6 +10,7 @@ import {
     SparkleIcon,
 } from "../ui/icons";
 import { DevyPromptBand } from "./DevyPromptBand";
+import { useCardCarousel } from "./useCardCarousel";
 
 // The Leaderboard card's own identity color, as a hex — same value as
 // cardAccents.leaderboard ("224 80 122"), just in the form TierMedal wants.
@@ -30,11 +30,11 @@ const avatarPalette = ["#f5b400", "#8b5cf6", "#04adc0", "#3b82f6"];
 // with its own font-size rule in styles.css — the same reason the code
 // this replaces already used Tailwind's `!` modifier on those elements.
 const textTitle =
-  "max-[680px]:!text-[16px] min-[681px]:max-[1200px]:!text-[19px] !text-[22px]";
+  "max-[680px]:!text-[18px] min-[681px]:max-[1200px]:!text-[19px] !text-[22px]";
 const textBody =
-  "max-[680px]:!text-[12px] min-[681px]:max-[1200px]:!text-[14px] !text-[15px]";
+  "max-[680px]:!text-[14px] min-[681px]:max-[1200px]:!text-[14px] !text-[15px]";
 const textCaption =
-  "max-[680px]:!text-[10px] min-[681px]:max-[1200px]:!text-[11px] !text-[12px]";
+  "max-[680px]:!text-[11px] min-[681px]:max-[1200px]:!text-[11px] !text-[12px]";
 
 // A small shared badge scale for TierMedal — compact (side/peeking state),
 // standard (front-card header/masthead), and one deliberately oversized
@@ -46,8 +46,19 @@ const badgeLg = 64;
 
 // Shared card shell. Border colour, glow and the accent wash all come from
 // .home-map-card in styles.css, driven by the --card-accent each card sets.
+// Mobile positioning here (top/left/width/height/padding/origin) is the
+// single place to retune the mobile card box — change it once and every
+// card picks it up. `left`/`width` must stay in step with CAROUSEL.PEEK
+// (45) in useCardCarousel.js. The transform itself is NOT set here — it's
+// written per-frame by useCardCarousel's paint(), which is why it's absent
+// from this class list even though transform-origin/backface-visibility are.
 const mapCard =
-  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border p-7 text-left font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] ${textBody}`;
+  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border p-7 text-left font-medium focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] max-[680px]:!top-[60px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:14px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
+
+const lightFrontElevation =
+  "[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.31)_0px_1.67px_4.18px_0px,rgba(183,181,203,0.27)_0px_8.37px_8.37px_0px,rgba(183,181,203,0.16)_0px_17.57px_10.88px_0px,rgba(183,181,203,0.05)_0px_31.8px_12.55px_0px,rgba(183,181,203,0.01)_0px_50.21px_14.23px_0px,rgb(var(--card-accent)_/_0.12)_0px_18px_36px_-28px] max-[680px]:[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.24)_0px_1px_3px_0px,rgba(183,181,203,0.2)_0px_5px_6px_0px,rgba(183,181,203,0.1)_0px_11px_8px_0px,rgb(var(--card-accent)_/_0.08)_0px_12px_28px_-24px]";
+const darkMobileFrontDepth =
+  "max-[680px]:[[data-theme=dark]_&]:![box-shadow:0_18px_34px_-28px_rgb(var(--card-accent)_/_0.18),0_10px_20px_-18px_rgb(0_0_0_/_0.38)]";
 
 const mapCardSurface =
   "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
@@ -81,14 +92,14 @@ const cardLabels = {
 };
 
 // The click-to-jump rail under the stack — makes "this is a paged set of
-// four things" explicit instead of leaving wheel/arrow/click-a-side-card as
-// the only way to discover it's a carousel at all. Desktop-only: below
-// 900px every card is already visible at once in the stacked grid, so a
-// pager pointing at one of them would be misleading.
+// four things" explicit instead of leaving wheel/arrow/swipe as the only way
+// to discover it's a carousel at all. Shown at every width, including mobile
+// where the input band below is pinned absolute — the extra -mt on mobile
+// clears that band instead of sitting underneath it.
 function ScenePager({ activeCard, onSelect }) {
   return (
     <div
-      className="mt-2 flex items-center justify-center gap-2"
+      className="-mt-2 flex items-center justify-center gap-2 max-[680px]:hidden"
       role="tablist"
       aria-label="Choose a card"
     >
@@ -99,7 +110,7 @@ function ScenePager({ activeCard, onSelect }) {
           role="tab"
           aria-selected={cardId === activeCard}
           aria-label={cardLabels[cardId]}
-          className="h-2 w-2 flex-none rounded-full border-0 bg-white/20 p-0 transition-[width,background-color,opacity] duration-300 ease-out hover:bg-[rgb(var(--dot-accent)/0.55)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#93c5fd] data-[active=true]:w-6 data-[active=true]:bg-[rgb(var(--dot-accent))] [[data-theme=light]_&]:bg-black/15"
+          className="h-2 w-2 flex-none rounded-full border-0 bg-white/20 p-0 transition-[width,background-color,opacity] duration-300 ease-out hover:bg-[rgb(var(--dot-accent)/0.55)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#93c5fd] data-[active=true]:w-6 data-[active=true]:bg-[rgb(var(--dot-accent))] [[data-theme=light]_&]:bg-black/40"
           style={{ "--dot-accent": cardAccents[cardId] }}
           data-active={cardId === activeCard}
           onClick={() => onSelect(cardId)}
@@ -138,7 +149,7 @@ function LessonIllustration({ src }) {
     );
   }
   return (
-    <span className="home-map-card__lesson-illustration" aria-hidden="true">
+    <span className="home-map-card__lesson-illustration max-[680px]:!my-1.5 max-[680px]:!size-20" aria-hidden="true">
       <img src={src} alt="" />
     </span>
   );
@@ -237,7 +248,7 @@ function CardCtaButton({ children, onClick }) {
   return (
     <ActionButton
       variant="primary"
-      className={`home-map-card__cta-bar flex min-h-[44px] w-full items-center justify-center gap-2 text-center font-medium ${textBody}`}
+      className={`home-map-card__cta-bar flex min-h-[44px] w-full items-center justify-center gap-2 text-center font-medium [[data-theme=light]_&]:!shadow-[0_2px_0_rgb(var(--card-accent)_/_0.38)] ${textBody}`}
       style={{
         background: "rgb(var(--card-accent))",
         borderColor: "rgb(var(--card-accent))",
@@ -340,14 +351,11 @@ export default function HomeView({
   seasonTimeLeft,
   seasonCoins,
   dynamicUpdate,
-  streakDays = 0,
-  xp = 0,
 }) {
   const [mapMode, setMapMode] = useState("map");
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
-  const dragMoved = useRef(false);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 680,
   );
@@ -358,6 +366,18 @@ export default function HomeView({
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const activeIndex = cardOrder.indexOf(activeCard);
+
+  const onCarouselCommit = useCallback((index) => {
+    setMapMode("map");
+    setActiveCard(cardOrder[index]);
+  }, []);
+
+  const { cardRefs, dragMoved, panHandlers } = useCardCarousel({
+    count: cardOrder.length,
+    activeIndex,
+    onCommit: onCarouselCommit,
+    isMobile,
+  });
 
   const getCardSlot = (cardId) => {
     const offset =
@@ -370,13 +390,16 @@ export default function HomeView({
     return "far-previous";
   };
   const isFront = (cardId) => getCardSlot(cardId) === "front";
+  // On mobile every card renders its full front layout, even while it is off
+  // to the side: if the contents swapped at the moment the slot changed, that
+  // pop would land in the middle of the swipe and undo the smooth motion.
+  const isFrontLayout = (cardId) => isMobile || isFront(cardId);
 
-  // Below 680px, cards are a plain stacked list, not a carousel — tapping a
-  // secondary card should go straight to its screen, not "select it" first
-  // the way it does on desktop where bringing a card to front is itself part
-  // of the carousel interaction.
+  // Bringing a card to the front is itself part of the carousel interaction,
+  // so a tap on a peeking card focuses it rather than jumping straight to its
+  // screen. Only the front card opens on tap.
   const openOrSelect = (cardId, onOpen) => {
-    if (window.innerWidth > 680 && getCardSlot(cardId) !== "front") {
+    if (getCardSlot(cardId) !== "front") {
       setMapMode("map");
       setActiveCard(cardId);
       return;
@@ -420,31 +443,12 @@ export default function HomeView({
     }, 430);
   };
 
-  // Mobile-only swipe: the stacked cards below 680px still peek their
-  // neighbors at the sides, so the whole stack is wrapped in one draggable
-  // Motion element below (pointer-based, so it works for touch, mouse and
-  // pen alike) that moves 1:1 with the gesture and snaps back to center via
-  // dragConstraints. A plain tap never reaches the offset threshold in
-  // onDrag, so dragMoved stays false and the card's own onClick still opens
-  // it as before; a real drag flips dragMoved so the browser's post-drag
-  // ghost click (fired on whatever card sits under the finger at release)
-  // gets swallowed instead of opening that card.
-  const onCardDragStart = () => {
-    dragMoved.current = false;
-  };
-
-  const onCardDrag = (event, info) => {
-    if (Math.abs(info.offset.x) > 5) {
-      dragMoved.current = true;
-    }
-  };
-
-  const onCardDragEnd = (event, info) => {
-    if (Math.abs(info.offset.x) > 55) {
-      changeCard(info.offset.x < 0 ? 1 : -1);
-    }
-  };
-
+  // The swipe itself lives in useCardCarousel — the scene's pan gesture feeds
+  // one motion value that every card reads, so the stack moves as one piece.
+  // A plain tap never passes the small distance threshold there, so dragMoved
+  // stays false and the card's own onClick still opens it; a real drag flips
+  // it so the browser's post-drag ghost click (fired on whatever card sits
+  // under the finger at release) gets swallowed instead of opening that card.
   const onSceneClickCapture = (event) => {
     if (dragMoved.current) {
       event.preventDefault();
@@ -487,34 +491,19 @@ export default function HomeView({
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:px-[18px] max-[680px]:px-[18px] max-[680px]:py-4">
-      {/* Header hides the streak/gem counters below 680px (main.jsx) — same
-          numbers, shown here instead so they're not lost, just relocated
-          from the header chrome into the page's own content. */}
-      <div className="hidden max-[680px]:flex items-center justify-end pb-2">
-        <div className="inline-flex items-center gap-2 rounded-full bg-white px-2 py-1 shadow-sm">
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-bold text-neutral-800">
-            <AnimatedBoltIcon className="size-4 text-[#f5a623]" />
-            {streakDays}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-bold text-neutral-800">
-            <AnimatedGemIcon className="size-4 text-[#6699ec]" />
-            {xp}
-          </span>
-        </div>
-      </div>
-
-      <div className="mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center">
-        <section
-          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2"
+      <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[680px]:justify-start max-[680px]:pt-14">
+        <motion.section
+          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
           data-mode={mapMode}
           aria-label="Learning map"
           onWheel={onSceneWheel}
           onClickCapture={onSceneClickCapture}
+          {...panHandlers}
         >
-          <span className="home-map-atmosphere" aria-hidden="true" />
+          <span className="home-map-atmosphere max-[680px]:opacity-50" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
-          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block">
+          <div className="home-map-devy hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:block max-[680px]:!-top-9">
             <DevyLottie
               key={activeCard}
               clip={devyClips[activeCard]}
@@ -522,20 +511,12 @@ export default function HomeView({
             />
           </div>
 
-          <motion.div
-            className="absolute inset-0"
-            drag={isMobile ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            dragMomentum={false}
-            onDragStart={onCardDragStart}
-            onDrag={onCardDrag}
-            onDragEnd={onCardDragEnd}
-          >
           <div
-            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson ${mapCardSurface} ${isFront("continueLearning") ? "!pt-3 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
+            ref={cardRefs[0]}
+            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3" : ""} ${isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
+            data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
             tabIndex={0}
             role="group"
             aria-label="Continue learning"
@@ -545,7 +526,7 @@ export default function HomeView({
               openOrSelect("continueLearning", continueSelectedCourse)
             }
           >
-            {!isFront("continueLearning") && (
+            {!isFrontLayout("continueLearning") && (
               <div className="home-map-card__header-row flex w-full items-center justify-between gap-2">
                 <span className="home-map-card__continue-label flex items-center gap-2.5">
                   <IconChip icon={PlayIcon} tone="blue" />
@@ -618,9 +599,11 @@ export default function HomeView({
           </div>
 
           <div
-            className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
+            ref={cardRefs[1]}
+            className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
+            data-layout={isFrontLayout("leaderboard") ? "front" : getCardSlot("leaderboard")}
             tabIndex={0}
             role="group"
             aria-label="Leaderboard"
@@ -628,7 +611,7 @@ export default function HomeView({
             onKeyDown={onCardKeyDown}
             onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
           >
-            {(!isFront("leaderboard") || !leagueUnlocked) && (
+            {(!isFrontLayout("leaderboard") || !leagueUnlocked) && (
               <div className="flex w-full items-center justify-between gap-2">
                 <span className="flex items-center gap-2.5">
                   <TierMedal
@@ -640,7 +623,7 @@ export default function HomeView({
                     Leaderboard
                   </span>
                 </span>
-                {!isFront("leaderboard") && <ExpandCue />}
+                {!isFrontLayout("leaderboard") && <ExpandCue />}
               </div>
             )}
 
@@ -830,9 +813,11 @@ export default function HomeView({
           </div>
 
           <div
-            className={`${mapCard} home-map-card--portfolio ${mapCardSurface} ${isFront("portfolio") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
+            ref={cardRefs[2]}
+            className={`${mapCard} home-map-card--portfolio ${mapCardSurface} ${isFront("portfolio") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.portfolio }}
             data-slot={getCardSlot("portfolio")}
+            data-layout={isFrontLayout("portfolio") ? "front" : getCardSlot("portfolio")}
             tabIndex={0}
             role="group"
             aria-label="Your work"
@@ -847,7 +832,7 @@ export default function HomeView({
                   Your work
                 </span>
               </span>
-              {!isFront("portfolio") && <ExpandCue />}
+              {!isFrontLayout("portfolio") && <ExpandCue />}
             </div>
 
             {completedLessonsCount === 0 ? (
@@ -925,9 +910,11 @@ export default function HomeView({
           </div>
 
           <div
-            className={`${mapCard} home-map-card--dynamic ${mapCardSurface} ${isFront("dynamic") ? "min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6" : ""}`}
+            ref={cardRefs[3]}
+            className={`${mapCard} home-map-card--dynamic ${mapCardSurface} ${isFront("dynamic") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
+            data-layout={isFrontLayout("dynamic") ? "front" : getCardSlot("dynamic")}
             tabIndex={0}
             role="group"
             aria-label="What's new"
@@ -942,7 +929,7 @@ export default function HomeView({
                   What's new
                 </span>
               </span>
-              {!isFront("dynamic") && <ExpandCue />}
+              {!isFrontLayout("dynamic") && <ExpandCue />}
             </div>
 
             <span className="home-map-card__side">
@@ -968,8 +955,7 @@ export default function HomeView({
               {dynamicUpdate?.cta ?? "Open"}
             </CardCtaButton>
           </div>
-          </motion.div>
-        </section>
+        </motion.section>
 
         <ScenePager
           activeCard={activeCard}
@@ -983,7 +969,7 @@ export default function HomeView({
             main.jsx) takes over for this whole band — Devy Pro and Career
             Path stay reachable from the account menu and the Paths tab. */}
         <section
-          className="home-quick-actions relative mx-auto mt-3 flex w-full max-w-[1040px] items-center justify-center py-3"
+          className="home-quick-actions relative mx-auto mt-9 flex w-full max-w-[1040px] items-center justify-center py-3 max-[680px]:absolute max-[680px]:bottom-4 max-[680px]:left-1/2 max-[680px]:z-10 max-[680px]:mt-0 max-[680px]:-translate-x-1/2 max-[680px]:pb-4 max-[680px]:pt-3"
           aria-label="Quick actions"
         >
           <DevyPromptBand

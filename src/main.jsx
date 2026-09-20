@@ -863,7 +863,7 @@ function App() {
                 aria-label={label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon className="size-7 max-[360px]:size-[25px]" />
+                <Icon className="size-[22px] max-[360px]:size-5" />
                 {isActive && (
                   <span
                     className={`absolute inset-x-1 bottom-0 h-[3px] rounded-full ${barColor}`}
