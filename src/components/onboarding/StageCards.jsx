@@ -1,5 +1,5 @@
-import { motion } from 'motion/react'
-import { useState } from 'react'
+import { animate, motion } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
 import { reducedMotion } from '../../lib/onboardingMotion'
 import { MiniIcon } from './OnboardingStep'
 import { stageIcon } from './PathCard'
@@ -8,10 +8,12 @@ import { stageIcon } from './PathCard'
 // stage edges, straight (±2° at most) and slightly smaller; anything further
 // out waits just past the edge, so a step change slides rather than pops.
 function slotFor(offset) {
-  if (offset === 0) return { x: '0%', scale: 1, rotate: 0, opacity: 1 }
   const side = Math.sign(offset)
-  if (Math.abs(offset) === 1) return { x: `${side * 92}%`, scale: 0.9, rotate: side * 2, opacity: 0.85 }
-  return { x: `${side * 160}%`, scale: 0.85, rotate: side * 2, opacity: 0 }
+  const distance = Math.min(Math.abs(offset), 2)
+  const x = distance <= 1 ? 92 * distance : 92 + (68 * (distance - 1))
+  const scale = distance <= 1 ? 1 - (0.1 * distance) : 0.9 - (0.05 * (distance - 1))
+  const opacity = distance <= 1 ? 1 - (0.15 * distance) : 0.85 * (2 - distance)
+  return { x: `${side * x}%`, scale, rotate: side * 2 * Math.min(distance, 1), opacity }
 }
 
 // One of the app's own accents per card — green, orange, blue, amber,
@@ -53,20 +55,50 @@ function StageCard({ stage, index, active, onClick }) {
 // tap a peeking card); the first step is active by default because that's
 // where they'll start.
 export function StageCards({ stages, label }) {
-  const [active, setActive] = useState(0)
   const cards = stages.slice(0, 5)
   const instant = reducedMotion()
+  const [position, setPosition] = useState(() => Math.max(stages.length - 1, 0))
+  const [isScanning, setIsScanning] = useState(!instant)
+  const scanAnimation = useRef(null)
+  const active = Math.round(position)
+
+  useEffect(() => {
+    scanAnimation.current?.stop()
+
+    if (instant || cards.length < 2) {
+      setPosition(0)
+      setIsScanning(false)
+      return undefined
+    }
+
+    setPosition(cards.length - 1)
+    setIsScanning(true)
+    scanAnimation.current = animate(cards.length - 1, 0, {
+      duration: 1.15 + (cards.length * 0.08),
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: setPosition,
+      onComplete: () => setIsScanning(false),
+    })
+
+    return () => scanAnimation.current?.stop()
+  }, [cards.length, instant])
+
+  const showStage = (index) => {
+    scanAnimation.current?.stop()
+    setIsScanning(false)
+    setPosition(index)
+  }
 
   return (
     <div className="grid w-full justify-items-center gap-3">
       <div
-        className="onb-stage relative h-[150px] w-full max-w-[460px] overflow-hidden max-[480px]:h-[136px]"
+        className="relative h-[150px] w-full max-w-[460px] overflow-hidden max-[480px]:h-[136px]"
         role="group"
         aria-roledescription="carousel"
         aria-label={label}
       >
         {cards.map((stage, index) => {
-          const offset = index - active
+          const offset = index - position
           const slot = slotFor(offset)
           return (
             <motion.div
@@ -74,11 +106,11 @@ export function StageCards({ stages, label }) {
               className="absolute left-1/2 top-1/2 -ml-[106px] -mt-[60px] max-[480px]:-ml-[94px] max-[480px]:-mt-[54px]"
               initial={instant ? false : { opacity: 0, scale: 0.85, x: '0%' }}
               animate={slot}
-              transition={instant ? { duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.9, delay: offset === 0 ? 0.25 : 0.32 + Math.abs(offset) * 0.06 }}
-              style={{ zIndex: 3 - Math.min(Math.abs(offset), 2) }}
-              aria-hidden={offset === 0 ? undefined : 'true'}
+              transition={instant || isScanning ? { duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.9 }}
+              style={{ zIndex: 3 - Math.min(Math.ceil(Math.abs(offset)), 2) }}
+              aria-hidden={index === active ? undefined : 'true'}
             >
-              <StageCard stage={stage} index={index} active={offset === 0} onClick={() => setActive(index)} />
+              <StageCard stage={stage} index={index} active={index === active} onClick={() => showStage(index)} />
             </motion.div>
           )
         })}
@@ -92,7 +124,7 @@ export function StageCards({ stages, label }) {
             role="tab"
             aria-selected={index === active}
             aria-label={`${stage.label}, step ${index + 1}`}
-            onClick={() => setActive(index)}
+            onClick={() => showStage(index)}
             className={`h-2 rounded-full border-0 p-0 transition-[width,background-color] duration-300 ${index === active
               ? 'w-6 bg-[#f4f4f2] [[data-theme=light]_&]:bg-neutral-800'
               : 'w-2 bg-[#404040] hover:bg-[#6a6a6a] [[data-theme=light]_&]:bg-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#a8a8a8]'}`}
