@@ -364,7 +364,7 @@ export default function OnboardingView({ onComplete }) {
         </div>
       </header>
 
-      <main ref={scrollRef} className={`scrollbar-hidden grid min-w-0 justify-items-center overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] px-6 py-8 max-[680px]:px-4 ${isGenerating ? 'content-center' : isPathPreview ? 'content-end pb-16' : isRouteAssessment ? 'content-start sm:content-center' : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time' ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
+      <main ref={scrollRef} className={`scrollbar-hidden grid min-w-0 justify-items-center overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] px-6 py-8 max-[680px]:px-4 ${isGenerating ? 'content-center' : isPathPreview ? 'content-end pb-28' : isRouteAssessment ? 'content-start sm:content-center' : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time' ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
         <StepFrame stepKey={screenKey} direction={direction} onExitComplete={() => scrollRef.current?.scrollTo({ top: 0 })} className="grid w-full min-w-0 max-w-full justify-items-center gap-6">
           {isGenerating && (
             <GeneratingPath

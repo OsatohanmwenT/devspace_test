@@ -14,29 +14,28 @@ function slotFor(offset) {
   return { x: `${side * 160}%`, scale: 0.85, rotate: side * 2, opacity: 0 }
 }
 
-// One colour for the route: the app's green, like the reference's Gut
-// Health card. The neighbours are the same material, dimmed and behind, so
-// the active step still leads.
-const CARD_TINT = '#168a46'
+// One of the app's own accents per card — green, orange, blue, amber,
+// purple — like every Vybe having its own colour. Flat fills for now; the
+// layered .onb-card depth is held back until the composition settles.
+const CARD_TINTS = ['#168a46', '#e8702a', '#2563eb', '#d4a017', '#7c3aed']
 
 function StageCard({ stage, index, active, onClick }) {
   const icon = stageIcon(stage.value)
-  const tint = CARD_TINT
+  const tint = CARD_TINTS[index % CARD_TINTS.length]
   return (
     <button
       type="button"
       tabIndex={active ? -1 : 0}
       aria-label={active ? undefined : `Show ${stage.label}`}
       onClick={onClick}
-      className="onb-card onb-card--tinted flex h-[120px] w-[212px] flex-col justify-between rounded-2xl border-0 p-3.5 text-left text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#6699ec] max-[480px]:h-[108px] max-[480px]:w-[188px]"
+      className="flex h-[120px] w-[212px] flex-col justify-between rounded-2xl border-0 p-3.5 text-left text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#6699ec] max-[480px]:h-[108px] max-[480px]:w-[188px]"
       style={{
-        '--card-tint': tint,
-        background: `linear-gradient(180deg, rgba(255,255,255,.2) 0%, rgba(255,255,255,0) 55%), ${tint}`,
+        background: tint,
         cursor: active ? 'default' : 'pointer',
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.35)]" aria-hidden="true">
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-white" aria-hidden="true">
           {icon ? <MiniIcon name={icon} className="size-4" /> : <span className="text-[12px] font-semibold">{index + 1}</span>}
         </span>
         <span className="text-[11px] font-semibold uppercase tracking-[.06em] text-white/85">
