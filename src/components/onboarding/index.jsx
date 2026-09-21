@@ -312,7 +312,28 @@ export default function OnboardingView({ onComplete }) {
   const isMulti = isMultiSelectStep(step.id)
   const canAdvance = !isChoice || (isMulti ? (value?.length ?? 0) > 0 : value !== undefined)
   const isLast = step.id === 'daily_time_break'
-  const hasFooter = step.id !== 'welcome' && !isPlacementRecommendation && !isRouteAssessment && !isGenerating
+  // Layout that depends on which screen is showing — the footer, the grid
+  // rows, and how <main> aligns its content — is keyed off the screen that's
+  // actually on stage, not the step state. Otherwise the frame re-lays out
+  // the instant Continue is pressed, while the old screen is still playing
+  // its exit, and the content visibly jumps as if the page had scrolled.
+  const wantedLayout = {
+    isWelcome: step.id === 'welcome',
+    hasFooter: step.id !== 'welcome' && !isPlacementRecommendation && !isRouteAssessment && !isGenerating,
+    mainAlign: isGenerating
+      ? 'content-center'
+      : isPathPreview
+        ? 'content-end pb-28'
+        : isRouteAssessment
+          ? 'content-start sm:content-center'
+          : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time'
+            ? 'content-start pt-10 max-[680px]:pt-6'
+            : 'content-center pt-8',
+  }
+  const wantedLayoutRef = useRef(wantedLayout)
+  wantedLayoutRef.current = wantedLayout
+  const [layout, setLayout] = useState(wantedLayout)
+  const hasFooter = layout.hasFooter
 
   // The footer CTA lights up (one sheen) the first time an answer makes it
   // usable on a given step — not on every re-render, and not on break
@@ -341,7 +362,7 @@ export default function OnboardingView({ onComplete }) {
   const screenKey = isGenerating ? 'generating' : `${step.id}${isRouteAssessment ? ':test' : ''}`
 
   return (
-    <section className={`fixed inset-0 z-30 grid overflow-hidden bg-[#121214] [[data-theme=light]_&]:bg-[#fafaf8] ${step.id === 'welcome' ? 'grid-rows-[56px_minmax(0,1fr)]' : 'grid-rows-[56px_minmax(0,1fr)_96px]'}`} aria-label="Set up your learning">
+    <section className={`fixed inset-0 z-30 grid overflow-hidden bg-[#121214] [[data-theme=light]_&]:bg-[#fafaf8] ${layout.isWelcome ? 'grid-rows-[56px_minmax(0,1fr)]' : 'grid-rows-[56px_minmax(0,1fr)_96px]'}`} aria-label="Set up your learning">
       <header className="flex items-center gap-4 px-6 max-[680px]:px-4">
         <button
           type="button"
@@ -364,8 +385,8 @@ export default function OnboardingView({ onComplete }) {
         </div>
       </header>
 
-      <main ref={scrollRef} className={`scrollbar-hidden grid min-w-0 justify-items-center overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] px-6 py-8 max-[680px]:px-4 ${isGenerating ? 'content-center' : isPathPreview ? 'content-end pb-28' : isRouteAssessment ? 'content-start sm:content-center' : isChoice && step.id !== 'starting_point' && step.id !== 'project_interest' && step.id !== 'daily_time' ? 'content-start pt-10 max-[680px]:pt-6' : 'content-center pt-8'}`}>
-        <StepFrame stepKey={screenKey} direction={direction} onExitComplete={() => scrollRef.current?.scrollTo({ top: 0 })} className="grid w-full min-w-0 max-w-full justify-items-center gap-6">
+      <main ref={scrollRef} className={`scrollbar-hidden grid min-w-0 justify-items-center overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable] px-6 py-8 max-[680px]:px-4 ${layout.mainAlign}`}>
+        <StepFrame stepKey={screenKey} direction={direction} onExitComplete={() => { setLayout(wantedLayoutRef.current); scrollRef.current?.scrollTo({ top: 0 }) }} className="grid w-full min-w-0 max-w-full justify-items-center gap-6">
           {isGenerating && (
             <GeneratingPath
               onDone={() => onComplete(buildProfile(answers))}
@@ -435,7 +456,11 @@ export default function OnboardingView({ onComplete }) {
         </StepFrame>
       </main>
 
-      {showScrollHint && <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 z-10 h-10 bg-[linear-gradient(to_bottom,rgba(18,18,20,0)_0%,rgba(18,18,20,.06)_28%,rgba(18,18,20,.4)_76%,#121214_100%)] backdrop-blur-[0.5px] [mask-image:linear-gradient(to_bottom,transparent,black_20%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_34%)] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,rgba(250,250,248,0)_0%,rgba(250,250,248,.06)_28%,rgba(250,250,248,.4)_76%,#fafaf8_100%)] ${hasFooter ? 'bottom-24' : 'bottom-0'}`} />}
+      {/* When a list runs past the fold, the bottom edge is genuinely blurred
+          (not just faded) so the last visible rows read as a crowd with more
+          behind it — the blur ramps in through the mask, so it never draws
+          a hard line across an option. */}
+      {showScrollHint && <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 z-10 h-28 bg-[linear-gradient(to_bottom,rgba(18,18,20,0)_0%,rgba(18,18,20,.35)_55%,rgba(18,18,20,.85)_100%)] backdrop-blur-[5px] [mask-image:linear-gradient(to_bottom,transparent,black_60%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_60%)] [[data-theme=light]_&]:bg-[linear-gradient(to_bottom,rgba(250,250,248,0)_0%,rgba(250,250,248,.35)_55%,rgba(250,250,248,.85)_100%)] ${hasFooter ? 'bottom-24' : 'bottom-0'}`} />}
 
       {hasFooter && <footer className="flex items-center justify-center px-6 pb-5 max-[680px]:px-4">
         <ActionButton
@@ -452,21 +477,31 @@ export default function OnboardingView({ onComplete }) {
   )
 }
 
-// P2 — build-in cascade for every question screen: Devy, then the title,
-// then the subtitle, then each option in turn (the `data-build` marks live on
-// StepHeading / OptionList / ChipList). Re-runs per step id.
+// Every question screen: the heading pops in as one unit, then the options
+// arrive with a light stagger — the one place order earns a cascade. The
+// `data-build` marks live on StepHeading / OptionList / ChipList; the
+// heading is scoped by its own wrapper so the two runs don't overlap.
 function QuestionScreen({ stepId, children }) {
-  const rootRef = useRef(null)
-  useBuildIn(rootRef, [stepId])
-  return <div ref={rootRef} className="grid w-full justify-items-center gap-6">{children}</div>
+  const [heading, options] = Array.isArray(children) ? children : [children, null]
+  const headingRef = useRef(null)
+  const optionsRef = useRef(null)
+  useBuildIn(headingRef, [stepId])
+  useBuildIn(optionsRef, [stepId], { mode: 'cascade', delay: 0.12 })
+  return (
+    <div className="grid w-full justify-items-center gap-6">
+      <div ref={headingRef} className="grid w-full justify-items-center">{heading}</div>
+      <div ref={optionsRef} className="grid w-full justify-items-center">{options}</div>
+    </div>
+  )
 }
 
-// Vertical, centred: Devy waves, then the title reveals word by word, then
-// the copy and the CTA cascade in. (A fanned stack of teaser cards was tried
-// here and parked — see TeaserCards.jsx.)
+// Vertical, centred: the one genuinely celebratory moment in the flow, so it
+// gets the bigger bounce rather than the everyday pop — Devy, title, copy and
+// CTA arrive together as one springy block. (A fanned stack of teaser cards
+// was tried here and parked — see TeaserCards.jsx.)
 function WelcomeScreen({ onPrimary, primaryLabel }) {
   const rootRef = useRef(null)
-  useBuildIn(rootRef, [])
+  useBuildIn(rootRef, [], { mode: 'bounce' })
 
   return (
     <div ref={rootRef} className="grid justify-items-center gap-5 self-center text-center">
@@ -474,7 +509,7 @@ function WelcomeScreen({ onPrimary, primaryLabel }) {
         <DevyLottie clip="wave" ariaLabel="Devy" className="h-40 w-40" />
       </span>
       <h1 data-build data-build-order="1" className="m-0 max-w-[22ch] font-rethink-sans text-[clamp(30px,4vw,40px)] font-medium leading-[1.15] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-        <WordReveal text="Let’s set up your learning" delay={CASCADE.stagger * 2} />
+        Let’s set up your learning
       </h1>
       <p data-build data-build-order="2" className="m-0 max-w-[48ch] text-[16px] leading-[1.55] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
         A few quick questions so Devspace knows what you want, where to start, and what examples will feel relevant.
@@ -493,11 +528,13 @@ function WelcomeScreen({ onPrimary, primaryLabel }) {
 }
 
 // The role reveal — "{role} it is." over a row of illustrated stage cards, so
-// the choice is backed by what the route actually teaches. (A fuller tinted
-// path card exists in PathCard.jsx, parked for a screen with more room.)
+// the choice is backed by what the route actually teaches. The carousel below
+// already scans itself into place, so the heading just materialises (scale,
+// no travel) rather than adding a second directional motion to watch.
+// (A fuller tinted path card exists in PathCard.jsx, parked for later.)
 function RoleReveal({ role, stages }) {
   const rootRef = useRef(null)
-  useBuildIn(rootRef, [role])
+  useBuildIn(rootRef, [role], { mode: 'scale' })
 
   return (
     <div ref={rootRef} className="grid w-full max-w-[620px] justify-items-center gap-6 self-end text-center">
@@ -610,9 +647,8 @@ function PlacementRecommendation({ placement, roleLabel, explanation, onStartLea
     <div ref={rootRef} className="grid w-full max-w-[420px] justify-items-center gap-2.5 self-center text-center">
       <span data-build data-build-order="0"><DevyLottie clip="wave" ariaLabel="Devy" className="mb-1 h-24 w-24" /></span>
       <p data-build data-build-order="1" className="m-0 text-[11px] font-semibold uppercase tracking-[.08em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Your recommended start</p>
-      <h1 className="m-0 max-w-[22ch] font-rethink-sans text-[clamp(24px,3vw,30px)] font-medium leading-[1.2] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-        <WordReveal text="Start with" delay={CASCADE.stagger * 2} />{' '}
-        <WordReveal text={placement.label} delay={CASCADE.stagger * 2 + 0.12} className="text-[#6699ec]" />
+      <h1 data-build data-build-order="2" className="m-0 max-w-[22ch] font-rethink-sans text-[clamp(24px,3vw,30px)] font-medium leading-[1.2] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+        Start with <span className="text-[#6699ec]">{placement.label}</span>
       </h1>
       <p data-build data-build-order="3" className="m-0 max-w-[40ch] text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
         {explanation ? `${explanation.rungSummary}, ${explanation.tail}` : 'Based on your experience, this is the best place to begin.'}
@@ -724,10 +760,12 @@ function useCountUp(target, duration = 0.6) {
   return shown
 }
 
+// A result card — it materialises in place rather than rising in, so it
+// reads as "here's what you got" settling into view, not arriving from off-page.
 function AssessmentResult({ testResult, questions, onUse, onRetry }) {
   const rootRef = useRef(null)
   const score = useCountUp(testResult.score)
-  useBuildIn(rootRef, [testResult.group.id])
+  useBuildIn(rootRef, [testResult.group.id], { mode: 'scale' })
 
   return (
     <div ref={rootRef} className="grid w-full max-w-[520px] justify-items-center gap-4 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-6 text-center [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white">
@@ -735,7 +773,7 @@ function AssessmentResult({ testResult, questions, onUse, onRetry }) {
       <div data-build data-build-order="1">
         <p className="m-0 text-[11px] font-semibold uppercase tracking-[.08em] text-[#8b7cf6] [[data-theme=light]_&]:text-[#5c49c9]">Recommended start</p>
         <strong className="mt-1 block text-xl font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-          <WordReveal text={testResult.group.label} delay={0.5} />
+          {testResult.group.label}
         </strong>
         <p className="m-0 mt-1 text-sm text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{testResult.group.stages.map((stage) => stage.label).join(' · ')}</p>
       </div>
@@ -782,7 +820,7 @@ function RouteReview({ groups, notSureOption, value, placement, branch, onSelect
 
   // The heading cascades, then the route draws itself top to bottom: each
   // row lands and the connector below it grows down to meet the next.
-  useBuildIn(rootRef, [isTesting, testResult?.group.id ?? null, testQuestionIndex])
+  useBuildIn(rootRef, [isTesting, testResult?.group.id ?? null, testQuestionIndex], { mode: isTesting ? 'pop' : 'cascade' })
   useLayoutEffect(() => {
     if (isTesting || !rootRef.current || reducedMotion()) return undefined
     const context = gsap.context(() => {
@@ -792,7 +830,7 @@ function RouteReview({ groups, notSureOption, value, placement, branch, onSelect
         duration: 0.34,
         ease: 'power2.out',
         stagger: CASCADE.stagger,
-        delay: CASCADE.stagger * 3 + 0.12,
+        delay: CASCADE.stagger * 3 + 0.08,
       })
     }, rootRef)
     return () => context.revert()

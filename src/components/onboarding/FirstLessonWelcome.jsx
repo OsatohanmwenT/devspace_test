@@ -1,10 +1,9 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { motion } from 'motion/react'
-import { CASCADE, SWAP } from '../../lib/onboardingMotion'
+import { POP_IN, SWAP } from '../../lib/onboardingMotion'
 import { ActionButton } from '../ui/ActionButton'
 import { DevyLottie } from '../ui/DevyLottie'
-import { WordReveal } from './motion/WordReveal'
 
 export function FirstLessonWelcome({ path, lesson, onBegin }) {
   const welcomeRef = useRef(null)
@@ -12,11 +11,11 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
 
-    // Same cascade (P2) as the rest of onboarding, so the handoff from the
+    // Same pop (P2) as the rest of onboarding, so the handoff from the
     // generating screen reads as one more step of the same flow.
     const context = gsap.context(() => {
       gsap.from('[data-welcome-devy]', { autoAlpha: 0, scale: 0.86, duration: 0.55, ease: 'power2.out' })
-      gsap.from('[data-welcome-step]', { autoAlpha: 0, y: CASCADE.y, filter: `blur(${CASCADE.blur}px)`, duration: CASCADE.duration, ease: CASCADE.ease, stagger: CASCADE.stagger, delay: 0.16, clearProps: 'filter' })
+      gsap.from('[data-welcome-step]', { autoAlpha: 0, y: POP_IN.y, scale: POP_IN.scale, duration: POP_IN.duration, ease: POP_IN.ease, delay: 0.16 })
     }, welcomeRef)
 
     return () => context.revert()
@@ -46,7 +45,7 @@ export function FirstLessonWelcome({ path, lesson, onBegin }) {
           Your first lesson is ready
         </h1>
         <p data-welcome-step className="m-0 text-[17px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
-          {path.title} starts with <WordReveal as="strong" text={lesson?.title ?? 'your first lesson'} delay={0.5} className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800" />.
+          {path.title} starts with <strong className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{lesson?.title ?? 'your first lesson'}</strong>.
         </p>
         <ActionButton
           data-welcome-step

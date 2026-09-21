@@ -2,7 +2,7 @@ import { gsap } from 'gsap'
 import { useLayoutEffect, useRef } from 'react'
 import { reducedMotion, WORD } from '../../../lib/onboardingMotion'
 
-// P3 — word reveal. Each word rises and un-blurs a beat after the last, the
+// P3 — word reveal. Each word rises a beat after the last, the
 // way the reference's "Create and… Join Vybe" lands. Hero titles only; a
 // question prompt should be readable the instant it appears.
 //
@@ -20,12 +20,10 @@ export function WordReveal({ text, delay = 0, as: Tag = 'span', className = '' }
       gsap.from('[data-word]', {
         autoAlpha: 0,
         y: WORD.y,
-        filter: `blur(${WORD.blur}px)`,
         duration: WORD.duration,
         ease: WORD.ease,
         delay,
         stagger: WORD.stagger,
-        clearProps: 'filter',
       })
     }, rootRef)
 
