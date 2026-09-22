@@ -1109,6 +1109,7 @@ function App() {
             onOpenCareerPath={() => setActive('Paths')}
             onOpenDevyPro={openPlans}
             onOpenLeaderboard={() => setActive('Leaderboard')}
+            onOpenPlans={openPlans}
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
             onOpenPath={openPathFromHome}

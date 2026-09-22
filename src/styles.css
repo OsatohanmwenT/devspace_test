@@ -959,6 +959,321 @@
   line-height: 1.3;
 }
 
+/* The desktop companion card follows the same simple rhythm as the learning
+   card: a quiet label, one centred update, then one direct next action. */
+.home-map-card__dynamic-story {
+  display: none;
+}
+
+.home-dashboard-summary {
+  display: none;
+}
+
+@media (min-width: 1201px) {
+  .home-map-card--dynamic > :not(.home-dashboard-summary) {
+    display: none !important;
+  }
+
+  .home-dashboard-summary {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 88px minmax(0, 1fr);
+  }
+
+  .home-dashboard-streak,
+  .home-dashboard-league {
+    padding: 24px 28px;
+  }
+
+  .home-dashboard-streak {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .home-dashboard-xp,
+  .home-dashboard-streak-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .home-dashboard-xp {
+    color: #f4f4f2;
+  }
+
+  .home-dashboard-xp svg {
+    color: #ffffff;
+  }
+
+  .home-dashboard-xp-ring {
+    position: relative;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 999px;
+    background: #f5b400;
+    box-shadow: 0 4px 10px rgb(245 180 0 / 0.22);
+  }
+
+  .home-dashboard-xp-ring svg {
+    position: relative;
+    width: 18px;
+    height: 18px;
+  }
+
+  .home-dashboard-xp strong {
+    font-family: var(--font-rubik, inherit);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .home-dashboard-xp span,
+  .home-dashboard-streak-count,
+  .home-dashboard-league > span > span > span {
+    color: #8a8f9c;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .home-dashboard-streak-count {
+    color: #f4f4f2;
+  }
+
+  .home-dashboard-league {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 20px;
+    padding-bottom: 8px;
+  }
+
+  .home-dashboard-league strong {
+    color: #f4f4f2;
+    font-family: var(--font-rubik, inherit);
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .home-dashboard-league-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .home-dashboard-league-expand {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #6b6b70;
+    cursor: pointer;
+  }
+
+  .home-dashboard-league-expand:hover {
+    color: #f4f4f2;
+  }
+
+  [data-theme='light'] .home-dashboard-league-expand:hover {
+    color: #262626;
+  }
+
+  /* Fills the room a lone centred line used to leave empty: the same
+     four-person window the mobile leaderboard card previews, the learner's
+     own row lifted with the accent tint. A plain centred column, not an
+     overlay-fade scroller — the window is fixed-size, never longer than
+     what's shown, so there's nothing for a fade to imply is still below. */
+  .home-dashboard-standings {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .home-dashboard-standings::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 42px;
+    background: linear-gradient(to bottom, transparent, #1f1f1f 92%);
+    content: '';
+    pointer-events: none;
+  }
+
+  .home-dashboard-standings-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+    padding: 12px 10px;
+    color: #8a8f9c;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .home-dashboard-standings-row > span {
+    font-size: 16px;
+  }
+
+  .home-dashboard-standings-row[data-self] {
+    background: rgb(116 145 255 / 0.18);
+    color: #f4f4f2;
+  }
+
+  .home-dashboard-standings-rank,
+  .home-dashboard-standings-score {
+    color: #8a8f9c;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .home-dashboard-standings-score {
+    text-align: right;
+  }
+
+  .home-dashboard-standings-row[data-self] .home-dashboard-standings-rank,
+  .home-dashboard-standings-row[data-self] .home-dashboard-standings-score {
+    color: #d9e3ff;
+  }
+  .home-dashboard-league-empty {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 5px;
+  }
+
+  .home-dashboard-league-empty > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .home-dashboard-league-empty > span > span {
+    color: #8a8f9c;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .home-dashboard-league-empty .home-dashboard-link {
+    grid-column: 2;
+  }
+
+  .home-dashboard-link {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #b6bac4;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .home-dashboard-link:hover {
+    color: #f4f4f2;
+    text-decoration: underline;
+  }
+
+  [data-theme='light'] .home-dashboard-streak {
+    border-bottom-color: rgb(0 0 0 / 0.09);
+  }
+
+  [data-theme='light'] .home-dashboard-xp,
+  [data-theme='light'] .home-dashboard-streak-count,
+  [data-theme='light'] .home-dashboard-league strong {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-dashboard-standings-row[data-self] {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-dashboard-standings::after {
+    background: linear-gradient(to bottom, transparent, #ffffff 92%);
+  }
+
+  [data-theme='light'] .home-dashboard-standings-row[data-self] .home-dashboard-standings-rank,
+  [data-theme='light'] .home-dashboard-standings-row[data-self] .home-dashboard-standings-score {
+    color: #4d609f;
+  }
+
+}
+
+.home-map-card[data-layout='front'] .home-map-card__dynamic-story {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+
+.home-map-card__dynamic-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 7px;
+  place-items: center;
+  border-radius: 18px;
+  background: rgb(var(--card-accent) / 0.12);
+  color: rgb(var(--card-accent));
+}
+
+.home-map-card__dynamic-eyebrow {
+  color: rgb(var(--card-accent));
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-map-card__dynamic-story strong {
+  color: #f4f4f2;
+  font-family: var(--font-rubik, inherit);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.home-map-card__dynamic-story > span:last-child {
+  max-width: 30ch;
+  color: #b6bac4;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.home-map-card--dynamic[data-layout='front'] .home-map-card__cta-bar {
+  margin-top: 0;
+}
+
+[data-theme='light'] .home-map-card__dynamic-story strong {
+  color: #262626;
+}
+
+[data-theme='light'] .home-map-card__dynamic-story > span:last-child {
+  color: #686968;
+}
+
 .home-prompt-glow {
   background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.28), rgb(var(--prompt-accent) / 0.1) 44%, transparent 76%);
 }
@@ -1327,6 +1642,42 @@
   .home-prompt-band[data-compose='true'] .home-prompt-glow {
     transform: scale(1.12);
     opacity: 1;
+  }
+}
+
+/* Desktop uses the same four panels as the carousel, but keeps every panel
+   in a fixed dashboard grid. The overrides live after the carousel rules so
+   tablet sizing and motion continue unchanged through 1200px. */
+@media (min-width: 1201px) {
+  .home-map-card,
+  .home-map-card[data-slot='front'],
+  .home-map-card[data-slot='previous'],
+  .home-map-card[data-slot='next'],
+  .home-map-card[data-slot='far-previous'],
+  .home-map-card[data-slot='far-next'] {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    transform: none !important;
+    translate: 0 !important;
+    scale: 1 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    will-change: auto;
+  }
+
+  .home-map-card:hover {
+    translate: 0 !important;
+  }
+
+  .home-map-scene[data-mode='compose'] .home-map-card[data-slot] {
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 }
 

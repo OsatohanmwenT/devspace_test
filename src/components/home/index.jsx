@@ -1,10 +1,12 @@
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { DevyLottie } from "../ui/DevyLottie";
 import {
     ArrowLeftIcon,
+    BoltIcon,
+    GemIcon,
     PlayIcon,
     RocketIcon,
     SparkleIcon,
@@ -99,7 +101,7 @@ const cardLabels = {
 function ScenePager({ activeCard, onSelect }) {
   return (
     <div
-      className="-mt-2 flex items-center justify-center gap-2 max-[680px]:hidden"
+      className="-mt-2 flex items-center justify-center gap-2 min-[1201px]:hidden max-[680px]:hidden"
       role="tablist"
       aria-label="Choose a card"
     >
@@ -336,6 +338,7 @@ export default function HomeView({
   onStartMission,
   onOpenCareerPath,
   onOpenLeaderboard,
+  onOpenPlans,
   onOpenDevy,
   onOpenPath,
   courseOptions = [],
@@ -350,6 +353,8 @@ export default function HomeView({
   promoteCount = 1,
   seasonTimeLeft,
   seasonCoins,
+  streakDays = 0,
+  xp = 0,
   dynamicUpdate,
 }) {
   const [mapMode, setMapMode] = useState("map");
@@ -360,12 +365,32 @@ export default function HomeView({
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 680,
   );
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1201,
+  );
+  const [showPremiumOffer, setShowPremiumOffer] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1201,
+  );
+  const [isPremiumOfferCollapsed, setIsPremiumOfferCollapsed] = useState(false);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 680);
+    const onResize = () => {
+      setIsMobile(window.innerWidth <= 680);
+      setIsDesktop(window.innerWidth >= 1201);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    if (!showPremiumOffer) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setIsPremiumOfferCollapsed(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showPremiumOffer]);
+
   const activeIndex = cardOrder.indexOf(activeCard);
 
   const onCarouselCommit = useCallback((index) => {
@@ -394,9 +419,11 @@ export default function HomeView({
   // On mobile every card renders its full front layout, even while it is off
   // to the side: if the contents swapped at the moment the slot changed, that
   // pop would land in the middle of the swipe and undo the smooth motion.
-  const isFrontLayout = (cardId) => isMobile || isFront(cardId);
+  const isFrontLayout = (cardId) => isMobile || isDesktop || isFront(cardId);
   const cardTabIndex = (cardId) =>
-    ["front", "previous", "next"].includes(getCardSlot(cardId)) ? 0 : -1;
+    isDesktop || ["front", "previous", "next"].includes(getCardSlot(cardId))
+      ? 0
+      : -1;
 
   const changeCard = useCallback(
     (direction) => {
@@ -411,7 +438,7 @@ export default function HomeView({
   );
 
   const promoteOnHover = (cardId) => {
-    if (window.innerWidth <= 900 || isFront(cardId)) return;
+    if (isDesktop || window.innerWidth <= 900 || isFront(cardId)) return;
     window.clearTimeout(hoverTimer.current);
     hoverTimer.current = window.setTimeout(() => {
       setMapMode("map");
@@ -425,6 +452,7 @@ export default function HomeView({
     const onKeyDown = (event) => {
       if (
         isMobile ||
+        isDesktop ||
         event.defaultPrevented ||
         !["ArrowLeft", "ArrowRight"].includes(event.key) ||
         event.target.matches("input, textarea, select, [contenteditable='true']")
@@ -435,7 +463,7 @@ export default function HomeView({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [changeCard, isMobile]);
+  }, [changeCard, isDesktop, isMobile]);
 
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
@@ -443,7 +471,7 @@ export default function HomeView({
   // so a tap on a peeking card focuses it rather than jumping straight to its
   // screen. Only the front card opens on tap.
   const openOrSelect = (cardId, onOpen) => {
-    if (getCardSlot(cardId) !== "front") {
+    if (!isDesktop && getCardSlot(cardId) !== "front") {
       setMapMode("map");
       setActiveCard(cardId);
       return;
@@ -452,6 +480,7 @@ export default function HomeView({
   };
 
   const onCardKeyDown = (event) => {
+    if (isDesktop) return;
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     changeCard(event.key === "ArrowRight" ? 1 : -1);
@@ -459,6 +488,7 @@ export default function HomeView({
 
   const onSceneWheel = (event) => {
     if (
+      isDesktop ||
       window.innerWidth <= 900 ||
       wheelLocked.current ||
       Math.abs(event.deltaY) < 12
@@ -519,17 +549,22 @@ export default function HomeView({
         : `${leagueRankDelta > 0 ? "↑" : "↓"} ${Math.abs(leagueRankDelta)} today`;
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
-      <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center max-[680px]:justify-start max-[680px]:pt-14">
+    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 min-[1201px]:overflow-y-auto min-[1201px]:py-8 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
+      <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-8 max-[680px]:justify-start max-[680px]:pt-14">
+        <header className="hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:block">
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+            Welcome back
+          </h1>
+        </header>
         <motion.section
-          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
+          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
           data-mode={mapMode}
           aria-label="Learning map"
           onWheel={onSceneWheel}
           onClickCapture={onSceneClickCapture}
           {...panHandlers}
         >
-          <span className="home-map-atmosphere max-[680px]:opacity-50" aria-hidden="true" />
+          <span className="home-map-atmosphere min-[1201px]:hidden max-[680px]:opacity-50" aria-hidden="true" />
           {/* Keep positioning on the wrapper so the compose transform never
               conflicts with the active Lottie clip. */}
           <div className="home-map-devy pointer-events-none hidden absolute left-1/2 top-[0px] -translate-x-1/2 max-[680px]:z-0 max-[680px]:block max-[680px]:!top-14">
@@ -542,7 +577,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[0]}
-            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3" : ""} ${isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
             data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
@@ -631,7 +666,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[1]}
-            className={`${mapCard} home-map-card--leaderboard ${mapCardSurface} ${isFront("leaderboard") ? `${lightFrontElevation} ${darkMobileFrontDepth} !pt-6 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--leaderboard min-[1201px]:hidden ${mapCardSurface} ${isDesktop || isFront("leaderboard") ? `${lightFrontElevation} ${darkMobileFrontDepth} !pt-6 min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.leaderboard }}
             data-slot={getCardSlot("leaderboard")}
             data-layout={isFrontLayout("leaderboard") ? "front" : getCardSlot("leaderboard")}
@@ -797,7 +832,7 @@ export default function HomeView({
                     style={{ display: "block" }}
                   >
                     <span className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col">
-                      {leagueNeighborsWide.map((entry, index) => (
+                      {leagueNeighborsWide.slice(0, 3).map((entry, index) => (
                         <span
                           key={entry.id}
                           className={`home-map-card__standings-row items-center gap-3 px-4! py-2! min-[681px]:py-3! ${textBody} ${entry.isCurrentUser ? "rounded-xl bg-[rgb(var(--card-accent)/0.15)]" : ""}`}
@@ -847,7 +882,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[2]}
-            className={`${mapCard} home-map-card--portfolio ${mapCardSurface} ${isFront("portfolio") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--portfolio min-[1201px]:hidden ${mapCardSurface} ${isDesktop || isFront("portfolio") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.portfolio }}
             data-slot={getCardSlot("portfolio")}
             data-layout={isFrontLayout("portfolio") ? "front" : getCardSlot("portfolio")}
@@ -946,24 +981,131 @@ export default function HomeView({
 
           <div
             ref={cardRefs[3]}
-            className={`${mapCard} home-map-card--dynamic ${mapCardSurface} ${isFront("dynamic") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
-            style={{ "--card-accent": cardAccents.dynamic }}
+            className={`${mapCard} home-map-card--dynamic min-[1201px]:col-start-1 min-[1201px]:row-start-2 min-[1201px]:self-start min-[1201px]:!h-[356px] min-[1201px]:!overflow-hidden min-[1201px]:!p-0 ${mapCardSurface} ${isDesktop || isFront("dynamic") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            style={{ "--card-accent": isDesktop ? "116 145 255" : cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
             data-layout={isFrontLayout("dynamic") ? "front" : getCardSlot("dynamic")}
-            tabIndex={cardTabIndex("dynamic")}
+            tabIndex={isDesktop ? -1 : cardTabIndex("dynamic")}
             role="group"
             aria-label="What's new"
             aria-current={isFront("dynamic") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
             onMouseEnter={() => promoteOnHover("dynamic")}
             onMouseLeave={clearHoverPromotion}
-            onClick={() => openOrSelect("dynamic", dynamicAction)}
+            onClick={() => {
+              if (!isDesktop) openOrSelect("dynamic", dynamicAction);
+            }}
           >
+            <div className="home-dashboard-summary">
+              <section className="home-dashboard-streak">
+                <span className="home-dashboard-xp">
+                  <span className="home-dashboard-xp-ring">
+                    <BoltIcon className="size-4" />
+                  </span>
+                  <strong>{xp}</strong>
+                </span>
+              </section>
+
+              <section className="home-dashboard-league">
+                {leagueUnlocked ? (
+                  <>
+                    <span className="home-dashboard-league-head">
+                      <TierMedal
+                        league={{ color: leagueColor || leaderboardMedalColor }}
+                        state="current"
+                        size={badgeMd}
+                      />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <strong>{leagueName ?? "Your league"}</strong>
+                        <span>
+                          Top {promoteCount} advance · {seasonTimeLeft}
+                        </span>
+                      </span>
+                      {/* The standings list below already reads as a mini
+                          leaderboard on its own — this replaces a separate
+                          "View leaderboard" row at the foot of the card with
+                          the same quiet expand affordance the mobile card
+                          uses, so the card stays exactly as tall as its
+                          content. */}
+                      <button
+                        type="button"
+                        aria-label="View full leaderboard"
+                        className="home-dashboard-league-expand"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenLeaderboard();
+                        }}
+                      >
+                        <svg className="size-[15px]" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </span>
+
+                    {/* The middle of this card used to be one centred line of
+                        text over a lot of empty space — the same standings
+                        preview the mobile leaderboard card already builds
+                        (leagueNeighborsWide, faded top and bottom) fills it
+                        with something worth looking at: where you actually
+                        sit against the league right now. */}
+                    {/* leagueNeighborsWide is a fixed four-person window, never a
+                        long scroll — so the rows just sit centred in the
+                        space with no overlay-fade pretending there's more
+                        below than there actually is. */}
+                    <span className="home-dashboard-standings">
+                      {leagueNeighborsWide.slice(0, 3).map((entry) => (
+                        <span
+                          key={entry.id}
+                          className="home-dashboard-standings-row"
+                          data-self={entry.isCurrentUser || undefined}
+                        >
+                          <span className="home-dashboard-standings-rank">{entry.rank}</span>
+                          <span className="min-w-0 truncate">
+                            {entry.isCurrentUser ? "You" : entry.name}
+                          </span>
+                          <span className="home-dashboard-standings-score">{entry.score}</span>
+                        </span>
+                      ))}
+                    </span>
+                  </>
+                ) : (
+                  <span className="home-dashboard-league-empty">
+                    <TierMedal
+                      league={{ color: leagueColor || leaderboardMedalColor }}
+                      state="locked"
+                      size={badgeLg}
+                    />
+                    <span>
+                      <strong>It’s comeback time</strong>
+                      <span>Complete a lesson to claim your place in the league.</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="home-dashboard-link"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onStartMission();
+                      }}
+                    >
+                      Continue <ArrowLeftIcon className="size-4 rotate-180" />
+                    </button>
+                  </span>
+                )}
+              </section>
+
+            </div>
+
             <div className="flex w-full items-center justify-between gap-2">
               <span className="flex items-center gap-2.5">
                 <IconChip icon={SparkleIcon} tone="teal" />
                 <span className="home-map-card__section-label">
-                  What's new
+                  Next milestone
                 </span>
               </span>
               {!isFrontLayout("dynamic") && <ExpandCue />}
@@ -978,10 +1120,16 @@ export default function HomeView({
               </span>
             </span>
 
-            <span className="home-map-card__details">
-              <span>{dynamicUpdate?.title}</span>
+            <div className="home-map-card__dynamic-story">
+              <span className="home-map-card__dynamic-icon">
+                <SparkleIcon className="size-6" />
+              </span>
+              <span className="home-map-card__dynamic-eyebrow">
+                {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Your learning path"}
+              </span>
+              <strong>{dynamicUpdate?.title}</strong>
               <span>{dynamicUpdate?.body}</span>
-            </span>
+            </div>
 
             <CardCtaButton
               onClick={(event) => {
@@ -992,6 +1140,11 @@ export default function HomeView({
               {dynamicUpdate?.cta ?? "Open"}
             </CardCtaButton>
           </div>
+
+          <div
+            className="hidden min-[1201px]:col-start-1 min-[1201px]:row-start-3 min-[1201px]:block min-[1201px]:h-[120px] min-[1201px]:rounded-[24px] min-[1201px]:border min-[1201px]:border-white/10 min-[1201px]:bg-[#1f1f1f] [[data-theme=light]_&]:min-[1201px]:border-neutral-200 [[data-theme=light]_&]:min-[1201px]:bg-white"
+            aria-hidden="true"
+          />
         </motion.section>
 
         <ScenePager
@@ -1006,7 +1159,7 @@ export default function HomeView({
             main.jsx) takes over for this whole band — Devy Pro and Career
             Path stay reachable from the account menu and the Paths tab. */}
         <section
-          className="home-quick-actions relative mx-auto mt-9 flex w-full max-w-[1040px] items-center justify-center py-3 max-[680px]:absolute max-[680px]:bottom-4 max-[680px]:left-1/2 max-[680px]:z-10 max-[680px]:mt-0 max-[680px]:-translate-x-1/2 max-[680px]:pb-4 max-[680px]:pt-3"
+          className="home-quick-actions relative mx-auto mt-9 flex w-full max-w-[1040px] items-center justify-center py-3 min-[1201px]:col-span-2 min-[1201px]:row-start-4 min-[1201px]:self-end min-[1201px]:mt-0 min-[1201px]:pb-4 max-[680px]:absolute max-[680px]:bottom-4 max-[680px]:left-1/2 max-[680px]:z-10 max-[680px]:mt-0 max-[680px]:-translate-x-1/2 max-[680px]:pb-4 max-[680px]:pt-3"
           aria-label="Quick actions"
         >
           <DevyPromptBand
@@ -1017,6 +1170,74 @@ export default function HomeView({
             onOpen={onOpenDevy}
           />
         </section>
+
+        {showPremiumOffer && (
+          <div className={`fixed bottom-0 left-6 z-50 hidden min-[1201px]:block ${isPremiumOfferCollapsed ? "" : "w-[360px]"}`}>
+            <AnimatePresence initial={false} mode="wait">
+            {isPremiumOfferCollapsed ? (
+              <motion.button
+                key="premium-launcher"
+                type="button"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="flex h-12 items-center gap-2.5 rounded-t-[18px] rounded-b-none border border-white/10 bg-[#232323] px-4 text-sm font-semibold text-[#f4f4f2] shadow-[0_12px_28px_rgb(0_0_0_/_0.24)] hover:bg-[#2a2a2a] [[data-theme=light]_&]:border-neutral-200 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-neutral-50"
+                aria-expanded="false"
+                onClick={() => setIsPremiumOfferCollapsed(false)}
+              >
+                <GemIcon className="size-4 text-[#9c84ff]" />
+                Devspace Pro
+                <svg className="ml-1 size-4 text-[#a9a9ad]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </motion.button>
+            ) : (
+              <motion.section
+                key="premium-offer"
+                initial={{ opacity: 0, y: 18, clipPath: "inset(100% 0 0 0)" }}
+                animate={{ opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)" }}
+                exit={{ opacity: 0, y: 10, clipPath: "inset(100% 0 0 0)" }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{ transformOrigin: "bottom left" }}
+                className="relative w-full overflow-hidden rounded-t-[16px] rounded-b-none border border-white/10 bg-[#232323] p-6 text-[#f4f4f2] shadow-[0_18px_40px_rgb(0_0_0_/_0.28)] [[data-theme=light]_&]:border-neutral-200 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800"
+                role="dialog"
+                aria-labelledby="premium-offer-title"
+              >
+              <button
+                type="button"
+                className="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-[#a9a9ad] hover:bg-white/10 hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:bg-black/5 [[data-theme=light]_&]:hover:text-neutral-800"
+                aria-label="Collapse Devspace Pro offer"
+                onClick={() => setIsPremiumOfferCollapsed(true)}
+              >
+                <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <span className="mb-4 grid size-10 place-items-center rounded-xl bg-[linear-gradient(86deg,#7491ff33_-7.44%,#ff90e033_44.8%,#f7c32533_102.54%)] text-[#9c84ff]">
+                <GemIcon className="size-5" />
+              </span>
+              <h2 id="premium-offer-title" className="pr-8 text-[21px] font-bold tracking-[-0.03em]">
+                Keep your streak protected
+              </h2>
+              <p className="mt-2 max-w-[32ch] text-[14px] leading-5 text-[#b6bac4] [[data-theme=light]_&]:text-neutral-600">
+                Devspace Pro gives you streak protection and more room to keep learning on your schedule.
+              </p>
+              <ActionButton
+                variant="premium"
+                className="mt-5 min-h-11 w-full text-[14px]"
+                onClick={() => {
+                  setShowPremiumOffer(false);
+                  onOpenPlans?.();
+                }}
+              >
+                Explore Devspace Pro
+              </ActionButton>
+              </motion.section>
+            )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );

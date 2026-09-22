@@ -4,6 +4,42 @@ import { reducedMotion } from '../../lib/onboardingMotion'
 import { MiniIcon } from './OnboardingStep'
 import { stageIcon } from './PathCard'
 
+// The illustrations already used for path regions, matched to what a stage
+// actually teaches so the card shows a picture of the thing rather than an
+// empty panel. Falls back through a fixed rotation when nothing matches, so
+// every card still gets art rather than a blank space.
+const STAGE_ART = {
+  js: '/assets/thinking-in-code.png',
+  typescript: '/assets/thinking-in-code.png',
+  react: '/assets/thinking-in-code.png',
+  vue: '/assets/thinking-in-code.png',
+  angular: '/assets/thinking-in-code.png',
+  markup: '/assets/thinking-in-code.png',
+  python: '/assets/programming-with-variables.png',
+  java: '/assets/programming-with-variables.png',
+  csharp: '/assets/programming-with-variables.png',
+  swift: '/assets/programming-with-variables.png',
+  kotlin: '/assets/programming-with-variables.png',
+  database: '/assets/exploring-data-visually.png',
+  api: '/assets/scientific-thinking.png',
+  cloud: '/assets/scientific-thinking.png',
+  docker: '/assets/scientific-thinking.png',
+  git: '/assets/programming-with-variables.png',
+  design: '/assets/probability-and-chance.png',
+}
+const FALLBACK_ART = [
+  '/assets/programming-with-variables.png',
+  '/assets/exploring-data-visually.png',
+  '/assets/scientific-thinking.png',
+  '/assets/probability-and-chance.png',
+  '/assets/thinking-in-code.png',
+]
+
+function artFor(stage, index) {
+  const icon = stageIcon(stage.value)
+  return (icon && STAGE_ART[icon]) || FALLBACK_ART[index % FALLBACK_ART.length]
+}
+
 // Where a card sits relative to the active one. Neighbours peek in from the
 // stage edges, straight (±2° at most) and slightly smaller; anything further
 // out waits just past the edge, so a step change slides rather than pops.
@@ -17,8 +53,10 @@ function slotFor(offset) {
 }
 
 // One of the app's own accents per card — green, orange, blue, amber,
-// purple — like every Vybe having its own colour. Flat fills for now; the
-// layered .onb-card depth is held back until the composition settles.
+// purple — like every Vybe having its own colour. Uses the same layered
+// .onb-card--tinted material as the rest of onboarding (inner top-light,
+// hairline highlight, tinted ambient shadow) so these read as real objects
+// rather than flat colour swatches.
 const CARD_TINTS = ['#168a46', '#e8702a', '#2563eb', '#d4a017', '#7c3aed']
 
 function StageCard({ stage, index, active, onClick }) {
@@ -30,21 +68,28 @@ function StageCard({ stage, index, active, onClick }) {
       tabIndex={active ? -1 : 0}
       aria-label={active ? undefined : `Show ${stage.label}`}
       onClick={onClick}
-      className="flex h-[120px] w-[212px] flex-col justify-between rounded-2xl border-0 p-3.5 text-left text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#6699ec] max-[480px]:h-[108px] max-[480px]:w-[188px]"
+      className="onb-card onb-card--tinted flex h-[224px] w-[212px] flex-col rounded-2xl border-0 p-3.5 text-left text-white focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#6699ec] max-[480px]:h-[198px] max-[480px]:w-[188px]"
       style={{
-        background: tint,
+        '--card-tint': tint,
+        background: `linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 55%), ${tint}`,
         cursor: active ? 'default' : 'pointer',
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-white" aria-hidden="true">
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.35)]" aria-hidden="true">
           {icon ? <MiniIcon name={icon} className="size-4" /> : <span className="text-[12px] font-semibold">{index + 1}</span>}
         </span>
         <span className="text-[11px] font-semibold uppercase tracking-[.06em] text-white/85">
           {index === 0 ? 'Start here' : `Step ${index + 1}`}
         </span>
       </div>
-      <p className="m-0 line-clamp-2 font-rethink-sans text-[15px] font-semibold leading-[1.2] max-[480px]:text-[14px]">{stage.label}</p>
+      <p className="m-0 mt-2 line-clamp-2 font-rethink-sans text-[15px] font-semibold leading-[1.2] max-[480px]:text-[14px]">{stage.label}</p>
+      {/* A plain panel for the art — the card's own depth already carries the
+          material, so this stays a simple translucent inset rather than a
+          second layer of shadows. */}
+      <div className="relative mt-2.5 flex flex-1 items-end justify-center overflow-hidden rounded-xl bg-black/18">
+        <img src={artFor(stage, index)} alt="" className="h-[86%] max-h-[120px] object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,.35)]" />
+      </div>
     </button>
   )
 }
@@ -92,7 +137,7 @@ export function StageCards({ stages, label }) {
   return (
     <div className="grid w-full justify-items-center gap-3">
       <div
-        className="relative h-[150px] w-full max-w-[460px] overflow-hidden max-[480px]:h-[136px]"
+        className="relative h-[254px] w-full max-w-[460px] overflow-hidden max-[480px]:h-[228px]"
         role="group"
         aria-roledescription="carousel"
         aria-label={label}
@@ -103,7 +148,7 @@ export function StageCards({ stages, label }) {
           return (
             <motion.div
               key={stage.value}
-              className="absolute left-1/2 top-1/2 -ml-[106px] -mt-[60px] max-[480px]:-ml-[94px] max-[480px]:-mt-[54px]"
+              className="absolute left-1/2 top-1/2 -ml-[106px] -mt-[112px] max-[480px]:-ml-[94px] max-[480px]:-mt-[99px]"
               initial={instant ? false : { opacity: 0, scale: 0.85, x: '0%' }}
               animate={slot}
               transition={instant || isScanning ? { duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.9 }}
