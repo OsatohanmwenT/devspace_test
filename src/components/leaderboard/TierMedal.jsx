@@ -11,6 +11,16 @@ function darken(hex, amount = 40) {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
 }
 
+// Same parse as `darken`, just handed back as an rgba() string at a given
+// alpha instead of a darkened hex — used for the "current" ring below.
+function toRgba(hex, alpha) {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 0xff
+  const g = (num >> 8) & 0xff
+  const b = num & 0xff
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 // Sized in px rather than utility classes so the ladder can scale tiers down as
 // they recede into the distance.
 export function TierMedal({ league, state, size = 46 }) {
@@ -38,7 +48,11 @@ export function TierMedal({ league, state, size = 46 }) {
       style={{
         width: size,
         height: size,
-        boxShadow: state === 'current' ? `0 0 0 ${Math.max(2, Math.round(size / 16))}px rgba(102, 153, 236,.35)` : 'none',
+        // The ring used to be a hardcoded blue, unrelated to either the
+        // league's own color or whatever accent the card around it was
+        // using — now it's the league's own color, so "current" reads as
+        // "this league, lit up" rather than a third, unrelated hue.
+        boxShadow: state === 'current' ? `0 0 0 ${Math.max(2, Math.round(size / 16))}px ${toRgba(league.color, 0.35)}` : 'none',
       }}
       aria-hidden="true"
     >

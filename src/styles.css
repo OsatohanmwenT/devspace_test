@@ -767,6 +767,15 @@
   color: #686968;
 }
 
+/* The card's own flex column is left-aligned (align-items: flex-start) so
+   the lesson rows below stay left-aligned — the hero art needs to opt out
+   of that on its own to sit centered above them. */
+.home-map-card__hero-badge {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
 .home-map-card__lesson-illustration {
   display: grid;
   place-items: center;
@@ -803,7 +812,7 @@
   gap: 14px;
   padding: 10px 0;
   color: #a6aab4;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 500;
 }
 
@@ -1010,6 +1019,9 @@
     color: #ffffff;
   }
 
+  /* --xp-fill is today's real percent of the daily XP goal, set inline by
+     the component — the ring's fill is an actual signal, not decoration
+     shaped like one. */
   .home-dashboard-xp-ring {
     position: relative;
     display: grid;
@@ -1017,8 +1029,16 @@
     height: 34px;
     place-items: center;
     border-radius: 999px;
-    background: #f5b400;
+    background: conic-gradient(#f5b400 var(--xp-fill, 0%), rgb(245 180 0 / 0.18) 0);
     box-shadow: 0 4px 10px rgb(245 180 0 / 0.22);
+  }
+
+  .home-dashboard-xp-ring::before {
+    position: absolute;
+    inset: 3px;
+    border-radius: inherit;
+    background: #1f1f1f;
+    content: '';
   }
 
   .home-dashboard-xp-ring svg {
@@ -1089,6 +1109,107 @@
     color: #262626;
   }
 
+  /* The desktop home for "Your work" (the portfolio card) — previously an
+     empty aria-hidden spacer. Its height comes from the grid's own 1fr row,
+     not a choice made here, so this stays deliberately compact: one header
+     row, one content row, nothing that assumes more room than it has. */
+  .home-dashboard-portfolio {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 120px;
+    flex-direction: column;
+    border: 1px solid rgb(37 99 235 / 0.16);
+    border-radius: 24px;
+    background: #16233a;
+    padding: 18px 20px;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -14px rgb(37 99 235 / 0.35);
+    transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  .home-dashboard-portfolio:hover {
+    border-color: rgb(var(--card-accent) / 0.55);
+  }
+
+  [data-theme='light'] .home-dashboard-portfolio {
+    border-color: rgb(37 99 235 / 0.14);
+    background: #eaf2ff;
+    box-shadow: 0 8px 20px -14px rgb(37 99 235 / 0.25);
+  }
+
+  .home-dashboard-portfolio-expand {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    color: #6b6b70;
+  }
+
+  [data-theme='light'] .home-dashboard-portfolio-expand {
+    color: #8a8a86;
+  }
+
+  .home-dashboard-portfolio-body {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    align-items: flex-start;
+    /* Devy sits at 40% width so the text never runs full-bleed under him even
+       though he's no longer a real flex sibling claiming his own column. */
+    padding-right: 40%;
+  }
+
+  .home-dashboard-portfolio-body strong {
+    display: block;
+    overflow: hidden;
+    color: #f4f4f2;
+    font-family: var(--font-rubik, inherit);
+    font-size: 15px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-theme='light'] .home-dashboard-portfolio-body strong {
+    color: #262626;
+  }
+
+  .home-dashboard-portfolio-body > .min-w-0 > span {
+    display: block;
+    margin-top: 2px;
+    color: #8a8f9c;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .home-dashboard-portfolio-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .home-dashboard-portfolio-tags span {
+    border-radius: 999px;
+    padding: 3px 9px;
+    background: rgb(var(--card-accent) / 0.15);
+    color: rgb(var(--card-accent));
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .home-dashboard-portfolio-devy {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    width: 56px;
+    height: 56px;
+  }
+
   /* Fills the room a lone centred line used to leave empty: the same
      four-person window the mobile leaderboard card previews, the learner's
      own row lifted with the accent tint. A plain centred column, not an
@@ -1121,7 +1242,7 @@
     align-items: center;
     gap: 8px;
     border-radius: 10px;
-    padding: 12px 10px;
+    padding: 12px;
     color: #8a8f9c;
     font-size: 16px;
     font-weight: 600;
@@ -1134,6 +1255,21 @@
   .home-dashboard-standings-row[data-self] {
     background: rgb(116 145 255 / 0.18);
     color: #f4f4f2;
+  }
+
+  /* Per-person color, reused from the mobile leaderboard card's own
+     standings preview (avatarPalette) rather than invented here — the only
+     color a row carries besides the self-row wash. */
+  .home-dashboard-standings-avatar {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    place-items: center;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   .home-dashboard-standings-rank,
@@ -1406,8 +1542,8 @@
     opacity: 1;
     filter: none;
     box-shadow:
-      0 28px 48px -26px rgb(var(--card-accent) / 0.24),
-      0 16px 30px -18px rgba(0, 0, 0, 0.42);
+      0 14px 28px -22px rgb(var(--card-accent) / 0.1),
+      0 8px 18px -16px rgba(0, 0, 0, 0.24);
     transition:
       translate 220ms ease,
       transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -1462,7 +1598,7 @@
 
   .home-map-card__lesson-details strong {
     color: #f4f4f2;
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.2;
     max-width: 100%;
   }
@@ -1492,7 +1628,27 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: #88bdf2;
+    /* Was a hardcoded #88bdf2 — a visibly different, lighter blue than the
+       "LESSON N OF N" label right above it (--card-accent, rgb(59 130 246)).
+       Locking it to the same variable means the two can't drift again. */
+    background: rgb(var(--card-accent));
+  }
+
+  /* This card is stretched to 500px (row-span-2, to line up with the two
+     stacked cards in the left column) but its own content — title, progress,
+     illustration, two lesson rows — never needs that much room. The general
+     rule above pins the CTA to the bottom with `margin-top: auto`, which
+     just moved the problem: instead of a gap in the middle it became one
+     big gap immediately above the button. Centering the content+button as
+     one group turns that into two smaller, even margins — a composition
+     that reads as deliberate instead of a card that ran out of things to
+     show. */
+  .home-map-card--continue-learning[data-layout='front'] {
+    justify-content: center;
+  }
+
+  .home-map-card--continue-learning[data-layout='front'] .home-map-card__cta-bar {
+    margin-top: 28px;
   }
 
   .home-map-card[data-layout='front'] .home-map-card__details > span:last-child {
@@ -1688,7 +1844,7 @@
    from its desktop size to its mobile size with nothing in between. */
 @media (min-width: 681px) and (max-width: 1200px) {
   .home-map-card__lesson-details strong {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .home-map-card__lesson-details .home-map-card__lesson-complete {
@@ -1718,7 +1874,7 @@
   }
 
   .home-map-card__lesson-row {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .home-map-card__side-value--text {
@@ -1727,6 +1883,22 @@
 }
 
 @media (max-width: 680px) {
+  .home-map-card--continue-learning[data-layout='front'] {
+    padding: 24px 30px 28px !important;
+  }
+
+  .home-map-card--continue-learning[data-layout='front'] .home-map-card__course-heading {
+    padding-bottom: 12px !important;
+  }
+
+  .home-map-card--continue-learning[data-layout='front'] .home-map-card__cta-bar {
+    margin-top: 18px;
+  }
+
+  .home-map-card--continue-learning[data-layout='front'] .home-map-card__lesson-row[data-state='upcoming'] {
+    display: none;
+  }
+
   /* The stack is a 3D stage here: every card's placement comes from the one
      `position` value in useCardCarousel. While dragging, `paint()` writes
      transform/opacity/z-index straight to each card's inline style on every
@@ -1759,7 +1931,7 @@
   }
 
   .home-map-card__lesson-details strong {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .home-map-card__lesson-details .home-map-card__lesson-complete {
@@ -1793,7 +1965,7 @@
   }
 
   .home-map-card__lesson-row {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .home-map-card__side-value--text {

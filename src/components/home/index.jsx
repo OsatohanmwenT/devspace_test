@@ -1,8 +1,9 @@
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { DevyLottie } from "../ui/DevyLottie";
+import { DevyMood } from "../ui/DevyMood";
 import {
     ArrowLeftIcon,
     BoltIcon,
@@ -58,9 +59,9 @@ const mapCard =
   `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border !border-white/10 p-7 text-left font-medium hover:!border-white/20 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:!border-neutral-200 [[data-theme=light]_&]:hover:!border-neutral-300 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] max-[680px]:!top-[96px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:10px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
 
 const lightFrontElevation =
-  "[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.31)_0px_1.67px_4.18px_0px,rgba(183,181,203,0.27)_0px_8.37px_8.37px_0px,rgba(183,181,203,0.16)_0px_17.57px_10.88px_0px,rgba(183,181,203,0.05)_0px_31.8px_12.55px_0px,rgba(183,181,203,0.01)_0px_50.21px_14.23px_0px,rgb(var(--card-accent)_/_0.06)_0px_18px_36px_-28px] max-[680px]:[[data-theme=light]_&]:![box-shadow:rgba(183,181,203,0.24)_0px_1px_3px_0px,rgba(183,181,203,0.2)_0px_5px_6px_0px,rgba(183,181,203,0.1)_0px_11px_8px_0px,rgb(var(--card-accent)_/_0.04)_0px_12px_28px_-24px]";
+  "[[data-theme=light]_&]:![box-shadow:0_10px_24px_-18px_rgba(20,20,40,0.14),0_8px_18px_-20px_rgb(var(--card-accent)_/_0.04)] max-[680px]:[[data-theme=light]_&]:![box-shadow:0_8px_18px_-16px_rgba(20,20,40,0.12),0_6px_14px_-18px_rgb(var(--card-accent)_/_0.03)]";
 const darkMobileFrontDepth =
-  "max-[680px]:[[data-theme=dark]_&]:![box-shadow:0_18px_34px_-28px_rgb(var(--card-accent)_/_0.1),0_10px_20px_-18px_rgb(0_0_0_/_0.38)]";
+  "max-[680px]:[[data-theme=dark]_&]:![box-shadow:0_12px_24px_-20px_rgb(var(--card-accent)_/_0.06),0_7px_16px_-15px_rgb(0_0_0_/_0.28)]";
 
 const mapCardSurface =
   "bg-[#1f1f1f] text-[#f4f4f2] hover:bg-[#252525] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-white";
@@ -157,6 +158,19 @@ function LessonIllustration({ src }) {
   );
 }
 
+// The region art used to just sit inline with the rest of the heading text —
+// one more paragraph in the stack. Mounting it on a tinted plate that
+// straddles the card's own top edge gives Continue Learning the one hero
+// moment a "what am I on right now" card should lead with, instead of every
+// element on the card carrying equal weight.
+function HeroBadge({ src }) {
+  return (
+    <span className="home-map-card__hero-badge" aria-hidden="true">
+      <LessonIllustration src={src} />
+    </span>
+  );
+}
+
 // The corner cue that only appears on hover — "there is more inside this" —
 // so a side card visibly invites a click instead of just sitting there.
 function ExpandCue() {
@@ -209,6 +223,15 @@ function LessonStatusIcon({ locked }) {
   }
   return (
     <span className="relative grid size-[26px] flex-none place-items-center">
+      {/* A soft, contained spotlight behind the one lesson that's actually
+          current — the same "this is the live one" cue TierMedal's ring
+          uses elsewhere, just as a glow instead of a ring, since this icon
+          already has its own ring. */}
+      <span
+        className="pointer-events-none absolute inset-[-6px] -z-10 rounded-full blur-md"
+        style={{ background: "rgb(var(--card-accent) / 0.35)" }}
+        aria-hidden="true"
+      />
       <span
         className="grid size-full place-items-center rounded-full bg-[#3f3f46]"
         style={{ boxShadow: "0 2px 0 #2a2a2f, 0 0 0 3px rgb(var(--card-accent) / 0.15)" }}
@@ -223,6 +246,21 @@ function LessonStatusIcon({ locked }) {
         </svg>
       </span>
     </span>
+  );
+}
+
+// The right-hand "not done yet" marker on a lesson row — a plain ring, tinted
+// with the card's accent on the current lesson so the eye still lands there
+// first, neutral grey on anything after it. Deliberately never filled here:
+// neither row in this list has been completed, and a filled/checked state
+// belongs to the left-hand LessonStatusIcon once a lesson actually is done.
+function LessonStatusRing({ current }) {
+  return (
+    <span
+      className={`size-[18px] flex-none rounded-full border-2 ${current ? "" : "border-white/[0.14] [[data-theme=light]_&]:border-black/[0.12]"}`}
+      style={current ? { borderColor: "rgb(var(--card-accent) / 0.7)" } : undefined}
+      aria-hidden="true"
+    />
   );
 }
 
@@ -355,6 +393,8 @@ export default function HomeView({
   seasonCoins,
   streakDays = 0,
   xp = 0,
+  dailyXp = 0,
+  xpGoal = 1,
   dynamicUpdate,
 }) {
   const [mapMode, setMapMode] = useState("map");
@@ -537,6 +577,10 @@ export default function HomeView({
   // in it only means something after a first lesson — before that, the real
   // "unlock" moment worth telling the learner about is finishing lesson one.
   const leagueUnlocked = completedLessonsCount > 0;
+  // Same formula XpPopover already uses for the header's daily-goal ring —
+  // reused here rather than reinvented so "today's progress" means the same
+  // thing in both places.
+  const dailyGoalPercent = Math.min(100, Math.round((dailyXp / Math.max(1, xpGoal)) * 100));
   const dynamicAction =
     dynamicUpdate?.kind === "path-complete" || dynamicUpdate?.kind === "welcome"
       ? onOpenCareerPath
@@ -577,7 +621,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[0]}
-            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3 min-[1201px]:!pt-8" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
             data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
@@ -615,7 +659,7 @@ export default function HomeView({
             </span>
 
             <span className="home-map-card__lesson-details !mt-0">
-              <span className="home-map-card__course-heading !gap-2 pt-3! !pb-2">
+              <span className="home-map-card__course-heading !gap-2 pt-3! !pb-6">
                 <strong className={`home-map-card__course-title ${textTitle}`}>
                   {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Continue learning"}
                 </strong>
@@ -631,22 +675,30 @@ export default function HomeView({
                   </span>
                   <span className={`home-map-card__course-progress-value ${textCaption}`}>{selectedCourse?.regionPercent ?? 0}%</span>
                 </span>
-                <LessonIllustration src={selectedCourse?.regionImage} />
               </span>
+
+              <HeroBadge src={selectedCourse?.regionImage} />
 
               <span className="home-map-card__lesson-list">
                 <span className="home-map-card__lesson-row" data-state="current">
                   <LessonStatusIcon locked={false} />
-                  <strong className={selectedCourse?.nextLessonTitle ? undefined : "home-map-card__lesson-complete"}>
+                  <strong className={`flex-1 ${selectedCourse?.nextLessonTitle ? "" : "home-map-card__lesson-complete"}`}>
                     {selectedCourse?.nextLessonTitle ?? `${selectedCourse?.title ?? "This path"} complete`}
                   </strong>
+                  <LessonStatusRing current />
                 </span>
-                {/* {selectedCourse?.nextLessonTitle && selectedCourse?.upNextTitle && (
+                {/* A quiet preview of what comes after the current lesson —
+                    real data (main.jsx's upNextTitle), not filler. Without
+                    it this was the only content block on the card, and the
+                    fixed-height card (row-span-2, to match the left column)
+                    left a large gap of true empty space above the CTA. */}
+                {selectedCourse?.nextLessonTitle && selectedCourse?.upNextTitle && (
                   <span className="home-map-card__lesson-row" data-state="upcoming">
                     <LessonStatusIcon locked />
-                    <span>{selectedCourse.upNextTitle}</span>
+                    <span className="flex-1">{selectedCourse.upNextTitle}</span>
+                    <LessonStatusRing />
                   </span>
-                )} */}
+                )}
               </span>
             </span>
 
@@ -999,8 +1051,20 @@ export default function HomeView({
             <div className="home-dashboard-summary">
               <section className="home-dashboard-streak">
                 <span className="home-dashboard-xp">
-                  <span className="home-dashboard-xp-ring">
-                    <BoltIcon className="size-4" />
+                  {/* The ring used to be a fixed 25% regardless of xp — it
+                      now reflects today's real progress toward the daily
+                      goal (same formula XpPopover already uses), so it's an
+                      actual signal instead of decoration shaped like one.
+                      The number beside it stays lifetime total, which is
+                      why the ring gets its own label rather than relying on
+                      that number to explain it. */}
+                  <span
+                    className="home-dashboard-xp-ring"
+                    style={{ "--xp-fill": `${dailyGoalPercent}%` }}
+                    role="img"
+                    aria-label={`${dailyGoalPercent}% of today’s XP goal`}
+                  >
+                    <BoltIcon className="size-4" aria-hidden="true" />
                   </span>
                   <strong>{xp}</strong>
                 </span>
@@ -1026,7 +1090,13 @@ export default function HomeView({
                           "View leaderboard" row at the foot of the card with
                           the same quiet expand affordance the mobile card
                           uses, so the card stays exactly as tall as its
-                          content. */}
+                          content. It needs to stay a real, always-visible
+                          button (not ExpandCue itself, which is opacity:0
+                          until the whole card is hovered) since this is the
+                          only way to reach the leaderboard from here on
+                          desktop — but it reuses ExpandCue's exact glyph and
+                          size so "this expands" means one shape everywhere,
+                          not a second, unrelated icon design. */}
                       <button
                         type="button"
                         aria-label="View full leaderboard"
@@ -1036,11 +1106,11 @@ export default function HomeView({
                           onOpenLeaderboard();
                         }}
                       >
-                        <svg className="size-[15px]" viewBox="0 0 24 24" fill="none">
+                        <svg className="size-4" viewBox="0 0 24 24" fill="none">
                           <path
-                            d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+                            d="M7 17 17 7M9 7h8v8"
                             stroke="currentColor"
-                            strokeWidth="2"
+                            strokeWidth="2.2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
@@ -1058,16 +1128,35 @@ export default function HomeView({
                         long scroll — so the rows just sit centred in the
                         space with no overlay-fade pretending there's more
                         below than there actually is. */}
+                    {/* Every row used to be flat grey — the mobile
+                        leaderboard card's own standings preview already
+                        colors each row with a per-person avatar chip
+                        (avatarPalette, self gets --card-accent); this
+                        reuses the exact same device so the two renderings
+                        of "your standing" read as the same UI, not two
+                        different ones that happen to show the same data. */}
                     <span className="home-dashboard-standings">
-                      {leagueNeighborsWide.slice(0, 3).map((entry) => (
+                      {leagueNeighborsWide.slice(0, 3).map((entry, index) => (
                         <span
                           key={entry.id}
                           className="home-dashboard-standings-row"
                           data-self={entry.isCurrentUser || undefined}
                         >
                           <span className="home-dashboard-standings-rank">{entry.rank}</span>
-                          <span className="min-w-0 truncate">
-                            {entry.isCurrentUser ? "You" : entry.name}
+                          <span className="flex min-w-0 items-center gap-2.5">
+                            <span
+                              className="home-dashboard-standings-avatar"
+                              style={{
+                                background: entry.isCurrentUser
+                                  ? "rgb(var(--card-accent))"
+                                  : avatarPalette[index % avatarPalette.length],
+                              }}
+                            >
+                              {(entry.isCurrentUser ? "You" : entry.name)?.[0]?.toUpperCase()}
+                            </span>
+                            <span className="min-w-0 truncate">
+                              {entry.isCurrentUser ? "You" : entry.name}
+                            </span>
                           </span>
                           <span className="home-dashboard-standings-score">{entry.score}</span>
                         </span>
@@ -1141,10 +1230,71 @@ export default function HomeView({
             </CardCtaButton>
           </div>
 
-          <div
-            className="hidden min-[1201px]:col-start-1 min-[1201px]:row-start-3 min-[1201px]:block min-[1201px]:h-[120px] min-[1201px]:rounded-[24px] min-[1201px]:border min-[1201px]:border-white/10 min-[1201px]:bg-[#1f1f1f] [[data-theme=light]_&]:min-[1201px]:border-neutral-200 [[data-theme=light]_&]:min-[1201px]:bg-white"
-            aria-hidden="true"
-          />
+          {/* This slot used to be an empty aria-hidden spacer — the desktop
+              grid never actually gave "Your work" (the portfolio card) a
+              home of its own: it's min-[1201px]:hidden everywhere else, the
+              only one of the four cards with no desktop presence. This is
+              that presence, condensed to the one row the grid leaves for it
+              (its height is fixed by the grid's own 1fr row, not a free
+              choice — see the row-start-3 math against the 500px card
+              opposite it). */}
+          <button
+            type="button"
+            className="home-dashboard-portfolio hidden min-[1201px]:col-start-1 min-[1201px]:row-start-3 min-[1201px]:flex"
+            style={{ "--card-accent": cardAccents.portfolio }}
+            onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
+          >
+            {/* Pinned to the corner rather than its own flex row above the
+                text — a header row here was pushing "N lessons completed"
+                down by its own height + gap before the text ever started,
+                which is exactly the "not at the top" gap the reference
+                doesn't have (its title sits right at the card's own
+                padding, nothing above it). */}
+            <span className="home-dashboard-portfolio-expand" aria-hidden="true">
+              <svg className="size-4" viewBox="0 0 24 24" fill="none">
+                <path d="M7 17 17 7M9 7h8v8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+
+            <span className="home-dashboard-portfolio-body">
+              <span className="min-w-0">
+                {completedLessonsCount === 0 ? (
+                  <>
+                    <strong>Your portfolio starts here</strong>
+                    <span>Complete a lesson to begin</span>
+                  </>
+                ) : (
+                  <>
+                    <strong>
+                      {completedLessonsCount} lesson{completedLessonsCount === 1 ? "" : "s"} completed
+                    </strong>
+                    {pathTools.length > 0 ? (
+                      <span className="home-dashboard-portfolio-tags">
+                        {pathTools.slice(0, 3).map((tool) => (
+                          <span key={tool}>{tool}</span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span>Building your work, one lesson at a time</span>
+                    )}
+                  </>
+                )}
+              </span>
+            </span>
+
+            {/* The reference's mascot-in-the-corner idea, with Devy instead —
+                neutral for the empty state, the same celebrating pose the
+                roadmap uses once there's actually something to show. Pinned
+                to the card itself rather than sharing the text row's flex
+                box, so its size is never squeezed by (or squeezing) the
+                header row above it. */}
+            <DevyMood
+              mood={completedLessonsCount === 0 ? "neutral" : "celebrating"}
+              animate={completedLessonsCount > 0}
+              className="home-dashboard-portfolio-devy"
+              alt=""
+            />
+          </button>
         </motion.section>
 
         <ScenePager
@@ -1172,17 +1322,17 @@ export default function HomeView({
         </section>
 
         {showPremiumOffer && (
-          <div className={`fixed bottom-0 left-6 z-50 hidden min-[1201px]:block ${isPremiumOfferCollapsed ? "" : "w-[360px]"}`}>
-            <AnimatePresence initial={false} mode="wait">
+          <div className="fixed bottom-0 left-6 z-50 hidden min-[1201px]:block">
+            <motion.div
+              layout
+              transition={{ layout: { type: "spring", stiffness: 320, damping: 30, mass: 0.8 } }}
+              style={{ transformOrigin: "bottom left" }}
+              className={isPremiumOfferCollapsed ? "w-[228px]" : "w-[360px]"}
+            >
             {isPremiumOfferCollapsed ? (
-              <motion.button
-                key="premium-launcher"
+              <button
                 type="button"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="flex h-12 items-center gap-2.5 rounded-t-[18px] rounded-b-none border border-white/10 bg-[#232323] px-4 text-sm font-semibold text-[#f4f4f2] shadow-[0_12px_28px_rgb(0_0_0_/_0.24)] hover:bg-[#2a2a2a] [[data-theme=light]_&]:border-neutral-200 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-neutral-50"
+                className="flex h-12 w-full items-center gap-2.5 rounded-t-[18px] rounded-b-none border border-white/10 bg-[#232323] px-4 text-sm font-semibold text-[#f4f4f2] shadow-[0_12px_28px_rgb(0_0_0_/_0.24)] hover:bg-[#2a2a2a] [[data-theme=light]_&]:border-neutral-200 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:bg-neutral-50"
                 aria-expanded="false"
                 onClick={() => setIsPremiumOfferCollapsed(false)}
               >
@@ -1191,15 +1341,9 @@ export default function HomeView({
                 <svg className="ml-1 size-4 text-[#a9a9ad]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </motion.button>
+              </button>
             ) : (
-              <motion.section
-                key="premium-offer"
-                initial={{ opacity: 0, y: 18, clipPath: "inset(100% 0 0 0)" }}
-                animate={{ opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)" }}
-                exit={{ opacity: 0, y: 10, clipPath: "inset(100% 0 0 0)" }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                style={{ transformOrigin: "bottom left" }}
+              <section
                 className="relative w-full overflow-hidden rounded-t-[16px] rounded-b-none border border-white/10 bg-[#232323] p-6 text-[#f4f4f2] shadow-[0_18px_40px_rgb(0_0_0_/_0.28)] [[data-theme=light]_&]:border-neutral-200 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800"
                 role="dialog"
                 aria-labelledby="premium-offer-title"
@@ -1233,9 +1377,9 @@ export default function HomeView({
               >
                 Explore Devspace Pro
               </ActionButton>
-              </motion.section>
+              </section>
             )}
-            </AnimatePresence>
+            </motion.div>
           </div>
         )}
       </div>

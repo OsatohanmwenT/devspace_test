@@ -1129,6 +1129,8 @@ function App() {
             promoteCount={promoteCount}
             streakDays={streakDays}
             xp={xp}
+            dailyXp={getDailyXp(progress)}
+            xpGoal={xpGoal}
             seasonTimeLeft={seasonTimeLeft}
             seasonCoins={seasonCoins}
             dynamicUpdate={dynamicUpdate}
