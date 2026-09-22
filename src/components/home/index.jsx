@@ -1034,7 +1034,7 @@ export default function HomeView({
           <div
             ref={cardRefs[3]}
             className={`${mapCard} home-map-card--dynamic min-[1201px]:col-start-1 min-[1201px]:row-start-2 min-[1201px]:self-start min-[1201px]:!h-[356px] min-[1201px]:!overflow-hidden min-[1201px]:!p-0 ${mapCardSurface} ${isDesktop || isFront("dynamic") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
-            style={{ "--card-accent": isDesktop ? "116 145 255" : cardAccents.dynamic }}
+            style={{ "--card-accent": isDesktop ? cardAccents.leaderboard : cardAccents.dynamic }}
             data-slot={getCardSlot("dynamic")}
             data-layout={isFrontLayout("dynamic") ? "front" : getCardSlot("dynamic")}
             tabIndex={isDesktop ? -1 : cardTabIndex("dynamic")}

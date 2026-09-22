@@ -1119,24 +1119,27 @@
     width: 100%;
     height: 120px;
     flex-direction: column;
-    border: 1px solid rgb(37 99 235 / 0.16);
+    border: 1px solid rgb(var(--card-accent) / 0.35);
     border-radius: 24px;
-    background: #16233a;
+    background: #1f1f1f;
     padding: 18px 20px;
     text-align: left;
     cursor: pointer;
-    box-shadow: 0 8px 20px -14px rgb(37 99 235 / 0.35);
-    transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+    transition: border-color 200ms ease, background-color 200ms ease;
   }
 
   .home-dashboard-portfolio:hover {
-    border-color: rgb(var(--card-accent) / 0.55);
+    border-color: rgb(var(--card-accent) / 0.9);
+    background: #252525;
   }
 
   [data-theme='light'] .home-dashboard-portfolio {
-    border-color: rgb(37 99 235 / 0.14);
-    background: #eaf2ff;
-    box-shadow: 0 8px 20px -14px rgb(37 99 235 / 0.25);
+    border-color: rgb(var(--card-accent) / 0.3);
+    background: #fff;
+  }
+
+  [data-theme='light'] .home-dashboard-portfolio:hover {
+    border-color: rgb(var(--card-accent) / 0.6);
   }
 
   .home-dashboard-portfolio-expand {
@@ -1253,7 +1256,7 @@
   }
 
   .home-dashboard-standings-row[data-self] {
-    background: rgb(116 145 255 / 0.18);
+    background: rgb(var(--card-accent) / 0.18);
     color: #f4f4f2;
   }
 
