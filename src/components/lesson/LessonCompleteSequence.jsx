@@ -253,6 +253,7 @@ export function LessonCompleteSequence({ title, body, xpEarned, accuracy, starte
       title={title}
       body={body}
       mood="celebrating"
+      clip="lesson-complete"
       accentTitle
       pinAction
       onExit={onExit}

@@ -1563,10 +1563,79 @@
   .home-dashboard-streak {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     border-bottom: 1px solid rgb(255 255 255 / 0.08);
     padding-top: 16px;
     padding-bottom: 16px;
+  }
+
+  .home-dashboard-achievements {
+    display: inline-flex;
+    align-items: center;
+    padding-left: 18px;
+  }
+
+  .home-dashboard-achievements-label {
+    color: #8a8f9c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .home-dashboard-badge-slots {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Achievement badge strip — each slot is a coin. Unearned ones sit as a
+     recessed, embossed socket (a badge waiting to be collected) rather than
+     a dashed placeholder; earned ones become a glossy gold coin. */
+  .home-dashboard-badge-slot {
+    position: relative;
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02) 72%);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      inset 0 2px 6px rgb(0 0 0 / 0.45),
+      0 1px 0 rgb(255 255 255 / 0.05);
+    color: rgb(255 255 255 / 0.3);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* inner rim — gives the disc the stamped edge of a coin */
+  .home-dashboard-badge-slot::before {
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgb(255 255 255 / 0.07);
+    border-radius: inherit;
+    content: '';
+  }
+
+  .home-dashboard-badge-slot svg {
+    position: relative;
+    width: 22px;
+    height: 22px;
+  }
+
+  .home-dashboard-badge-slot[data-state='earned'],
+  [data-theme='light'] .home-dashboard-badge-slot[data-state='earned'] {
+    background: radial-gradient(circle at 35% 28%, #fff4c2 0%, #f5c542 38%, #d99a0b 76%, #b67a05 100%);
+    box-shadow:
+      inset 0 0 0 1.5px rgb(255 255 255 / 0.35),
+      inset 0 -3px 6px rgb(120 70 0 / 0.35),
+      0 4px 10px rgb(217 154 11 / 0.3);
+    color: #8a5a00;
+  }
+
+  .home-dashboard-badge-slot[data-state='earned']::before {
+    border-color: rgb(255 255 255 / 0.45);
   }
 
   .home-dashboard-xp,
@@ -1617,7 +1686,6 @@
     font-size: 22px;
     line-height: 1;
   }
-
   .home-dashboard-xp span,
   .home-dashboard-streak-count,
   .home-dashboard-league > span > span > span {
@@ -1937,6 +2005,22 @@
     border-bottom-color: rgb(0 0 0 / 0.09);
   }
 
+  [data-theme='light'] .home-dashboard-achievements-label {
+    color: #747780;
+  }
+
+  [data-theme='light'] .home-dashboard-badge-slot {
+    background: radial-gradient(circle at 50% 28%, #ffffff 0%, #eef0f3 78%);
+    box-shadow:
+      inset 0 0 0 1px #e1e3e8,
+      inset 0 2px 5px rgb(15 23 42 / 0.08),
+      0 1px 2px rgb(15 23 42 / 0.04);
+    color: #b3b7c0;
+  }
+
+  [data-theme='light'] .home-dashboard-badge-slot:not([data-state='earned'])::before {
+    border-color: rgb(15 23 42 / 0.06);
+  }
   [data-theme='light'] .home-dashboard-xp,
   [data-theme='light'] .home-dashboard-streak-count,
   [data-theme='light'] .home-dashboard-league strong {

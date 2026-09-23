@@ -1173,6 +1173,7 @@ function App() {
             canPromote={currentLeague.promotePercent > 0}
             promoteCount={promoteCount}
             streakDays={streakDays}
+            earnedStreakMilestones={earnedStreakMilestones ?? []}
             xp={xp}
             dailyXp={getDailyXp(progress)}
             xpGoal={xpGoal}

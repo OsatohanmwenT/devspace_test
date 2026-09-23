@@ -20,6 +20,7 @@ const SOURCES = {
   // Every one of this file's 72 frames is byte-identical — it plays as a
   // static coin/medallion icon, not a loop, despite the "loop-3s" export name.
   coin: '/assets/animations/devy-coin.lottie',
+  'lesson-complete': '/assets/animations/lesson-complete.lottie',
 }
 
 // Reduced-motion viewers get the first frame only — DotLottieReact has no

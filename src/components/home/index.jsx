@@ -8,6 +8,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveAvatar } from "../../lib/avatarStyles";
 import { answerHomePrompt } from "../../lib/devy";
+import { STREAK_MILESTONES } from "../../lib/streak";
 import { getRoleLabel, normalizeProfile } from "../../lib/profile";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
@@ -661,6 +662,8 @@ export default function HomeView({
   onOpenProfile,
   profile,
   longestStreak = 0,
+  streakDays = 0,
+  earnedStreakMilestones = [],
   completedSessions = {},
   lessonDoneToday = false,
   currentPath,
@@ -872,6 +875,16 @@ export default function HomeView({
     onOpenPath(course.id);
   };
   const continueSelectedCourse = () => continueCourse(selectedCourse);
+  // The badge row: the streak milestones Profile already shows — the two most
+  // recently earned, then the next one to aim for (with progress), so it's
+  // always pointing somewhere rather than showing empty slots.
+  const earnedTiers = STREAK_MILESTONES.filter((tier) => earnedStreakMilestones.includes(tier.days));
+  const unearnedTiers = STREAK_MILESTONES.filter((tier) => !earnedStreakMilestones.includes(tier.days));
+  const shownEarned = earnedTiers.slice(-(unearnedTiers.length ? 2 : 3));
+  const badgeSlots = [
+    ...shownEarned.map((tier) => ({ tier, state: "earned" })),
+    ...unearnedTiers.slice(0, 3 - shownEarned.length).map((tier, index) => ({ tier, state: index === 0 ? "next" : "locked" })),
+  ];
   const identity = normalizeProfile(profile);
   const profileName = identity?.name?.trim() || "Learner";
   const composeSuggestions = [
@@ -1432,6 +1445,38 @@ export default function HomeView({
                   </span>
                   <strong>{xp}</strong>
                 </span>
+                <button
+                  type="button"
+                  className="home-dashboard-achievements"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenProfile?.();
+                  }}
+                  aria-label={`Badges: ${badgeSlots.filter((slot) => slot.state === "earned").length} earned. Open profile`}
+                >
+                  <span className="home-dashboard-badge-slots">
+                    {badgeSlots.map(({ tier, state }) => (
+                      <span
+                        key={tier.days}
+                        className="home-dashboard-badge-slot"
+                        data-state={state}
+                        style={state === "next" ? { "--badge-progress": `${Math.min(1, streakDays / tier.days) * 100}%` } : undefined}
+                        title={
+                          state === "earned"
+                            ? `${tier.label} · ${tier.days}-day streak`
+                            : state === "next"
+                              ? `${tier.days - streakDays} more ${tier.days - streakDays === 1 ? "day" : "days"} to ${tier.label}`
+                              : `${tier.label} · ${tier.days} days`
+                        }
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle cx="12" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="m8.5 14-1.25 5.25L12 17l4.75 2.25L15.5 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ))}
+                  </span>
+                </button>
               </section>
 
               <section className="home-dashboard-league">
