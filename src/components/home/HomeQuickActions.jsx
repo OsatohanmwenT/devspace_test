@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { isRecommendedForPath, practiceSessions } from "../../data/practice";
-import { TopicIcon } from "../practice/TopicIcon";
-import { ArrowLeftIcon, CheckIcon } from "../ui/icons";
+import { CheckIcon } from "../ui/icons";
 
 const DAY_MS = 86400000;
 
@@ -15,7 +14,6 @@ export function getDailyPractice(path) {
   const dayIndex = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / DAY_MS);
   return pool[dayIndex % pool.length];
 }
-
 // Today's three tasks, opened from whatever trigger the caller passes as
 // children (on Home it's the XP ring, which already tracks the daily goal).
 // Clicks and keys stay inside so the card this sits in doesn't react.
@@ -103,36 +101,3 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
   );
 }
 
-// A quiet secondary line under the main "Continue lesson" button — today's
-// practice is an alternative to the lesson, not a peer of it.
-export function PracticeLink({ path, completedSessions = {}, onStart, onSeeAll }) {
-  const session = getDailyPractice(path);
-  if (!session) return null;
-  const done = completedSessions[session.id]?.completedAt === new Date().toDateString();
-
-  return (
-    <button
-      type="button"
-      className="home-practice-link"
-      data-done={done || undefined}
-      onClick={(event) => {
-        event.stopPropagation();
-        if (done) onSeeAll();
-        else onStart(session.id);
-      }}
-    >
-      {done ? (
-        <>
-          <CheckIcon className="size-3.5" />
-          Practice done today · browse more
-        </>
-      ) : (
-        <>
-          <TopicIcon topic={session.topic} className="size-3.5 flex-none" />
-          Or a {session.minutes}-min practice: {session.title}
-        </>
-      )}
-      <ArrowLeftIcon className="size-3.5 rotate-180" />
-    </button>
-  );
-}

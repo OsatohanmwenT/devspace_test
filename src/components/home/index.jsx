@@ -24,7 +24,7 @@ import {
 } from "../ui/icons";
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
-import { DailyTasks, getDailyPractice, PracticeLink } from "./HomeQuickActions";
+import { DailyTasks, getDailyPractice } from "./HomeQuickActions";
 import { WARM_UP_ID } from "../../lib/warmUp";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -1092,14 +1092,6 @@ export default function HomeView({
                   warmUp={warmUpDue ? warmUp : null}
                   onStartWarmUp={startWarmUp}
                   onSkipWarmUp={skipWarmUp}
-                  primaryFooter={
-                    <PracticeLink
-                      path={currentPath}
-                      completedSessions={completedSessions}
-                      onStart={onStartPractice}
-                      onSeeAll={onSeeAllPractice}
-                    />
-                  }
                 />
               )}
             </div>
