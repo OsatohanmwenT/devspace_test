@@ -6,6 +6,8 @@ import {
     useTransform,
 } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { resolveAvatar } from "../../lib/avatarStyles";
+import { getRoleLabel, normalizeProfile } from "../../lib/profile";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { DevyLottie } from "../ui/DevyLottie";
@@ -18,11 +20,9 @@ import {
     RocketIcon,
     SparkleIcon,
 } from "../ui/icons";
-import { resolveAvatar } from "../../lib/avatarStyles";
-import { getRoleLabel, normalizeProfile } from "../../lib/profile";
-import { DailyTasksButton, getDailyPractice, PracticeButton } from "./HomeQuickActions";
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
+import { DailyTasksButton, getDailyPractice, PracticeButton } from "./HomeQuickActions";
 import { useCardCarousel } from "./useCardCarousel";
 
 // The Leaderboard card's own identity color, as a hex — same value as
