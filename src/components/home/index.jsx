@@ -24,7 +24,7 @@ import {
 } from "../ui/icons";
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
-import { DailyTasksButton, getDailyPractice, PracticeButton } from "./HomeQuickActions";
+import { DailyTasks, getDailyPractice, PracticeLink } from "./HomeQuickActions";
 import { useCardCarousel } from "./useCardCarousel";
 
 // The Leaderboard card's own identity color, as a hex — same value as
@@ -314,7 +314,7 @@ function CardCtaButton({ children, onClick }) {
   );
 }
 
-function CourseFace({ course, onContinue }) {
+function CourseFace({ course, onContinue, footer }) {
   const lessonsTotal = course.regionLessonsTotal ?? 0;
   const lessonsCompleted = Math.min(course.regionLessonsCompleted ?? 0, lessonsTotal);
   const started = course.isPrimary || course.percent > 0;
@@ -359,6 +359,7 @@ function CourseFace({ course, onContinue }) {
           ? course.nextLessonTitle ? "Continue lesson" : "Open path"
           : course.percent > 0 ? "Resume path" : "Explore path"}
       </CardCtaButton>
+      {course.isPrimary && footer}
     </>
   );
 }
@@ -491,7 +492,7 @@ function CourseStackCard({ depth, count, leavingDir, reduceMotion, onSwipe, onLe
 // The learner's courses as a deck: the one they're continuing sits on top,
 // the others peek out underneath. Swiping the top card (or the arrow keys /
 // dots) sends it to the back and brings the next course forward.
-function CourseStack({ courses, activeIndex, onChange, onContinue }) {
+function CourseStack({ courses, activeIndex, onChange, onContinue, primaryFooter }) {
   const reduceMotion = useReducedMotion();
   const [leaving, setLeaving] = useState(null);
   const count = courses.length;
@@ -540,7 +541,7 @@ function CourseStack({ courses, activeIndex, onChange, onContinue }) {
               onChange((activeIndex + 1) % count);
             }}
           >
-            <CourseFace course={course} onContinue={() => onContinue(course)} />
+            <CourseFace course={course} onContinue={() => onContinue(course)} footer={primaryFooter} />
           </CourseStackCard>
         );
       })}
@@ -949,22 +950,6 @@ export default function HomeView({
       <div data-compose={mapMode === "compose" || mapMode === "chat" || undefined} className="home-dashboard-grid relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-4 max-[680px]:justify-start max-[680px]:pt-14">
         <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:col-start-1 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
-          <div className="home-greeting-actions">
-            <DailyTasksButton
-              dailyXp={dailyXp}
-              xpGoal={xpGoal}
-              lessonDoneToday={lessonDoneToday}
-              practiceDoneToday={Object.values(completedSessions).some((entry) => entry?.completedAt === new Date().toDateString())}
-              onContinueLesson={() => continueCourse(primaryCourse)}
-              onStartPractice={() => onStartPractice(getDailyPractice(currentPath).id)}
-            />
-            <PracticeButton
-              path={currentPath}
-              completedSessions={completedSessions}
-              onStart={onStartPractice}
-              onSeeAll={onSeeAllPractice}
-            />
-          </div>
         </header>
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
@@ -1009,6 +994,14 @@ export default function HomeView({
                   activeIndex={selectedCourseIndex}
                   onChange={(index) => setSelectedCourseId(stackCourses[index].id)}
                   onContinue={(course) => openOrSelect("continueLearning", () => continueCourse(course))}
+                  primaryFooter={
+                    <PracticeLink
+                      path={currentPath}
+                      completedSessions={completedSessions}
+                      onStart={onStartPractice}
+                      onSeeAll={onSeeAllPractice}
+                    />
+                  }
                 />
               )}
             </div>
@@ -1427,7 +1420,17 @@ export default function HomeView({
           >
             <div className="home-dashboard-summary">
               <section className="home-dashboard-streak">
-                <span className="home-dashboard-xp">
+                {/* The XP ring already tracks today's goal, so it's also
+                    where today's tasks open from. */}
+                <DailyTasks
+                  className="home-dashboard-xp"
+                  dailyXp={dailyXp}
+                  xpGoal={xpGoal}
+                  lessonDoneToday={lessonDoneToday}
+                  practiceDoneToday={Object.values(completedSessions).some((entry) => entry?.completedAt === new Date().toDateString())}
+                  onContinueLesson={() => continueCourse(primaryCourse)}
+                  onStartPractice={() => onStartPractice(getDailyPractice(currentPath).id)}
+                >
                   {/* The ring used to be a fixed 25% regardless of xp — it
                       now reflects today's real progress toward the daily
                       goal (same formula XpPopover already uses), so it's an
@@ -1438,13 +1441,15 @@ export default function HomeView({
                   <span
                     className="home-dashboard-xp-ring"
                     style={{ "--xp-fill": `${dailyGoalPercent}%` }}
-                    role="img"
-                    aria-label={`${dailyGoalPercent}% of today’s XP goal`}
+                    title={`${dailyGoalPercent}% of today’s XP goal`}
                   >
                     <BoltIcon className="size-4" aria-hidden="true" />
                   </span>
                   <strong>{xp}</strong>
-                </span>
+                  <svg className="home-dashboard-xp-caret" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </DailyTasks>
                 <button
                   type="button"
                   className="home-dashboard-achievements"

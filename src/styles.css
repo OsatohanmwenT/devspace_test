@@ -1282,22 +1282,16 @@
     font-weight: 700;
   }
 
-  .home-greeting-actions {
-    --qa-accent: 249 115 22;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
   .home-quick-tasks {
     position: relative;
-    --qa-accent: 124 58 237;
+    --qa-accent: 217 119 6;
   }
 
+  /* Opens down from the XP ring, over the league section of the same card. */
   .home-quick-tasks__panel {
     position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
+    top: calc(100% + 10px);
+    left: -8px;
     z-index: 30;
     display: grid;
     width: 280px;
@@ -1307,6 +1301,23 @@
     background: #1f1f1f;
     padding: 8px;
     box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.6);
+  }
+
+  .home-quick-tasks__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 4px;
+    color: #8a8f9c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .home-quick-tasks__title span {
+    color: rgb(var(--qa-accent));
+    font-variant-numeric: tabular-nums;
   }
 
   .home-quick-tasks__row {
@@ -1381,129 +1392,47 @@
     border-color: #d4d4d4;
   }
 
-  .home-quick-action {
+  .home-practice-link {
     display: flex;
+    width: 100%;
     align-items: center;
-    border: 1px solid rgb(255 255 255 / 0.1);
-    border-radius: 16px;
-    background: #1f1f1f;
-    padding: 4px;
-    color: #f4f4f2;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 200ms ease, transform 200ms ease, padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .home-quick-action:hover,
-  .home-quick-action:focus-visible,
-  .home-quick-action[aria-expanded='true'] {
-    padding-right: 12px;
-  }
-
-  .home-quick-action:hover,
-  .home-quick-action[aria-expanded='true'] {
-    border-color: rgb(var(--qa-accent) / 0.6);
-    transform: translateY(-1px);
-  }
-
-  [data-theme='light'] .home-quick-action:hover,
-  [data-theme='light'] .home-quick-action[aria-expanded='true'] {
-    border-color: rgb(var(--qa-accent) / 0.5);
-  }
-
-  .home-quick-action:hover .home-quick-action__art {
-    transform: rotate(-4deg) scale(1.05);
-  }
-
-  .home-quick-action:focus-visible {
-    outline: 3px solid #93c5fd;
-    outline-offset: 3px;
-  }
-
-  .home-quick-action__art {
-    width: 38px;
-    height: 38px;
-    flex: none;
-    transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  /* Collapsed to just the illustration until hovered or focused; the text
-     slides out beside it. */
-  .home-quick-action__text,
-  .home-quick-action__go {
-    max-width: 0;
-    margin-left: 0;
-    overflow: hidden;
-    opacity: 0;
-    white-space: nowrap;
-    transition: max-width 320ms cubic-bezier(0.22, 1, 0.36, 1), margin-left 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease;
-  }
-
-  .home-quick-action:hover .home-quick-action__text,
-  .home-quick-action:focus-visible .home-quick-action__text,
-  .home-quick-action[aria-expanded='true'] .home-quick-action__text {
-    max-width: 240px;
-    margin-left: 12px;
-    opacity: 1;
-  }
-
-  .home-quick-action:hover .home-quick-action__go,
-  .home-quick-action:focus-visible .home-quick-action__go {
-    max-width: 30px;
-    margin-left: 10px;
-    opacity: 1;
-  }
-
-  .home-quick-action__text {
-    display: grid;
-    gap: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .home-quick-action__text,
-    .home-quick-action__go {
-      transition: none;
-    }
-  }
-
-  .home-quick-action__text strong {
-    font-size: 14px;
-    font-weight: 700;
-  }
-
-  .home-quick-action__text > span {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #9a9ea8;
-    font-size: 12.5px;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    border: 0;
+    background: transparent;
+    padding: 2px 0;
+    color: #9aa3b5;
+    font-size: 13px;
     font-weight: 600;
+    cursor: pointer;
+    transition: color 160ms ease;
   }
 
-  .home-quick-action__go {
-    display: grid;
-    width: 30px;
-    height: 30px;
-    place-items: center;
-    border-radius: 999px;
-    background: rgb(var(--qa-accent) / 0.14);
-    color: rgb(var(--qa-accent));
+  .home-practice-link:hover {
+    color: #f4f4f2;
   }
 
-  .home-quick-action[data-done] .home-quick-action__go {
-    background: rgb(22 163 74 / 0.14);
+  .home-practice-link:focus-visible {
+    border-radius: 8px;
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+  }
+
+  .home-practice-link[data-done] {
     color: #16a34a;
   }
 
-  [data-theme='light'] .home-quick-action {
-    border-color: #e5e5e5;
-    background: #fff;
-    color: #262626;
-    box-shadow: 0 6px 16px -12px rgb(20 20 40 / 0.18);
+  [data-theme='light'] .home-practice-link {
+    color: #5b6475;
   }
 
-  [data-theme='light'] .home-quick-action__text > span {
-    color: #6b6f78;
+  [data-theme='light'] .home-practice-link:hover {
+    color: #1d4ed8;
+  }
+
+  [data-theme='light'] .home-practice-link[data-done] {
+    color: #15803d;
   }
 
   .home-greeting {
@@ -1646,7 +1575,36 @@
   }
 
   .home-dashboard-xp {
+    margin: -6px -10px -6px -6px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    padding: 6px 10px 6px 6px;
     color: #f4f4f2;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+  }
+
+  .home-dashboard-xp:hover,
+  .home-dashboard-xp[aria-expanded='true'] {
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .home-dashboard-xp:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+  }
+
+  .home-dashboard-xp .home-dashboard-xp-caret {
+    width: 16px;
+    height: 16px;
+    margin-left: -4px;
+    color: #8a8f9c;
+    transition: transform 200ms ease;
+  }
+
+  .home-dashboard-xp[aria-expanded='true'] .home-dashboard-xp-caret {
+    transform: rotate(180deg);
   }
 
   .home-dashboard-xp svg {
@@ -2021,6 +1979,11 @@
   [data-theme='light'] .home-dashboard-badge-slot:not([data-state='earned'])::before {
     border-color: rgb(15 23 42 / 0.06);
   }
+  [data-theme='light'] .home-dashboard-xp:hover,
+  [data-theme='light'] .home-dashboard-xp[aria-expanded='true'] {
+    background: rgb(0 0 0 / 0.04);
+  }
+
   [data-theme='light'] .home-dashboard-xp,
   [data-theme='light'] .home-dashboard-streak-count,
   [data-theme='light'] .home-dashboard-league strong {
