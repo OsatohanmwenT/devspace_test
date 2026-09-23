@@ -1,3 +1,11 @@
+import { roleOptions } from '../data/onboarding.js'
+
+const ROLE_LABELS = Object.fromEntries(Object.values(roleOptions).flat().map((option) => [option.value, option.label]))
+
+export function getRoleLabel(role) {
+  return ROLE_LABELS[role] ?? 'Practitioner'
+}
+
 export function isProfileUrl(value) {
   try {
     const url = new URL(value)

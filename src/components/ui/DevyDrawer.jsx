@@ -29,8 +29,10 @@ function answerFor(prompt, pathTitle, nextLesson) {
   return 'I can help with what is on this page. Try one of the suggestions above, or ask about your next lesson, practice, or learning path.'
 }
 
-export function DevyDrawer({ page, pathTitle, nextLesson, onClose }) {
-  const [messages, setMessages] = useState([])
+export function DevyDrawer({ page, pathTitle, nextLesson, initialPrompt, onClose }) {
+  const [messages, setMessages] = useState(() =>
+    initialPrompt ? [{ prompt: initialPrompt, answer: answerFor(initialPrompt, pathTitle, nextLesson) }] : [],
+  )
   const [draft, setDraft] = useState('')
   const content = pageCopy[page] ?? pageCopy.Home
 

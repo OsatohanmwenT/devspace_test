@@ -18,7 +18,10 @@ import {
     RocketIcon,
     SparkleIcon,
 } from "../ui/icons";
+import { resolveAvatar } from "../../lib/avatarStyles";
+import { getRoleLabel, normalizeProfile } from "../../lib/profile";
 import { DailyTasksButton, getDailyPractice, PracticeButton } from "./HomeQuickActions";
+import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -307,20 +310,6 @@ function CardCtaButton({ children, onClick }) {
       <ArrowLeftIcon className="size-4 rotate-180" />
     </ActionButton>
   );
-}
-
-// Professional standing, read off how far through the primary career path
-// the learner is — the portfolio card's quick "where am I" answer.
-const STANDING_RANKS = [
-  { name: "Trainee", from: 0 },
-  { name: "Apprentice", from: 25 },
-  { name: "Junior", from: 60 },
-  { name: "Job-ready", from: 100 },
-];
-
-function getStanding(percent) {
-  const step = STANDING_RANKS.findLastIndex((rank) => percent >= rank.from);
-  return { rank: STANDING_RANKS[step].name, step, percent };
 }
 
 function CourseFace({ course, onContinue }) {
@@ -619,6 +608,9 @@ export default function HomeView({
   onOpenPath,
   onStartPractice,
   onSeeAllPractice,
+  onOpenProfile,
+  profile,
+  longestStreak = 0,
   completedSessions = {},
   lessonDoneToday = false,
   currentPath,
@@ -640,6 +632,9 @@ export default function HomeView({
   dynamicUpdate,
 }) {
   const [mapMode, setMapMode] = useState("map");
+  const [promptText, setPromptText] = useState("");
+  const [composeAccent, setComposeAccent] = useState(null);
+  const promptInputRef = useRef(null);
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
@@ -816,7 +811,14 @@ export default function HomeView({
     onOpenPath(course.id);
   };
   const continueSelectedCourse = () => continueCourse(selectedCourse);
-  const standing = getStanding(primaryCourse?.percent ?? 0);
+  const identity = normalizeProfile(profile);
+  const profileName = identity?.name?.trim() || "Learner";
+  const composeSuggestions = [
+    primaryCourse?.nextLessonTitle && { id: "explain", icon: "explain", accent: "59 130 246", label: `Explain ${primaryCourse.nextLessonTitle}` },
+    primaryCourse?.regionTitle && { id: "quiz", icon: "quiz", accent: "22 163 74", label: `Quiz me on ${primaryCourse.regionTitle}` },
+    { id: "next", icon: "next", accent: "139 92 246", label: "What should I learn next?" },
+    { id: "code", icon: "code", accent: "249 115 22", label: "Help me debug my code" },
+  ].filter(Boolean);
 
   // The league system technically seats everyone from day one, but competing
   // in it only means something after a first lesson — before that, the real
@@ -840,11 +842,11 @@ export default function HomeView({
         : `${leagueRankDelta > 0 ? "↑" : "↓"} ${Math.abs(leagueRankDelta)} today`;
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 min-[1201px]:overflow-y-auto min-[1201px]:py-8 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
-      <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-8 max-[680px]:justify-start max-[680px]:pt-14">
-        <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:flex">
+    <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 min-[1201px]:overflow-y-auto min-[1201px]:overflow-x-hidden min-[1201px]:py-4 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
+      <div data-compose={mapMode === "compose" || undefined} className="home-dashboard-grid relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-4 max-[680px]:justify-start max-[680px]:pt-14">
+        <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:col-start-1 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
-          <div className="home-quick-actions">
+          <div className="home-greeting-actions">
             <DailyTasksButton
               dailyXp={dailyXp}
               xpGoal={xpGoal}
@@ -1514,7 +1516,8 @@ export default function HomeView({
             type="button"
             className="home-dashboard-portfolio hidden min-[1201px]:col-start-1 min-[1201px]:row-start-3 min-[1201px]:flex"
             style={{ "--card-accent": cardAccents.portfolio }}
-            onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
+            aria-label={`Open profile: ${profileName}`}
+            onClick={onOpenProfile}
           >
             {/* Pinned to the corner rather than its own flex row above the
                 text — a header row here was pushing "N lessons completed"
@@ -1529,24 +1532,23 @@ export default function HomeView({
             </span>
 
             <span className="home-dashboard-portfolio-body">
-              <span className="min-w-0">
-                <strong>{standing.rank}</strong>
-                <span>
-                  {completedLessonsCount === 0
-                    ? "Finish a lesson to start climbing"
-                    : `${primaryCourse?.title ?? "Your path"} · ${standing.percent}% job-ready`}
+              <span className="home-dashboard-portfolio-id">
+                <img
+                  className="home-dashboard-portfolio-avatar"
+                  src={identity?.photo ?? resolveAvatar(identity?.avatarStyle, null, identity?.name?.trim() || "you").uri}
+                  alt=""
+                />
+                <span className="min-w-0">
+                  <strong>{profileName}</strong>
+                  <span>{identity?.headline?.trim() || getRoleLabel(profile?.role)}</span>
                 </span>
-                <span
-                  className="home-dashboard-portfolio-ladder"
-                  role="img"
-                  aria-label={`Standing: ${standing.rank}, step ${standing.step + 1} of ${STANDING_RANKS.length}`}
-                >
-                  {STANDING_RANKS.map((rank, index) => (
-                    <span
-                      key={rank.name}
-                      data-state={index < standing.step ? "passed" : index === standing.step ? "current" : undefined}
-                    />
-                  ))}
+              </span>
+              <span className="home-dashboard-portfolio-stats">
+                <span>
+                  <b>{completedLessonsCount}</b> module{completedLessonsCount === 1 ? "" : "s"}
+                </span>
+                <span>
+                  <b>{longestStreak}</b>-day best streak
                 </span>
               </span>
             </span>
@@ -1577,13 +1579,28 @@ export default function HomeView({
         {/* Below 680px the floating "Ask Devy" button (rendered globally in
             main.jsx) takes over for this whole band — Devy Pro and Career
             Path stay reachable from the account menu and the Paths tab. */}
+        <DevyComposeStage
+          open={mapMode === "compose"}
+          name={identity?.name?.trim().split(/\s+/)[0]}
+          suggestions={composeSuggestions}
+          onPick={(text) => {
+            promptInputRef.current?.blur();
+            onOpenDevy(text);
+          }}
+          onClose={() => promptInputRef.current?.blur()}
+          onFrontChange={setComposeAccent}
+        />
+
         <section
           className="home-quick-actions relative mx-auto mt-9 flex w-full max-w-[1040px] items-center justify-center py-3 min-[1201px]:col-span-2 min-[1201px]:row-start-4 min-[1201px]:self-end min-[1201px]:mt-0 min-[1201px]:pb-4 max-[680px]:absolute max-[680px]:bottom-4 max-[680px]:left-1/2 max-[680px]:z-10 max-[680px]:mt-0 max-[680px]:-translate-x-1/2 max-[680px]:pb-4 max-[680px]:pt-3"
           aria-label="Quick actions"
         >
           <DevyPromptBand
             isComposing={mapMode === "compose"}
-            accent={cardAccents[activeCard]}
+            accent={mapMode === "compose" && composeAccent ? composeAccent : cardAccents[activeCard]}
+            value={promptText}
+            onValueChange={setPromptText}
+            inputRef={promptInputRef}
             onComposeStart={() => setMapMode("compose")}
             onComposeEnd={() => setMapMode("map")}
             onOpen={onOpenDevy}

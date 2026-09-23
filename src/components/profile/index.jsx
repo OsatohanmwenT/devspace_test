@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ArrowLeftIcon, BookOpenIcon, BoltIcon, ChecklistIcon, CheckIcon, EyeIcon, InfoIcon, ShareIcon, TrophyIcon } from '../ui/icons'
 import { ActionButton } from '../ui/ActionButton'
 import {
-  roleOptions,
   BRANCHES,
   projectInterestOptions,
   motivationOptions,
@@ -14,14 +13,13 @@ import {
 import { explorePaths } from '../../data/paths'
 import { getLeague } from '../../data/leagues'
 import { STREAK_MILESTONES } from '../../lib/streak'
-import { getProfileProgress, normalizeProfile } from '../../lib/profile'
+import { getProfileProgress, getRoleLabel, normalizeProfile } from '../../lib/profile'
 import { getAvatarDataUri } from '../../lib/avatarStyles'
 import { TierMedal } from '../leaderboard/TierMedal'
 import { EditProfileModal } from './EditProfileModal'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
 
-const ROLE_LABELS = labelMap(Object.values(roleOptions).flat())
 const BRANCH_LABELS = labelMap(BRANCHES)
 const INTEREST_LABELS = labelMap(projectInterestOptions)
 const MOTIVATION_LABELS = labelMap(motivationOptions)
@@ -393,7 +391,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
   const levelInfo = getLevel(xp)
   const earnedTiers = earnedStreakMilestones ?? []
   const identity = normalizeProfile(profile)
-  const roleLabel = ROLE_LABELS[profile?.role] ?? 'Practitioner'
+  const roleLabel = getRoleLabel(profile?.role)
   const branchLabel = BRANCH_LABELS[profile?.branch]
   const motivationLabel = MOTIVATION_LABELS[profile?.motivation]
   const experienceLabel = EXPERIENCE_LABELS[profile?.experience]

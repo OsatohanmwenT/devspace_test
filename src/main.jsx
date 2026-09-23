@@ -1113,9 +1113,12 @@ function App() {
             onOpenLeaderboard={() => setActive('Leaderboard')}
             onOpenPlans={openPlans}
             onSeeAllPractice={() => setActive('Practice')}
-            onOpenDevy={() => setDevyOpen(true)}
+            onOpenDevy={(prompt) => setDevyOpen(prompt || true)}
             onOpenPath={openPathFromHome}
             onStartPractice={setOpenPractice}
+            onOpenProfile={() => setActive('Profile')}
+            profile={profile}
+            longestStreak={longestStreak}
             completedSessions={completedSessions}
             lessonDoneToday={Object.values(completedLessons).some((entry) => entry?.completedAt === new Date().toDateString())}
             currentPath={currentPath}
@@ -1146,7 +1149,7 @@ function App() {
 
       {!openLesson && active !== 'Plans' && active !== 'Home' && !customPathFullScreen && (
         <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[900px]:right-[18px] max-[900px]:bottom-[18px]">
-          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={devyOpen} aria-controls="devy-drawer" aria-label="Ask Devy">
+          <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={Boolean(devyOpen)} aria-controls="devy-drawer" aria-label="Ask Devy">
             <DevyLottie clip="thinking" className="size-full" />
           </button>
         </div>
@@ -1154,7 +1157,7 @@ function App() {
 
       {devyOpen && <>
         <button type="button" className="fixed inset-0 z-40 cursor-default bg-black/30" onClick={() => setDevyOpen(false)} aria-label="Close Devy" />
-        <DevyDrawer page={active} pathTitle={currentPath.title} nextLesson={nextLesson?.title} onClose={() => setDevyOpen(false)} />
+        <DevyDrawer page={active} pathTitle={currentPath.title} nextLesson={nextLesson?.title} initialPrompt={typeof devyOpen === 'string' ? devyOpen : undefined} onClose={() => setDevyOpen(false)} />
       </>}
 
       {streakJourneyOpen && (
