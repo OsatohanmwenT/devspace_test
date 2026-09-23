@@ -1117,6 +1117,7 @@ function App() {
             onOpenPath={openPathFromHome}
             onStartPractice={setOpenPractice}
             completedSessions={completedSessions}
+            lessonDoneToday={Object.values(completedLessons).some((entry) => entry?.completedAt === new Date().toDateString())}
             currentPath={currentPath}
             courseOptions={courseOptions}
             completedLessonsCount={Object.keys(completedLessons).length}

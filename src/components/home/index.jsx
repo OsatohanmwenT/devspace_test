@@ -18,7 +18,7 @@ import {
     RocketIcon,
     SparkleIcon,
 } from "../ui/icons";
-import { DailyPracticeButton } from "./DailyPracticeButton";
+import { DailyTasksButton, getDailyPractice, PracticeButton } from "./HomeQuickActions";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -307,6 +307,20 @@ function CardCtaButton({ children, onClick }) {
       <ArrowLeftIcon className="size-4 rotate-180" />
     </ActionButton>
   );
+}
+
+// Professional standing, read off how far through the primary career path
+// the learner is — the portfolio card's quick "where am I" answer.
+const STANDING_RANKS = [
+  { name: "Trainee", from: 0 },
+  { name: "Apprentice", from: 25 },
+  { name: "Junior", from: 60 },
+  { name: "Job-ready", from: 100 },
+];
+
+function getStanding(percent) {
+  const step = STANDING_RANKS.findLastIndex((rank) => percent >= rank.from);
+  return { rank: STANDING_RANKS[step].name, step, percent };
 }
 
 function CourseFace({ course, onContinue }) {
@@ -604,7 +618,9 @@ export default function HomeView({
   onOpenDevy,
   onOpenPath,
   onStartPractice,
+  onSeeAllPractice,
   completedSessions = {},
+  lessonDoneToday = false,
   currentPath,
   courseOptions = [],
   completedLessonsCount = 0,
@@ -800,6 +816,7 @@ export default function HomeView({
     onOpenPath(course.id);
   };
   const continueSelectedCourse = () => continueCourse(selectedCourse);
+  const standing = getStanding(primaryCourse?.percent ?? 0);
 
   // The league system technically seats everyone from day one, but competing
   // in it only means something after a first lesson — before that, the real
@@ -827,11 +844,22 @@ export default function HomeView({
       <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-8 max-[680px]:justify-start max-[680px]:pt-14">
         <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
-          <DailyPracticeButton
-            path={currentPath}
-            completedSessions={completedSessions}
-            onStart={onStartPractice}
-          />
+          <div className="home-quick-actions">
+            <DailyTasksButton
+              dailyXp={dailyXp}
+              xpGoal={xpGoal}
+              lessonDoneToday={lessonDoneToday}
+              practiceDoneToday={Object.values(completedSessions).some((entry) => entry?.completedAt === new Date().toDateString())}
+              onContinueLesson={() => continueCourse(primaryCourse)}
+              onStartPractice={() => onStartPractice(getDailyPractice(currentPath).id)}
+            />
+            <PracticeButton
+              path={currentPath}
+              completedSessions={completedSessions}
+              onStart={onStartPractice}
+              onSeeAll={onSeeAllPractice}
+            />
+          </div>
         </header>
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
@@ -1502,27 +1530,24 @@ export default function HomeView({
 
             <span className="home-dashboard-portfolio-body">
               <span className="min-w-0">
-                {completedLessonsCount === 0 ? (
-                  <>
-                    <strong>Your portfolio starts here</strong>
-                    <span>Complete a lesson to begin</span>
-                  </>
-                ) : (
-                  <>
-                    <strong>
-                      {completedLessonsCount} lesson{completedLessonsCount === 1 ? "" : "s"} completed
-                    </strong>
-                    {pathTools.length > 0 ? (
-                      <span className="home-dashboard-portfolio-tags">
-                        {pathTools.slice(0, 3).map((tool) => (
-                          <span key={tool}>{tool}</span>
-                        ))}
-                      </span>
-                    ) : (
-                      <span>Building your work, one lesson at a time</span>
-                    )}
-                  </>
-                )}
+                <strong>{standing.rank}</strong>
+                <span>
+                  {completedLessonsCount === 0
+                    ? "Finish a lesson to start climbing"
+                    : `${primaryCourse?.title ?? "Your path"} · ${standing.percent}% job-ready`}
+                </span>
+                <span
+                  className="home-dashboard-portfolio-ladder"
+                  role="img"
+                  aria-label={`Standing: ${standing.rank}, step ${standing.step + 1} of ${STANDING_RANKS.length}`}
+                >
+                  {STANDING_RANKS.map((rank, index) => (
+                    <span
+                      key={rank.name}
+                      data-state={index < standing.step ? "passed" : index === standing.step ? "current" : undefined}
+                    />
+                  ))}
+                </span>
               </span>
             </span>
 
