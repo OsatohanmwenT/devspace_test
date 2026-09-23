@@ -7,8 +7,10 @@ import { isQuestionComplete, isQuestionCorrect } from '../lesson/questionState'
 import { PracticeIntro } from './PracticeIntro'
 import { PracticeResult } from './PracticeResult'
 
-export function PracticeSession({ sessionId, completion, xpAward = 0, onExit, onComplete }) {
-  const session = practiceSessions.find((item) => item.id === sessionId)
+// `session` lets a caller pass a round built on the fly (the Home warm-up)
+// instead of one from the practice catalogue.
+export function PracticeSession({ sessionId, session: sessionOverride, completion, xpAward = 0, onExit, onComplete }) {
+  const session = sessionOverride ?? practiceSessions.find((item) => item.id === sessionId)
   const [phase, setPhase] = useState('intro')
   const [questionIndex, setQuestionIndex] = useState(0)
   const [questionStates, setQuestionStates] = useState({})

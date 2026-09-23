@@ -19,6 +19,7 @@ import { RoadmapTransition } from './components/paths/RoadmapTransition';
 import PlansView from './components/plans';
 import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
+import { buildWarmUp, WARM_UP_ID } from './lib/warmUp';
 import ProfileView from './components/profile';
 import SettingsView from './components/settings';
 import { StreakMilestoneTransition } from './components/streak/StreakMilestoneTransition';
@@ -656,6 +657,7 @@ function App() {
   // actually completed, rather than the authored literals in data/paths.js
   // which never moved.
   const derived = useMemo(() => derivePathProgress(currentPath, completedLessons), [currentPath, completedLessons])
+  const warmUp = useMemo(() => buildWarmUp(completedLessons), [completedLessons])
   const nextLesson = derived.currentLesson
   const currentStepIndex = derived.currentRegionIndex
   const currentRegionCard = derived.currentRegion ?? derived.regions[0]
@@ -1152,6 +1154,7 @@ function App() {
             onOpenDevy={(prompt) => setDevyOpen(prompt || true)}
             onOpenPath={openPathFromHome}
             onStartPractice={setOpenPractice}
+            warmUp={warmUp}
             onOpenProfile={() => setActive('Profile')}
             profile={profile}
             longestStreak={longestStreak}
@@ -1246,7 +1249,7 @@ function App() {
           onViewJourney={viewJourneyFromMilestone}
         />
       )}
-      {openPractice && <PracticeSession sessionId={openPractice} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {openPractice && <PracticeSession sessionId={openPractice} session={openPractice === WARM_UP_ID ? warmUp : undefined} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
       {pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}
     </div>
   )

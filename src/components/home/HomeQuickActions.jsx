@@ -49,7 +49,7 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
       onClick: onContinueLesson,
     },
     { id: "lesson", label: "Finish a lesson", done: lessonDoneToday, onClick: onContinueLesson },
-    { id: "practice", label: "Complete a practice", done: practiceDoneToday, onClick: onStartPractice },
+    { id: "practice", label: "Warm up or practice", done: practiceDoneToday, onClick: onStartPractice },
   ];
   const doneCount = tasks.filter((task) => task.done).length;
   const allDone = doneCount === tasks.length;
@@ -70,7 +70,7 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
         aria-label={`Today's tasks: ${allDone ? "all done" : `${doneCount} of ${tasks.length} done`}`}
         onClick={() => setOpen((current) => !current)}
       >
-        {children}
+        {typeof children === "function" ? children({ doneCount, total: tasks.length }) : children}
       </button>
       {open && (
         <div className="home-quick-tasks__panel" id={panelId} role="group" aria-label="Today's tasks">

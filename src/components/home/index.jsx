@@ -25,6 +25,7 @@ import {
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { DailyTasks, getDailyPractice, PracticeLink } from "./HomeQuickActions";
+import { WARM_UP_ID } from "../../lib/warmUp";
 import { useCardCarousel } from "./useCardCarousel";
 
 // The Leaderboard card's own identity color, as a hex — same value as
@@ -314,7 +315,64 @@ function CardCtaButton({ children, onClick }) {
   );
 }
 
-function CourseFace({ course, onContinue, footer }) {
+// Coming back on a new day, the primary course leads with a short warm-up on
+// what was learned last before the next lesson, the lesson itself stays one
+// click away as "Skip to lesson".
+function WarmUpFace({ course, warmUp, onStart, onSkip }) {
+  const count = warmUp.questions.length;
+  return (
+    <>
+      <span className="home-desktop-course-card__tag" data-variant="warm-up">
+        <FlameGlyph />
+        Warm up · {warmUp.minutes} min
+      </span>
+      <strong className="home-desktop-course-card__title">
+        {count} quick {count === 1 ? "question" : "questions"}
+      </strong>
+      <span className="home-desktop-course-card__subtitle">
+        From {warmUp.sourceTitle}
+        {course.nextLessonTitle && ` · then ${course.nextLessonTitle}`}
+      </span>
+      <span className="home-desktop-course-card__art" aria-hidden="true">
+        <LessonIllustration src={course.regionImage} />
+      </span>
+      <CardCtaButton onClick={onStart}>Start warm-up</CardCtaButton>
+      <button
+        type="button"
+        className="home-practice-link"
+        onClick={(event) => {
+          event.stopPropagation();
+          onSkip();
+        }}
+      >
+        Skip to lesson
+      </button>
+    </>
+  );
+}
+
+function FlameGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+      <path d="M8.6 1.2c.3 2.1-.9 3.2-2 4.4C5.4 6.9 4 8.3 4 10.4 4 12.9 5.8 14.8 8 14.8s4-1.9 4-4.3c0-1.9-1-3.2-1.9-4.1-.2 1-.7 1.7-1.4 2 .6-2.6-.3-5.4-.1-7.2z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function CourseFace({ course, onContinue, footer, warmUp, onStartWarmUp, onSkipWarmUp }) {
+  if (course.isPrimary && warmUp) {
+    return (
+      <WarmUpFace
+        course={course}
+        warmUp={warmUp}
+        onStart={onStartWarmUp}
+        onSkip={() => {
+          onSkipWarmUp();
+          onContinue();
+        }}
+      />
+    );
+  }
   const lessonsTotal = course.regionLessonsTotal ?? 0;
   const lessonsCompleted = Math.min(course.regionLessonsCompleted ?? 0, lessonsTotal);
   const started = course.isPrimary || course.percent > 0;
@@ -369,6 +427,7 @@ const SWIPE_DISTANCE = 110;
 const SWIPE_VELOCITY = 600;
 
 const STACK_HINT_KEY = "devspace-course-stack-hint";
+const WARM_UP_SKIP_KEY = "devspace-warm-up-skipped";
 
 function CourseStackCard({ depth, count, leavingDir, reduceMotion, onSwipe, onLeft, children }) {
   const x = useMotionValue(0);
@@ -492,7 +551,7 @@ function CourseStackCard({ depth, count, leavingDir, reduceMotion, onSwipe, onLe
 // The learner's courses as a deck: the one they're continuing sits on top,
 // the others peek out underneath. Swiping the top card (or the arrow keys /
 // dots) sends it to the back and brings the next course forward.
-function CourseStack({ courses, activeIndex, onChange, onContinue, primaryFooter }) {
+function CourseStack({ courses, activeIndex, onChange, onContinue, primaryFooter, warmUp, onStartWarmUp, onSkipWarmUp }) {
   const reduceMotion = useReducedMotion();
   const [leaving, setLeaving] = useState(null);
   const count = courses.length;
@@ -541,7 +600,14 @@ function CourseStack({ courses, activeIndex, onChange, onContinue, primaryFooter
               onChange((activeIndex + 1) % count);
             }}
           >
-            <CourseFace course={course} onContinue={() => onContinue(course)} footer={primaryFooter} />
+            <CourseFace
+              course={course}
+              onContinue={() => onContinue(course)}
+              footer={primaryFooter}
+              warmUp={warmUp}
+              onStartWarmUp={onStartWarmUp}
+              onSkipWarmUp={onSkipWarmUp}
+            />
           </CourseStackCard>
         );
       })}
@@ -667,6 +733,7 @@ export default function HomeView({
   earnedStreakMilestones = [],
   completedSessions = {},
   lessonDoneToday = false,
+  warmUp = null,
   currentPath,
   courseOptions = [],
   completedLessonsCount = 0,
@@ -876,6 +943,34 @@ export default function HomeView({
     onOpenPath(course.id);
   };
   const continueSelectedCourse = () => continueCourse(selectedCourse);
+  // The warm-up shows once a day on the way back in — until it's done or
+  // skipped, and not once a lesson has already been finished today. Skipping
+  // is only a per-browser convenience, so it lives in localStorage.
+  const today = new Date().toDateString();
+  const [warmUpSkippedOn, setWarmUpSkippedOn] = useState(() => {
+    try {
+      return window.localStorage.getItem(WARM_UP_SKIP_KEY);
+    } catch {
+      return null;
+    }
+  });
+  const warmUpDue = Boolean(
+    warmUp &&
+      !lessonDoneToday &&
+      completedSessions[WARM_UP_ID]?.completedAt !== today &&
+      warmUpSkippedOn !== today,
+  );
+  const startWarmUp = () => onStartPractice(WARM_UP_ID);
+  const skipWarmUp = () => {
+    setWarmUpSkippedOn(today);
+    try {
+      window.localStorage.setItem(WARM_UP_SKIP_KEY, today);
+    } catch {
+      // storage unavailable — the skip just won't outlive this visit
+    }
+  };
+  const practiceDoneToday = Object.values(completedSessions).some((entry) => entry?.completedAt === today);
+
   // The badge row: the streak milestones Profile already shows — the two most
   // recently earned, then the next one to aim for (with progress), so it's
   // always pointing somewhere rather than showing empty slots.
@@ -994,6 +1089,9 @@ export default function HomeView({
                   activeIndex={selectedCourseIndex}
                   onChange={(index) => setSelectedCourseId(stackCourses[index].id)}
                   onContinue={(course) => openOrSelect("continueLearning", () => continueCourse(course))}
+                  warmUp={warmUpDue ? warmUp : null}
+                  onStartWarmUp={startWarmUp}
+                  onSkipWarmUp={skipWarmUp}
                   primaryFooter={
                     <PracticeLink
                       path={currentPath}
@@ -1427,28 +1525,37 @@ export default function HomeView({
                   dailyXp={dailyXp}
                   xpGoal={xpGoal}
                   lessonDoneToday={lessonDoneToday}
-                  practiceDoneToday={Object.values(completedSessions).some((entry) => entry?.completedAt === new Date().toDateString())}
+                  practiceDoneToday={practiceDoneToday}
                   onContinueLesson={() => continueCourse(primaryCourse)}
-                  onStartPractice={() => onStartPractice(getDailyPractice(currentPath).id)}
+                  onStartPractice={() => (warmUpDue ? startWarmUp() : onStartPractice(getDailyPractice(currentPath).id))}
                 >
-                  {/* The ring used to be a fixed 25% regardless of xp — it
-                      now reflects today's real progress toward the daily
-                      goal (same formula XpPopover already uses), so it's an
-                      actual signal instead of decoration shaped like one.
-                      The number beside it stays lifetime total, which is
-                      why the ring gets its own label rather than relying on
-                      that number to explain it. */}
-                  <span
-                    className="home-dashboard-xp-ring"
-                    style={{ "--xp-fill": `${dailyGoalPercent}%` }}
-                    title={`${dailyGoalPercent}% of today’s XP goal`}
-                  >
-                    <BoltIcon className="size-4" aria-hidden="true" />
-                  </span>
-                  <strong>{xp}</strong>
-                  <svg className="home-dashboard-xp-caret" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  {({ doneCount, total }) => (
+                    <>
+                      {/* The ring used to be a fixed 25% regardless of xp — it
+                          now reflects today's real progress toward the daily
+                          goal (same formula XpPopover already uses), so it's an
+                          actual signal instead of decoration shaped like one.
+                          The number beside it stays lifetime total, which is
+                          why the ring gets its own label rather than relying on
+                          that number to explain it. */}
+                      <span
+                        className="home-dashboard-xp-ring"
+                        style={{ "--xp-fill": `${dailyGoalPercent}%` }}
+                        title={`${dailyGoalPercent}% of today’s XP goal`}
+                      >
+                        <BoltIcon className="size-4" aria-hidden="true" />
+                      </span>
+                      <strong>{xp}</strong>
+                      {/* Today's task count sits right on the trigger, so the
+                          daily tasks are visible without opening anything. */}
+                      <span className="home-dashboard-xp-tasks" data-done={doneCount === total || undefined}>
+                        {doneCount === total ? "All done today" : `${doneCount}/${total} today`}
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    </>
+                  )}
                 </DailyTasks>
                 <button
                   type="button"

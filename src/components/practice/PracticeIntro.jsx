@@ -15,7 +15,7 @@ export function PracticeIntro({ session, completion, onStart }) {
           <div className="grid w-full max-w-[520px] justify-items-center text-center">
             <DevyLottie clip="wave" ariaLabel="Devy" className="mb-6 h-40 w-40 max-[680px]:mb-5 max-[680px]:h-32 max-[680px]:w-32" />
 
-            <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">Let’s practice</span>
+            <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#88bdf2] [[data-theme=light]_&]:text-[#07389b]">{session.eyebrow ?? 'Let’s practice'}</span>
             <h1 className="mt-2 mb-0 font-rethink-sans text-[clamp(28px,4vw,38px)] font-semibold leading-[1.14] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
               {session.title}
             </h1>
