@@ -255,9 +255,31 @@ export const writingProgramsClickFillQuiz = {
 export const variablesExpressionsEditor = {
   title: 'Build the yearly-hours program',
   description: 'Use the two variables to calculate the yearly total, then print it.',
+  example: 'hours_per_week = 40',
   filename: 'yearly_hours.py',
   starterCode: 'hours_per_week = 40\nweeks_per_year = 52\n\n# Calculate and print the yearly total',
   output: '2080',
+  tasks: [
+    { title: 'Calculate the yearly total', description: 'Multiply hours_per_week by weeks_per_year and save the result.' },
+    { title: 'Print the result', description: 'Use print() with the variable you created.' },
+  ],
+  hint: 'yearly_total = hours_per_week * weeks_per_year\nprint(yearly_total)',
+}
+
+export const variablesExpressionsGuidedEditor = {
+  title: 'Try the calculation',
+  description: 'Finish the calculation, then print the yearly total. This focused lab keeps the task in one place.',
+  example: 'hours_per_week = 40',
+  filename: 'yearly_hours.py',
+  starterCode: 'hours_per_week = 40\nweeks_per_year = 52\n\n# Calculate and print the yearly total',
+  output: '2080',
+  layout: 'guided',
+  continueLabel: 'Open full editor',
+  tasks: [
+    { title: 'Calculate the yearly total', description: 'Multiply hours_per_week by weeks_per_year and save the result.' },
+    { title: 'Print the result', description: 'Use print() with the variable you created.' },
+  ],
+  hint: 'yearly_total = hours_per_week * weeks_per_year\nprint(yearly_total)',
 }
 
 export const writingProgramsLesson = {
@@ -284,6 +306,7 @@ export const writingProgramsLesson = {
         { id: 'variables-expressions-learn', type: 'article', content: variablesExpressionsArticle },
         { id: 'variables-expressions-check', type: 'quiz', content: variablesExpressionsQuiz },
         { id: 'variables-expressions-fill', type: 'quiz', content: variablesExpressionsFillQuiz },
+        { id: 'variables-expressions-guided-editor', type: 'code-editor', content: variablesExpressionsGuidedEditor },
         { id: 'variables-expressions-editor', type: 'code-editor', content: variablesExpressionsEditor },
       ],
       transition: {
@@ -317,7 +340,7 @@ export const writingProgramsLesson = {
   completion: {
     eyebrow: 'Lesson complete',
     title: 'Lesson complete!',
-    body: 'You learned how Python runs instructions, stores values in variables, names them clearly, and used all of it to finish a real program.',
+    body: 'You did it. You built something real with Python.',
   },
 }
 

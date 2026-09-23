@@ -4,6 +4,7 @@ import { ActionButton } from '../ui/ActionButton'
 import { LessonNavigationPill } from './LessonNavigationPill'
 import { LessonProgressStrip } from './LessonProgressStrip'
 import { ConceptTransition } from './ConceptTransition'
+import { LessonCompleteSequence } from './LessonCompleteSequence'
 import { LessonArticle } from './LessonArticle'
 import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
@@ -22,6 +23,7 @@ import { getPersistedRate, getPersistedVoice, speakText, useNarrationPersonality
 import { NotesDrawer } from './NotesDrawer'
 import { CheatsheetDrawer } from '../paths/CheatsheetDrawer'
 import { getLessonTopics } from '../../data/learningResources'
+import { LESSON_XP } from '../../lib/lessonMeta'
 
 const STREAK_THRESHOLD = 3
 // A wrong answer gets one retry with coaching before the explanation reveals
@@ -64,7 +66,7 @@ function UnavailableLesson({ lessonId }) {
   )
 }
 
-export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile, xp = 0 }) {
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile, xp = 0, streakPreview = null }) {
   const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
   const lesson = getLesson(activeLessonId)
   // Rebuilt per lesson rather than once at module load, so the id actually selects content.
@@ -95,6 +97,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const devyLineRef = useRef(null)
   const articleTalkTimersRef = useRef([])
   const exitButtonRef = useRef(null)
+  // When this sitting started, for the lesson-complete "time" result.
+  const startedAtRef = useRef(Date.now())
   const stayButtonRef = useRef(null)
   const exitDialogRef = useRef(null)
   const lessonTopics = useMemo(() => getLessonTopics(activeLessonId), [activeLessonId])
@@ -121,6 +125,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const practiceAnswer = practiceState?.answer
   const isPracticeComplete = Boolean(practiceState?.completed)
   const editorState = isCodeEditor ? session.activityStates[currentStep.id] : undefined
+  const editorCode = editorState?.code
   const isCodeEditorComplete = Boolean(editorState?.completed)
   // DevyAssistant only needs "is this step resolved" — question and practice
   // steps each define that differently; article/transition steps don't use it.
@@ -221,12 +226,21 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     }))
   }
 
+  const completedLessonQuestions = questionRecap()
+
   const completeCodeEditor = () => {
     setSuccessPulse((current) => current + 1)
     play('success')
     setSession((current) => ({
       ...current,
-      activityStates: { ...current.activityStates, [currentStep.id]: { completed: true } },
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], completed: true } },
+    }))
+  }
+
+  const updateCodeEditor = (code) => {
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], code, completed: false } },
     }))
   }
 
@@ -402,7 +416,9 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         ? { label: 'Return to path', onClick: finishLesson }
         : currentStep.kind === 'skill-check'
           ? { label: 'Start skill check', onClick: goNext }
-          : currentStep.type === 'article'
+          : isCodeEditor
+            ? null
+            : currentStep.type === 'article'
           ? {
               label: audioReadyForNext
                 ? (lessonFlow[session.stepIndex + 1]?.type === 'question' ? 'Start quick check' : 'Continue lesson')
@@ -415,8 +431,6 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               : { label: attempts > 0 ? 'Try again' : 'Check', onClick: checkQuestion, disabled: !canCheck })
             : isPractice
               ? { label: 'Continue', onClick: goNext, disabled: !isPracticeComplete }
-              : isCodeEditor
-                ? { label: 'Continue', onClick: goNext, disabled: !isCodeEditorComplete }
               : { label: 'Continue', onClick: goNext }
 
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
@@ -481,7 +495,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
   return (
     <section
-      className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800 ${isMilestone ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[64px_minmax(0,1fr)_76px] max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px]'}`}
+      className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800 ${isMilestone ? 'grid-rows-[minmax(0,1fr)]' : isCodeEditor ? 'grid-rows-[64px_minmax(0,1fr)]' : 'grid-rows-[64px_minmax(0,1fr)_76px] max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px]'}`}
       aria-label="Lesson"
       style={{ '--devy-panel-width': `${devyPanelWidth}px` }}
     >
@@ -555,7 +569,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
       </header>}
 
       <main
-        className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
+        className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen && !isCodeEditor ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
       >
         {!lesson && <UnavailableLesson lessonId={activeLessonId} />}
         {currentStep?.type === 'article' && <LessonArticle
@@ -573,12 +587,15 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           />
         )}
         {isCodeEditor && (
-          <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
+          <div className="h-full min-h-0 w-full">
             <LessonCodeEditor
               key={currentStep.id}
               content={currentStep.content}
+              code={editorCode}
               completed={isCodeEditorComplete}
+              onCodeChange={updateCodeEditor}
               onComplete={completeCodeEditor}
+              onContinue={goNext}
             />
           </div>
         )}
@@ -615,10 +632,21 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             badge={<ChecklistIcon className="size-5" />}
           />
         )}
-        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} action={footerAction} onExit={requestExit} mood="celebrating" />}
+        {currentStep?.kind === 'complete' && (
+          <LessonCompleteSequence
+            title={currentStep.completion?.title ?? 'Lesson complete!'}
+            body={currentStep.completion?.body}
+            xpEarned={session.assistedByDevy ? 0 : LESSON_XP}
+            accuracy={completedLessonQuestions.total ? Math.round((completedLessonQuestions.correct / completedLessonQuestions.total) * 100) : null}
+            startedAt={startedAtRef.current}
+            streak={streakPreview}
+            onFinish={finishLesson}
+            onExit={requestExit}
+          />
+        )}
       </main>
 
-      {!isMilestone && <aside
+      {!isMilestone && !isCodeEditor && <aside
         className={`absolute z-[1] top-16 bottom-0 left-0 flex w-[var(--devy-panel-width)] max-[720px]:w-full max-[720px]:min-w-0 flex-col p-5 border-r max-[720px]:border-r-0 max-[720px]:border-b border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white transition-transform duration-[180ms] ease-in-out max-[720px]:top-[60px] ${isDevyPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Devy chat"
       >
@@ -644,7 +672,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         />
       </aside>}
 
-      {!isMilestone && <footer
+      {!isMilestone && !isCodeEditor && <footer
         className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] py-2 px-6 max-[720px]:px-3.5 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0' : 'ml-0'}`}
       >
         {!isMilestone && (

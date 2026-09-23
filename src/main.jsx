@@ -661,6 +661,14 @@ function App() {
   const currentRegionCard = derived.currentRegion ?? derived.regions[0]
   const streakWeek = getStreakWeek(streakDays, lastActiveDate)
   const activeToday = isActiveToday(lastActiveDate)
+  // What finishing the open lesson would do to the streak, from the same
+  // applyActivity the real completion runs — null when today already counts,
+  // so the lesson-complete sequence only shows a streak moment that's real.
+  const lessonStreakPreview = useMemo(() => {
+    if (!openLesson || activeToday) return null
+    const after = applyActivity(progress, 0)
+    return { before: streakDays, after: after.streakDays, dates: after.streakActivityDates }
+  }, [openLesson, activeToday, progress, streakDays])
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
   // Paths the learner paused to focus on the current primary one — offered
@@ -1211,7 +1219,7 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} streakPreview={lessonStreakPreview} />}
       {/* Rendered after LessonView so it lands on top of the lesson the learner
           just finished, rather than behind it. */}
       {leagueCelebration && (

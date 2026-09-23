@@ -25,7 +25,7 @@ if (typeof window !== 'undefined') {
 // centre, spread so it reads as a small pop rather than confetti.
 const SPARKS = [[-86, -52], [84, -64], [-104, 18], [100, 8], [-58, 70], [64, 66]]
 
-export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip, badge, action, onExit }) {
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip, badge, stats = [], action, pinAction = false, accentTitle = false, children, onExit }) {
   const rootRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -77,14 +77,15 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
           'landed',
         )
         .to('[data-transition-spark]', { autoAlpha: 0, scale: 0.4, duration: 0.5, stagger: 0.03 }, 'landed+=0.45')
+        .from('[data-transition-stat]', { autoAlpha: 0, y: 10, scale: 0.94, duration: 0.3, stagger: 0.08 }, 'landed+=0.28')
 
-      if (mood !== 'celebrating') {
-        timeline
-          .from('[data-transition-eyebrow]', { autoAlpha: 0, y: 8, duration: 0.3 }, 'landed')
-          .from('[data-transition-title]', { autoAlpha: 0, y: 10, duration: 0.35 }, 'landed+=0.12')
-          .from('[data-transition-body]', { autoAlpha: 0, y: 8, duration: 0.35 }, 'landed+=0.24')
-          .from('[data-transition-extra]', { autoAlpha: 0, y: 8, duration: 0.35, stagger: 0.08 }, 'landed+=0.36')
-      }
+      // Every screen's text waits for the curtain — including the celebrating
+      // one, whose cheer loop only ever touches Devy, not the copy.
+      timeline
+        .from('[data-transition-eyebrow]', { autoAlpha: 0, y: 8, duration: 0.3 }, 'landed')
+        .from('[data-transition-title]', { autoAlpha: 0, y: 10, duration: 0.35 }, 'landed+=0.12')
+        .from('[data-transition-body]', { autoAlpha: 0, y: 8, duration: 0.35 }, 'landed+=0.24')
+        .from('[data-transition-extra]', { autoAlpha: 0, y: 8, duration: 0.35, stagger: 0.08 }, 'landed+=0.36')
 
       // The ongoing cheer only starts once GSAP is done writing to the mark —
       // starting it any earlier is exactly the conflict this component avoids.
@@ -101,7 +102,7 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
   return (
     <section
       ref={rootRef}
-      className="relative h-full overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+      className="relative flex h-full flex-col overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
       aria-labelledby="lesson-transition-title"
     >
       {['bg-[#93c5fd]', 'bg-[#2563eb] [[data-theme=light]_&]:bg-[#3b82f6]'].map((tone) => (
@@ -123,7 +124,7 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
           <svg className="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </button>
       )}
-      <div className="grid min-h-full place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
+      <div className="grid flex-1 place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
         <div className="grid w-[min(100%,720px)] justify-items-center text-center">
           {/* GSAP drives this entrance directly rather than through DevyMood's
               own mood animation — the two would fight over the same transform
@@ -169,14 +170,29 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
           <h1
             data-transition-title
             id="lesson-transition-title"
-            className="m-0 max-w-[20ch] text-balance font-rethink-sans text-[clamp(25px,2.7vw,34px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 max-[720px]:text-[24px]"
+            className={`m-0 max-w-[20ch] text-balance font-rethink-sans text-[clamp(25px,2.7vw,34px)] font-semibold leading-[1.12] max-[720px]:text-[24px] ${accentTitle ? 'text-amber-400 [[data-theme=light]_&]:text-amber-500' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'}`}
           >
             {title}
           </h1>
           <p data-transition-body className="mt-4 mb-0 max-w-[48ch] text-balance text-base leading-[1.6] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968] max-[720px]:mt-3 max-[720px]:text-[15px]">
             {body}
           </p>
-          {action && (
+          {stats.length > 0 && (
+            <dl className="mt-8 grid w-full max-w-[500px] grid-cols-3 gap-3 max-[720px]:mt-6 max-[720px]:gap-2">
+              {stats.map((stat, index) => (
+                <div
+                  key={stat.label}
+                  data-transition-stat
+                  className={`rounded-xl border px-3 py-3.5 [[data-theme=light]_&]:bg-white max-[720px]:px-2 max-[720px]:py-2.5 ${index === 0 ? 'border-[#6699ec]/45 bg-[#202a40] [[data-theme=light]_&]:border-[#bfd3f7]' : index === 1 ? 'border-[#a99af7]/45 bg-[#2b2542] [[data-theme=light]_&]:border-[#d9d1ff]' : 'border-amber-300/35 bg-[#302a20] [[data-theme=light]_&]:border-[#f5d9a4]'}`}
+                >
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a7acb7] [[data-theme=light]_&]:text-[#717784] max-[720px]:text-[10px]">{stat.label}</dt>
+                  <dd className="m-0 mt-1 text-[22px] font-semibold leading-none text-[#f4f4f2] [[data-theme=light]_&]:text-[#172b44] max-[720px]:text-[18px]">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {children}
+          {action && !pinAction && (
             <ActionButton
               data-transition-extra
               variant="primary"
@@ -189,6 +205,18 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
           )}
         </div>
       </div>
+      {action && pinAction && (
+        <div data-transition-extra className="flex shrink-0 justify-center px-6 pt-2 pb-7 max-[720px]:px-4 max-[720px]:pb-5">
+          <ActionButton
+            variant="primary"
+            className="depth-button min-h-14 w-full max-w-[560px] overflow-hidden text-[17px] font-semibold"
+            onClick={action.onClick}
+            disabled={action.disabled}
+          >
+            {action.label}
+          </ActionButton>
+        </div>
+      )}
     </section>
   )
 }

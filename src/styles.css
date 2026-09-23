@@ -3137,3 +3137,115 @@
   -webkit-mask-image: radial-gradient(circle at var(--open-x, 50%) var(--open-y, 40%), transparent var(--hole), #000 calc(var(--hole) + 1px));
   mask-image: radial-gradient(circle at var(--open-x, 50%) var(--open-y, 40%), transparent var(--hole), #000 calc(var(--hole) + 1px));
 }
+
+/* Streak flame: a gentle, continuous flicker — the inner flame breathes and
+   the outer one sways a touch, both anchored at the base. */
+.streak-flame-inner,
+.streak-flame-outer {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.streak-flame-inner {
+  animation: streak-flame-breathe 1.4s ease-in-out infinite;
+}
+
+.streak-flame-outer {
+  animation: streak-flame-sway 2.2s ease-in-out infinite;
+}
+
+@keyframes streak-flame-breathe {
+  50% {
+    transform: scale(0.94, 1.08);
+  }
+}
+
+@keyframes streak-flame-sway {
+  25% {
+    transform: skewX(-2deg) scaleY(1.02);
+  }
+  75% {
+    transform: skewX(2deg) scaleY(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-flame-inner,
+  .streak-flame-outer {
+    animation: none;
+  }
+}
+
+/* Lesson-complete result cards, once landed: a slow staggered float, and a
+   sheen that sweeps across each card every few seconds. The float uses the
+   independent `translate` property so it never fights GSAP's entrance, which
+   writes `transform`. */
+.result-card {
+  animation: result-card-float 3.2s ease-in-out var(--idle-delay, 1.8s) infinite;
+}
+
+.result-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+  content: '';
+  pointer-events: none;
+  translate: -120% 0;
+  animation: result-card-shine 4.5s ease-in-out var(--idle-delay, 1.8s) infinite;
+}
+
+@keyframes result-card-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+}
+
+@keyframes result-card-shine {
+  0% {
+    translate: -120% 0;
+  }
+  30%,
+  100% {
+    translate: 120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-card,
+  .result-card::after {
+    animation: none;
+  }
+}
+
+/* The pinned lesson-complete buttons get the same raised-tile depth and
+   idle sheen as the result cards. No float here: the button's own hover and
+   press nudges already use `translate`. */
+.depth-button {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.2), transparent 50%);
+  box-shadow: 0 5px 0 #1e40af, 0 18px 30px -16px rgb(37 99 235 / 0.75);
+}
+
+.depth-button:active {
+  box-shadow: 0 1px 0 #1e40af, 0 8px 16px -12px rgb(37 99 235 / 0.6);
+}
+
+.depth-button::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+  content: '';
+  pointer-events: none;
+  translate: -120% 0;
+  animation: result-card-shine 4.5s ease-in-out 2.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-button::after {
+    animation: none;
+  }
+}
