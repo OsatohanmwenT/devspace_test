@@ -988,42 +988,165 @@
   }
 
   .home-desktop-course-card {
-    display: flex;
+    position: relative;
+    display: block;
     width: 100%;
     height: 100%;
+  }
+
+  .home-map-card--continue-learning {
+    --course-card-bg: #1a2130;
+    --course-card-border: rgb(59 130 246 / 0.2);
+    --course-card-shadow: 0 12px 24px -20px rgb(0 0 0 / 0.5);
+  }
+
+  [data-theme='light'] .home-map-card--continue-learning {
+    --course-card-bg: #f5f9ff;
+    --course-card-border: rgb(59 130 246 / 0.18);
+    --course-card-shadow: 0 10px 24px -18px rgb(20 20 40 / 0.14);
+  }
+
+  .home-course-stack {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    outline: none;
+  }
+
+  .home-course-stack:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 4px;
+  }
+
+  /* Bottom inset leaves room for the cards behind to peek out below. Scaling
+     from the bottom edge keeps each back card centred, so the peeks step in
+     evenly on both sides. */
+  .home-course-stack__slot {
+    position: absolute;
+    inset: 0 0 28px;
+    transform-origin: 50% 100%;
+  }
+
+  .home-course-stack__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 48px;
+    border: 1px solid var(--course-card-border);
+    border-radius: 24px;
+    background: var(--course-card-bg);
+    box-shadow: var(--course-card-shadow);
+    padding: 32px 48px 24px;
     text-align: center;
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .home-course-stack__card[data-top] {
+    cursor: grab;
+  }
+
+  .home-course-stack__card[data-top]:active {
+    cursor: grabbing;
+  }
+
+  .home-course-stack__card img {
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .home-course-stack__dots {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    z-index: 20;
+    display: flex;
+    gap: 6px;
+  }
+
+  .home-course-stack__dots button {
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0;
+    background: rgb(255 255 255 / 0.2);
+    cursor: pointer;
+    transition: width 200ms ease, background-color 200ms ease;
+  }
+
+  [data-theme='light'] .home-course-stack__dots button {
+    background: rgb(30 41 59 / 0.16);
+  }
+
+  .home-course-stack__dots button[aria-current='true'] {
+    width: 20px;
+    background: rgb(var(--card-accent));
+  }
+
+  .home-course-stack__dots button:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
   }
 
   .home-desktop-course-card__tag {
     border-radius: 999px;
     padding: 6px 12px;
-    background: rgb(var(--card-accent) / 0.1);
+    background: rgb(var(--card-accent) / 0.12);
     color: rgb(var(--card-accent));
     font-size: 12px;
     font-weight: 700;
   }
 
   .home-desktop-course-card__title {
-    margin-top: 12px;
+    margin-top: 14px;
     color: #f4f4f2;
     font-family: var(--font-rubik, inherit);
-    font-size: 32px;
-    line-height: 1.12;
+    font-size: 36px;
+    line-height: 1.08;
     letter-spacing: -0.03em;
   }
 
-  .home-desktop-course-card__subtitle,
-  .home-desktop-course-card__current {
+  .home-desktop-course-card__subtitle {
+    margin-top: 8px;
     color: #8a8f9c;
     font-size: 14px;
     font-weight: 600;
   }
 
-  .home-desktop-course-card__subtitle {
-    margin-top: 6px;
+  [data-theme='light'] .home-desktop-course-card__title {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-desktop-course-card__subtitle {
+    color: #687086;
+  }
+
+  .home-desktop-course-card__segments {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .home-desktop-course-card__segments > span {
+    width: 34px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  [data-theme='light'] .home-desktop-course-card__segments > span {
+    background: rgb(30 41 59 / 0.1);
+  }
+
+  .home-desktop-course-card__segments > span[data-state='done'] {
+    background: rgb(var(--card-accent));
+  }
+
+  .home-desktop-course-card__segments > span[data-state='current'] {
+    background: rgb(var(--card-accent) / 0.4);
   }
 
   .home-desktop-course-card__art {
@@ -1034,57 +1157,56 @@
   }
 
   .home-desktop-course-card__art .home-map-card__lesson-illustration {
-    width: 160px;
-    height: 160px;
+    width: 180px;
+    height: 180px;
     margin: 0;
-  }
-
-  .home-desktop-course-card__footer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 22px;
-  }
-
-  .home-desktop-course-card__dots {
-    display: flex;
-    gap: 7px;
-  }
-
-  .home-desktop-course-card__dots > span {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: rgb(255 255 255 / 0.18);
-  }
-
-  .home-desktop-course-card__dots > span[data-active='true'] {
-    background: rgb(var(--card-accent) / 0.55);
-  }
-
-  .home-desktop-course-card__current {
-    margin-bottom: 0;
   }
 
   .home-map-card--continue-learning .home-desktop-course-card .home-map-card__cta-bar {
     display: flex;
     min-height: 52px;
     margin-top: 0 !important;
+    margin-bottom: 4px;
     font-size: 17px;
+    font-weight: 700;
   }
 
-  [data-theme='light'] .home-desktop-course-card__title {
+  .home-greeting {
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .home-greeting h1 {
+    color: #f4f4f2;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .home-greeting p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9a9ea8;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .home-greeting__sep {
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.5;
+  }
+
+  [data-theme='light'] .home-greeting h1 {
     color: #262626;
   }
 
-  [data-theme='light'] .home-desktop-course-card__subtitle,
-  [data-theme='light'] .home-desktop-course-card__current {
-    color: #687086;
-  }
-
-  [data-theme='light'] .home-desktop-course-card__dots > span {
-    background: rgb(30 41 59 / 0.16);
+  [data-theme='light'] .home-greeting p {
+    color: #6b6f78;
   }
 
   .home-map-card--dynamic > :not(.home-dashboard-summary) {
@@ -1522,7 +1644,7 @@
 }
 
 .home-prompt-glow {
-  background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.28), rgb(var(--prompt-accent) / 0.1) 44%, transparent 76%);
+  background: radial-gradient(ellipse at center, rgb(var(--prompt-accent) / 0.4), rgb(var(--prompt-accent) / 0.14) 46%, transparent 76%);
 }
 
 [data-theme='light'] .home-prompt-glow {

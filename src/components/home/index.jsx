@@ -1,4 +1,10 @@
-import { motion } from "motion/react";
+import {
+  animate as animateValue,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
@@ -302,6 +308,223 @@ function CardCtaButton({ children, onClick }) {
   );
 }
 
+function CourseFace({ course, onContinue }) {
+  const lessonsTotal = course.regionLessonsTotal ?? 0;
+  const lessonsCompleted = Math.min(course.regionLessonsCompleted ?? 0, lessonsTotal);
+  const started = course.isPrimary || course.percent > 0;
+  return (
+    <>
+      <span className="home-desktop-course-card__tag">
+        {started ? course.title : "Suggested path"}
+      </span>
+      <strong className="home-desktop-course-card__title">
+        {started ? course.nextLessonTitle ?? course.regionTitle ?? course.title : course.title}
+      </strong>
+      <span className="home-desktop-course-card__subtitle">
+        {course.regionTitle ?? "First region"}
+        {started && lessonsTotal > 0 && ` · Lesson ${Math.min(lessonsCompleted + 1, lessonsTotal)} of ${lessonsTotal}`}
+        {!started && course.regionsTotal > 0 && ` · ${course.regionsTotal} regions`}
+      </span>
+      {started && lessonsTotal > 0 && (
+        <span
+          className="home-desktop-course-card__segments"
+          role="img"
+          aria-label={`${lessonsCompleted} of ${lessonsTotal} lessons done`}
+        >
+          {Array.from({ length: lessonsTotal }, (_, index) => (
+            <span
+              key={index}
+              data-state={index < lessonsCompleted ? "done" : index === lessonsCompleted ? "current" : undefined}
+            />
+          ))}
+        </span>
+      )}
+      <span className="home-desktop-course-card__art" aria-hidden="true">
+        <LessonIllustration src={course.regionImage} />
+      </span>
+      <CardCtaButton onClick={onContinue}>
+        {course.isPrimary
+          ? course.nextLessonTitle ? "Continue lesson" : "Open path"
+          : course.percent > 0 ? "Resume path" : "Explore path"}
+      </CardCtaButton>
+    </>
+  );
+}
+
+const STACK_DEPTH = 3;
+const SWIPE_DISTANCE = 110;
+const SWIPE_VELOCITY = 600;
+
+function CourseStackCard({ depth, count, leavingDir, reduceMotion, onSwipe, onLeft, children }) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-320, 320], [-9, 9]);
+  const dragged = useRef(false);
+  const isTop = depth === 0;
+
+  useEffect(() => {
+    if (!leavingDir) {
+      x.set(0);
+      return undefined;
+    }
+    if (reduceMotion) {
+      onLeft();
+      return undefined;
+    }
+    const controls = animateValue(x, leavingDir * 720, { duration: 0.34, ease: [0.4, 0, 0.9, 0.6] });
+    controls.then(onLeft);
+    return () => controls.stop();
+  }, [leavingDir]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Plain pointer events with capture rather than Motion's drag: capture
+  // guarantees the release arrives, so a short flick can't strand the card.
+  const gesture = useRef(null);
+  const canDrag = isTop && !leavingDir && count > 1;
+  const onPointerDown = (event) => {
+    if (!canDrag || event.button !== 0 || event.target.closest("button")) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    gesture.current = { startX: event.clientX, lastX: event.clientX, lastT: event.timeStamp, velocity: 0 };
+    dragged.current = false;
+  };
+  const onPointerMove = (event) => {
+    const g = gesture.current;
+    if (!g) return;
+    const dt = Math.max(1, event.timeStamp - g.lastT);
+    g.velocity = ((event.clientX - g.lastX) / dt) * 1000;
+    g.lastX = event.clientX;
+    g.lastT = event.timeStamp;
+    const offset = event.clientX - g.startX;
+    if (Math.abs(offset) > 4) dragged.current = true;
+    x.set(offset);
+  };
+  const onPointerEnd = () => {
+    const g = gesture.current;
+    if (!g) return;
+    gesture.current = null;
+    const offset = x.get();
+    const dir =
+      offset > SWIPE_DISTANCE || g.velocity > SWIPE_VELOCITY
+        ? 1
+        : offset < -SWIPE_DISTANCE || g.velocity < -SWIPE_VELOCITY
+          ? -1
+          : 0;
+    if (dir && dragged.current) onSwipe(dir);
+    else animateValue(x, 0, { type: "spring", stiffness: 500, damping: 34 });
+    window.setTimeout(() => {
+      dragged.current = false;
+    }, 0);
+  };
+
+  const hidden = depth >= Math.min(count, STACK_DEPTH);
+  // Outer layer: the card's place in the deck. Inner layer: the drag and
+  // fly-off, kept separate so the two never fight over the same transform.
+  return (
+    <motion.div
+      className="home-course-stack__slot"
+      aria-hidden={isTop ? undefined : "true"}
+      inert={isTop ? undefined : true}
+      style={{ zIndex: 10 - depth }}
+      initial={false}
+      animate={{
+        y: depth * 14,
+        scale: 1 - depth * 0.04,
+        opacity: leavingDir || hidden ? 0 : 1,
+        filter: `brightness(${1 - Math.min(depth, 2) * 0.04})`,
+      }}
+      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 320, damping: 32, opacity: { duration: 0.25 } }}
+    >
+      <motion.div
+        className="home-course-stack__card"
+        data-top={isTop || undefined}
+        style={{ x, rotate }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
+        onClickCapture={(event) => {
+          if (dragged.current) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// The learner's courses as a deck: the one they're continuing sits on top,
+// the others peek out underneath. Swiping the top card (or the arrow keys /
+// dots) sends it to the back and brings the next course forward.
+function CourseStack({ courses, activeIndex, onChange, onContinue }) {
+  const reduceMotion = useReducedMotion();
+  const [leaving, setLeaving] = useState(null);
+  const count = courses.length;
+  const topCourse = courses[activeIndex];
+
+  const next = (dir = -1) => {
+    if (count < 2 || leaving) return;
+    setLeaving({ id: topCourse.id, dir });
+  };
+  const previous = () => {
+    if (count < 2 || leaving) return;
+    onChange((activeIndex - 1 + count) % count);
+  };
+
+  return (
+    <div
+      className="home-course-stack"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Your courses"
+      tabIndex={0}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "ArrowRight") next(-1);
+        else if (event.key === "ArrowLeft") previous();
+        else return;
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
+      {courses.map((course, index) => {
+        const depth = (index - activeIndex + count) % count;
+        const leavingDir = leaving?.id === course.id ? leaving.dir : 0;
+        return (
+          <CourseStackCard
+            key={course.id}
+            depth={depth}
+            count={count}
+            leavingDir={leavingDir}
+            reduceMotion={reduceMotion}
+            onSwipe={next}
+            onLeft={() => {
+              setLeaving(null);
+              onChange((activeIndex + 1) % count);
+            }}
+          >
+            <CourseFace course={course} onContinue={() => onContinue(course)} />
+          </CourseStackCard>
+        );
+      })}
+      {count > 1 && (
+        <span className="home-course-stack__dots">
+          {courses.map((course, index) => (
+            <button
+              key={course.id}
+              type="button"
+              aria-label={`Show ${course.title}`}
+              aria-current={index === activeIndex ? "true" : undefined}
+              onClick={() => !leaving && onChange(index)}
+            />
+          ))}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ChevronIcon({ className }) {
   return (
     <svg
@@ -391,7 +614,6 @@ export default function HomeView({
   promoteCount = 1,
   seasonTimeLeft,
   seasonCoins,
-  streakDays = 0,
   xp = 0,
   dailyXp = 0,
   xpGoal = 1,
@@ -560,18 +782,20 @@ export default function HomeView({
   const selectedCourse =
     courseOptions.find((option) => option.id === selectedCourseId) ??
     primaryCourse;
-  const continueSelectedCourse = () => {
-    if (!selectedCourse) {
+  const selectedCourseIndex = Math.max(0, courseOptions.indexOf(selectedCourse));
+  const continueCourse = (course) => {
+    if (!course) {
       onOpenCareerPath();
       return;
     }
-    if (selectedCourse.isPrimary) {
-      if (selectedCourse.nextLessonTitle) onStartMission();
+    if (course.isPrimary) {
+      if (course.nextLessonTitle) onStartMission();
       else onOpenCareerPath();
       return;
     }
-    onOpenPath(selectedCourse.id);
+    onOpenPath(course.id);
   };
+  const continueSelectedCourse = () => continueCourse(selectedCourse);
 
   // The league system technically seats everyone from day one, but competing
   // in it only means something after a first lesson — before that, the real
@@ -581,6 +805,8 @@ export default function HomeView({
   // reused here rather than reinvented so "today's progress" means the same
   // thing in both places.
   const dailyGoalPercent = Math.min(100, Math.round((dailyXp / Math.max(1, xpGoal)) * 100));
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const dynamicAction =
     dynamicUpdate?.kind === "path-complete" || dynamicUpdate?.kind === "welcome"
       ? onOpenCareerPath
@@ -595,10 +821,8 @@ export default function HomeView({
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 min-[1201px]:overflow-y-auto min-[1201px]:py-8 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
       <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-8 max-[680px]:justify-start max-[680px]:pt-14">
-        <header className="hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:block">
-          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-            Welcome back
-          </h1>
+        <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:flex">
+          <h1>{greeting}</h1>
         </header>
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
@@ -621,7 +845,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[0]}
-            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} [[data-theme=light]_&]:!bg-[#f5f9ff] ${isFrontLayout("continueLearning") ? "!pt-3 min-[1201px]:!pt-8" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} max-[1200px]:[[data-theme=light]_&]:!bg-[#f5f9ff] min-[1201px]:!bg-transparent min-[1201px]:!border-0 min-[1201px]:!p-0 min-[1201px]:!overflow-visible min-[1201px]:!cursor-default min-[1201px]:![box-shadow:none] min-[1201px]:![scale:1] ${isFrontLayout("continueLearning") ? "!pt-3 min-[1201px]:!pt-0" : ""} ${!isDesktop && isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
             data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
@@ -637,33 +861,14 @@ export default function HomeView({
             }
           >
             <div className="home-desktop-course-card">
-              <span className="home-desktop-course-card__tag">Career path</span>
-              <strong className="home-desktop-course-card__title">
-                {selectedCourse?.title ?? "Continue learning"}
-              </strong>
-              <span className="home-desktop-course-card__subtitle">
-                {selectedCourse?.regionTitle ?? "Current region"} · {selectedCourse?.percent ?? 0}% complete
-              </span>
-              <span className="home-desktop-course-card__art" aria-hidden="true">
-                <LessonIllustration src={selectedCourse?.regionImage} />
-              </span>
-              <span className="home-desktop-course-card__footer">
-                <span className="home-desktop-course-card__dots" aria-hidden="true">
-                  <span data-active="true" />
-                  <span />
-                </span>
-                <span className="home-desktop-course-card__current">
-                  Region {(selectedCourse?.regionIndex ?? 0) + 1} of {selectedCourse?.regionsTotal ?? 1} · {selectedCourse?.nextLessonTitle ?? "Ready to continue"}
-                </span>
-              </span>
-              <CardCtaButton
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openOrSelect("continueLearning", continueSelectedCourse);
-                }}
-              >
-                {selectedCourse?.nextLessonTitle ? "Continue lesson" : "Open path"}
-              </CardCtaButton>
+              {courseOptions.length > 0 && (
+                <CourseStack
+                  courses={courseOptions}
+                  activeIndex={selectedCourseIndex}
+                  onChange={(index) => setSelectedCourseId(courseOptions[index].id)}
+                  onContinue={(course) => openOrSelect("continueLearning", () => continueCourse(course))}
+                />
+              )}
             </div>
 
             {!isFrontLayout("continueLearning") && (

@@ -29,7 +29,7 @@ export function DevyPromptBand({ isComposing, accent, onComposeStart, onComposeE
 
   return (
     <div className="home-prompt-band relative mx-auto w-full max-w-[480px]" data-compose={isComposing} style={{ "--prompt-accent": accent }}>
-      <span className="home-prompt-glow pointer-events-none absolute -inset-x-14 -inset-y-8 rounded-full blur-3xl max-[680px]:![background:radial-gradient(ellipse_at_center,rgb(var(--prompt-accent)_/_0.1),rgb(var(--prompt-accent)_/_0.025)_44%,transparent_76%)] [[data-theme=light]_&]:![background:radial-gradient(ellipse_at_center,rgb(var(--prompt-accent)_/_0.14),rgb(var(--prompt-accent)_/_0.035)_44%,transparent_76%)]" aria-hidden="true" />
+      <span className="home-prompt-glow pointer-events-none absolute -inset-x-14 -inset-y-8 rounded-full blur-3xl min-[681px]:-inset-x-28 min-[681px]:-inset-y-14 max-[680px]:![background:radial-gradient(ellipse_at_center,rgb(var(--prompt-accent)_/_0.1),rgb(var(--prompt-accent)_/_0.025)_44%,transparent_76%)] [[data-theme=light]_&]:![background:radial-gradient(ellipse_at_center,rgb(var(--prompt-accent)_/_0.14),rgb(var(--prompt-accent)_/_0.035)_44%,transparent_76%)] min-[681px]:[[data-theme=light]_&]:![background:radial-gradient(ellipse_at_center,rgb(var(--prompt-accent)_/_0.32),rgb(var(--prompt-accent)_/_0.1)_46%,transparent_76%)]" aria-hidden="true" />
       <form
         className="relative flex w-full items-center rounded-full border border-[#404040] bg-[#1f1f1f] p-2 shadow-[0_14px_32px_rgba(0,0,0,0.16)] max-[680px]:mt-4 [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:!shadow-[0_5px_14px_rgba(183,181,203,0.16)]"
         onSubmit={(event) => {
