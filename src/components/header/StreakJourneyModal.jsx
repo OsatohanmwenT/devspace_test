@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { CheckIcon, LockIcon } from '../ui/icons'
+import { BoltIcon, CheckIcon, LockIcon } from '../ui/icons'
+import { ActionButton } from '../ui/ActionButton'
 import { Drawer } from '../ui/Drawer'
 import { DevyMood } from '../ui/DevyMood'
 import { InfoTooltip } from '../ui/InfoTooltip'
@@ -21,7 +22,7 @@ function DayChip({ label, state }) {
   const tone = state === 'earned'
     ? 'border-amber-400 bg-amber-400 text-amber-950'
     : state === 'next'
-      ? 'border-[#6699ec] bg-[#6699ec] text-white'
+      ? 'border-amber-400 bg-amber-400/10 text-amber-300 [[data-theme=light]_&]:bg-amber-50 [[data-theme=light]_&]:text-amber-700'
       : 'border-[#404040] bg-[#1f1f1f] text-[#7d7d80] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-[#9a9a9d]'
 
   return (
@@ -29,6 +30,24 @@ function DayChip({ label, state }) {
       {label}
     </span>
   )
+}
+
+const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+
+// The current week, Monday first, read off the same activity list as the
+// 30-day history so both views always agree on which days counted.
+function getWeek(activity, today) {
+  const activeKeys = new Set(activity.filter((day) => day.isActive).map((day) => day.key))
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const monday = new Date(start)
+  monday.setDate(start.getDate() - ((start.getDay() + 6) % 7))
+  return WEEKDAYS.map((letter, index) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + index)
+    const key = date.toDateString()
+    const state = activeKeys.has(key) ? 'done' : key === start.toDateString() ? 'today' : date > start ? 'future' : 'missed'
+    return { key, letter, state }
+  })
 }
 
 export function StreakJourneyModal({
@@ -40,6 +59,7 @@ export function StreakJourneyModal({
   lastActiveDate,
   isActiveToday,
   lastProtection,
+  onKeepStreak,
   onClose,
 }) {
   const [clock, setClock] = useState(() => new Date())
@@ -50,6 +70,7 @@ export function StreakJourneyModal({
   }, [])
 
   const activity = getStreakHistory(currentStreak, lastActiveDate, activeDates, clock)
+  const week = getWeek(activity, clock)
   const nextMilestone = STREAK_MILESTONES.find((tier) => tier.days > currentStreak)
   const isAtRisk = currentStreak > 0 && !isActiveToday
 
@@ -74,6 +95,7 @@ export function StreakJourneyModal({
       const isEarned = earnedMilestones.includes(tier.days)
       const isNext = tier.days === nextMilestone?.days
       const remaining = tier.days - currentStreak
+      const previousDays = STREAK_MILESTONES[STREAK_MILESTONES.indexOf(tier) - 1]?.days ?? 0
 
       return {
         key: tier.days,
@@ -86,6 +108,7 @@ export function StreakJourneyModal({
             ? `${remaining} more ${remaining === 1 ? 'day' : 'days'} to unlock.`
             : null,
         state: isEarned ? 'earned' : isNext ? 'next' : 'locked',
+        progress: isNext ? Math.max(0, (currentStreak - previousDays) / (tier.days - previousDays)) : null,
       }
     }),
   ]
@@ -99,13 +122,18 @@ export function StreakJourneyModal({
   return (
     <Drawer id="streak-journey-dialog" title="Streak journey" onClose={onClose} labelledBy="streak-journey-title">
       <div className="grid gap-7">
-        <div className="grid gap-2">
+        <div className="grid gap-3">
           <div className="flex items-center gap-3">
-            <strong className="font-rethink-sans text-[44px] leading-none font-medium tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-              {currentStreak}
-            </strong>
-            <span className="text-[11px] font-bold uppercase leading-[1.15] tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-              Day<br />streak
+            <span className="grid size-12 flex-none place-items-center rounded-2xl bg-amber-400/15 text-amber-400 [[data-theme=light]_&]:bg-amber-100 [[data-theme=light]_&]:text-amber-500" aria-hidden="true">
+              <BoltIcon className="size-6" />
+            </span>
+            <span className="grid">
+              <strong className="font-rethink-sans text-[40px] leading-none font-semibold tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+                {currentStreak}
+              </strong>
+              <span className="text-[13px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                day streak
+              </span>
             </span>
             {/* The status line below already says whether today is covered, but
                 it says it in 13px grey. Devy says it at a glance. */}
@@ -122,36 +150,77 @@ export function StreakJourneyModal({
               {lastProtection === 'shield' ? 'A Premium shield' : 'An earned restore'} covered your last missed day.
             </p>
           )}
+          {!isActiveToday && onKeepStreak && (
+            <ActionButton variant="primary" className="mt-1 min-h-11 w-full text-[15px] font-semibold" onClick={onKeepStreak}>
+              {currentStreak > 0 ? 'Keep my streak' : 'Start my streak'}
+            </ActionButton>
+          )}
         </div>
 
-        <div className="grid gap-3">
-          <ol className="grid w-full list-none grid-cols-10 gap-1.5 m-0 p-0" aria-label="Activity over the last 30 days">
+        <ol className="m-0 grid list-none grid-cols-7 gap-2 p-0" aria-label="This week">
+          {week.map((day) => (
+            <li
+              key={day.key}
+              className="grid justify-items-center gap-1.5"
+              aria-label={`${day.key}: ${day.state === 'done' ? 'active' : day.state === 'today' ? 'today, not yet active' : day.state === 'future' ? 'upcoming' : 'no activity'}`}
+              aria-current={day.state === 'today' ? 'date' : undefined}
+            >
+              <span className={`text-[11px] font-semibold ${day.state === 'today' ? 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800' : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#9a9a9d]'}`}>
+                {day.letter}
+              </span>
+              <span
+                className={`grid size-9 place-items-center rounded-full ${
+                  day.state === 'done'
+                    ? 'bg-amber-400 text-amber-950'
+                    : day.state === 'today'
+                      ? 'border-2 border-dashed border-amber-400'
+                      : day.state === 'future'
+                        ? 'border border-[#333336] [[data-theme=light]_&]:border-[#ececea]'
+                        : 'bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0]'
+                }`}
+                aria-hidden="true"
+              >
+                {day.state === 'done' && <CheckIcon className="size-3.5" />}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Longest streak', value: `${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}` },
+            { label: 'Restores left', value: restoresLeft },
+          ].map((stat) => (
+            <div key={stat.label} className="grid gap-0.5 rounded-xl bg-[#262626] px-3.5 py-3 [[data-theme=light]_&]:bg-[#f5f5f3]">
+              <strong className="text-[17px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{stat.value}</strong>
+              <span className="text-[12px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-2">
+          <span className="text-[12px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Last 30 days</span>
+          <ol className="m-0 grid w-full list-none grid-cols-[repeat(15,minmax(0,1fr))] gap-1 p-0" aria-label="Activity over the last 30 days">
             {activity.map((day) => (
               <li
                 key={day.key}
-                className={
+                className={`aspect-square rounded-[4px] ${
                   day.isActive
-                    ? 'grid aspect-square place-items-center rounded-md bg-amber-400 text-amber-950'
+                    ? 'bg-amber-400'
                     : day.isToday
-                      ? 'grid aspect-square place-items-center rounded-md border border-dashed border-[#7d7d80] [[data-theme=light]_&]:border-[#9a9a9d]'
-                      : 'aspect-square rounded-md bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0]'
-                }
+                      ? 'border border-dashed border-[#7d7d80] [[data-theme=light]_&]:border-[#9a9a9d]'
+                      : 'bg-[#262626] [[data-theme=light]_&]:bg-[#f2f2f0]'
+                }`}
                 aria-label={`${day.key}: ${day.isActive ? 'active' : day.isToday ? 'today, not yet active' : 'no activity'}`}
                 aria-current={day.isToday ? 'date' : undefined}
-              >
-                {day.isActive && <CheckIcon className="size-3" />}
-              </li>
+              />
             ))}
           </ol>
-          <div className="flex justify-between gap-3 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-            <span>Longest streak: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{longestStreak}</strong></span>
-            <span>Restores left: <strong className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{restoresLeft}</strong></span>
-          </div>
         </div>
 
         <div className="grid gap-4">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.08em] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-            Milestones &amp; rewards
+          <div className="flex items-center gap-3 text-[14px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+            Milestones and rewards
             <span className="h-px flex-1 bg-[#404040] [[data-theme=light]_&]:bg-[#e1e1e1]" />
             <InfoTooltip label="How milestones work" align="end">
               Every milestone earns one permanent streak restore, so a single slip doesn&apos;t erase what you&apos;ve built.
@@ -179,7 +248,7 @@ export function StreakJourneyModal({
                         step.state === 'earned'
                           ? 'bg-amber-400/15 text-amber-300 [[data-theme=light]_&]:bg-amber-100 [[data-theme=light]_&]:text-amber-800'
                           : step.state === 'next'
-                            ? 'bg-[#6699ec]/20 text-[#b8b3ff] [[data-theme=light]_&]:bg-[#eff4ff] [[data-theme=light]_&]:text-[#3d77eb]'
+                            ? 'border border-amber-400/50 text-amber-300 [[data-theme=light]_&]:text-amber-700'
                             : 'bg-[#262626] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#f2f2f0] [[data-theme=light]_&]:text-[#686968]'
                       }`}>
                         {step.reward}
@@ -188,6 +257,18 @@ export function StreakJourneyModal({
                   </span>
                   {step.detail && (
                     <span className="text-[13px] leading-[1.45] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{step.detail}</span>
+                  )}
+                  {step.progress != null && (
+                    <span
+                      className="mt-1.5 block h-1.5 w-40 overflow-hidden rounded-full bg-[#333336] [[data-theme=light]_&]:bg-[#ececea]"
+                      role="progressbar"
+                      aria-label={`Progress to ${step.title}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(step.progress * 100)}
+                    >
+                      <span className="block h-full rounded-full bg-amber-400" style={{ width: `${Math.max(6, step.progress * 100)}%` }} />
+                    </span>
                   )}
                 </div>
               </li>

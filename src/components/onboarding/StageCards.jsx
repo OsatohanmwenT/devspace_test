@@ -1,7 +1,6 @@
 import { animate, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { reducedMotion } from '../../lib/onboardingMotion'
-import { MiniIcon } from './OnboardingStep'
 import { stageIcon } from './PathCard'
 
 // The illustrations already used for path regions, matched to what a stage
@@ -60,7 +59,6 @@ function slotFor(offset) {
 const CARD_TINTS = ['#168a46', '#e8702a', '#2563eb', '#d4a017', '#7c3aed']
 
 function StageCard({ stage, index, active, onClick }) {
-  const icon = stageIcon(stage.value)
   const tint = CARD_TINTS[index % CARD_TINTS.length]
   return (
     <button
@@ -76,12 +74,12 @@ function StageCard({ stage, index, active, onClick }) {
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.35)]" aria-hidden="true">
-          {icon ? <MiniIcon name={icon} className="size-4" /> : <span className="text-[12px] font-semibold">{index + 1}</span>}
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-white/22 text-[13px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.35)]" aria-hidden="true">
+          {index + 1}
         </span>
-        <span className="text-[11px] font-semibold uppercase tracking-[.06em] text-white/85">
-          {index === 0 ? 'Start here' : `Step ${index + 1}`}
-        </span>
+        {index === 0 && (
+          <span className="text-[11px] font-semibold uppercase tracking-[.06em] text-white/85">Start here</span>
+        )}
       </div>
       <p className="m-0 mt-2 line-clamp-2 font-rethink-sans text-[15px] font-semibold leading-[1.2] max-[480px]:text-[14px]">{stage.label}</p>
       {/* A plain panel for the art — the card's own depth already carries the
@@ -137,7 +135,7 @@ export function StageCards({ stages, label }) {
   return (
     <div className="grid w-full justify-items-center gap-3">
       <div
-        className="relative h-[254px] w-full max-w-[460px] overflow-hidden max-[480px]:h-[228px]"
+        className="relative h-[254px] w-full max-w-[460px] overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_16%,#000_84%,transparent)] max-[480px]:h-[228px]"
         role="group"
         aria-roledescription="carousel"
         aria-label={label}

@@ -624,6 +624,8 @@ export default function HomeView({
   leagueNeighbors = [],
   leagueNeighborsWide = [],
   promoteCount = 1,
+  coinsToPromotion = 0,
+  inPromotionZone = false,
   seasonTimeLeft,
   seasonCoins,
   xp = 0,
@@ -1356,7 +1358,12 @@ export default function HomeView({
                       <span className="flex min-w-0 flex-1 flex-col">
                         <strong>{leagueName ?? "Your league"}</strong>
                         <span>
-                          Top {promoteCount} advance · {seasonTimeLeft}
+                          {inPromotionZone
+                            ? `In the top ${promoteCount}`
+                            : coinsToPromotion > 0
+                              ? `${coinsToPromotion} coins to top ${promoteCount}`
+                              : `Top ${promoteCount} advance`}{" "}
+                          · {seasonTimeLeft}
                         </span>
                       </span>
                       {/* The standings list below already reads as a mini

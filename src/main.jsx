@@ -1170,6 +1170,10 @@ function App() {
           lastActiveDate={lastActiveDate}
           isActiveToday={activeToday}
           lastProtection={lastStreakProtection}
+          onKeepStreak={() => {
+            setStreakJourneyOpen(false)
+            startMission()
+          }}
           onClose={() => {
             setStreakJourneyOpen(false)
             streakButtonRef.current?.focus()

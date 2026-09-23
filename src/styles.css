@@ -1712,7 +1712,7 @@
     flex: 1;
     flex-direction: column;
     justify-content: center;
-    gap: 10px;
+    gap: 4px;
   }
 
   .home-dashboard-standings::after {
@@ -1731,20 +1731,21 @@
     grid-template-columns: 28px minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
-    border-radius: 10px;
-    padding: 12px;
-    color: #8a8f9c;
-    font-size: 16px;
+    border-radius: 12px;
+    padding: 9px 12px;
+    color: #d4d4d8;
+    font-size: 15px;
     font-weight: 600;
   }
 
   .home-dashboard-standings-row > span {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .home-dashboard-standings-row[data-self] {
-    background: rgb(var(--card-accent) / 0.18);
+    background: rgb(var(--card-accent) / 0.16);
     color: #f4f4f2;
+    font-weight: 700;
   }
 
   /* Per-person color, reused from the mobile leaderboard card's own
@@ -1775,7 +1776,7 @@
 
   .home-dashboard-standings-row[data-self] .home-dashboard-standings-rank,
   .home-dashboard-standings-row[data-self] .home-dashboard-standings-score {
-    color: #d9e3ff;
+    color: #fdba74;
   }
   .home-dashboard-league-empty {
     display: grid;
@@ -1831,17 +1832,22 @@
     color: #262626;
   }
 
-  [data-theme='light'] .home-dashboard-standings-row[data-self] {
-    color: #262626;
+  [data-theme='light'] .home-dashboard-standings-row {
+    color: #404040;
   }
 
   [data-theme='light'] .home-dashboard-standings::after {
     background: linear-gradient(to bottom, transparent, #ffffff 92%);
   }
 
+  [data-theme='light'] .home-dashboard-standings-row[data-self] {
+    background: #fff1e6;
+    color: #262626;
+  }
+
   [data-theme='light'] .home-dashboard-standings-row[data-self] .home-dashboard-standings-rank,
   [data-theme='light'] .home-dashboard-standings-row[data-self] .home-dashboard-standings-score {
-    color: #4d609f;
+    color: #c2410c;
   }
 
 }
