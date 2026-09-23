@@ -1028,6 +1028,10 @@
     transform-origin: 50% 100%;
   }
 
+  .home-course-stack[data-single] .home-course-stack__slot {
+    inset: 0;
+  }
+
   .home-course-stack__card {
     position: absolute;
     inset: 0;
@@ -1057,38 +1061,143 @@
     -webkit-user-drag: none;
   }
 
-  .home-course-stack__dots {
+  /* A little fanned deck of the learner's courses: tilted thumbnails that
+     spread on hover, the current one lifted and ringed. It shows what else
+     is in the stack, not just how many. */
+  .home-course-stack__switcher {
     position: absolute;
-    top: 22px;
-    right: 24px;
+    top: 16px;
+    right: 16px;
     z-index: 20;
     display: flex;
+    align-items: center;
     gap: 6px;
-  }
-
-  .home-course-stack__dots button {
-    width: 8px;
-    height: 8px;
-    border: 0;
+    border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 999px;
+    background: rgb(31 31 31 / 0.85);
+    padding: 5px 5px 5px 7px;
+    box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.5);
+  }
+
+  .home-course-stack__thumbs {
+    display: flex;
+    align-items: center;
+  }
+
+  .home-course-stack__thumbs button {
+    position: relative;
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    place-items: center;
+    margin-left: -11px;
+    overflow: hidden;
+    border: 2px solid #1f1f1f;
+    border-radius: 10px;
+    background: #2a2a2e;
     padding: 0;
-    background: rgb(255 255 255 / 0.2);
+    color: #f4f4f2;
+    font-size: 11px;
+    font-weight: 800;
     cursor: pointer;
-    transition: width 200ms ease, background-color 200ms ease;
+    opacity: 0.7;
+    rotate: -4deg;
+    transition:
+      margin-left 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      rotate 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 200ms ease,
+      box-shadow 200ms ease;
   }
 
-  [data-theme='light'] .home-course-stack__dots button {
-    background: rgb(30 41 59 / 0.16);
+  .home-course-stack__thumbs button:first-child {
+    margin-left: 0;
   }
 
-  .home-course-stack__dots button[aria-current='true'] {
-    width: 20px;
-    background: rgb(var(--card-accent));
+  .home-course-stack__thumbs button:nth-child(even) {
+    rotate: 4deg;
   }
 
-  .home-course-stack__dots button:focus-visible {
+  .home-course-stack__thumbs button img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 3px;
+  }
+
+  .home-course-stack__thumbs button[data-active] {
+    z-index: 2;
+    opacity: 1;
+    rotate: 0deg;
+    box-shadow: 0 0 0 2px #6699ec;
+  }
+
+  .home-course-stack__switcher:hover .home-course-stack__thumbs button {
+    margin-left: 4px;
+  }
+
+  .home-course-stack__switcher:hover .home-course-stack__thumbs button:first-child {
+    margin-left: 0;
+  }
+
+  .home-course-stack__thumbs button:not([data-active]):hover {
+    opacity: 1;
+    rotate: 0deg;
+  }
+
+  .home-course-stack__thumbs button:focus-visible,
+  .home-course-stack__next:focus-visible {
     outline: 2px solid #93c5fd;
     outline-offset: 2px;
+  }
+
+  .home-course-stack__next {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #6699ec;
+    cursor: pointer;
+    transition: translate 300ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 150ms ease;
+  }
+
+  .home-course-stack__next:hover {
+    translate: 2px 0;
+    background: rgb(59 130 246 / 0.16);
+  }
+
+  [data-theme='light'] .home-course-stack__switcher {
+    border-color: #ececea;
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: 0 6px 16px -10px rgb(20 20 40 / 0.22);
+  }
+
+  [data-theme='light'] .home-course-stack__thumbs button {
+    border-color: #fff;
+    background: #f1f3f8;
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-course-stack__thumbs button[data-active] {
+    box-shadow: 0 0 0 2px #3b82f6;
+  }
+
+  [data-theme='light'] .home-course-stack__next {
+    color: #2563eb;
+  }
+
+  [data-theme='light'] .home-course-stack__next:hover {
+    background: #eff4ff;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-course-stack__thumbs button,
+    .home-course-stack__next {
+      transition: none;
+    }
   }
 
   .home-desktop-course-card__tag {
@@ -1110,7 +1219,9 @@
   }
 
   .home-desktop-course-card__subtitle {
+    max-width: 38ch;
     margin-top: 8px;
+    line-height: 1.45;
     color: #8a8f9c;
     font-size: 14px;
     font-weight: 600;
@@ -1667,6 +1778,14 @@
     white-space: nowrap;
   }
 
+  .home-dashboard-portfolio-devy {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    width: 56px;
+    height: 56px;
+  }
+
   .home-dashboard-portfolio-stats {
     display: flex;
     flex-wrap: wrap;
@@ -1690,14 +1809,6 @@
 
   [data-theme='light'] .home-dashboard-portfolio-stats > span {
     color: #5b53c9;
-  }
-
-  .home-dashboard-portfolio-devy {
-    position: absolute;
-    right: 16px;
-    bottom: 14px;
-    width: 56px;
-    height: 56px;
   }
 
   /* Fills the room a lone centred line used to leave empty: the same
@@ -2870,6 +2981,112 @@
     pointer-events: auto;
   }
 
+  /* Chat mode: the suggestions give way to the conversation itself, sitting
+     just above the input so it reads as one continuous exchange. */
+  .home-compose-stage[data-mode='chat'] {
+    justify-content: flex-end;
+    min-height: 0;
+  }
+
+  .home-compose-stage[data-mode='chat'] .home-compose-stage__title,
+  .home-compose-stage[data-mode='chat'] .home-compose-stage__cluster {
+    display: none;
+  }
+
+  .home-compose-stage__thread {
+    display: flex;
+    width: min(700px, 100%);
+    max-height: 100%;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding: 8px 4px 12px;
+    scrollbar-width: thin;
+  }
+
+  .home-compose-stage__msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    animation: home-msg-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .home-compose-stage__msg[data-role='user'] {
+    justify-content: flex-end;
+  }
+
+  .home-compose-stage__msg p {
+    max-width: 80%;
+    margin: 0;
+    border-radius: 20px;
+    padding: 14px 18px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .home-compose-stage__msg[data-role='user'] p {
+    border-bottom-right-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .home-compose-stage__msg[data-role='devy'] p {
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-bottom-left-radius: 6px;
+    background: #1f1f1f;
+    color: #f4f4f2;
+  }
+
+  [data-theme='light'] .home-compose-stage__msg[data-role='devy'] p {
+    border-color: #ececea;
+    background: #fff;
+    color: #262626;
+    box-shadow: 0 10px 24px -18px rgb(20 20 40 / 0.2);
+  }
+
+  .home-compose-stage__typing {
+    display: flex;
+    gap: 5px;
+  }
+
+  .home-compose-stage__typing span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.4;
+    animation: home-typing 1s ease-in-out infinite;
+  }
+
+  .home-compose-stage__typing span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .home-compose-stage__typing span:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  @keyframes home-msg-in {
+    from {
+      opacity: 0;
+      translate: 0 8px;
+    }
+  }
+
+  @keyframes home-typing {
+    50% {
+      opacity: 1;
+      translate: 0 -3px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-compose-stage__msg,
+    .home-compose-stage__typing span {
+      animation: none;
+    }
+  }
+
   .home-compose-stage[data-open] .home-compose-stage__title {
     opacity: 1;
     translate: 0 0;
@@ -2911,4 +3128,12 @@
       scale: none !important;
     }
   }
+}
+
+/* Break-screen curtain: a hole of radius --hole opens around --open-x/y
+   (where Devy stands), so the blue parts outward from him. */
+.transition-curtain {
+  --hole: 0px;
+  -webkit-mask-image: radial-gradient(circle at var(--open-x, 50%) var(--open-y, 40%), transparent var(--hole), #000 calc(var(--hole) + 1px));
+  mask-image: radial-gradient(circle at var(--open-x, 50%) var(--open-y, 40%), transparent var(--hole), #000 calc(var(--hole) + 1px));
 }

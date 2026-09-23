@@ -7,6 +7,7 @@ import {
 } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveAvatar } from "../../lib/avatarStyles";
+import { answerHomePrompt } from "../../lib/devy";
 import { getRoleLabel, normalizeProfile } from "../../lib/profile";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
@@ -325,9 +326,15 @@ function CourseFace({ course, onContinue }) {
         {started ? course.nextLessonTitle ?? course.regionTitle ?? course.title : course.title}
       </strong>
       <span className="home-desktop-course-card__subtitle">
-        {course.regionTitle ?? "First region"}
-        {started && lessonsTotal > 0 && ` · Lesson ${Math.min(lessonsCompleted + 1, lessonsTotal)} of ${lessonsTotal}`}
-        {!started && course.regionsTotal > 0 && ` · ${course.regionsTotal} regions`}
+        {course.isPlaceholder ? (
+          course.description ?? "Explore what this path covers"
+        ) : (
+          <>
+            {course.regionTitle ?? "First region"}
+            {started && lessonsTotal > 0 && ` · Lesson ${Math.min(lessonsCompleted + 1, lessonsTotal)} of ${lessonsTotal}`}
+            {!started && course.regionsTotal > 0 && ` · ${course.regionsTotal} regions`}
+          </>
+        )}
       </span>
       {started && lessonsTotal > 0 && (
         <span
@@ -359,11 +366,34 @@ const STACK_DEPTH = 3;
 const SWIPE_DISTANCE = 110;
 const SWIPE_VELOCITY = 600;
 
+const STACK_HINT_KEY = "devspace-course-stack-hint";
+
 function CourseStackCard({ depth, count, leavingDir, reduceMotion, onSwipe, onLeft, children }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-320, 320], [-9, 9]);
   const dragged = useRef(false);
   const isTop = depth === 0;
+
+  // The first time a learner has more than one course here, the top card
+  // nudges aside and springs back once — showing it moves before they'd
+  // ever think to drag it.
+  useEffect(() => {
+    if (!isTop || count < 2 || reduceMotion) return undefined;
+    try {
+      if (window.localStorage.getItem(STACK_HINT_KEY)) return undefined;
+    } catch {
+      return undefined;
+    }
+    const controls = animateValue(x, [0, -56, 0], { delay: 1.1, duration: 1.1, ease: [0.22, 1, 0.36, 1], times: [0, 0.4, 1] });
+    controls.then(() => {
+      try {
+        window.localStorage.setItem(STACK_HINT_KEY, "1");
+      } catch {
+        // Private mode: the hint just shows again next time.
+      }
+    });
+    return () => controls.stop();
+  }, [isTop, count, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!leavingDir) {
@@ -478,6 +508,7 @@ function CourseStack({ courses, activeIndex, onChange, onContinue }) {
   return (
     <div
       className="home-course-stack"
+      data-single={count < 2 || undefined}
       role="region"
       aria-roledescription="carousel"
       aria-label="Your courses"
@@ -513,16 +544,35 @@ function CourseStack({ courses, activeIndex, onChange, onContinue }) {
         );
       })}
       {count > 1 && (
-        <span className="home-course-stack__dots">
-          {courses.map((course, index) => (
-            <button
-              key={course.id}
-              type="button"
-              aria-label={`Show ${course.title}`}
-              aria-current={index === activeIndex ? "true" : undefined}
-              onClick={() => !leaving && onChange(index)}
-            />
-          ))}
+        <span className="home-course-stack__switcher">
+          <span className="home-course-stack__thumbs">
+            {courses.map((course, index) => (
+              <button
+                key={course.id}
+                type="button"
+                data-active={index === activeIndex || undefined}
+                aria-label={`Show ${course.title}`}
+                aria-current={index === activeIndex ? "true" : undefined}
+                title={course.title}
+                onClick={() => !leaving && index !== activeIndex && onChange(index)}
+              >
+                {course.emblem ?? course.regionImage ? (
+                  <img src={course.emblem ?? course.regionImage} alt="" />
+                ) : (
+                  <span aria-hidden="true">{course.title.charAt(0)}</span>
+                )}
+              </button>
+            ))}
+          </span>
+          <button
+            type="button"
+            className="home-course-stack__next"
+            aria-label={`Next course: ${courses[(activeIndex + 1) % count].title}`}
+            title={`Next: ${courses[(activeIndex + 1) % count].title}`}
+            onClick={() => next(-1)}
+          >
+            <ChevronIcon className="size-[18px] -rotate-90" />
+          </button>
         </span>
       )}
     </div>
@@ -636,6 +686,12 @@ export default function HomeView({
   const [mapMode, setMapMode] = useState("map");
   const [promptText, setPromptText] = useState("");
   const [composeAccent, setComposeAccent] = useState(null);
+  // Desktop only: asking from the Home input turns the stage into the
+  // conversation itself rather than opening the side drawer.
+  const [chat, setChat] = useState([]);
+  const [devyTyping, setDevyTyping] = useState(false);
+  const replyTimer = useRef(null);
+  useEffect(() => () => window.clearTimeout(replyTimer.current), []);
   const promptInputRef = useRef(null);
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
@@ -799,7 +855,10 @@ export default function HomeView({
   const selectedCourse =
     courseOptions.find((option) => option.id === selectedCourseId) ??
     primaryCourse;
-  const selectedCourseIndex = Math.max(0, courseOptions.indexOf(selectedCourse));
+  // The stack is for paths already in progress — the main one plus any the
+  // learner started and hasn't finished — not catalog suggestions.
+  const stackCourses = courseOptions.filter((course) => course.isPrimary || (course.isStarted && course.percent < 100));
+  const selectedCourseIndex = Math.max(0, stackCourses.indexOf(selectedCourse));
   const continueCourse = (course) => {
     if (!course) {
       onOpenCareerPath();
@@ -821,6 +880,35 @@ export default function HomeView({
     { id: "next", icon: "next", accent: "139 92 246", label: "What should I learn next?" },
     { id: "code", icon: "code", accent: "249 115 22", label: "Help me debug my code" },
   ].filter(Boolean);
+
+  const askDevy = (text) => {
+    const question = text?.trim();
+    if (!question) return;
+    setMapMode("chat");
+    setChat((messages) => [...messages, { id: `q-${Date.now()}`, role: "user", text: question }]);
+    setDevyTyping(true);
+    window.clearTimeout(replyTimer.current);
+    replyTimer.current = window.setTimeout(() => {
+      setChat((messages) => [
+        ...messages,
+        {
+          id: `a-${Date.now()}`,
+          role: "devy",
+          text: answerHomePrompt(question, primaryCourse?.title, primaryCourse?.nextLessonTitle),
+        },
+      ]);
+      setDevyTyping(false);
+    }, 700);
+    promptInputRef.current?.focus();
+  };
+
+  const closeChat = () => {
+    window.clearTimeout(replyTimer.current);
+    setDevyTyping(false);
+    setChat([]);
+    setMapMode("map");
+    promptInputRef.current?.blur();
+  };
 
   // The league system technically seats everyone from day one, but competing
   // in it only means something after a first lesson — before that, the real
@@ -845,7 +933,7 @@ export default function HomeView({
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden px-[22px] py-5 min-[1201px]:overflow-y-auto min-[1201px]:overflow-x-hidden min-[1201px]:py-4 max-[900px]:px-[18px] max-[680px]:h-[calc(100dvh-64px)] max-[680px]:px-[18px] max-[680px]:py-4">
-      <div data-compose={mapMode === "compose" || undefined} className="home-dashboard-grid relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-4 max-[680px]:justify-start max-[680px]:pt-14">
+      <div data-compose={mapMode === "compose" || mapMode === "chat" || undefined} className="home-dashboard-grid relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-4 max-[680px]:justify-start max-[680px]:pt-14">
         <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:col-start-1 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
           <div className="home-greeting-actions">
@@ -902,11 +990,11 @@ export default function HomeView({
             }
           >
             <div className="home-desktop-course-card">
-              {courseOptions.length > 0 && (
+              {stackCourses.length > 0 && (
                 <CourseStack
-                  courses={courseOptions}
+                  courses={stackCourses}
                   activeIndex={selectedCourseIndex}
-                  onChange={(index) => setSelectedCourseId(courseOptions[index].id)}
+                  onChange={(index) => setSelectedCourseId(stackCourses[index].id)}
                   onContinue={(course) => openOrSelect("continueLearning", () => continueCourse(course))}
                 />
               )}
@@ -1587,14 +1675,14 @@ export default function HomeView({
             main.jsx) takes over for this whole band — Devy Pro and Career
             Path stay reachable from the account menu and the Paths tab. */}
         <DevyComposeStage
-          open={mapMode === "compose"}
+          open={mapMode === "compose" || mapMode === "chat"}
+          mode={mapMode === "chat" ? "chat" : "suggest"}
           name={identity?.name?.trim().split(/\s+/)[0]}
           suggestions={composeSuggestions}
-          onPick={(text) => {
-            promptInputRef.current?.blur();
-            onOpenDevy(text);
-          }}
-          onClose={() => promptInputRef.current?.blur()}
+          messages={chat}
+          typing={devyTyping}
+          onPick={askDevy}
+          onClose={closeChat}
           onFrontChange={setComposeAccent}
         />
 
@@ -1603,14 +1691,16 @@ export default function HomeView({
           aria-label="Quick actions"
         >
           <DevyPromptBand
-            isComposing={mapMode === "compose"}
-            accent={mapMode === "compose" && composeAccent ? composeAccent : cardAccents[activeCard]}
+            isComposing={mapMode === "compose" || mapMode === "chat"}
+            accent={(mapMode === "compose" || mapMode === "chat") && composeAccent ? composeAccent : cardAccents[activeCard]}
+            placeholder={mapMode === "chat" ? "Ask a follow-up..." : undefined}
             value={promptText}
             onValueChange={setPromptText}
             inputRef={promptInputRef}
-            onComposeStart={() => setMapMode("compose")}
-            onComposeEnd={() => setMapMode("map")}
-            onOpen={onOpenDevy}
+            onComposeStart={() => setMapMode((mode) => (mode === "chat" ? "chat" : "compose"))}
+            onComposeEnd={() => setMapMode((mode) => (mode === "chat" ? "chat" : "map"))}
+            onDismiss={closeChat}
+            onOpen={(prompt) => (isDesktop ? askDevy(prompt) : onOpenDevy(prompt))}
           />
         </section>
 

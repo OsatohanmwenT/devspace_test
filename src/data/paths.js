@@ -375,6 +375,7 @@ export function getPath(pathId, customPaths = {}) {
     emblem: stub.image,
     level: stub.type === 'skill' ? 'Skill path' : 'Career path',
     family: stub.family,
+    isStub: true,
   }
 }
 

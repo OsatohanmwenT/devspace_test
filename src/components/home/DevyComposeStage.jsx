@@ -54,12 +54,19 @@ function placeCards(cards, angle) {
 // Desktop-only "how can I help" stage shown while the Ask Devy input has
 // focus: the dashboard steps aside and Devy takes the middle, with a few
 // starting points drawn from what the learner is actually doing.
-export function DevyComposeStage({ open, name, suggestions, onPick, onClose, onFrontChange }) {
+export function DevyComposeStage({ open, mode = "suggest", name, suggestions, messages = [], typing = false, onPick, onClose, onFrontChange }) {
   const reduceMotion = useReducedMotion();
   const cardRefs = useRef([]);
   const angle = useRef(0);
   const paused = useRef(false);
   const [front, setFront] = useState(0);
+  const threadRef = useRef(null);
+  const isChat = mode === "chat";
+
+  useEffect(() => {
+    const thread = threadRef.current;
+    if (thread) thread.scrollTo({ top: thread.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
+  }, [messages.length, typing, reduceMotion]);
 
   useLayoutEffect(() => {
     setFront(placeCards(cardRefs.current, angle.current));
@@ -71,7 +78,7 @@ export function DevyComposeStage({ open, name, suggestions, onPick, onClose, onF
   }, [frontAccent, onFrontChange]);
 
   useAnimationFrame((_, delta) => {
-    if (!open || paused.current || reduceMotion) return;
+    if (!open || isChat || paused.current || reduceMotion) return;
     angle.current -= (delta / LAP_MS) * Math.PI * 2;
     const next = placeCards(cardRefs.current, angle.current);
     if (next !== front) setFront(next);
@@ -81,6 +88,7 @@ export function DevyComposeStage({ open, name, suggestions, onPick, onClose, onF
     <div
       className="home-compose-stage"
       data-open={open || undefined}
+      data-mode={mode}
       aria-hidden={!open}
       style={{ "--stage-glow": `rgb(${suggestions[front]?.accent ?? "59 130 246"})` }}
     >
@@ -88,6 +96,24 @@ export function DevyComposeStage({ open, name, suggestions, onPick, onClose, onF
       <h2 className="home-compose-stage__title">
         Hey{name ? `, ${name}` : ""}! How can I help?
       </h2>
+      {isChat && (
+        <div className="home-compose-stage__thread" ref={threadRef} role="log" aria-live="polite" aria-label="Conversation with Devy">
+          {messages.map((message) => (
+            <div key={message.id} className="home-compose-stage__msg" data-role={message.role}>
+              <p>{message.text}</p>
+            </div>
+          ))}
+          {typing && (
+            <div className="home-compose-stage__msg" data-role="devy">
+              <p className="home-compose-stage__typing" aria-label="Devy is typing">
+                <span />
+                <span />
+                <span />
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       <div
         className="home-compose-stage__cluster"
         onMouseEnter={() => (paused.current = true)}
@@ -103,7 +129,7 @@ export function DevyComposeStage({ open, name, suggestions, onPick, onClose, onF
             key={suggestion.id}
             ref={(node) => (cardRefs.current[index] = node)}
             type="button"
-            tabIndex={open ? 0 : -1}
+            tabIndex={open && !isChat ? 0 : -1}
             className="home-compose-stage__card"
             style={{ "--accent": suggestion.accent }}
             onMouseDown={(event) => event.preventDefault()}

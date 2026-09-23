@@ -162,11 +162,16 @@ export function getFallbackResponse(availablePrompts) {
   if (availablePrompts.length === 0) {
     return { body: 'There’s nothing more I can help with on this step — try continuing to the next one.' }
   }
-  const labels = availablePrompts.map((item) => item.label)
+  const labels = availablePrompts.map((item) => `“${item.label}”`)
   const list = labels.length === 1
     ? labels[0]
     : `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}`
-  return { body: `I can only help with what’s on this step. Try asking me to ${list.toLowerCase()}.` }
+  // The prompts come back too, so the reply can offer them as buttons instead
+  // of leaving the learner to retype one.
+  return {
+    body: `I’m focused on this step right now. Try ${list}.`,
+    suggestions: availablePrompts,
+  }
 }
 
 export function getResponse(promptId, step, { checked = false } = {}) {
@@ -219,4 +224,15 @@ export function getResponse(promptId, step, { checked = false } = {}) {
     default:
       return null
   }
+}
+
+// Answers for Devy outside a lesson (Home and the drawer): the learner's
+// real path and next lesson, otherwise a short pointer to what Devy can do.
+export function answerHomePrompt(prompt, pathTitle, nextLesson) {
+  if (prompt.includes('next') || prompt.includes('quick')) return nextLesson ? `Your best next step is ${nextLesson} in ${pathTitle}. It keeps your path moving without asking you to choose from scratch.` : 'Open a path and I will help you choose a useful next step.'
+  if (prompt.includes('practice')) return 'Practice is a short way to strengthen one skill. Pick a session that fits the time you have, then return to your path when you are ready.'
+  if (prompt.includes('league') || prompt.includes('XP') || prompt.includes('week')) return 'Lessons and practice earn XP. Your weekly total decides your league position, so a short session still counts.'
+  if (prompt.includes('path')) return 'A path is a sequence of lessons that builds toward a practical goal. You can explore any path and still keep your current progress.'
+  if (prompt.includes('doing')) return `You are currently working through ${pathTitle}. Small, regular sessions are the easiest way to make progress.`
+  return 'I can help with what is on this page. Try one of the suggestions above, or ask about your next lesson, practice, or learning path.'
 }

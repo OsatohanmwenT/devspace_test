@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { DevyMood } from '../ui/DevyMood'
 import { LessonDataTable } from './LessonDataTable'
 import { RichText } from './RichText'
@@ -20,7 +21,7 @@ function blankClassName(checked, selected, correct) {
   return `${BLANK_BASE} border border-dashed cursor-default border-[#515151] [[data-theme=light]_&]:border-[#d5d5d5] bg-[#303030] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800`
 }
 
-function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption }) {
+function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption, isDropTarget, onDropTargetChange }) {
   const selectedIndex = answer?.[blankIndex]
   const selected = selectedIndex === undefined ? undefined : question.options[selectedIndex]
   const correct = selected === question.answers[blankIndex]
@@ -28,15 +29,23 @@ function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption }
   return (
     <button
       type="button"
-      className={blankClassName(checked, selected, correct)}
+      className={`${blankClassName(checked, selected, correct)}${isDropTarget ? ' ring-2 ring-[#6699ec] ring-offset-2 [[data-theme=light]_&]:bg-[#eef5ff]' : ''}`}
       disabled={checked}
       onClick={() => onAnswer(clearBlank(answer, blankIndex))}
       onDragOver={(event) => {
-        if (!selected && !checked) event.preventDefault()
+        if (checked) return
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'move'
+        onDropTargetChange(blankIndex)
+      }}
+      onDragLeave={() => {
+        if (isDropTarget) onDropTargetChange(undefined)
       }}
       onDrop={(event) => {
         event.preventDefault()
-        onDropOption(Number(event.dataTransfer.getData('text/plain')), blankIndex)
+        onDropTargetChange(undefined)
+        const optionIndex = Number(event.dataTransfer.getData('text/plain'))
+        if (Number.isInteger(optionIndex)) onDropOption(optionIndex, blankIndex)
       }}
       aria-label={selected ? `Blank ${blankIndex + 1}: ${selected}. Activate to clear.` : `Blank ${blankIndex + 1}: empty`}
     >
@@ -45,7 +54,7 @@ function Blank({ question, answer, blankIndex, checked, onAnswer, onDropOption }
   )
 }
 
-function TokenBank({ question, answer, checked, onAnswer }) {
+function TokenBank({ question, answer, checked, onAnswer, onDragStart, onDragEnd }) {
   const used = answer ?? []
 
   return (
@@ -60,7 +69,9 @@ function TokenBank({ question, answer, checked, onAnswer }) {
           onDragStart={(event) => {
             event.dataTransfer.effectAllowed = 'move'
             event.dataTransfer.setData('text/plain', String(optionIndex))
+            onDragStart()
           }}
+          onDragEnd={onDragEnd}
           onClick={() => onAnswer(fillNextBlank(question, answer, optionIndex))}
         >
           {option}
@@ -72,7 +83,7 @@ function TokenBank({ question, answer, checked, onAnswer }) {
 
 // Code with blanks — a Parsons-style exercise. The static parts are syntax
 // highlighted; the blanks are the same fill model as prose questions.
-function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
+function CodeFill({ question, answer, checked, onAnswer, onDropOption, dropTarget, onDropTargetChange }) {
   const language = question.language ?? 'python'
   const tokenize = LANGUAGE_TOKENIZERS[language] ?? tokenizePython
   const badge = LANGUAGE_BADGES[language] ?? LANGUAGE_BADGES.python
@@ -91,7 +102,7 @@ function CodeFill({ question, answer, checked, onAnswer, onDropOption }) {
                 <span key={tokenIndex} className={TOKEN_CLASSES[token.type]}>{token.value}</span>
               ))}
               {index < question.answers.length && (
-                <Blank question={question} answer={answer} blankIndex={index} checked={checked} onAnswer={onAnswer} onDropOption={onDropOption} />
+                <Blank question={question} answer={answer} blankIndex={index} checked={checked} onAnswer={onAnswer} onDropOption={onDropOption} isDropTarget={dropTarget === index} onDropTargetChange={onDropTargetChange} />
               )}
             </span>
           ))}
@@ -158,14 +169,14 @@ function TableSelect({ question, answer, checked, onAnswer }) {
   )
 }
 
-function ProseFill({ question, answer, checked, onAnswer, onDropOption }) {
+function ProseFill({ question, answer, checked, onAnswer, onDropOption, dropTarget, onDropTargetChange }) {
   return (
     <p className="m-0 text-[clamp(18px,1.5vw,21px)] max-[720px]:text-[19px] leading-[1.55] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
       {question.segments.map((segment, index) => (
         <span key={index}>
           {segment}
           {index < question.answers.length && (
-            <Blank question={question} answer={answer} blankIndex={index} checked={checked} onAnswer={onAnswer} onDropOption={onDropOption} />
+            <Blank question={question} answer={answer} blankIndex={index} checked={checked} onAnswer={onAnswer} onDropOption={onDropOption} isDropTarget={dropTarget === index} onDropTargetChange={onDropTargetChange} />
           )}
         </span>
       ))}
@@ -209,10 +220,13 @@ function MultipleChoice({ question, answer, checked, onAnswer }) {
 }
 
 export function LessonQuestion({ question, answer, checked, retrying = false, onAnswer, onAskDevy, headingLevel: Heading = 'h2', prefix }) {
+  const [dropTarget, setDropTarget] = useState()
   const correct = checked && isQuestionCorrect(question, answer)
   const placeOption = (optionIndex, blankIndex) => {
-    if (checked || !Number.isInteger(optionIndex) || optionIndex < 0 || optionIndex >= question.options.length || answer?.includes(optionIndex) || answer?.[blankIndex] !== undefined) return
+    if (checked || !Number.isInteger(optionIndex) || optionIndex < 0 || optionIndex >= question.options.length) return
     const nextAnswer = [...(answer ?? Array(question.answers.length).fill(undefined))]
+    const existingBlank = nextAnswer.indexOf(optionIndex)
+    if (existingBlank !== -1) nextAnswer[existingBlank] = undefined
     nextAnswer[blankIndex] = optionIndex
     onAnswer(nextAnswer)
   }
@@ -226,11 +240,11 @@ export function LessonQuestion({ question, answer, checked, retrying = false, on
       {isFillType(question)
         ? <div className="grid gap-3 rounded-2xl border border-[#373737] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#202020] [[data-theme=light]_&]:bg-[#f7f7f7] p-3.5 max-[720px]:p-3">
           {question.type === 'code-fill'
-            ? <CodeFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />
-            : <ProseFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} />}
+            ? <CodeFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} dropTarget={dropTarget} onDropTargetChange={setDropTarget} />
+            : <ProseFill question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDropOption={placeOption} dropTarget={dropTarget} onDropTargetChange={setDropTarget} />}
           <div className="grid gap-2.5">
             <p className="m-0 text-[15px] font-semibold text-[#b2b2b6] [[data-theme=light]_&]:text-[#777]">Click or drag an option to fill the blanks:</p>
-            <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} />
+            <TokenBank question={question} answer={answer} checked={checked} onAnswer={onAnswer} onDragStart={() => setDropTarget(undefined)} onDragEnd={() => setDropTarget(undefined)} />
           </div>
         </div>
         : isTableType(question)

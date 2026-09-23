@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { RichText } from './RichText'
-import { LessonDataTable } from './LessonDataTable'
+import { useState } from 'react';
 import {
-  isTableTaskComplete, isTableTasksComplete, isSortComplete, isIssueSpotterComplete, isReorderCorrect, isFieldSelectionValid,
-} from '../../lib/practiceCheck'
+    isFieldSelectionValid,
+    isIssueSpotterComplete, isReorderCorrect,
+    isSortComplete,
+    isTableTaskComplete, isTableTasksComplete,
+} from '../../lib/practiceCheck';
+import { LessonDataTable } from './LessonDataTable';
+import { RichText } from './RichText';
 
 const PANEL = 'rounded-2xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] p-4'
 const CHIP_BASE = 'min-h-9 rounded-full border px-3.5 text-[13px] font-medium transition-colors'

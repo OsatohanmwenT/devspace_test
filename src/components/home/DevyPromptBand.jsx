@@ -16,7 +16,7 @@ const IDLE_PROMPTS = [
 // Idle, it's just a single-line input with a rotating hint — upload, voice
 // and send only appear once the learner clicks in, so Browse mode never
 // competes with Chat mode for attention.
-export function DevyPromptBand({ isComposing, accent, value, onValueChange, inputRef, onComposeStart, onComposeEnd, onOpen }) {
+export function DevyPromptBand({ isComposing, accent, placeholder, value, onValueChange, inputRef, onComposeStart, onComposeEnd, onDismiss, onOpen }) {
   const [promptIndex, setPromptIndex] = useState(0)
 
   useEffect(() => {
@@ -43,14 +43,15 @@ export function DevyPromptBand({ isComposing, accent, value, onValueChange, inpu
         ref={inputRef}
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
-        placeholder={isComposing ? "Ask Devy anything..." : IDLE_PROMPTS[promptIndex]}
+        placeholder={placeholder ?? (isComposing ? "Ask Devy anything..." : IDLE_PROMPTS[promptIndex])}
         aria-label="Ask Devy for help"
         onFocus={onComposeStart}
         onBlur={onComposeEnd}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.currentTarget.blur();
-            onComposeEnd();
+            if (onDismiss) onDismiss();
+            else onComposeEnd();
           }
         }}
       />

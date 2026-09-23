@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 // Prose authored as an array of segments so copy can carry inline code chips and
 // emphasis. A plain string is still valid and renders as-is.
 export function RichText({ content, className = '' }) {
@@ -27,4 +29,30 @@ export function RichText({ content, className = '' }) {
       })}
     </span>
   )
+}
+
+// Words of plain text, plus code chips and emphasis kept whole, so a reply can
+// be revealed a word at a time without ever splitting a chip.
+function toTokens(content) {
+  const segments = Array.isArray(content) ? content : [content]
+  return segments.flatMap((segment) => (typeof segment === 'string' ? segment.split(/(?<=\s)/) : [segment]))
+}
+
+// Types a reply out word by word, then calls onDone. Reduced motion shows it
+// all at once.
+export function StreamedRichText({ content, className = '', onDone }) {
+  const tokens = toTokens(content)
+  const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const [shown, setShown] = useState(reduce ? tokens.length : 0)
+
+  useEffect(() => {
+    if (shown >= tokens.length) {
+      onDone?.()
+      return undefined
+    }
+    const timer = window.setTimeout(() => setShown((count) => count + 1), 28)
+    return () => window.clearTimeout(timer)
+  }, [shown, tokens.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return <RichText content={tokens.slice(0, shown)} className={className} />
 }

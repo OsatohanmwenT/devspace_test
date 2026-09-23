@@ -687,6 +687,32 @@ function App() {
   // at instead of a trip through the Paths tab.
   const courseOptions = useMemo(() => {
     const toOption = (path, isPrimary) => {
+      // Started = the primary path, one the learner paused (pathHistory), or
+      // one they built themselves — as opposed to a catalog suggestion.
+      const isStarted = isPrimary || (pathHistory ?? []).includes(path.id) || Boolean(customPaths?.[path.id])
+      // An unauthored path borrows another path's lessons (see getPath), so
+      // a suggestion has no lesson or progress of its own to show yet.
+      if (path.isStub && !isStarted) {
+        return {
+          id: path.id,
+          title: path.title,
+          description: path.description ?? null,
+          regionTitle: null,
+          percent: 0,
+          nextLessonTitle: null,
+          upNextTitle: null,
+          regionPercent: 0,
+          regionIndex: 0,
+          regionsTotal: 0,
+          regionLessonsCompleted: 0,
+          regionLessonsTotal: 0,
+          regionImage: path.emblem ?? null,
+          emblem: path.emblem ?? null,
+          isPrimary,
+          isStarted,
+          isPlaceholder: true,
+        }
+      }
       const info = derivePathProgress(path, completedLessons)
       const regionLessons = info.currentRegion?.lessons ?? []
       const currentIndexInRegion = regionLessons.findIndex((lesson) => lesson.id === info.currentLesson?.id)
@@ -711,7 +737,9 @@ function App() {
         // roadmap — real art tied to what's actually being learned, not a
         // generic icon repeated on every card.
         regionImage: info.currentRegion?.image ?? path.emblem ?? null,
+        emblem: path.emblem ?? null,
         isPrimary,
+        isStarted,
       }
     }
     // A custom path becomes switchable the moment it exists, even if it was
@@ -723,7 +751,7 @@ function App() {
       ...otherPaths.map((path) => toOption(path, false)),
       ...ownCustomPaths.map((path) => toOption(path, false)),
     ]
-  }, [currentPath, otherPaths, customPaths, profile?.pathId, completedLessons])
+  }, [currentPath, otherPaths, customPaths, profile?.pathId, completedLessons, pathHistory])
 
   // Home's Leaderboard card reveals the standings immediately around the
   // learner's own row — one above, one below — rather than the whole league,

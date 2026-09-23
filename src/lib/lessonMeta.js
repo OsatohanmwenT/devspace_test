@@ -31,6 +31,7 @@ export function getLessonMeta(lessonId) {
     exerciseCount: activities.length,
     questionCount: activities.filter((step) => step.type === 'question').length,
     articleCount: activities.filter((step) => step.type === 'article').length,
+    codeEditorCount: activities.filter((step) => step.type === 'code-editor').length,
     conceptCount: lesson.concepts.length,
   }
 }

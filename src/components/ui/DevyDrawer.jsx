@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DevyLottie } from './DevyLottie';
+import { answerHomePrompt } from '../../lib/devy';
 
 const pageCopy = {
   Home: {
@@ -20,24 +21,15 @@ const pageCopy = {
   },
 }
 
-function answerFor(prompt, pathTitle, nextLesson) {
-  if (prompt.includes('next') || prompt.includes('quick')) return nextLesson ? `Your best next step is ${nextLesson} in ${pathTitle}. It keeps your path moving without asking you to choose from scratch.` : 'Open a path and I will help you choose a useful next step.'
-  if (prompt.includes('practice')) return 'Practice is a short way to strengthen one skill. Pick a session that fits the time you have, then return to your path when you are ready.'
-  if (prompt.includes('league') || prompt.includes('XP') || prompt.includes('week')) return 'Lessons and practice earn XP. Your weekly total decides your league position, so a short session still counts.'
-  if (prompt.includes('path')) return 'A path is a sequence of lessons that builds toward a practical goal. You can explore any path and still keep your current progress.'
-  if (prompt.includes('doing')) return `You are currently working through ${pathTitle}. Small, regular sessions are the easiest way to make progress.`
-  return 'I can help with what is on this page. Try one of the suggestions above, or ask about your next lesson, practice, or learning path.'
-}
-
 export function DevyDrawer({ page, pathTitle, nextLesson, initialPrompt, onClose }) {
   const [messages, setMessages] = useState(() =>
-    initialPrompt ? [{ prompt: initialPrompt, answer: answerFor(initialPrompt, pathTitle, nextLesson) }] : [],
+    initialPrompt ? [{ prompt: initialPrompt, answer: answerHomePrompt(initialPrompt, pathTitle, nextLesson) }] : [],
   )
   const [draft, setDraft] = useState('')
   const content = pageCopy[page] ?? pageCopy.Home
 
   const ask = (prompt) => {
-    setMessages((current) => [...current, { prompt, answer: answerFor(prompt, pathTitle, nextLesson) }])
+    setMessages((current) => [...current, { prompt, answer: answerHomePrompt(prompt, pathTitle, nextLesson) }])
   }
 
   const submit = (event) => {

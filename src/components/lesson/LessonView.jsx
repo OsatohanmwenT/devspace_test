@@ -8,6 +8,7 @@ import { LessonArticle } from './LessonArticle'
 import { NarrationControl } from './NarrationControl'
 import { LessonQuestion } from './LessonQuestion'
 import { LessonPractice } from './LessonPractice'
+import { LessonCodeEditor } from './LessonCodeEditor'
 import { DevyAssistant } from './DevyAssistant'
 import { DevySpeechBubble } from './DevySpeechBubble'
 import { ChecklistIcon, GemIcon } from '../ui/icons'
@@ -103,6 +104,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const isMilestone = currentStep?.kind === 'transition' || currentStep?.kind === 'complete' || currentStep?.kind === 'skill-check'
   const isQuestion = currentStep?.type === 'question'
   const isPractice = currentStep?.type === 'practice'
+  const isCodeEditor = currentStep?.type === 'code-editor'
 
   const questionState = isQuestion ? session.activityStates[currentStep.id] : undefined
   const answer = questionState?.answer
@@ -118,9 +120,11 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
   const practiceState = isPractice ? session.activityStates[currentStep.id] : undefined
   const practiceAnswer = practiceState?.answer
   const isPracticeComplete = Boolean(practiceState?.completed)
+  const editorState = isCodeEditor ? session.activityStates[currentStep.id] : undefined
+  const isCodeEditorComplete = Boolean(editorState?.completed)
   // DevyAssistant only needs "is this step resolved" — question and practice
   // steps each define that differently; article/transition steps don't use it.
-  const isStepResolved = isQuestion ? isChecked : isPractice ? isPracticeComplete : false
+  const isStepResolved = isQuestion ? isChecked : isPractice ? isPracticeComplete : isCodeEditor ? isCodeEditorComplete : false
 
   useEffect(() => {
     setAudioReadyForNext(false)
@@ -214,6 +218,15 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
     setSession((current) => ({
       ...current,
       activityStates: { ...current.activityStates, [currentStep.id]: { ...current.activityStates[currentStep.id], completed: true } },
+    }))
+  }
+
+  const completeCodeEditor = () => {
+    setSuccessPulse((current) => current + 1)
+    play('success')
+    setSession((current) => ({
+      ...current,
+      activityStates: { ...current.activityStates, [currentStep.id]: { completed: true } },
     }))
   }
 
@@ -402,6 +415,8 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               : { label: attempts > 0 ? 'Try again' : 'Check', onClick: checkQuestion, disabled: !canCheck })
             : isPractice
               ? { label: 'Continue', onClick: goNext, disabled: !isPracticeComplete }
+              : isCodeEditor
+                ? { label: 'Continue', onClick: goNext, disabled: !isCodeEditorComplete }
               : { label: 'Continue', onClick: goNext }
 
   // Ctrl/Cmd+Enter drives the primary action; number keys pick an option.
@@ -466,13 +481,15 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
 
   return (
     <section
-      className="fixed inset-0 z-20 grid grid-rows-[64px_minmax(0,1fr)_76px] overflow-hidden bg-[#121212] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800 max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px]"
+      className={`fixed inset-0 z-20 grid overflow-hidden bg-[#121212] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#fafaf8] [[data-theme=light]_&]:text-neutral-800 ${isMilestone ? 'grid-rows-[minmax(0,1fr)]' : 'grid-rows-[64px_minmax(0,1fr)_76px] max-[720px]:grid-rows-[64px_minmax(0,1fr)_68px]'}`}
       aria-label="Lesson"
       style={{ '--devy-panel-width': `${devyPanelWidth}px` }}
     >
       {successPulse > 0 && <div key={successPulse} className="lesson-success-glow" aria-hidden="true" />}
       {errorPulse > 0 && <div key={errorPulse} className="lesson-error-glow" aria-hidden="true" />}
-      <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] max-[720px]:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-[720px]:gap-2 border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
+      {/* Break screens (between concepts, skill check, lesson complete) are
+          full screen: no header or footer, just the moment and its button. */}
+      {!isMilestone && <header className="relative grid grid-cols-[44px_minmax(0,1fr)_auto] max-[720px]:grid-cols-[minmax(0,1fr)_auto] items-center gap-3 max-[720px]:gap-2 border-b border-[#404040] [[data-theme=light]_&]:border-[#e8e6e1] bg-[#1a1a1a] [[data-theme=light]_&]:bg-[#fdfcf9] px-5 max-[720px]:px-3.5">
         <button
           ref={exitButtonRef}
           type="button"
@@ -489,7 +506,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
               currentStep={session.stepIndex + 1}
               totalSteps={Math.max(lessonFlow.length, 1)}
               onPrevious={session.stepIndex > 0 ? goPrevious : undefined}
-              onNext={!isLastStep && (!isQuestion || isChecked) && (!isPractice || isPracticeComplete) ? goNext : undefined}
+              onNext={!isLastStep && (!isQuestion || isChecked) && (!isPractice || isPracticeComplete) && (!isCodeEditor || isCodeEditorComplete) ? goNext : undefined}
               streaking={showStreak}
             />
           )}
@@ -535,7 +552,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           )}
           </div>
         </div>
-      </header>
+      </header>}
 
       <main
         className={`min-w-0 min-h-0 overflow-auto p-0 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0 max-[720px]:mt-[min(42vh,340px)]' : 'ml-0'}`}
@@ -555,6 +572,16 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             completed={isPracticeComplete}
           />
         )}
+        {isCodeEditor && (
+          <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
+            <LessonCodeEditor
+              key={currentStep.id}
+              content={currentStep.content}
+              completed={isCodeEditorComplete}
+              onComplete={completeCodeEditor}
+            />
+          </div>
+        )}
         {isQuestion && (
           <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
             <LessonQuestion
@@ -569,16 +596,26 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             />
           </div>
         )}
-        {currentStep?.kind === 'transition' && <ConceptTransition {...currentStep.transition} stats={recapStats(currentStep.concept)} />}
+        {currentStep?.kind === 'transition' && (
+          <ConceptTransition
+            title={`That’s ${currentStep.concept.title} done`}
+            body={currentStep.nextConcept ? `You’re ready for ${currentStep.nextConcept.title}` : currentStep.transition?.body}
+            action={footerAction && { ...footerAction, label: 'Continue' }}
+            onExit={requestExit}
+            clip="walk"
+          />
+        )}
         {currentStep?.kind === 'skill-check' && (
           <ConceptTransition
+            action={footerAction}
+            onExit={requestExit}
             eyebrow="Skill check"
             title={currentStep.quizTitle ?? 'Let’s check what you’ve learned'}
             body={currentStep.quizIntro ?? 'A few quick questions to make sure it’s sticking.'}
             badge={<ChecklistIcon className="size-5" />}
           />
         )}
-        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} mood="celebrating" />}
+        {currentStep?.kind === 'complete' && <ConceptTransition {...currentStep.completion} action={footerAction} onExit={requestExit} mood="celebrating" />}
       </main>
 
       {!isMilestone && <aside
@@ -601,12 +638,13 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
           checked={isStepResolved}
           profile={lesson?.role ? { ...profile, role: lesson.role } : profile}
           recentMessages={recentDevyMessages}
+          lessonTitle={lesson?.title}
           onClose={() => setIsDevyOpen(false)}
           focusRing={focusRing}
         />
       </aside>}
 
-      <footer
+      {!isMilestone && <footer
         className={`${isMilestone ? 'flex justify-center' : 'grid grid-cols-[auto_minmax(0,1fr)_auto]'} items-center gap-3 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] py-2 px-6 max-[720px]:px-3.5 transition-[margin-left] duration-[180ms] ease-in-out ${isDevyPanelOpen ? 'ml-[var(--devy-panel-width)] max-[720px]:ml-0' : 'ml-0'}`}
       >
         {!isMilestone && (
@@ -649,7 +687,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
         >
           {footerAction.label}
         </ActionButton>}
-      </footer>
+      </footer>}
 
       {isNotesOpen && (
         <NotesDrawer

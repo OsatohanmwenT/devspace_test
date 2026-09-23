@@ -13,7 +13,7 @@ test('an authored lesson reports counts derived from its real flow', () => {
 
   assert.ok(meta, 'writing-programs should have authored content')
   assert.ok(meta.exerciseCount > 0)
-  assert.equal(meta.exerciseCount, meta.questionCount + meta.articleCount)
+  assert.equal(meta.exerciseCount, meta.questionCount + meta.articleCount + meta.codeEditorCount)
   assert.ok(meta.conceptCount > 0)
 })
 

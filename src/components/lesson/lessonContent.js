@@ -252,6 +252,14 @@ export const writingProgramsClickFillQuiz = {
   ],
 }
 
+export const variablesExpressionsEditor = {
+  title: 'Build the yearly-hours program',
+  description: 'Use the two variables to calculate the yearly total, then print it.',
+  filename: 'yearly_hours.py',
+  starterCode: 'hours_per_week = 40\nweeks_per_year = 52\n\n# Calculate and print the yearly total',
+  output: '2080',
+}
+
 export const writingProgramsLesson = {
   id: 'writing-programs',
   title: 'Writing programs',
@@ -276,6 +284,7 @@ export const writingProgramsLesson = {
         { id: 'variables-expressions-learn', type: 'article', content: variablesExpressionsArticle },
         { id: 'variables-expressions-check', type: 'quiz', content: variablesExpressionsQuiz },
         { id: 'variables-expressions-fill', type: 'quiz', content: variablesExpressionsFillQuiz },
+        { id: 'variables-expressions-editor', type: 'code-editor', content: variablesExpressionsEditor },
       ],
       transition: {
         eyebrow: 'Concept complete',
