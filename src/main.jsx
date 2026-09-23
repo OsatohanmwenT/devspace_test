@@ -703,6 +703,8 @@ function App() {
         // nextLessonTitle, which is the in-progress lesson itself.
         upNextTitle: currentIndexInRegion !== -1 ? regionLessons[currentIndexInRegion + 1]?.title ?? null : null,
         regionPercent: info.currentRegion?.percent ?? 0,
+        regionIndex: info.currentRegion?.index ?? 0,
+        regionsTotal: info.regionsTotal ?? 0,
         regionLessonsCompleted: info.currentRegion?.lessonsCompleted ?? 0,
         regionLessonsTotal: info.currentRegion?.lessonsTotal ?? 0,
         // The same topic illustration the region already uses on the Paths

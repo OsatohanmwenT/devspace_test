@@ -621,7 +621,7 @@ export default function HomeView({
 
           <div
             ref={cardRefs[0]}
-            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} ${isFrontLayout("continueLearning") ? "!pt-3 min-[1201px]:!pt-8" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
+            className={`${mapCard} home-map-card--continue-learning home-map-card--lesson min-[1201px]:col-start-2 min-[1201px]:row-start-2 min-[1201px]:row-span-2 min-[1201px]:self-start min-[1201px]:!h-[500px] ${mapCardSurface} [[data-theme=light]_&]:!bg-[#f5f9ff] ${isFrontLayout("continueLearning") ? "!pt-3 min-[1201px]:!pt-8" : ""} ${isDesktop || isFront("continueLearning") ? `${lightFrontElevation} ${darkMobileFrontDepth} min-[681px]:max-[1200px]:!top-[54px] min-[681px]:max-[1200px]:!h-[410px] min-[681px]:max-[1200px]:!w-[460px] min-[681px]:max-[1200px]:!p-6` : ""}`}
             style={{ "--card-accent": cardAccents.continueLearning }}
             data-slot={getCardSlot("continueLearning")}
             data-layout={isFrontLayout("continueLearning") ? "front" : getCardSlot("continueLearning")}
@@ -636,6 +636,36 @@ export default function HomeView({
               openOrSelect("continueLearning", continueSelectedCourse)
             }
           >
+            <div className="home-desktop-course-card">
+              <span className="home-desktop-course-card__tag">Career path</span>
+              <strong className="home-desktop-course-card__title">
+                {selectedCourse?.title ?? "Continue learning"}
+              </strong>
+              <span className="home-desktop-course-card__subtitle">
+                {selectedCourse?.regionTitle ?? "Current region"} · {selectedCourse?.percent ?? 0}% complete
+              </span>
+              <span className="home-desktop-course-card__art" aria-hidden="true">
+                <LessonIllustration src={selectedCourse?.regionImage} />
+              </span>
+              <span className="home-desktop-course-card__footer">
+                <span className="home-desktop-course-card__dots" aria-hidden="true">
+                  <span data-active="true" />
+                  <span />
+                </span>
+                <span className="home-desktop-course-card__current">
+                  Region {(selectedCourse?.regionIndex ?? 0) + 1} of {selectedCourse?.regionsTotal ?? 1} · {selectedCourse?.nextLessonTitle ?? "Ready to continue"}
+                </span>
+              </span>
+              <CardCtaButton
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openOrSelect("continueLearning", continueSelectedCourse);
+                }}
+              >
+                {selectedCourse?.nextLessonTitle ? "Continue lesson" : "Open path"}
+              </CardCtaButton>
+            </div>
+
             {!isFrontLayout("continueLearning") && (
               <div className="home-map-card__header-row flex w-full items-center justify-between gap-2">
                 <span className="home-map-card__continue-label flex items-center gap-2.5">

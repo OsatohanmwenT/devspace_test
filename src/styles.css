@@ -978,7 +978,115 @@
   display: none;
 }
 
+.home-desktop-course-card {
+  display: none;
+}
+
 @media (min-width: 1201px) {
+  .home-map-card--continue-learning > :not(.home-desktop-course-card) {
+    display: none !important;
+  }
+
+  .home-desktop-course-card {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 48px;
+    text-align: center;
+  }
+
+  .home-desktop-course-card__tag {
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: rgb(var(--card-accent) / 0.1);
+    color: rgb(var(--card-accent));
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .home-desktop-course-card__title {
+    margin-top: 12px;
+    color: #f4f4f2;
+    font-family: var(--font-rubik, inherit);
+    font-size: 32px;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+
+  .home-desktop-course-card__subtitle,
+  .home-desktop-course-card__current {
+    color: #8a8f9c;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .home-desktop-course-card__subtitle {
+    margin-top: 6px;
+  }
+
+  .home-desktop-course-card__art {
+    display: grid;
+    min-height: 160px;
+    flex: 1 0 160px;
+    place-items: center;
+  }
+
+  .home-desktop-course-card__art .home-map-card__lesson-illustration {
+    width: 160px;
+    height: 160px;
+    margin: 0;
+  }
+
+  .home-desktop-course-card__footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+
+  .home-desktop-course-card__dots {
+    display: flex;
+    gap: 7px;
+  }
+
+  .home-desktop-course-card__dots > span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  .home-desktop-course-card__dots > span[data-active='true'] {
+    background: rgb(var(--card-accent) / 0.55);
+  }
+
+  .home-desktop-course-card__current {
+    margin-bottom: 0;
+  }
+
+  .home-map-card--continue-learning .home-desktop-course-card .home-map-card__cta-bar {
+    display: flex;
+    min-height: 52px;
+    margin-top: 0 !important;
+    font-size: 17px;
+  }
+
+  [data-theme='light'] .home-desktop-course-card__title {
+    color: #262626;
+  }
+
+  [data-theme='light'] .home-desktop-course-card__subtitle,
+  [data-theme='light'] .home-desktop-course-card__current {
+    color: #687086;
+  }
+
+  [data-theme='light'] .home-desktop-course-card__dots > span {
+    background: rgb(30 41 59 / 0.16);
+  }
+
   .home-map-card--dynamic > :not(.home-dashboard-summary) {
     display: none !important;
   }
