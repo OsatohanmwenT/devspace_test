@@ -1115,6 +1115,9 @@ function App() {
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={() => setDevyOpen(true)}
             onOpenPath={openPathFromHome}
+            onStartPractice={setOpenPractice}
+            completedSessions={completedSessions}
+            currentPath={currentPath}
             courseOptions={courseOptions}
             completedLessonsCount={Object.keys(completedLessons).length}
             pathTools={currentPath.tools ?? []}

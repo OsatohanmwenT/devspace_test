@@ -1,9 +1,9 @@
 import {
-  animate as animateValue,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
+    animate as animateValue,
+    motion,
+    useMotionValue,
+    useReducedMotion,
+    useTransform,
 } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TierMedal } from "../leaderboard/TierMedal";
@@ -18,6 +18,7 @@ import {
     RocketIcon,
     SparkleIcon,
 } from "../ui/icons";
+import { DailyPracticeButton } from "./DailyPracticeButton";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -602,6 +603,9 @@ export default function HomeView({
   onOpenPlans,
   onOpenDevy,
   onOpenPath,
+  onStartPractice,
+  completedSessions = {},
+  currentPath,
   courseOptions = [],
   completedLessonsCount = 0,
   pathTools = [],
@@ -823,6 +827,11 @@ export default function HomeView({
       <div className="relative mx-auto flex h-full w-full max-w-[1100px] flex-col justify-center min-[1201px]:max-w-[1000px] min-[1201px]:grid min-[1201px]:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] min-[1201px]:grid-rows-[auto_auto_1fr_auto] min-[1201px]:justify-start min-[1201px]:gap-6 min-[1201px]:pb-8 max-[680px]:justify-start max-[680px]:pt-14">
         <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
+          <DailyPracticeButton
+            path={currentPath}
+            completedSessions={completedSessions}
+            onStart={onStartPractice}
+          />
         </header>
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"

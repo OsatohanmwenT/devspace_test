@@ -1,5 +1,15 @@
 export const practiceTopics = ['All', 'Python', 'SQL', 'Git', 'Data', 'Theory']
 
+export function isRecommendedForPath(session, path) {
+  const tools = (path?.tools ?? []).map((tool) => tool.toLowerCase())
+  const pathTitle = path?.title?.toLowerCase() ?? ''
+  const topic = session.topic.toLowerCase()
+  return tools.some((tool) => tool.includes(topic) || topic.includes(tool))
+    || pathTitle.includes(topic)
+    || (topic === 'python' && pathTitle.includes('learning'))
+    || (topic === 'data' && pathTitle.includes('data'))
+}
+
 export const practiceSessions = [
   {
     id: 'python-basics-warmup',

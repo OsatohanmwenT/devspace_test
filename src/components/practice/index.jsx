@@ -1,22 +1,11 @@
 import { useState } from 'react'
-import { practiceSessions, practiceTopics } from '../../data/practice'
+import { isRecommendedForPath, practiceSessions, practiceTopics } from '../../data/practice'
 import { PracticeCard } from './PracticeCard'
 import { DevyMood } from '../ui/DevyMood'
 
 export default function PracticeView({ onStart, completedSessions = {}, currentPath }) {
   const [topic, setTopic] = useState('All')
   const [search, setSearch] = useState('')
-
-  const activeTools = (currentPath?.tools ?? []).map((t) => t.toLowerCase())
-  const pathTitle = currentPath?.title?.toLowerCase() ?? ''
-
-  const isRecommendedSession = (session) => {
-    const topicLower = session.topic.toLowerCase()
-    return activeTools.some((tool) => tool.includes(topicLower) || topicLower.includes(tool))
-      || pathTitle.includes(topicLower)
-      || (topicLower === 'python' && pathTitle.includes('learning'))
-      || (topicLower === 'data' && pathTitle.includes('data'))
-  }
 
   const matchesSession = (session) => {
     const query = search.trim().toLowerCase()
@@ -76,7 +65,7 @@ export default function PracticeView({ onStart, completedSessions = {}, currentP
             session={session}
             onStart={onStart}
             completion={completedSessions[session.id]}
-            isRecommended={isRecommendedSession(session)}
+            isRecommended={isRecommendedForPath(session, currentPath)}
           />
         ))}
         {/* An empty grid used to be one grey sentence wedged in a three-column
