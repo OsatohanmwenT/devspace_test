@@ -12,7 +12,7 @@ export function LeagueLadder({ leagueIndex }) {
   const currentLeague = leagues[leagueIndex]
 
   return (
-    <div className="flex w-full items-center py-3 overflow-hidden" aria-label="League progression" role="list">
+    <div className="relative flex w-full items-center py-3 overflow-hidden" aria-label="League progression" role="list">
       <div className="flex min-w-0 flex-1 justify-end gap-4 max-[680px]:gap-2">
         {leagues.slice(0, leagueIndex).map((league, index) => {
           const distance = leagueIndex - index

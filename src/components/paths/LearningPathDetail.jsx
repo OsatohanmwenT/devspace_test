@@ -105,7 +105,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           </div>
         </aside>
 
-        <div className="grid w-[min(100%,700px)] min-w-0 gap-12 mx-auto">
+        <div className="grid w-[min(100%,700px)] min-w-0 grid-cols-[minmax(0,1fr)] gap-12 mx-auto">
           {frameworkCheckpointReady && (
             <section className="grid gap-4 rounded-2xl border border-[#4169e1] bg-[#18284d] p-6 [[data-theme=light]_&]:bg-[#eff4ff]" aria-labelledby="framework-checkpoint-title">
               <div className="grid gap-1">
@@ -122,7 +122,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           )}
           {regions.map((region) => {
             return (
-              <section className="relative grid" key={region.id} aria-labelledby={`${region.id}-title`}>
+              <section className="relative grid min-w-0 grid-cols-[minmax(0,1fr)]" key={region.id} aria-labelledby={`${region.id}-title`}>
                 <header
                   data-region-header={region.id}
                   className={`relative isolate sticky top-[86px] z-[2] grid min-h-[70px] justify-items-center content-center gap-1 py-3 px-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-2xl bg-[#1f1f1f] [[data-theme=light]_&]:bg-white shadow-[0_8px_20px_rgba(0,0,0,.28)] [[data-theme=light]_&]:shadow-[0_8px_20px_rgba(40,40,35,.08)] text-center max-[680px]:min-h-[64px] ${pinnedRegionId === region.id ? "after:content-[''] after:pointer-events-none after:fixed after:top-0 after:left-0 after:z-0 after:h-[86px] after:w-screen after:bg-[#121214] [[data-theme=light]_&]:after:bg-[#fafaf8]" : ''}`}
@@ -148,30 +148,36 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
           })}
           {selectedLesson && (
             <aside
-              className="sticky z-[5] bottom-[18px] flex min-h-[92px] items-center justify-between gap-[18px] mx-4 py-4 px-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[20px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[680px]:min-h-0 max-[680px]:mx-0 max-[680px]:p-3 max-[680px]:rounded-2xl"
+              className="sticky z-[5] bottom-[18px] flex min-h-[92px] items-center justify-between gap-[18px] mx-4 py-4 px-[18px] border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[20px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_2px_6px_rgba(20,20,20,0.06)] max-[680px]:min-h-0 max-[680px]:mx-0 max-[680px]:gap-3 max-[680px]:p-3 max-[680px]:pl-4 max-[680px]:rounded-2xl max-[680px]:shadow-[0_18px_40px_-20px_rgba(0,0,0,.7)]"
+              data-lesson-bar
               aria-label="Selected lesson"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 max-[680px]:flex-1">
                 <span className="text-[10px] font-bold tracking-[.08em] uppercase text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{canOpenLesson ? 'Current lesson' : 'Lesson preview'}</span>
-                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
-                {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
+                <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:mt-0.5 max-[680px]:text-[15px]">{selectedLesson.title}</h2>
+                {selectedLesson.description && <p className="max-w-[420px] mt-1.5 max-[680px]:hidden text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
                 {/* Starting a lesson here is what switches paths — there's no
                     separate "make active" step — so say so before the click. */}
                 {canOpenLesson && !isCurrentPath && (
-                  <p className="mt-1.5 text-[12px] font-semibold text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]">
+                  <p className="mt-1.5 max-[680px]:mt-0.5 max-[680px]:truncate max-[680px]:text-[11px] text-[12px] font-semibold text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]">
                     Starting this makes {path.title} your active path
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-3.5 max-[680px]:gap-2.5">
+              <div className="flex flex-none items-center gap-3.5 max-[680px]:gap-2">
                 {canOpenLesson && (
-                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap" onClick={() => {
+                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap max-[680px]:px-5" onClick={() => {
                   setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
                     ? startedIds
                     : [...startedIds, selectedLesson.id])
                   onOpenLesson(selectedLesson.id, path.id)
                 }}>
-                  {selectedLessonStarted ? 'Continue' : 'Start lesson'}
+                  {selectedLessonStarted ? 'Continue' : (
+                    <>
+                      <span className="max-[680px]:hidden">Start lesson</span>
+                      <span className="hidden max-[680px]:inline">Start</span>
+                    </>
+                  )}
                 </ActionButton>
               )}
               {hasPodcastContent && (

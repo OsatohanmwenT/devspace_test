@@ -54,6 +54,15 @@ import { now as weekNow } from './lib/week';
 import './styles.css';
 import './tailwind.css';
 
+// 1250 → "1.2k", 12500 → "13k": keeps the header's XP counter a steady width
+// on phones, where it shares a tight row with the nav. The exact number is
+// still read out by the screen-reader label beside it.
+function formatCompactNumber(value) {
+  if (value < 1000) return String(value)
+  const thousands = value / 1000
+  return `${thousands >= 10 ? Math.round(thousands) : Math.floor(thousands * 10) / 10}k`
+}
+
 // Temporary debug view for judging the new .riv entrance clips — visit
 // ?preview=devy-riv&clip=<name>. Logs every play/pause/stop event so a
 // one-shot entrance that already finished before the first screenshot is
@@ -342,7 +351,6 @@ function App() {
       saveProgress(next)
       return next
     })
-    showNotice(assisted ? 'Lesson complete · no XP (Devy helped on a question)' : `Lesson complete · +${LESSON_XP} XP`)
   }
 
   // The celebration sits on top of the finished lesson, so continuing has to
@@ -556,7 +564,6 @@ function App() {
       return next
     })
     launchLesson(record.cards[0]?.lessons[0]?.id)
-    showNotice(`${record.title} is ready to start`)
   }
 
   // Resumes a paused path (authored or custom) as primary.
@@ -675,12 +682,11 @@ function App() {
     })
   }
 
+  // No toast here: the lesson opening is the confirmation.
   const startMission = () => {
-    const wasStarted = started
     setStarted(true)
     setShowFirstLessonWelcome(false)
     launchLesson(nextLesson?.id ?? true)
-    showNotice(wasStarted ? 'Mission ready to continue' : 'Mission started')
   }
 
   const toggleTheme = () => {
@@ -1076,10 +1082,11 @@ function App() {
           })}
         </nav>
 
-        {/* Stats on the right — hidden on mobile, where the same numbers
-            show at the top of the page's own content instead (Home). */}
-        <div className="flex items-center gap-3.5 sm:gap-3 ml-auto">
-          <div className="relative max-[680px]:hidden">
+        {/* Stats on the right. On phones they drop their pill frames and sit
+            as bare icon + number (the max-[680px] styles below), so the
+            streak and XP stay visible without crowding the nav. */}
+        <div className="flex items-center gap-3.5 sm:gap-3 ml-auto max-[680px]:gap-2.5">
+          <div className="relative">
             <button
               ref={streakButtonRef}
               type="button"
@@ -1103,7 +1110,7 @@ function App() {
             </button>
           </div>
 
-          <div className="relative max-[680px]:hidden">
+          <div className="relative">
             <button
               ref={xpButtonRef}
               type="button"
@@ -1117,7 +1124,7 @@ function App() {
               aria-expanded={activePopover === 'xp'}
             >
               <AnimatedGemIcon className="w-3.5 h-3.5 max-[680px]:w-4 max-[680px]:h-4 text-[#8b7cf6] [[data-theme=light]_&]:text-[#6699ec]" />
-              <span aria-hidden="true">{xp}</span>
+              <span aria-hidden="true">{formatCompactNumber(xp)}</span>
               <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)] whitespace-nowrap">{xp} XP</span>
             </button>
             {activePopover === 'xp' && (
@@ -1296,7 +1303,7 @@ function App() {
       </main>
 
       {!openLesson && active !== 'Plans' && active !== 'Home' && !customPathFullScreen && (
-        <div className="fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[900px]:right-[18px] max-[900px]:bottom-[18px]">
+        <div className="devy-fab fixed right-6 bottom-6 z-20 grid justify-items-end gap-3 max-[900px]:right-[18px] max-[900px]:bottom-[18px]">
           <button type="button" className="grid size-16 place-items-center rounded-full border border-[#525252] bg-[#303030] p-2 shadow-[0_4px_0_#171717] transition-[background,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#404040] active:translate-y-1 active:shadow-none focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:border-[#b8b8b8] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_0_#d4d4d4] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={() => setDevyOpen(true)} aria-expanded={Boolean(devyOpen)} aria-controls="devy-drawer" aria-label="Ask Devy">
             <DevyLottie clip="thinking" className="size-full" />
           </button>

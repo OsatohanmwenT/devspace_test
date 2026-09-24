@@ -47,10 +47,15 @@ export function InfoTooltip({ label, children, align = 'center', tone = 'auto', 
       >
         <InfoIcon className="w-full h-full" />
       </button>
+      {/* Fully hidden while closed, not just transparent: an invisible panel
+          still takes up layout, and near a screen edge it widened the whole
+          page on phones (sideways scroll). `hidden` keeps it readable as the
+          button's description. Width is capped to the viewport too. */}
       <span
         id={tooltipId}
         role="tooltip"
-        className={`absolute z-10 bottom-[calc(100%+8px)] ${alignment} w-max max-w-[240px] rounded-lg border p-2.5 text-left text-[12px] font-normal normal-case leading-[1.45] tracking-normal transition-opacity duration-100 ${panelTone} ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        hidden={!open}
+        className={`absolute z-10 bottom-[calc(100%+8px)] ${alignment} w-max max-w-[min(240px,calc(100vw-36px))] rounded-lg border p-2.5 text-left text-[12px] font-normal normal-case leading-[1.45] tracking-normal ${panelTone}`}
       >
         {children}
       </span>

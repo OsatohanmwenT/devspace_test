@@ -430,6 +430,14 @@ function formatCompactXp(value) {
   return `${thousands >= 10 ? Math.round(thousands) : Math.floor(thousands * 10) / 10}k`;
 }
 
+const MILESTONE_ICON = {
+  checkpoint: "treasure-chest",
+  streak: "lightning-bolt",
+  "streak-risk": "lightning-bolt",
+  "path-complete": "coin-stack",
+  welcome: "daily-tasks-notebook",
+};
+
 const STACK_DEPTH = 3;
 const SWIPE_DISTANCE = 110;
 const SWIPE_VELOCITY = 600;
@@ -978,6 +986,7 @@ export default function HomeView({
       completedSessions[WARM_UP_ID]?.completedAt !== today &&
       warmUpSkippedOn !== today,
   );
+  const showMobileWarmUp = warmUpDue && selectedCourse?.isPrimary;
   const startWarmUp = () => onStartPractice(WARM_UP_ID);
   const skipWarmUp = () => {
     setWarmUpSkippedOn(today);
@@ -1064,6 +1073,34 @@ export default function HomeView({
         <header className="home-greeting hidden min-[1201px]:col-span-2 min-[1201px]:col-start-1 min-[1201px]:row-start-1 min-[1201px]:flex">
           <h1>{greeting}</h1>
         </header>
+        <div className="home-mobile-tasks min-[1201px]:hidden">
+          <DailyTasks
+            className="home-mobile-tasks-trigger"
+            dailyXp={dailyXp}
+            xpGoal={xpGoal}
+            lessonDoneToday={lessonDoneToday}
+            practiceDoneToday={practiceDoneToday}
+            onContinueLesson={() => continueCourse(primaryCourse)}
+            onStartPractice={() => {
+              if (warmUpDue) startWarmUp();
+              else if (dailyPracticeId) onStartPractice(dailyPracticeId);
+              else if (warmUp) startWarmUp();
+              else continueCourse(primaryCourse);
+            }}
+          >
+            {({ doneCount, total, unseen }) => (
+              <>
+                <GameIcon name="daily-tasks-notebook" className="size-4" />
+                <span>Daily tasks</span>
+                <span className="home-mobile-tasks-count">{doneCount}/{total}</span>
+                <svg className="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {unseen && <span className="home-mobile-tasks-dot" aria-hidden="true" />}
+              </>
+            )}
+          </DailyTasks>
+        </div>
         <motion.section
           className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
           data-mode={mapMode}
@@ -1137,56 +1174,113 @@ export default function HomeView({
             </span>
 
             <span className="home-map-card__lesson-details !mt-0">
-              <span className="home-map-card__course-heading !gap-2 pt-3! !pb-6">
-                <strong className={`home-map-card__course-title ${textTitle}`}>
-                  {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Continue learning"}
-                </strong>
-                {selectedCourse?.regionLessonsTotal > 0 && (
-                  <span className={`home-map-card__course-level ${textCaption}`}>
-                    Lesson {(selectedCourse?.regionLessonsCompleted ?? 0) + 1} of{" "}
-                    {selectedCourse.regionLessonsTotal}
+              {stackCourses.length > 1 && (
+                <CourseSwitcher
+                  options={stackCourses}
+                  selectedId={selectedCourse?.id}
+                  onSelect={setSelectedCourseId}
+                />
+              )}
+              {showMobileWarmUp ? (
+                <>
+                  <span className="home-map-card__course-heading !gap-2 pt-3! !pb-4">
+                    <span className="home-map-card__warm-up-tag"><FlameGlyph />Warm up · {warmUp.minutes} min</span>
+                    <strong className={`home-map-card__course-title ${textTitle}`}>
+                      {warmUp.questions.length} quick {warmUp.questions.length === 1 ? "question" : "questions"}
+                    </strong>
+                    <span className={`home-map-card__course-level ${textCaption}`}>
+                      From {warmUp.sourceTitle}
+                    </span>
                   </span>
-                )}
-                <span className="home-map-card__course-progress">
-                  <span className="home-map-card__progress">
-                    <span style={{ width: `${selectedCourse?.regionPercent ?? 0}%` }} />
+                  {/* Same list as the lesson state: the warm-up is step one and
+                      the lesson is next — tapping the lesson row skips ahead.
+                      No region art here: the fixed-height card can't fit it
+                      and both steps, and the steps are the point. */}
+                  <span className="home-map-card__lesson-list" data-warm-up>
+                    <span className="home-map-card__lesson-row" data-state="current">
+                      <span className="grid size-[26px] flex-none place-items-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-[0_2px_0_#c2410c]">
+                        <FlameGlyph />
+                      </span>
+                      <strong className="flex-1">Warm up</strong>
+                      <LessonStatusRing current />
+                    </span>
+                    {selectedCourse?.nextLessonTitle && (
+                      <button
+                        type="button"
+                        className="home-map-card__lesson-row w-full border-0 bg-transparent text-left"
+                        data-state="upcoming"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          skipWarmUp();
+                          continueSelectedCourse();
+                        }}
+                      >
+                        <span className="grid size-[26px] flex-none place-items-center rounded-full bg-white/[0.08] text-[#a6aab4] [[data-theme=light]_&]:bg-black/[0.06] [[data-theme=light]_&]:text-[#8a8a86]">
+                          <svg className="size-[11px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z" /></svg>
+                        </span>
+                        <span className="flex-1">{selectedCourse.nextLessonTitle}</span>
+                        <LessonStatusRing />
+                      </button>
+                    )}
                   </span>
-                  <span className={`home-map-card__course-progress-value ${textCaption}`}>{selectedCourse?.regionPercent ?? 0}%</span>
-                </span>
-              </span>
+                </>
+              ) : (
+                <>
+                  <span className="home-map-card__course-heading !gap-2 pt-3! !pb-6">
+                    <strong className={`home-map-card__course-title ${textTitle}`}>
+                      {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Continue learning"}
+                    </strong>
+                    {selectedCourse?.regionLessonsTotal > 0 && (
+                      <span className={`home-map-card__course-level ${textCaption}`}>
+                        Lesson {(selectedCourse?.regionLessonsCompleted ?? 0) + 1} of{" "}
+                        {selectedCourse.regionLessonsTotal}
+                      </span>
+                    )}
+                    <span className="home-map-card__course-progress">
+                      <span className="home-map-card__progress">
+                        <span style={{ width: `${selectedCourse?.regionPercent ?? 0}%` }} />
+                      </span>
+                      <span className={`home-map-card__course-progress-value ${textCaption}`}>{selectedCourse?.regionPercent ?? 0}%</span>
+                    </span>
+                  </span>
 
-              <HeroBadge src={selectedCourse?.regionImage} />
+                  <HeroBadge src={selectedCourse?.regionImage} />
 
-              <span className="home-map-card__lesson-list">
-                <span className="home-map-card__lesson-row" data-state="current">
-                  <LessonStatusIcon locked={false} />
-                  <strong className={`flex-1 ${selectedCourse?.nextLessonTitle ? "" : "home-map-card__lesson-complete"}`}>
-                    {selectedCourse?.nextLessonTitle ?? `${selectedCourse?.title ?? "This path"} complete`}
-                  </strong>
-                  <LessonStatusRing current />
-                </span>
-                {/* A quiet preview of what comes after the current lesson —
-                    real data (main.jsx's upNextTitle), not filler. Without
-                    it this was the only content block on the card, and the
-                    fixed-height card (row-span-2, to match the left column)
-                    left a large gap of true empty space above the CTA. */}
-                {selectedCourse?.nextLessonTitle && selectedCourse?.upNextTitle && (
-                  <span className="home-map-card__lesson-row" data-state="upcoming">
-                    <LessonStatusIcon locked />
-                    <span className="flex-1">{selectedCourse.upNextTitle}</span>
-                    <LessonStatusRing />
+                  <span className="home-map-card__lesson-list">
+                    <span className="home-map-card__lesson-row" data-state="current">
+                      <LessonStatusIcon locked={false} />
+                      <strong className={`flex-1 ${selectedCourse?.nextLessonTitle ? "" : "home-map-card__lesson-complete"}`}>
+                        {selectedCourse?.nextLessonTitle ?? `${selectedCourse?.title ?? "This path"} complete`}
+                      </strong>
+                      <LessonStatusRing current />
+                    </span>
+                    {/* A quiet preview of what comes after the current lesson —
+                        real data (main.jsx's upNextTitle), not filler. Without
+                        it this was the only content block on the card, and the
+                        fixed-height card (row-span-2, to match the left column)
+                        left a large gap of true empty space above the CTA. */}
+                    {selectedCourse?.nextLessonTitle && selectedCourse?.upNextTitle && (
+                      <span className="home-map-card__lesson-row" data-state="upcoming">
+                        <LessonStatusIcon locked />
+                        <span className="flex-1">{selectedCourse.upNextTitle}</span>
+                        <LessonStatusRing />
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
+                </>
+              )}
             </span>
 
             <CardCtaButton
               onClick={(event) => {
                 event.stopPropagation();
-                openOrSelect("continueLearning", continueSelectedCourse);
+                if (showMobileWarmUp) startWarmUp();
+                else openOrSelect("continueLearning", continueSelectedCourse);
               }}
             >
-              {selectedCourse?.nextLessonTitle
+              {showMobileWarmUp
+                ? "Start warm-up"
+                : selectedCourse?.nextLessonTitle
                 ? "Continue lesson"
                 : selectedCourse?.isPrimary
                   ? "See what's next"
@@ -1227,15 +1321,17 @@ export default function HomeView({
 
             {!leagueUnlocked ? (
               <>
-                <span className="home-map-card__side">
-                  <span className="home-map-card__side-value home-map-card__side-value--text">
-                    🔒 Locked
+                {!isFrontLayout("leaderboard") && (
+                  <span className="home-map-card__side">
+                    <span className="home-map-card__side-value home-map-card__side-value--text">
+                      🔒 Locked
+                    </span>
+                    <span className="home-map-card__side-label">
+                      Finish a lesson to unlock leagues
+                    </span>
                   </span>
-                  <span className="home-map-card__side-label">
-                    Finish a lesson to unlock leagues
-                  </span>
-                </span>
-                <span className="home-map-card__details home-map-card__details--centered">
+                )}
+                <span className="home-map-card__details home-map-card__details--centered home-map-card__details--locked">
                   <span className="relative grid place-items-center">
                     <span
                       className="absolute size-20 rounded-full blur-2xl"
@@ -1251,10 +1347,10 @@ export default function HomeView({
                     </span>
                   </span>
                   <strong className={`font-bold text-[#f4f4f2] ${textTitle}`}>
-                    Locked
+                    It’s comeback time
                   </strong>
                   <span className={`font-medium text-[#8a8f9c] ${textCaption}`}>
-                    Finish a lesson to unlock
+                    Complete a lesson to claim your place in the league.
                   </span>
                 </span>
               </>
@@ -1403,10 +1499,10 @@ export default function HomeView({
             <CardCtaButton
               onClick={(event) => {
                 event.stopPropagation();
-                openOrSelect("leaderboard", onOpenLeaderboard);
+                openOrSelect("leaderboard", leagueUnlocked ? onOpenLeaderboard : onStartMission);
               }}
             >
-              View leaderboard
+              {leagueUnlocked ? "View leaderboard" : "Start lesson"}
             </CardCtaButton>
           </div>
 
@@ -1446,12 +1542,6 @@ export default function HomeView({
                     Complete a lesson to begin
                   </span>
                 </span>
-                <span className="home-map-card__details">
-                  <span>
-                    Finish your first lesson and your work will start showing up
-                    here.
-                  </span>
-                </span>
               </>
             ) : (
               <>
@@ -1483,19 +1573,43 @@ export default function HomeView({
                   )}
                 </span>
 
-                <span className="home-map-card__details">
-                  <span>
-                    {completedLessonsCount} lesson
-                    {completedLessonsCount === 1 ? "" : "s"} completed
-                  </span>
-                  {pathTools.length > 0 && (
-                    <span>
-                      Skills so far: {pathTools.slice(0, 4).join(", ")}
-                    </span>
-                  )}
-                </span>
               </>
             )}
+
+            {/* The phone version of the desktop Learner card: who you are and
+                what you've built so far, instead of one floating number. */}
+            <span className="home-map-card__details home-map-card__portfolio-profile">
+              <span className="home-map-card__portfolio-id">
+                <img
+                  src={identity?.photo ?? resolveAvatar(identity?.avatarStyle, null, identity?.name?.trim() || "you").uri}
+                  alt=""
+                />
+                <span className="min-w-0">
+                  <strong>{profileName}</strong>
+                  <span>{identity?.headline?.trim() || getRoleLabel(profile?.role)}</span>
+                </span>
+              </span>
+              <span className="home-map-card__portfolio-stats">
+                <span>
+                  <b>{completedLessonsCount}</b> lesson{completedLessonsCount === 1 ? "" : "s"}
+                </span>
+                <span>
+                  <b>{longestStreak}</b>-day best streak
+                </span>
+                {pathTools.slice(0, 2).map((tool) => (
+                  <span key={tool}>{tool}</span>
+                ))}
+              </span>
+              {completedLessonsCount === 0 && (
+                <span className="home-map-card__portfolio-hint">Finish your first lesson and your work starts showing up here.</span>
+              )}
+            </span>
+            {/* Devy mid-workout, leaning in from the card's right edge and
+                standing on the button — the clip box ends at the card's edge,
+                so he's cut off by it like the desktop Learner card. */}
+            <span className="home-map-card__portfolio-devy" aria-hidden="true">
+              <GameIcon name="devy-dumbbell" />
+            </span>
 
             <CardCtaButton
               onClick={(event) => {
@@ -1756,9 +1870,10 @@ export default function HomeView({
             </span>
 
             <div className="home-map-card__dynamic-story">
-              <span className="home-map-card__dynamic-icon">
-                <SparkleIcon className="size-6" />
-              </span>
+              {/* The milestone's own illustration rather than a second copy
+                  of the header's sparkle: a chest for a checkpoint, the
+                  streak bolt, coins for finishing a path. */}
+              <GameIcon name={MILESTONE_ICON[dynamicUpdate?.kind] ?? "treasure-chest"} className="home-map-card__dynamic-art" />
               <span className="home-map-card__dynamic-eyebrow">
                 {selectedCourse?.regionTitle ?? selectedCourse?.title ?? "Your learning path"}
               </span>

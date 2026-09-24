@@ -7,7 +7,7 @@ function GateProgress({ done, total, label }) {
   return (
     <span className="grid gap-1.5">
       <span className="flex items-center justify-between gap-3 text-[12px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-        <span className="min-w-0 truncate">{label}</span>
+        <span className="min-w-0 truncate max-[680px]:whitespace-normal">{label}</span>
         <span className="flex-none tabular-nums">{done}/{total} lessons</span>
       </span>
       <span className="relative h-2 overflow-hidden rounded-full bg-[#333336] [[data-theme=light]_&]:bg-[#ececea]" role="img" aria-label={`${done} of ${total} lessons done`}>
@@ -22,7 +22,7 @@ function UnitCard({ unit, completion, onStart }) {
   const locked = !unit.unlocked
   return (
     <article
-      className={`flex min-h-[196px] min-w-0 flex-col rounded-3xl p-5 ${locked
+      className={`flex min-h-[196px] min-w-0 flex-col rounded-3xl p-5 max-[680px]:min-h-0 max-[680px]:p-4 ${locked
         ? 'border border-dashed border-[#3a3a3d] bg-transparent [[data-theme=light]_&]:border-[#dededa]'
         : 'bg-[#1f1f1f] shadow-[0_8px_20px_rgba(0,0,0,.08)] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_4px_14px_rgba(20,20,20,.08)]'}`}
       aria-label={`${unit.title}${locked ? ', locked' : ''}`}
@@ -47,7 +47,7 @@ function UnitCard({ unit, completion, onStart }) {
         ) : null}
       </div>
 
-      <div className="mt-auto pt-5">
+      <div className="mt-auto pt-5 max-[680px]:pt-4">
         {locked ? (
           <GateProgress done={unit.gateDone} total={unit.gateTotal} label={unit.requirement} />
         ) : session ? (

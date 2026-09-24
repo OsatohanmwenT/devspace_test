@@ -13,6 +13,9 @@ import { WarmUpIntro } from './WarmUpIntro'
 
 const CHEERS = ['Nailed it!', 'That’s the one.', 'Spot on.', 'You’ve got this.']
 const NUDGES = ['Tricky one — check the explanation.', 'Not quite. The explanation has it.', 'Close! Give the explanation a read.']
+// Phones share the footer with a wide button, so the nudge shrinks to its
+// first beat — the explanation card right above says the rest.
+const NUDGES_SHORT = ['Tricky one!', 'Not quite!', 'So close!']
 
 // Devy rides along through every round and reacts to each answer: listening
 // while the learner thinks, celebrating a right answer, thinking it over with
@@ -21,6 +24,7 @@ const NUDGES = ['Tricky one — check the explanation.', 'Not quite. The explana
 function PracticeDevy({ questionIndex, checked, correct }) {
   const clip = !checked ? 'listening' : correct ? 'lesson-complete' : 'thinking'
   const line = !checked ? null : correct ? CHEERS[questionIndex % CHEERS.length] : NUDGES[questionIndex % NUDGES.length]
+  const shortLine = !checked ? null : correct ? line : NUDGES_SHORT[questionIndex % NUDGES_SHORT.length]
   return (
     <span className="mr-auto flex min-w-0 items-end gap-3 self-end" role="status" aria-live="polite">
       {/* Taller than the footer on purpose: Devy stands on the footer's floor
@@ -34,7 +38,8 @@ function PracticeDevy({ questionIndex, checked, correct }) {
       />
       {line && (
         <span className={`mb-4 -ml-4 min-w-0 text-sm font-semibold leading-snug ${correct ? 'text-[#04adc0]' : 'text-[#ff676d]'}`}>
-          {line}
+          <span className="max-[720px]:hidden">{line}</span>
+          <span className="hidden max-[720px]:inline">{shortLine}</span>
         </span>
       )}
     </span>
