@@ -10,9 +10,14 @@ export function isRecommendedForPath(session, path) {
     || (topic === 'data' && pathTitle.includes('data'))
 }
 
+// `unitIds` names the path units (region ids in data/paths) each session was
+// written for — practice is handed out per unit once its checkpoint is passed
+// (lib/practiceUnits), so a session only ever reaches learners who've been
+// taught what it tests.
 export const practiceSessions = [
   {
     id: 'python-basics-warmup',
+    unitIds: ['python-foundations'],
     title: 'Python Basics Warm-Up',
     topic: 'Python',
     minutes: 4,
@@ -43,6 +48,7 @@ export const practiceSessions = [
   },
   {
     id: 'python-variables-drill',
+    unitIds: ['python-foundations'],
     title: 'Variables & Naming',
     topic: 'Python',
     minutes: 3,
@@ -64,6 +70,7 @@ export const practiceSessions = [
   },
   {
     id: 'sql-select-basics',
+    unitIds: ['data-analysis-foundations', 'eda-features'],
     title: 'SELECT Statement Basics',
     topic: 'SQL',
     minutes: 5,
@@ -89,6 +96,7 @@ export const practiceSessions = [
   },
   {
     id: 'sql-filtering-rows',
+    unitIds: ['data-analysis-foundations', 'eda-features'],
     title: 'Filtering Rows with WHERE',
     topic: 'SQL',
     minutes: 6,
@@ -162,6 +170,7 @@ export const practiceSessions = [
   },
   {
     id: 'git-commit-flow',
+    unitIds: ['working-in-a-technical-team'],
     title: 'Everyday Git Commands',
     topic: 'Git',
     minutes: 4,
@@ -178,6 +187,7 @@ export const practiceSessions = [
   },
   {
     id: 'data-cleaning-check',
+    unitIds: ['data-analysis-foundations', 'eda-features'],
     title: 'Spotting Messy Data',
     topic: 'Data',
     minutes: 5,
@@ -208,6 +218,7 @@ export const practiceSessions = [
   },
   {
     id: 'theory-algorithms-intro',
+    unitIds: ['orientation'],
     title: 'Thinking in Algorithms',
     topic: 'Theory',
     minutes: 3,

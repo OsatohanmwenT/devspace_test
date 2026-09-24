@@ -24,7 +24,7 @@ import {
 } from "../ui/icons";
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
-import { DailyTasks, getDailyPractice } from "./HomeQuickActions";
+import { DailyTasks } from "./HomeQuickActions";
 import { WARM_UP_ID } from "../../lib/warmUp";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -422,6 +422,14 @@ function CourseFace({ course, onContinue, footer, warmUp, onStartWarmUp, onSkipW
   );
 }
 
+// 1250 → "1.2k", 12500 → "13k": keeps the XP number a steady width in the
+// stats row once totals reach four digits.
+function formatCompactXp(value) {
+  if (value < 1000) return String(value);
+  const thousands = value / 1000;
+  return `${thousands >= 10 ? Math.round(thousands) : Math.floor(thousands * 10) / 10}k`;
+}
+
 const STACK_DEPTH = 3;
 const SWIPE_DISTANCE = 110;
 const SWIPE_VELOCITY = 600;
@@ -734,6 +742,7 @@ export default function HomeView({
   completedSessions = {},
   lessonDoneToday = false,
   warmUp = null,
+  dailyPracticeId = null,
   currentPath,
   courseOptions = [],
   completedLessonsCount = 0,
@@ -753,6 +762,7 @@ export default function HomeView({
   dailyXp = 0,
   xpGoal = 1,
   dynamicUpdate,
+  isHomeVisible = true,
 }) {
   const [mapMode, setMapMode] = useState("map");
   const [promptText, setPromptText] = useState("");
@@ -971,15 +981,15 @@ export default function HomeView({
   };
   const practiceDoneToday = Object.values(completedSessions).some((entry) => entry?.completedAt === today);
 
-  // The badge row: the streak milestones Profile already shows — the two most
-  // recently earned, then the next one to aim for (with progress), so it's
-  // always pointing somewhere rather than showing empty slots.
+  // The badge row: the streak milestones Profile already shows — kept to two
+  // (the latest earned, then the next to aim for) so it fits beside XP and the
+  // quests button in the narrow left column.
   const earnedTiers = STREAK_MILESTONES.filter((tier) => earnedStreakMilestones.includes(tier.days));
   const unearnedTiers = STREAK_MILESTONES.filter((tier) => !earnedStreakMilestones.includes(tier.days));
-  const shownEarned = earnedTiers.slice(-(unearnedTiers.length ? 2 : 3));
+  const shownEarned = earnedTiers.slice(-(unearnedTiers.length ? 1 : 2));
   const badgeSlots = [
     ...shownEarned.map((tier) => ({ tier, state: "earned" })),
-    ...unearnedTiers.slice(0, 3 - shownEarned.length).map((tier, index) => ({ tier, state: index === 0 ? "next" : "locked" })),
+    ...unearnedTiers.slice(0, 2 - shownEarned.length).map((tier, index) => ({ tier, state: index === 0 ? "next" : "locked" })),
   ];
   const identity = normalizeProfile(profile);
   const profileName = identity?.name?.trim() || "Learner";
@@ -1519,9 +1529,17 @@ export default function HomeView({
                   lessonDoneToday={lessonDoneToday}
                   practiceDoneToday={practiceDoneToday}
                   onContinueLesson={() => continueCourse(primaryCourse)}
-                  onStartPractice={() => (warmUpDue ? startWarmUp() : onStartPractice(getDailyPractice(currentPath).id))}
+                  onStartPractice={() => {
+                    // The warm-up first when it's due, then an unlocked unit's
+                    // practice set; before any unit unlocks there's nothing to
+                    // practise yet, so the lesson is the way forward.
+                    if (warmUpDue) startWarmUp();
+                    else if (dailyPracticeId) onStartPractice(dailyPracticeId);
+                    else if (warmUp) startWarmUp();
+                    else continueCourse(primaryCourse);
+                  }}
                 >
-                  {({ doneCount, total }) => (
+                  {({ doneCount, total, unseen }) => (
                     <>
                       {/* The ring used to be a fixed 25% regardless of xp — it
                           now reflects today's real progress toward the daily
@@ -1537,14 +1555,24 @@ export default function HomeView({
                       >
                         <BoltIcon className="size-4" aria-hidden="true" />
                       </span>
-                      <strong>{xp}</strong>
-                      {/* Today's task count sits right on the trigger, so the
-                          daily tasks are visible without opening anything. */}
+                      <strong title={`${xp.toLocaleString()} XP`}>{formatCompactXp(xp)}</strong>
+                      {/* Named and iconed like a game's missions button, so it
+                          reads as "daily quests" rather than a bare count; the
+                          dot marks something new since it was last opened. */}
                       <span className="home-dashboard-xp-tasks" data-done={doneCount === total || undefined}>
-                        {doneCount === total ? "All done today" : `${doneCount}/${total} today`}
-                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <svg className="home-dashboard-xp-tasks__chest" viewBox="0 0 20 20" aria-hidden="true">
+                          <path d="M3 8.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V9H3v-.5Z" fill="currentColor" opacity=".55" />
+                          <rect x="3" y="9" width="14" height="7.5" rx="1.6" fill="currentColor" />
+                          <rect x="8.4" y="7.6" width="3.2" height="4.2" rx="1" fill="#fff" />
+                        </svg>
+                        Quests
+                        <span className="home-dashboard-xp-tasks__count">
+                          {doneCount}/{total}
+                        </span>
+                        <svg className="home-dashboard-xp-tasks__caret" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                           <path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
+                        {unseen && <span className="home-dashboard-xp-tasks__dot" aria-hidden="true" />}
                       </span>
                     </>
                   )}
@@ -1853,7 +1881,7 @@ export default function HomeView({
           />
         </section>
 
-        {showPremiumOffer && (
+        {isHomeVisible && showPremiumOffer && (
           <div className="fixed bottom-0 left-6 z-50 hidden min-[1201px]:block">
             <motion.div
               layout

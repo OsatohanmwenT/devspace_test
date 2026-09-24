@@ -1,24 +1,27 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { isRecommendedForPath, practiceSessions } from "../../data/practice";
+import { getDailyQuests } from "../../lib/dailyQuests";
 import { CheckIcon } from "../ui/icons";
 
-const DAY_MS = 86400000;
+const QUESTS_SEEN_KEY = "devspace-daily-quests-seen";
 
-// Today's session: one the Practice page recommends for the learner's path
-// (falling back to all of them), rotating once a day so it's the same pick
-// all day and a different one tomorrow.
-export function getDailyPractice(path) {
-  const matching = practiceSessions.filter((session) => isRecommendedForPath(session, path));
-  const pool = matching.length > 0 ? matching : practiceSessions;
-  const now = new Date();
-  const dayIndex = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / DAY_MS);
-  return pool[dayIndex % pool.length];
+// When the checklist was last opened, and how many quests were done then — so
+// the trigger can carry a dot on the first visit of each day and again when a
+// quest gets completed, the way games flag their missions button.
+function readQuestsSeen() {
+  try {
+    return JSON.parse(window.localStorage.getItem(QUESTS_SEEN_KEY)) ?? null;
+  } catch {
+    return null;
+  }
 }
-// Today's three tasks, opened from whatever trigger the caller passes as
+
+// Today's three quests, opened from whatever trigger the caller passes as
 // children (on Home it's the XP ring, which already tracks the daily goal).
+// Children can be a function of { doneCount, total, unseen }.
 // Clicks and keys stay inside so the card this sits in doesn't react.
 export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday, onContinueLesson, onStartPractice, className = "", children }) {
   const [open, setOpen] = useState(false);
+  const [seen, setSeen] = useState(readQuestsSeen);
   const rootRef = useRef(null);
   const panelId = useId();
 
@@ -38,19 +41,29 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
     };
   }, [open]);
 
-  const tasks = [
-    {
-      id: "xp",
-      label: `Earn ${xpGoal} XP`,
-      meta: `${Math.min(dailyXp, xpGoal)}/${xpGoal}`,
-      done: dailyXp >= xpGoal,
-      onClick: onContinueLesson,
-    },
-    { id: "lesson", label: "Finish a lesson", done: lessonDoneToday, onClick: onContinueLesson },
-    { id: "practice", label: "Warm up or practice", done: practiceDoneToday, onClick: onStartPractice },
-  ];
+  const quests = getDailyQuests({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday });
+  const tasks = quests.map((quest) => ({
+    ...quest,
+    meta: quest.target > 1 ? `${quest.current}/${quest.target}` : null,
+    onClick: quest.id === "practice" ? onStartPractice : onContinueLesson,
+  }));
   const doneCount = tasks.filter((task) => task.done).length;
   const allDone = doneCount === tasks.length;
+  const today = new Date().toDateString();
+  const unseen = seen?.date !== today || doneCount > (seen?.done ?? 0);
+
+  const toggle = () => {
+    if (!open) {
+      const next = { date: today, done: doneCount };
+      setSeen(next);
+      try {
+        window.localStorage.setItem(QUESTS_SEEN_KEY, JSON.stringify(next));
+      } catch {
+        // storage unavailable — the dot just comes back next visit
+      }
+    }
+    setOpen((current) => !current);
+  };
 
   return (
     <div
@@ -65,15 +78,15 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
         data-done={allDone || undefined}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={`Today's tasks: ${allDone ? "all done" : `${doneCount} of ${tasks.length} done`}`}
-        onClick={() => setOpen((current) => !current)}
+        aria-label={`Daily quests: ${allDone ? "all done" : `${doneCount} of ${tasks.length} done`}${unseen ? ", new" : ""}`}
+        onClick={toggle}
       >
-        {typeof children === "function" ? children({ doneCount, total: tasks.length }) : children}
+        {typeof children === "function" ? children({ doneCount, total: tasks.length, unseen }) : children}
       </button>
       {open && (
-        <div className="home-quick-tasks__panel" id={panelId} role="group" aria-label="Today's tasks">
+        <div className="home-quick-tasks__panel" id={panelId} role="group" aria-label="Daily quests">
           <span className="home-quick-tasks__title">
-            Today
+            Daily quests
             <span>{doneCount}/{tasks.length}</span>
           </span>
           {tasks.map((task) => (

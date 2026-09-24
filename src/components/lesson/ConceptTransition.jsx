@@ -25,7 +25,7 @@ if (typeof window !== 'undefined') {
 // centre, spread so it reads as a small pop rather than confetti.
 const SPARKS = [[-86, -52], [84, -64], [-104, 18], [100, 8], [-58, 70], [64, 66]]
 
-export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip, badge, stats = [], action, pinAction = false, accentTitle = false, children, onExit }) {
+export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip, badge, stats = [], action, pinAction = false, accentTitle = false, disableDevyCheer = false, markClassName = 'size-[140px] max-[720px]:size-[104px]', children, onExit }) {
   const rootRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -89,7 +89,7 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
 
       // The ongoing cheer only starts once GSAP is done writing to the mark —
       // starting it any earlier is exactly the conflict this component avoids.
-      if (mood === 'celebrating') {
+      if (mood === 'celebrating' && !disableDevyCheer) {
         timeline.call(() => {
           document.querySelector('[data-transition-mark]')?.classList.add('devy-cheer-loop')
         })
@@ -145,7 +145,7 @@ export function ConceptTransition({ eyebrow, title, body, mood = 'neutral', clip
               className="pointer-events-none invisible absolute size-3 rotate-45 rounded-[3px] bg-amber-400 even:size-2 even:bg-[#6699ec]"
             />
           ))}
-          <div data-transition-mark className="relative size-[140px] max-[720px]:size-[104px]">
+          <div data-transition-mark className={`relative ${markClassName}`}>
             {clip ? (
               <DevyLottie clip={clip} className="h-full w-full" />
             ) : (

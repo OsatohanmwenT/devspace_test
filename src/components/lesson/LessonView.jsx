@@ -66,7 +66,7 @@ function UnavailableLesson({ lessonId }) {
   )
 }
 
-export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile, xp = 0, streakPreview = null }) {
+export default function LessonView({ navigationStyle = 'segments', lessonId = writingProgramsLesson.id, onExit, onComplete, profile, xp = 0, streakPreview = null, questPreview = null }) {
   const activeLessonId = typeof lessonId === 'string' ? lessonId : writingProgramsLesson.id
   const lesson = getLesson(activeLessonId)
   // Rebuilt per lesson rather than once at module load, so the id actually selects content.
@@ -640,6 +640,7 @@ export default function LessonView({ navigationStyle = 'segments', lessonId = wr
             accuracy={completedLessonQuestions.total ? Math.round((completedLessonQuestions.correct / completedLessonQuestions.total) * 100) : null}
             startedAt={startedAtRef.current}
             streak={streakPreview}
+            quests={questPreview?.(session.assistedByDevy ? 0 : LESSON_XP)}
             onFinish={finishLesson}
             onExit={requestExit}
           />

@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ActionButton } from '../ui/ActionButton'
 import { BoltIcon, CheckIcon } from '../ui/icons'
+import { DailyQuestProgress } from '../ui/DailyQuestProgress'
+import { DevyLottie } from '../ui/DevyLottie'
 import { DevyMood } from '../ui/DevyMood'
 import { ConceptTransition } from './ConceptTransition'
 
@@ -236,13 +238,49 @@ function StreakCelebration({ before, after, dates, onContinue }) {
   )
 }
 
-// The end of a lesson as a short sequence: the results, then — only when this
-// lesson actually extends the streak — the streak moment, then back to the path.
-export function LessonCompleteSequence({ title, body, xpEarned, accuracy, startedAt, streak, onFinish, onExit }) {
+// Duolingo's "quest progress" beat: the daily quests this lesson just moved,
+// filling up — so the quests are seen where they're earned, not only when
+// someone thinks to open the checklist on Home.
+function QuestProgressScreen({ quests, onContinue }) {
+  const doneCount = quests.after.filter((quest) => quest.done).length
+  const allDone = doneCount === quests.after.length
+  return (
+    <section className="flex h-full flex-col overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-labelledby="quest-progress-title">
+      <div className="grid flex-1 place-items-center px-7 py-10 max-[720px]:px-5">
+        <div className="grid w-full max-w-[520px] justify-items-center text-center">
+          <DevyLottie clip="lesson-complete" loop={false} className="mb-5 h-28 w-28" />
+          <h1 id="quest-progress-title" className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,32px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+            {allDone ? 'Daily quests complete!' : 'Daily quest progress'}
+          </h1>
+          <p className="mt-2 mb-0 text-[15px] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
+            {allDone ? 'All three done for today. See you tomorrow.' : `${doneCount} of ${quests.after.length} done today`}
+          </p>
+          <DailyQuestProgress before={quests.before} after={quests.after} className="mt-7" />
+        </div>
+      </div>
+      <div className="flex shrink-0 justify-center px-6 pt-2 pb-7 max-[720px]:px-4 max-[720px]:pb-5">
+        <ActionButton variant="primary" className="depth-button min-h-14 w-full max-w-[560px] overflow-hidden text-[17px] font-semibold" onClick={onContinue} autoFocus>
+          Continue
+        </ActionButton>
+      </div>
+    </section>
+  )
+}
+
+// The end of a lesson as a short sequence: the results, then the daily quests
+// it moved, then — only when this lesson actually extends the streak — the
+// streak moment, then back to the path.
+export function LessonCompleteSequence({ title, body, xpEarned, accuracy, startedAt, streak, quests, onFinish, onExit }) {
   const [screen, setScreen] = useState('results')
   // Fixed once, when the results appear — not recomputed on every render.
   const [seconds] = useState(() => Math.max(1, Math.round((Date.now() - startedAt) / 1000)))
   const xpShown = useCountUp(xpEarned, { delay: 1300 })
+
+  const afterQuests = () => (streak ? setScreen('streak') : onFinish())
+
+  if (screen === 'quests' && quests) {
+    return <QuestProgressScreen quests={quests} onContinue={afterQuests} />
+  }
 
   if (screen === 'streak' && streak) {
     return <StreakCelebration before={streak.before} after={streak.after} dates={streak.dates} onContinue={onFinish} />
@@ -256,10 +294,12 @@ export function LessonCompleteSequence({ title, body, xpEarned, accuracy, starte
       clip="lesson-complete"
       accentTitle
       pinAction
+      disableDevyCheer
+      markClassName="size-[184px] max-[720px]:size-[140px]"
       onExit={onExit}
       action={{
         label: xpEarned > 0 ? 'Claim XP' : 'Continue',
-        onClick: () => (streak ? setScreen('streak') : onFinish()),
+        onClick: () => (quests ? setScreen('quests') : afterQuests()),
       }}
     >
       <div className="mt-9 grid w-full max-w-[520px] grid-cols-3 gap-3 max-[720px]:mt-7 max-[720px]:gap-2">

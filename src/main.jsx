@@ -1,6 +1,6 @@
 import { bind } from 'cuelume';
 import { MotionConfig } from 'motion/react';
-import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
+import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
@@ -20,6 +20,8 @@ import PlansView from './components/plans';
 import PracticeView from './components/practice';
 import { PracticeSession } from './components/practice/PracticeSession';
 import { buildWarmUp, WARM_UP_ID } from './lib/warmUp';
+import { getPracticeUnits, isUnitPracticeId } from './lib/practiceUnits';
+import { getDailyQuestsFromProgress, questsAdvanced } from './lib/dailyQuests';
 import ProfileView from './components/profile';
 import SettingsView from './components/settings';
 import { StreakMilestoneTransition } from './components/streak/StreakMilestoneTransition';
@@ -616,6 +618,26 @@ function App() {
     }, 3000)
   }
 
+  // Built-on-the-fly rounds: the warm-up (told which lesson it leads into) and
+  // each unit's practice set. Anything else is a catalogue id PracticeSession
+  // looks up itself.
+  const practiceSessionFor = (id) => {
+    if (id === WARM_UP_ID) return warmUp ? { ...warmUp, nextLessonTitle: nextLesson?.title } : undefined
+    if (isUnitPracticeId(id)) return practiceUnits.find((unit) => unit.id === id)?.session ?? undefined
+    return undefined
+  }
+
+  // The warm-up is the lesson's opening act, so finishing it wipes straight
+  // into that lesson — no results screen, no loading screen in between.
+  const finishWarmUp = () => {
+    runPageTransition(() => {
+      setOpenPractice(null)
+      setStarted(true)
+      setShowFirstLessonWelcome(false)
+      setOpenLesson(nextLesson?.id ?? true)
+    })
+  }
+
   const startMission = () => {
     const wasStarted = started
     setStarted(true)
@@ -658,6 +680,9 @@ function App() {
   // which never moved.
   const derived = useMemo(() => derivePathProgress(currentPath, completedLessons), [currentPath, completedLessons])
   const warmUp = useMemo(() => buildWarmUp(completedLessons), [completedLessons])
+  // One practice set per unit of the current path, unlocked at that unit's
+  // checkpoint (lib/practiceUnits).
+  const practiceUnits = useMemo(() => getPracticeUnits(currentPath, completedLessons), [currentPath, completedLessons])
   const nextLesson = derived.currentLesson
   const currentStepIndex = derived.currentRegionIndex
   const currentRegionCard = derived.currentRegion ?? derived.regions[0]
@@ -671,6 +696,21 @@ function App() {
     const after = applyActivity(progress, 0)
     return { before: streakDays, after: after.streakDays, dates: after.streakActivityDates }
   }, [openLesson, activeToday, progress, streakDays])
+  // What finishing the open lesson would do to today's quests, for the quest
+  // progress screen at its end — the same preview idea as the streak one above,
+  // since the completion itself is only recorded once the learner leaves.
+  const lessonQuestPreview = useCallback((xpEarned) => {
+    const today = new Date().toDateString()
+    const before = getDailyQuestsFromProgress(progress, xpGoal, today)
+    // Mirrors recordLessonCompletion: a repeat completion earns no XP.
+    const xpGain = progress.completedLessons?.[openLesson] ? 0 : xpEarned
+    const finished = {
+      ...applyActivity(progress, xpGain, today),
+      completedLessons: { ...progress.completedLessons, [openLesson]: { completedAt: today } },
+    }
+    const after = getDailyQuestsFromProgress(finished, xpGoal, today)
+    return questsAdvanced(before, after) ? { before, after } : null
+  }, [progress, xpGoal, openLesson])
   const streakAtRisk = streakDays > 0 && !activeToday
   const streakMessage = getStreakMessage(streakDays, activeToday)
   // Paths the learner paused to focus on the current primary one — offered
@@ -1139,9 +1179,10 @@ function App() {
           />
         ) : active === 'Practice' ? (
           <PracticeView
+            units={practiceUnits}
             onStart={setOpenPractice}
             completedSessions={completedSessions}
-            currentPath={currentPath}
+            onContinueLearning={startMission}
           />
         ) : (
           <HomeView
@@ -1155,6 +1196,7 @@ function App() {
             onOpenPath={openPathFromHome}
             onStartPractice={setOpenPractice}
             warmUp={warmUp}
+            dailyPracticeId={practiceUnits.find((unit) => unit.session)?.id ?? null}
             onOpenProfile={() => setActive('Profile')}
             profile={profile}
             longestStreak={longestStreak}
@@ -1183,6 +1225,7 @@ function App() {
             seasonTimeLeft={seasonTimeLeft}
             seasonCoins={seasonCoins}
             dynamicUpdate={dynamicUpdate}
+            isHomeVisible={!openLesson && !openPractice && !customPathFullScreen && !devyOpen}
           />
         )}
       </main>
@@ -1223,7 +1266,7 @@ function App() {
 
       {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
 
-      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} streakPreview={lessonStreakPreview} />}
+      {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} streakPreview={lessonStreakPreview} questPreview={lessonQuestPreview} />}
       {/* Rendered after LessonView so it lands on top of the lesson the learner
           just finished, rather than behind it. */}
       {leagueCelebration && (
@@ -1249,7 +1292,7 @@ function App() {
           onViewJourney={viewJourneyFromMilestone}
         />
       )}
-      {openPractice && <PracticeSession sessionId={openPractice} session={openPractice === WARM_UP_ID ? warmUp : undefined} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
+      {openPractice && <PracticeSession sessionId={openPractice} session={practiceSessionFor(openPractice)} variant={openPractice === WARM_UP_ID ? 'warm-up' : 'practice'} onFinish={finishWarmUp} completion={completedSessions[openPractice]} xpAward={getPracticeXpAward(progress, openPractice)} quests={getDailyQuestsFromProgress(progress, xpGoal)} onExit={() => setOpenPractice(null)} onComplete={recordPracticeCompletion} />}
       {pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}
     </div>
   )

@@ -14,12 +14,24 @@ function recentLessonIds(completedLessons) {
     .map((entry) => entry.id)
 }
 
-function quizQuestions(lesson) {
+// A lesson's check questions, ids prefixed with the lesson so questions from
+// different lessons can share one round without colliding.
+export function getLessonQuizQuestions(lesson) {
   return lesson.concepts.flatMap((concept) =>
     concept.activities
       .filter((activity) => activity.type === 'quiz')
       .flatMap((activity) => activity.content.questions),
-  )
+  ).map((question) => ({ ...question, id: `${lesson.id}:${question.id}` }))
+}
+
+// Up to `size` questions from `pool`, starting at a point that moves once a
+// day — the same round all day, a different one tomorrow, never a repeat
+// within a round.
+export function pickDailyRound(pool, size, now = new Date()) {
+  if (!pool.length) return []
+  const dayIndex = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / DAY_MS)
+  const start = dayIndex % pool.length
+  return Array.from({ length: Math.min(size, pool.length) }, (_, index) => pool[(start + index) % pool.length])
 }
 
 // A short review round built from the check questions of the lessons the
@@ -32,7 +44,7 @@ export function buildWarmUp(completedLessons, { lookup = getLesson, now = new Da
   for (const id of recentLessonIds(completedLessons)) {
     const lesson = lookup(id)
     if (!lesson) continue
-    const questions = quizQuestions(lesson).map((question) => ({ ...question, id: `${lesson.id}:${question.id}` }))
+    const questions = getLessonQuizQuestions(lesson)
     if (!questions.length) continue
     sourceTitle ??= lesson.title
     pool.push(...questions)
@@ -40,10 +52,7 @@ export function buildWarmUp(completedLessons, { lookup = getLesson, now = new Da
   }
   if (!pool.length) return null
 
-  const dayIndex = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / DAY_MS)
-  const size = Math.min(WARM_UP_SIZE, pool.length)
-  const start = dayIndex % pool.length
-  const questions = Array.from({ length: size }, (_, index) => pool[(start + index) % pool.length])
+  const questions = pickDailyRound(pool, WARM_UP_SIZE, now)
 
   return {
     id: WARM_UP_ID,

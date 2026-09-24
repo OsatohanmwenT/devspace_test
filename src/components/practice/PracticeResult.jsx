@@ -1,5 +1,6 @@
 import { ActionButton } from '../ui/ActionButton'
-import { DevyMood } from '../ui/DevyMood'
+import { DailyQuestProgress } from '../ui/DailyQuestProgress'
+import { DevyLottie } from '../ui/DevyLottie'
 
 // A practice round used to end by vanishing: the last "Finish practice" click
 // closed the session outright, so the score, the XP and the answer the learner
@@ -15,7 +16,7 @@ import { DevyMood } from '../ui/DevyMood'
 // screen leads with the retry rather than the exit.
 const PASS_RATIO = 2 / 3
 
-export function PracticeResult({ session, correctCount, total, xpAward, isReplay, onRetry, onDone }) {
+export function PracticeResult({ session, correctCount, total, xpAward, isReplay, quests = null, onRetry, onDone }) {
   const ratio = total > 0 ? correctCount / total : 0
   const passed = ratio >= PASS_RATIO
   const perfect = total > 0 && correctCount === total
@@ -43,8 +44,11 @@ export function PracticeResult({ session, correctCount, total, xpAward, isReplay
     <main className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-label="Practice results">
       <div className="grid min-h-full place-items-center px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
         <div className="grid w-full max-w-[520px] justify-items-center text-center">
-          <DevyMood
-            mood={passed ? 'celebrating' : 'annoyed'}
+          {/* Celebrates a pass; after a round that didn't stick, Devy thinks
+              it over rather than looking disappointed in the learner. */}
+          <DevyLottie
+            clip={passed ? 'lesson-complete' : 'thinking'}
+            loop={!passed}
             className="mb-6 h-28 w-28 max-[680px]:mb-5 max-[680px]:h-24 max-[680px]:w-24"
           />
 
@@ -78,6 +82,13 @@ export function PracticeResult({ session, correctCount, total, xpAward, isReplay
             <p className="mt-3 mb-0 max-w-[40ch] text-[13px] leading-[1.5] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
               You already earned XP for this session. Replaying still counts for your streak.
             </p>
+          )}
+
+          {quests && (
+            <section className="mt-7 grid w-full justify-items-start gap-3" aria-label="Daily quest progress">
+              <h2 className="m-0 text-[12px] font-bold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Daily quests</h2>
+              <DailyQuestProgress before={quests.before} after={quests.after} />
+            </section>
           )}
 
           <ActionButton

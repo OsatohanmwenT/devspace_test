@@ -1,15 +1,54 @@
+import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { questsAdvanced } from '../../lib/dailyQuests'
 import { practiceSessions } from '../../data/practice'
 import { ActionButton } from '../ui/ActionButton'
+import { DevyLottie } from '../ui/DevyLottie'
 import { LessonProgressStrip } from '../lesson/LessonProgressStrip'
 import { LessonQuestion } from '../lesson/LessonQuestion'
 import { isQuestionComplete, isQuestionCorrect } from '../lesson/questionState'
 import { PracticeIntro } from './PracticeIntro'
 import { PracticeResult } from './PracticeResult'
+import { WarmUpIntro } from './WarmUpIntro'
 
-// `session` lets a caller pass a round built on the fly (the Home warm-up)
-// instead of one from the practice catalogue.
-export function PracticeSession({ sessionId, session: sessionOverride, completion, xpAward = 0, onExit, onComplete }) {
+const CHEERS = ['Nailed it!', 'That’s the one.', 'Spot on.', 'You’ve got this.']
+const NUDGES = ['Tricky one — check the explanation.', 'Not quite. The explanation has it.', 'Close! Give the explanation a read.']
+
+// Devy rides along through every round and reacts to each answer: listening
+// while the learner thinks, celebrating a right answer, thinking it over with
+// them after a wrong one — the blame stays on the question, never the learner.
+// Keyed by question and outcome so each reaction plays from its first frame.
+function PracticeDevy({ questionIndex, checked, correct }) {
+  const clip = !checked ? 'listening' : correct ? 'lesson-complete' : 'thinking'
+  const line = !checked ? null : correct ? CHEERS[questionIndex % CHEERS.length] : NUDGES[questionIndex % NUDGES.length]
+  return (
+    <span className="mr-auto flex min-w-0 items-end gap-3 self-end" role="status" aria-live="polite">
+      {/* Taller than the footer on purpose: Devy stands on the footer's floor
+          and peeks up over its top edge, so it reads as a character in the
+          room rather than an icon in a toolbar. */}
+      <DevyLottie
+        key={`${questionIndex}-${clip}`}
+        clip={clip}
+        loop={clip !== 'lesson-complete'}
+        className="-mt-16 -mb-6 -ml-3 size-[124px] flex-none max-[720px]:-mt-9 max-[720px]:size-[84px]"
+      />
+      {line && (
+        <span className={`mb-4 -ml-4 min-w-0 text-sm font-semibold leading-snug ${correct ? 'text-[#04adc0]' : 'text-[#ff676d]'}`}>
+          {line}
+        </span>
+      )}
+    </span>
+  )
+}
+
+// `session` lets a caller pass a round built on the fly (the warm-up, a unit's
+// practice set) instead of one from the practice catalogue.
+//
+// variant="warm-up" is the pre-lesson round: Devy's rope intro instead of the
+// stats screen, and no results screen at the end — finishing records the round
+// and calls `onFinish`, which carries straight on into the lesson.
+export function PracticeSession({ sessionId, session: sessionOverride, variant = 'practice', completion, xpAward = 0, quests = null, onExit, onComplete, onFinish }) {
+  const isWarmUp = variant === 'warm-up'
   const session = sessionOverride ?? practiceSessions.find((item) => item.id === sessionId)
   const [phase, setPhase] = useState('intro')
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -18,6 +57,9 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
   // completing the session is what makes the next replay worth less, so the
   // prop has already moved on by the time this screen paints.
   const [result, setResult] = useState(null)
+  // Today's quests as they stood when the round opened; the live `quests`
+  // prop has moved on by the results screen, which shows the difference.
+  const [questsBefore] = useState(quests)
 
   const currentQuestion = session?.questions[questionIndex]
   const currentState = currentQuestion ? questionStates[currentQuestion.id] : undefined
@@ -70,8 +112,12 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
   // is still written here, so nothing depends on the learner reading it.
   const finishPractice = () => {
     const correctCount = session.questions.filter((question) => isQuestionCorrect(question, questionStates[question.id]?.answer)).length
-    setResult({ correctCount, total: session.questions.length, xpAward, isReplay: Boolean(completion) })
     onComplete?.(session.id, correctCount, session.questions.length)
+    if (isWarmUp) {
+      onFinish?.()
+      return
+    }
+    setResult({ correctCount, total: session.questions.length, xpAward, isReplay: Boolean(completion) })
     setPhase('result')
   }
 
@@ -88,7 +134,7 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
   }
 
   const footerAction = checked
-    ? { label: isLastQuestion ? 'Finish practice' : 'Continue', onClick: continueQuestion }
+    ? { label: isLastQuestion ? (isWarmUp ? 'Start the lesson' : 'Finish practice') : 'Continue', onClick: continueQuestion }
     : { label: 'Check answer', onClick: checkQuestion, disabled: !canCheck }
 
   // Only the quiz has a footer. Reserving its 84px on the intro and results
@@ -117,7 +163,9 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
         {(phase === 'intro' || phase === 'result') && <span className="ml-3 text-sm font-semibold">{session.title}</span>}
       </header>
 
-      {phase === 'intro' ? (
+      {phase === 'intro' && isWarmUp ? (
+        <WarmUpIntro session={session} onDone={() => setPhase('quiz')} />
+      ) : phase === 'intro' ? (
         <PracticeIntro session={session} completion={completion} onStart={() => setPhase('quiz')} />
       ) : phase === 'result' && result ? (
         <PracticeResult
@@ -126,12 +174,18 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
           total={result.total}
           xpAward={result.xpAward}
           isReplay={result.isReplay}
+          quests={quests && questsBefore && questsAdvanced(questsBefore, quests) ? { before: questsBefore, after: quests } : null}
           onRetry={retryPractice}
           onDone={onExit}
         />
       ) : (
         <>
-          <main className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white">
+          <motion.main
+            className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
               <LessonQuestion
                 question={currentQuestion}
@@ -141,12 +195,10 @@ export function PracticeSession({ sessionId, session: sessionOverride, completio
                 onAnswer={answerQuestion}
               />
             </div>
-          </main>
+          </motion.main>
 
           <footer className="flex items-center justify-end gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] px-6 py-3 max-[720px]:px-3.5">
-            {checked && <span className={`mr-auto text-sm font-semibold ${isQuestionCorrect(currentQuestion, answer) ? 'text-[#04adc0]' : 'text-[#ff676d]'}`} role="status">
-              {isQuestionCorrect(currentQuestion, answer) ? 'Correct' : 'Review the explanation'}
-            </span>}
+            <PracticeDevy questionIndex={questionIndex} checked={checked} correct={checked && isQuestionCorrect(currentQuestion, answer)} />
             <ActionButton
               variant="primary"
               className="min-h-[50px] min-w-[200px] text-[15px] font-semibold max-[720px]:min-w-[164px]"
