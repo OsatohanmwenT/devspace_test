@@ -1330,9 +1330,15 @@
     text-transform: uppercase;
   }
 
-  .home-quick-tasks__title span {
+  .home-quick-tasks__title > span:last-child {
     color: rgb(var(--qa-accent));
     font-variant-numeric: tabular-nums;
+  }
+
+  .home-quick-tasks__heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .home-quick-tasks__row {
@@ -1636,10 +1642,10 @@
     color: #22c55e;
   }
 
-  .home-dashboard-xp .home-dashboard-xp-tasks__chest {
-    width: 15px;
-    height: 15px;
-    color: currentColor;
+  .home-dashboard-xp .home-dashboard-xp-tasks__icon {
+    width: 17px;
+    height: 17px;
+    margin: -2px 0 -2px -2px;
   }
 
   .home-dashboard-xp .home-dashboard-xp-tasks__count {
@@ -1786,6 +1792,7 @@
   .home-dashboard-portfolio {
     position: relative;
     display: flex;
+    overflow: hidden;
     width: 100%;
     height: 120px;
     flex-direction: column;
@@ -1883,12 +1890,26 @@
     white-space: nowrap;
   }
 
+  /* Flush to the corner and cropped by the card: the artwork is already cut
+     off at its right and bottom, so it lines up with the card's edges. */
   .home-dashboard-portfolio-devy {
     position: absolute;
-    right: 16px;
-    bottom: 14px;
-    width: 56px;
-    height: 56px;
+    right: -2px;
+    bottom: -4px;
+    width: auto;
+    height: 86px;
+    transform-origin: 100% 100%;
+    transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .home-dashboard-portfolio:hover .home-dashboard-portfolio-devy {
+    transform: rotate(-4deg) translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-dashboard-portfolio-devy {
+      transition: none;
+    }
   }
 
   .home-dashboard-portfolio-stats {
@@ -2019,6 +2040,12 @@
 
   .home-dashboard-league-empty .home-dashboard-link {
     justify-self: center;
+  }
+
+  .home-dashboard-league-empty .home-dashboard-league-lock {
+    width: 68px;
+    height: 68px;
+    filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.18));
   }
 
   .home-dashboard-link {
@@ -3266,40 +3293,22 @@
   mask-image: radial-gradient(circle at var(--open-x, 50%) var(--open-y, 40%), transparent var(--hole), #000 calc(var(--hole) + 1px));
 }
 
-/* Streak flame: a gentle, continuous flicker — the inner flame breathes and
-   the outer one sways a touch, both anchored at the base. */
-.streak-flame-inner,
-.streak-flame-outer {
-  transform-box: fill-box;
+/* Streak bolt: a slow charge — it swells a touch and brightens, like it's
+   holding a current, anchored at its base so it doesn't drift. */
+.streak-bolt {
   transform-origin: 50% 100%;
+  animation: streak-bolt-charge 1.8s ease-in-out infinite;
 }
 
-.streak-flame-inner {
-  animation: streak-flame-breathe 1.4s ease-in-out infinite;
-}
-
-.streak-flame-outer {
-  animation: streak-flame-sway 2.2s ease-in-out infinite;
-}
-
-@keyframes streak-flame-breathe {
+@keyframes streak-bolt-charge {
   50% {
-    transform: scale(0.94, 1.08);
-  }
-}
-
-@keyframes streak-flame-sway {
-  25% {
-    transform: skewX(-2deg) scaleY(1.02);
-  }
-  75% {
-    transform: skewX(2deg) scaleY(0.99);
+    transform: scale(1.04) rotate(-2deg);
+    filter: brightness(1.12) drop-shadow(0 0 14px rgb(255 214 0 / 0.55));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .streak-flame-inner,
-  .streak-flame-outer {
+  .streak-bolt {
     animation: none;
   }
 }

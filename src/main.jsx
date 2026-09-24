@@ -207,9 +207,13 @@ function App() {
     }
   }, [active])
 
-  const showNotice = (message) => {
-    setNotice(message)
-    window.setTimeout(() => setNotice(''), 2200)
+  // A notice can carry one action (e.g. Undo); those stay up long enough to
+  // reach for, and a newer notice always replaces the older one's timer.
+  const noticeTimerRef = useRef(null)
+  const showNotice = (message, action = null) => {
+    setNotice(action ? { message, action } : message)
+    window.clearTimeout(noticeTimerRef.current)
+    noticeTimerRef.current = window.setTimeout(() => setNotice(''), action ? 8000 : 2200)
   }
 
   // Settle any finished season before the leaderboard renders, so promotion
@@ -567,6 +571,39 @@ function App() {
     showNotice(`Switched active mission to ${targetPath?.title ?? 'new path'}`)
   }
 
+  // Picking a path means starting it: its current lesson opens and the path
+  // becomes active in one go (with Undo), wherever the learner picked it from.
+  const startPath = (pathId) => {
+    const targetPath = customPaths?.[pathId] ?? getPath(pathId, customPaths)
+    const lessonId = derivePathProgress(targetPath, completedLessons).currentLesson?.id
+    if (lessonId) startLessonOnPath(lessonId, pathId)
+    else resumePath(pathId)
+  }
+
+  // There's no "make this my path" step: starting a lesson on a path is the
+  // choice. If it isn't the active path it becomes it, and a toast offers to
+  // undo in case the learner was only trying a lesson out.
+  const startLessonOnPath = (lessonId, pathId) => {
+    const previousPathId = profile?.pathId
+    if (pathId && previousPathId && pathId !== previousPathId) {
+      const targetPath = getPath(pathId, customPaths)
+      setProgress((current) => {
+        const next = switchPrimaryPath(current, pathId)
+        saveProgress(next)
+        return next
+      })
+      showNotice(`Now learning ${targetPath?.title ?? 'this path'}`, {
+        label: 'Undo',
+        onClick: () => setProgress((current) => {
+          const next = switchPrimaryPath(current, previousPathId)
+          saveProgress(next)
+          return next
+        }),
+      })
+    }
+    launchLesson(lessonId)
+  }
+
   // The learner's own words and links, layered onto the onboarding-derived
   // profile — everything else on the CV comes from real progress records,
   // but name, headline, bio, links, and works are theirs to say.
@@ -775,6 +812,7 @@ function App() {
         regionTitle: info.currentRegion?.title ?? null,
         percent: info.percent,
         nextLessonTitle: info.currentLesson?.title ?? null,
+        nextLessonId: info.currentLesson?.id ?? null,
         // The lesson after the one already in progress — distinct from
         // nextLessonTitle, which is the in-progress lesson itself.
         upNextTitle: currentIndexInRegion !== -1 ? regionLessons[currentIndexInRegion + 1]?.title ?? null : null,
@@ -916,9 +954,28 @@ function App() {
     }
   }
 
+  // Rendered on every screen, including the lesson-loading one: a switch's
+  // Undo toast appears as the lesson launches, and would otherwise sit
+  // unseen behind the loading screen until it timed out.
+  const noticeToast = notice && <div className="fixed z-[60] right-6 bottom-6 flex items-center gap-4 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:justify-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px] shadow-[0_12px_30px_-18px_rgba(0,0,0,.6)]" role="status">
+        <span>{typeof notice === 'string' ? notice : notice.message}</span>
+        {typeof notice !== 'string' && (
+          <button
+            type="button"
+            className="-my-1 rounded-md border-0 bg-transparent px-2 py-1 text-[13px] font-semibold text-[#88bdf2] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]"
+            onClick={() => {
+              notice.action.onClick()
+              setNotice('')
+            }}
+          >
+            {notice.action.label}
+          </button>
+        )}
+      </div>
+
   if (!profile) return <><OnboardingView onComplete={completeOnboarding} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
   if (showFirstLessonWelcome) return <><FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
-  if (loadingLesson) return <><LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
+  if (loadingLesson) return <><LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />{noticeToast}{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
 
   return (
     <div className="min-h-screen bg-[#121214] font-rubik [[data-theme=light]_&]:bg-[#fafaf8]">
@@ -1106,7 +1163,7 @@ function App() {
           <PathsView
             currentLearnerPath={currentPath}
             completedLessons={completedLessons}
-            onOpenLesson={launchLesson}
+            onOpenLesson={startLessonOnPath}
             onChooseFramework={chooseFrontendFramework}
             initialView={pathsInitialView}
             initialSelectedPathId={pathsInitialSelectedId}
@@ -1114,7 +1171,7 @@ function App() {
             primaryPathId={profile?.pathId}
             profile={profile}
             onCreateCustomPath={createCustomPath}
-            onSwitchPrimaryPath={resumePath}
+            onStartPath={startPath}
             hasSeenCustomPathIntroduction={Boolean(seenPageIntroductions?.['custom-path'])}
             onDismissCustomPathIntroduction={() => dismissPageIntroduction('custom-path')}
             onFullScreenChange={setCustomPathFullScreen}
@@ -1164,7 +1221,14 @@ function App() {
             lastLeagueResult={lastLeagueResult}
             progress={progress}
             onDismissResult={dismissLeagueResult}
-            onStartPractice={() => setActive('Practice')}
+            // Practice is earned per unit now, so a newcomer's way onto the
+            // board is a lesson; once a unit's set is open, practice works too.
+            onStartPractice={() => {
+              const unlocked = practiceUnits.find((unit) => unit.session)
+              if (unlocked) setOpenPractice(unlocked.id)
+              else startMission()
+            }}
+            hasPractice={practiceUnits.some((unit) => unit.session)}
             onOpenPlans={openPlans}
             hasSeenIntroduction={Boolean(seenPageIntroductions?.leaderboard)}
             onDismissIntroduction={() => dismissPageIntroduction('leaderboard')}
@@ -1194,6 +1258,7 @@ function App() {
             onSeeAllPractice={() => setActive('Practice')}
             onOpenDevy={(prompt) => setDevyOpen(prompt || true)}
             onOpenPath={openPathFromHome}
+            onResumePath={startLessonOnPath}
             onStartPractice={setOpenPractice}
             warmUp={warmUp}
             dailyPracticeId={practiceUnits.find((unit) => unit.session)?.id ?? null}
@@ -1264,7 +1329,7 @@ function App() {
         />
       )}
 
-      {notice && <div className="fixed z-10 right-6 bottom-6 max-[680px]:right-[18px] max-[680px]:bottom-[18px] max-[680px]:left-[18px] max-[680px]:text-center px-4 py-3 border border-[#404040] [[data-theme=light]_&]:border-[#eeeeeb] rounded-[10px] bg-[#1f1f1f] [[data-theme=light]_&]:bg-white text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[13px]" role="status">{notice}</div>}
+      {noticeToast}
 
       {openLesson && <LessonView key={String(openLesson)} lessonId={openLesson} navigationStyle="segments" onExit={() => setOpenLesson(null)} onComplete={recordLessonCompletion} profile={profile} xp={xp} streakPreview={lessonStreakPreview} questPreview={lessonQuestPreview} />}
       {/* Rendered after LessonView so it lands on top of the lesson the learner

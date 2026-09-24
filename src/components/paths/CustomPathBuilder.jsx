@@ -162,7 +162,7 @@ function RouteCard({ route, onStart, onAdjust, readOnly, isPrimary, onMakePrimar
 
       {readOnly
         ? <div className="grid gap-3 border-t border-[#333] [[data-theme=light]_&]:border-[#eee] pt-4">
-            {!isPrimary && <ActionButton variant="primary" className="min-h-11 text-[15px] font-semibold" onClick={() => onMakePrimary(route)}>Make this my primary path</ActionButton>}
+            {!isPrimary && <ActionButton variant="primary" className="min-h-11 text-[15px] font-semibold" onClick={() => onMakePrimary(route)}>Resume this path</ActionButton>}
             <button type="button" onClick={onAdjust} className={`justify-self-center border-0 bg-transparent text-[14px] text-[#8b8b90] underline underline-offset-4 hover:text-[#6699ec] ${FOCUS_RING}`}>Back to paths</button>
           </div>
         : <div className="flex flex-wrap items-center gap-3 border-t border-[#333] [[data-theme=light]_&]:border-[#eee] pt-4">

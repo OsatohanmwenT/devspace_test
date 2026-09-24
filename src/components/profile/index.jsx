@@ -17,6 +17,7 @@ import { getProfileProgress, getRoleLabel, normalizeProfile } from '../../lib/pr
 import { getAvatarDataUri } from '../../lib/avatarStyles'
 import { TierMedal } from '../leaderboard/TierMedal'
 import { EditProfileModal } from './EditProfileModal'
+import { CoinIcon } from '../ui/GameIcon'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
 
@@ -675,7 +676,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} 🪙 this season</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} <CoinIcon /> this season</span>
                   </div>
                 </div>
               </SectionCard>
@@ -910,7 +911,7 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                   <TierMedal league={league} state="current" size={44} />
                   <div className="grid gap-0.5">
                     <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} 🪙 this season</span>
+                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} <CoinIcon /> this season</span>
                   </div>
                 </div>
               </SectionCard>

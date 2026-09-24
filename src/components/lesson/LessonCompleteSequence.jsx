@@ -4,7 +4,7 @@ import { ActionButton } from '../ui/ActionButton'
 import { BoltIcon, CheckIcon } from '../ui/icons'
 import { DailyQuestProgress } from '../ui/DailyQuestProgress'
 import { DevyLottie } from '../ui/DevyLottie'
-import { DevyMood } from '../ui/DevyMood'
+import { GameIcon } from '../ui/GameIcon'
 import { ConceptTransition } from './ConceptTransition'
 
 const prefersReducedMotion = () =>
@@ -94,35 +94,6 @@ function accuracyLabel(percent) {
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
-function StreakFlame({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 120 140" aria-hidden="true">
-      <defs>
-        <linearGradient id="streak-flame-outer" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffc53d" />
-          <stop offset="1" stopColor="#ff7a00" />
-        </linearGradient>
-        <linearGradient id="streak-flame-inner" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fff3a3" />
-          <stop offset="1" stopColor="#ffc107" />
-        </linearGradient>
-      </defs>
-      <g className="streak-flame-outer">
-        <path
-          d="M60 6C64 28 92 44 96 78c4 34-14 58-36 58-24 0-40-20-38-46 2-18 12-28 18-36 2 12 8 18 14 20-4-24-2-48 6-68z"
-          fill="url(#streak-flame-outer)"
-        />
-      </g>
-      <g className="streak-flame-inner">
-        <path
-          d="M60 70c6 14 20 22 20 38 0 14-9 22-20 22-12 0-20-8-20-20 0-10 6-16 10-20 1 7 4 10 7 11-2-11-1-21 3-31z"
-          fill="url(#streak-flame-inner)"
-        />
-      </g>
-    </svg>
-  )
-}
-
 function StreakCelebration({ before, after, dates, onContinue }) {
   const rootRef = useRef(null)
   const count = useCountUp(after, { from: before, delay: 650, duration: 500 })
@@ -168,30 +139,31 @@ function StreakCelebration({ before, after, dates, onContinue }) {
             </p>
           </div>
 
-          {/* Devy leans on the flame rather than standing beside it — one
-              character moment, not two separate objects. */}
+          {/* Lightning is the app's streak mark (the header counter, the
+              streak journey), so the streak moment uses it too. Devy leans on
+              it rather than standing beside it — one character moment. */}
           <div className="relative size-[200px] max-[720px]:size-[168px]">
             <span
               data-streak-glow
               aria-hidden="true"
-              className="absolute inset-[-30px] rounded-full bg-[radial-gradient(circle,rgba(255,170,0,0.32),rgba(255,122,0,0.1)_45%,transparent_70%)] [[data-theme=light]_&]:bg-[radial-gradient(circle,rgba(255,170,0,0.26),rgba(255,122,0,0.08)_45%,transparent_70%)]"
+              className="absolute inset-[-30px] rounded-full bg-[radial-gradient(circle,rgba(255,214,0,0.32),rgba(255,184,0,0.1)_45%,transparent_70%)] [[data-theme=light]_&]:bg-[radial-gradient(circle,rgba(255,200,0,0.28),rgba(255,170,0,0.08)_45%,transparent_70%)]"
             />
             <span data-streak-fire className="absolute inset-x-0 top-0 grid justify-items-center">
-              <StreakFlame className="h-[190px] w-[163px] max-[720px]:h-[160px] max-[720px]:w-[137px]" />
+              <GameIcon name="lightning-bolt" className="streak-bolt h-[184px] w-[180px] max-[720px]:h-[154px] max-[720px]:w-[150px]" />
             </span>
-            <span data-streak-devy className="absolute -right-12 -bottom-2 size-[104px] max-[720px]:-right-9 max-[720px]:size-[84px]">
-              <DevyMood mood="celebrating" className="size-full" />
+            <span data-streak-devy className="absolute -right-20 -bottom-8 size-[150px] max-[720px]:-right-14 max-[720px]:-bottom-6 max-[720px]:size-[118px]">
+              <DevyLottie clip="lesson-complete" loop={false} className="size-full" />
             </span>
           </div>
 
           <strong
             data-streak-count
             id="streak-celebration-title"
-            className="mt-3 bg-gradient-to-b from-amber-300 to-orange-500 bg-clip-text font-rethink-sans text-[76px] leading-none font-extrabold text-transparent max-[720px]:text-[60px]"
+            className="mt-3 bg-gradient-to-b from-yellow-300 to-amber-500 bg-clip-text font-rethink-sans text-[76px] leading-none font-extrabold text-transparent max-[720px]:text-[60px]"
           >
             {count}
           </strong>
-          <span className="mt-1 text-[20px] font-bold text-orange-400 [[data-theme=light]_&]:text-orange-500">day streak</span>
+          <span className="mt-1 text-[20px] font-bold text-amber-400 [[data-theme=light]_&]:text-amber-500">day streak</span>
 
           <div
             data-streak-week
@@ -202,7 +174,7 @@ function StreakCelebration({ before, after, dates, onContinue }) {
                 const linksNext = day.done && week[index + 1]?.done
                 return (
                   <li key={day.key} className="relative grid justify-items-center gap-2" aria-label={`${day.key}: ${day.done ? 'active' : 'not active'}`}>
-                    <span className={`text-[12px] leading-4 font-bold ${day.isToday ? 'text-orange-400 [[data-theme=light]_&]:text-orange-500' : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#9a9a9d]'}`}>
+                    <span className={`text-[12px] leading-4 font-bold ${day.isToday ? 'text-amber-400 [[data-theme=light]_&]:text-amber-500' : 'text-[#7d7d80] [[data-theme=light]_&]:text-[#9a9a9d]'}`}>
                       {day.letter}
                     </span>
                     {linksNext && (
@@ -215,7 +187,7 @@ function StreakCelebration({ before, after, dates, onContinue }) {
                     {day.done ? (
                       <span
                         data-streak-today={day.isToday || undefined}
-                        className={`relative grid size-9 place-items-center rounded-full bg-gradient-to-b from-amber-300 to-orange-500 text-white shadow-[0_4px_10px_-4px_rgba(255,122,0,.7)] ${day.isToday ? 'ring-4 ring-orange-400/25' : ''}`}
+                        className={`relative grid size-9 place-items-center rounded-full bg-gradient-to-b from-yellow-300 to-amber-500 text-white shadow-[0_4px_10px_-4px_rgba(245,180,0,.7)] ${day.isToday ? 'ring-4 ring-amber-400/25' : ''}`}
                       >
                         <CheckIcon className="size-4" />
                       </span>
@@ -248,7 +220,13 @@ function QuestProgressScreen({ quests, onContinue }) {
     <section className="flex h-full flex-col overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white" aria-labelledby="quest-progress-title">
       <div className="grid flex-1 place-items-center px-7 py-10 max-[720px]:px-5">
         <div className="grid w-full max-w-[520px] justify-items-center text-center">
-          <DevyLottie clip="lesson-complete" loop={false} className="mb-5 h-28 w-28" />
+          {/* All three done earns the treasure-chest Devy — the day's haul —
+              while part-way through it's the regular celebration. */}
+          {allDone ? (
+            <GameIcon name="devy-treasure-chest" className="devy-celebrate mb-4 h-36 w-36" />
+          ) : (
+            <DevyLottie clip="lesson-complete" loop={false} className="mb-5 h-28 w-28" />
+          )}
           <h1 id="quest-progress-title" className="m-0 font-rethink-sans text-[clamp(26px,3.4vw,32px)] font-semibold leading-[1.12] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
             {allDone ? 'Daily quests complete!' : 'Daily quest progress'}
           </h1>

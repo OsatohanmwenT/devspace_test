@@ -1,5 +1,5 @@
 import { ActionButton } from '../ui/ActionButton'
-import { DevyMood } from '../ui/DevyMood'
+import { CoinIcon, GameIcon } from '../ui/GameIcon'
 import { ROW_GRID } from './rowGrid'
 
 const SKELETON_WIDTHS = ['58%', '72%', '44%', '66%', '52%', '78%']
@@ -23,17 +23,18 @@ function SkeletonRow({ width }) {
 // restated the league name the card had already given in 30px type, and the two
 // stacked heroes pushed the only action on the page below the fold. Same
 // information, one card, CTA visible on arrival.
-export function LeagueJoinPrompt({ coinsToJoin, onStartPractice }) {
+export function LeagueJoinPrompt({ coinsToJoin, hasPractice = false, onStartPractice }) {
   return (
     <div className="mt-1 flex w-full items-center gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#ebe9e4] pt-5 text-left max-[680px]:flex-col max-[680px]:gap-3 max-[680px]:text-center">
-      {/* Devy is impatient to see you on the board, not disappointed in you. */}
-      <DevyMood mood="annoyed" className="size-20 flex-none max-[680px]:size-16" />
+      {/* The idle board: Devy's already warming up for the season and waiting
+          on you to join — eager, not disappointed. */}
+      <GameIcon name="devy-dumbbell" className="h-[92px] w-[120px] flex-none max-[680px]:h-[78px] max-[680px]:w-[102px]" />
       <div className="grid min-w-0 flex-1 gap-1">
         <strong className="text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
           You’re not on this season’s board yet
         </strong>
         <span className="text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-          Earn {coinsToJoin} 🪙 to join. One practice round or lesson does it.
+          Earn {coinsToJoin} <CoinIcon /> to join. {hasPractice ? 'One lesson or practice round does it.' : 'One lesson does it.'}
         </span>
       </div>
       <ActionButton
@@ -41,7 +42,7 @@ export function LeagueJoinPrompt({ coinsToJoin, onStartPractice }) {
         className="min-h-[50px] flex-none px-6 text-[15px] font-medium max-[680px]:w-full"
         onClick={onStartPractice}
       >
-        Start a practice round
+        {hasPractice ? 'Start a practice round' : 'Start a lesson'}
       </ActionButton>
     </div>
   )
@@ -55,7 +56,8 @@ export function LeagueJoinPrompt({ coinsToJoin, onStartPractice }) {
 export function LeagueProGatePrompt({ leagueName, onOpenPlans }) {
   return (
     <div className="mt-1 flex w-full items-center gap-4 border-t border-[#404040] [[data-theme=light]_&]:border-[#ebe9e4] pt-5 text-left max-[680px]:flex-col max-[680px]:gap-3 max-[680px]:text-center">
-      <DevyMood mood="celebrating" className="size-20 flex-none max-[680px]:size-16" />
+      {/* Reached but locked — the keyhole shield says "behind Pro", not "not yet". */}
+      <GameIcon name="shield-keyhole" className="size-[72px] flex-none max-[680px]:size-16" />
       <div className="grid min-w-0 flex-1 gap-1">
         <strong className="text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
           {leagueName} unlocked

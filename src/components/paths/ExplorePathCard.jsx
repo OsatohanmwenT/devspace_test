@@ -39,7 +39,7 @@ export function ExplorePathCard({ path, onSelect }) {
 // dialog is to answer "what am I getting into" — a title and one line never
 // did that, so the meat of it is the actual skill ladder onboarding would
 // walk this same path through (see `learningSteps` in data/paths.js).
-export function PathPreviewModal({ path, onClose, onSwitchPrimaryPath, isCurrentPath }) {
+export function PathPreviewModal({ path, onClose, onStartPath, isCurrentPath }) {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose()
@@ -100,16 +100,16 @@ export function PathPreviewModal({ path, onClose, onSwitchPrimaryPath, isCurrent
           )}
 
           <div className="flex flex-wrap items-center gap-3 border-t border-[#404040] pt-4 [[data-theme=light]_&]:border-[#eeeeeb]">
-            {!isCurrentPath && onSwitchPrimaryPath ? (
+            {!isCurrentPath && onStartPath ? (
               <ActionButton
                 className="min-h-11 px-6 text-sm font-semibold"
                 onClick={() => {
-                  onSwitchPrimaryPath(path.id)
                   onClose()
+                  onStartPath(path.id)
                 }}
                 autoFocus
               >
-                Set as active path →
+                Start learning →
               </ActionButton>
             ) : (
               <span className="text-sm font-medium text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">✓ This is your active mission path</span>

@@ -13,7 +13,6 @@ import { getRoleLabel, normalizeProfile } from "../../lib/profile";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { DevyLottie } from "../ui/DevyLottie";
-import { DevyMood } from "../ui/DevyMood";
 import {
     ArrowLeftIcon,
     BoltIcon,
@@ -25,6 +24,7 @@ import {
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { DailyTasks } from "./HomeQuickActions";
+import { GameIcon } from "../ui/GameIcon";
 import { WARM_UP_ID } from "../../lib/warmUp";
 import { useCardCarousel } from "./useCardCarousel";
 
@@ -732,6 +732,7 @@ export default function HomeView({
   onOpenPlans,
   onOpenDevy,
   onOpenPath,
+  onResumePath,
   onStartPractice,
   onSeeAllPractice,
   onOpenProfile,
@@ -948,6 +949,13 @@ export default function HomeView({
     if (course.isPrimary) {
       if (course.nextLessonTitle) onStartMission();
       else onOpenCareerPath();
+      return;
+    }
+    // Another path you've started: resuming it is the switch — it opens its
+    // next lesson and becomes active (main.jsx offers Undo). A path you
+    // haven't started yet still opens its roadmap first.
+    if (course.isStarted && course.nextLessonId && onResumePath) {
+      onResumePath(course.nextLessonId, course.id);
       return;
     }
     onOpenPath(course.id);
@@ -1560,11 +1568,7 @@ export default function HomeView({
                           reads as "daily quests" rather than a bare count; the
                           dot marks something new since it was last opened. */}
                       <span className="home-dashboard-xp-tasks" data-done={doneCount === total || undefined}>
-                        <svg className="home-dashboard-xp-tasks__chest" viewBox="0 0 20 20" aria-hidden="true">
-                          <path d="M3 8.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V9H3v-.5Z" fill="currentColor" opacity=".55" />
-                          <rect x="3" y="9" width="14" height="7.5" rx="1.6" fill="currentColor" />
-                          <rect x="8.4" y="7.6" width="3.2" height="4.2" rx="1" fill="#fff" />
-                        </svg>
+                        <GameIcon name="daily-tasks-notebook" className="home-dashboard-xp-tasks__icon" />
                         Quests
                         <span className="home-dashboard-xp-tasks__count">
                           {doneCount}/{total}
@@ -1711,11 +1715,7 @@ export default function HomeView({
                   </>
                 ) : (
                   <span className="home-dashboard-league-empty">
-                    <TierMedal
-                      league={{ color: leagueColor || leaderboardMedalColor }}
-                      state="locked"
-                      size={badgeLg}
-                    />
+                    <GameIcon name="shield-keyhole" className="home-dashboard-league-lock" />
                     <span>
                       <strong>It’s comeback time</strong>
                       <span>Complete a lesson to claim your place in the league.</span>
@@ -1825,18 +1825,11 @@ export default function HomeView({
               </span>
             </span>
 
-            {/* The reference's mascot-in-the-corner idea, with Devy instead —
-                neutral for the empty state, the same celebrating pose the
-                roadmap uses once there's actually something to show. Pinned
-                to the card itself rather than sharing the text row's flex
-                box, so its size is never squeezed by (or squeezing) the
-                header row above it. */}
-            <DevyMood
-              mood={completedLessonsCount === 0 ? "neutral" : "celebrating"}
-              animate={completedLessonsCount > 0}
-              className="home-dashboard-portfolio-devy"
-              alt=""
-            />
+            {/* Devy mid-workout, leaning in from the card's bottom-right
+                edge — the card clips him, so he reads as hanging off the
+                edge rather than sitting inside it. Pinned to the card itself
+                so it never competes with the text rows for space. */}
+            <GameIcon name="devy-dumbbell" className="home-dashboard-portfolio-devy" />
           </button>
         </motion.section>
 

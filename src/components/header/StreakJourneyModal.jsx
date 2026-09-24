@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { BoltIcon, CheckIcon, LockIcon } from '../ui/icons'
+import { GameIcon } from '../ui/GameIcon'
+import { CheckIcon, LockIcon } from '../ui/icons'
 import { ActionButton } from '../ui/ActionButton'
 import { Drawer } from '../ui/Drawer'
 import { DevyMood } from '../ui/DevyMood'
@@ -124,9 +125,7 @@ export function StreakJourneyModal({
       <div className="grid gap-7">
         <div className="grid gap-3">
           <div className="flex items-center gap-3">
-            <span className="grid size-12 flex-none place-items-center rounded-2xl bg-amber-400/15 text-amber-400 [[data-theme=light]_&]:bg-amber-100 [[data-theme=light]_&]:text-amber-500" aria-hidden="true">
-              <BoltIcon className="size-6" />
-            </span>
+            <GameIcon name="lightning-bolt" className="size-12 flex-none" />
             <span className="grid">
               <strong className="font-rethink-sans text-[40px] leading-none font-semibold tracking-[-.04em] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
                 {currentStreak}

@@ -8,6 +8,7 @@ import { LeaderboardIntroduction } from './LeaderboardIntroduction'
 import { LeaderboardRow } from './LeaderboardRow'
 import { SeasonDeadline } from './SeasonDeadline'
 import { TierMedal } from './TierMedal'
+import { GameIcon } from '../ui/GameIcon'
 
 const PROMOTION_ROWS = 5
 
@@ -56,11 +57,21 @@ export function LeagueQualifiedCelebration({ leagueIndex = 0, seasonCoins, onClo
         transition={{ duration: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
       >
         <motion.div
+          className="relative"
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.55, delay: 0.1, ease: [0.34, 1.56, 0.64, 1] }}
         >
           <TierMedal league={league} state="current" size={104} />
+          {/* The coins that got them here, spilling in beside the medal. */}
+          <motion.span
+            className="absolute -right-11 -bottom-2 block"
+            initial={{ scale: 0, rotate: -20, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+          >
+            <GameIcon name="coin-stack" className="size-[64px]" />
+          </motion.span>
         </motion.div>
 
         <h1 className="mt-6 mb-2 font-rethink-sans text-3xl font-semibold leading-[1.3] max-[680px]:text-[26px]">Welcome to Leagues!</h1>

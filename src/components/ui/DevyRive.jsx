@@ -30,22 +30,44 @@ function usePrefersReducedMotion() {
 // play "Timeline 1" directly instead.
 const DUAL_STATE_MACHINE_CLIPS = new Set(['launchpad-intro', 'rope-into', 'side-pop-out-intro', 'up-down-pop-out'])
 
+// Not every export names its entrance "Timeline 1" — the rope file's only
+// timeline is "Timeline 4" (alongside Wink / Brow raise / blink), and asking
+// for a name the file doesn't have plays nothing and leaves the first frame.
+//
+// `startAt` skips dead air: the rope timeline is 10s, but its first ~4s are
+// just the empty rope dangling — Devy slides down between 4.0s and 4.8s, then
+// swings. `restAt` is a settled pose to hold when motion is reduced.
+const ENTRANCE = {
+  'rope-into': { animation: 'Timeline 4', startAt: 3.4, restAt: 6 },
+  'up-down-pop-out': { animation: 'Timeline 2' },
+}
+
 export function DevyRive({ clip, className = '', ariaLabel, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
   const src = SOURCES[clip]
   const isDual = DUAL_STATE_MACHINE_CLIPS.has(clip)
+  const { animation: entrance = 'Timeline 1', startAt = 0, restAt } = ENTRANCE[clip] ?? {}
 
   const { rive, RiveComponent } = useRive({
     src,
     stateMachine: isDual ? undefined : 'State Machine 1',
-    animations: isDual ? 'Timeline 1' : undefined,
-    autoplay: !reducedMotion,
+    animations: isDual ? entrance : undefined,
+    autoplay: false,
   })
 
   useEffect(() => {
-    if (!rive || !isDual) return
-    rive.play('Timeline 1')
-  }, [rive, isDual])
+    if (!rive) return
+    if (!isDual) {
+      if (!reducedMotion) rive.play()
+      return
+    }
+    if (reducedMotion) {
+      if (restAt != null) rive.scrub(entrance, restAt)
+      return
+    }
+    if (startAt) rive.scrub(entrance, startAt)
+    rive.play(entrance)
+  }, [rive, isDual, entrance, startAt, restAt, reducedMotion])
 
   if (!src) return null
 

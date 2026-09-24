@@ -20,6 +20,7 @@ import { LeagueJoinPrompt, LeagueProGatePrompt, LockedBoardSkeleton } from './Lo
 import { PrivateLeagues } from './PrivateLeagues';
 import { PrivateLeaguesIntroduction } from './PrivateLeaguesIntroduction';
 import { ShareCardModal } from './ShareCardModal';
+import { CoinIcon } from '../ui/GameIcon';
 
 const TABS = ['This season', 'All time', 'By path']
 const TICK_MS = 60 * 1000
@@ -93,6 +94,7 @@ export default function LeaderboardView({
   progress,
   onDismissResult,
   onStartPractice,
+  hasPractice = false,
   onOpenPlans,
   hasSeenIntroduction = true,
   onDismissIntroduction,
@@ -277,7 +279,7 @@ export default function LeaderboardView({
         </p>
         {!canCompete
           ? <LeagueProGatePrompt leagueName={league.name} onOpenPlans={onOpenPlans} />
-          : !hasJoined && <LeagueJoinPrompt coinsToJoin={COINS_TO_JOIN} onStartPractice={onStartPractice} />}
+          : !hasJoined && <LeagueJoinPrompt coinsToJoin={COINS_TO_JOIN} hasPractice={hasPractice} onStartPractice={onStartPractice} />}
         {canCompete && hasJoined && (
           <button
             type="button"
@@ -307,7 +309,7 @@ export default function LeaderboardView({
             <ol className="grid list-none m-0 overflow-hidden rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] p-1.5" aria-label={`${league.name} standings`}>
               <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-3.5 px-4 pt-3 pb-2 text-[10px] font-semibold tracking-[.08em] uppercase text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
                 <span>Learner</span>
-                <span>🪙</span>
+                <CoinIcon className="text-[14px]" />
               </li>
               {(tab === 'This season' ? rendered
                 : tab === 'By path' ? byPath.map((entry) => ({ type: 'row', entry }))

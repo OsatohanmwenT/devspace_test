@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { GameIcon } from './GameIcon'
 import { BoltIcon, CheckIcon } from './icons'
 
 function BookGlyph({ className }) {
@@ -71,12 +72,18 @@ export function DailyQuestProgress({ before, after, className = '' }) {
                 />
               </span>
             </span>
-            <span
-              className={`grid size-7 flex-none place-items-center rounded-full ${quest.done ? 'bg-[#22c55e] text-white' : 'border-2 border-[#3a3a3d] [[data-theme=light]_&]:border-[#dededa]'}`}
-              aria-label={quest.done ? 'done' : 'not done yet'}
-              role="img"
-            >
-              {quest.done && <CheckIcon className="size-3.5" />}
+            {/* Each quest ends in its reward chest, greyed out until it's earned
+                and marked with a check once it is. */}
+            <span className="relative flex-none" role="img" aria-label={quest.done ? 'done' : 'not done yet'}>
+              <GameIcon
+                name="treasure-chest"
+                className={`size-9 transition-[filter,opacity] duration-500 ${quest.done ? '' : 'opacity-45 grayscale'}`}
+              />
+              {quest.done && (
+                <span className="absolute -right-1 -bottom-1 grid size-4 place-items-center rounded-full border-2 border-[#232323] bg-[#22c55e] text-white [[data-theme=light]_&]:border-[#fafaf8]">
+                  <CheckIcon className="size-2.5" />
+                </span>
+              )}
             </span>
           </li>
         )

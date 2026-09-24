@@ -5,6 +5,7 @@ import { ActionButton } from '../ui/ActionButton'
 import { Avatar } from '../ui/Avatar'
 import { Drawer } from '../ui/Drawer'
 import { BackLink } from '../ui/NavArrowLink'
+import { CoinIcon } from '../ui/GameIcon'
 
 const RESULT_LABEL = { win: 'Won', draw: 'Drew', loss: 'Lost' }
 const RESULT_COLOR = {
@@ -77,7 +78,7 @@ function MatchRow({ match, onShare }) {
       </div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[12px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-          {match.userCoins.toLocaleString()} 🪙 vs {match.opponentCoins.toLocaleString()} 🪙 · +{match.pointsEarned} pts
+          {match.userCoins.toLocaleString()} <CoinIcon /> vs {match.opponentCoins.toLocaleString()} <CoinIcon /> · +{match.pointsEarned} pts
         </span>
         {match.result === 'win' && (
           <button

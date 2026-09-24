@@ -3,6 +3,7 @@ import { DevyMood } from '../ui/DevyMood'
 import { InfoTooltip } from '../ui/InfoTooltip'
 import { ordinal } from '../../lib/ordinal'
 import { can, CAPABILITIES } from '../../lib/entitlements'
+import { CoinIcon } from '../ui/GameIcon'
 
 const TONE = {
   promoted: { accent: '#04adc0', ring: 'border-[#04adc0]/25' },
@@ -39,7 +40,7 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans, o
             would leave its full stop stranded mid-line. */}
         <span className="min-w-0 flex-1 truncate text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
           <strong className="font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Last season</strong>
-          {` · ${rank} in ${result.fromLeague} · ${result.score.toLocaleString()} 🪙`}
+          {` · ${rank} in ${result.fromLeague} · ${result.score.toLocaleString()} `}<CoinIcon />
         </span>
         <button
           type="button"
@@ -68,7 +69,7 @@ export function LeagueResultBanner({ result, progress, onDismiss, onOpenPlans, o
         <div className="grid min-w-0 flex-1 gap-1">
           <strong className="text-[13px] font-semibold uppercase tracking-[.08em]" style={{ color: tone.accent }}>Last season's result</strong>
           <span className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 text-[15px]">{message}</span>
-          <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{result.score.toLocaleString()} 🪙 earned</span>
+          <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] text-[13px]">{result.score.toLocaleString()} <CoinIcon /> earned</span>
         </div>
         <button
           type="button"

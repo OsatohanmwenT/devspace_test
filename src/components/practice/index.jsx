@@ -1,6 +1,7 @@
 import { ActionButton } from '../ui/ActionButton'
 import { DevyLottie } from '../ui/DevyLottie'
-import { CheckIcon, LockIcon } from '../ui/icons'
+import { GameIcon } from '../ui/GameIcon'
+import { CheckIcon } from '../ui/icons'
 
 function GateProgress({ done, total, label }) {
   return (
@@ -37,9 +38,7 @@ function UnitCard({ unit, completion, onStart }) {
           </h3>
         </span>
         {locked ? (
-          <span className="grid size-8 flex-none place-items-center rounded-full bg-[#262626] text-[#7d7d80] [[data-theme=light]_&]:bg-[#f5f5f4] [[data-theme=light]_&]:text-[#8a8a86]">
-            <LockIcon className="size-4" />
-          </span>
+          <GameIcon name="padlock" className="size-9 flex-none" />
         ) : completion ? (
           <span className="flex flex-none items-center gap-1 rounded-full bg-[rgba(4,173,192,0.16)] px-2 py-1 text-[11px] font-bold text-[#04adc0] [[data-theme=light]_&]:bg-[#cee9ed] [[data-theme=light]_&]:text-[#065f6b]">
             <CheckIcon className="h-3 w-3" />
@@ -91,7 +90,7 @@ export default function PracticeView({ units = [], completedSessions = {}, onSta
           <DevyLottie clip="wave" className="size-[112px] flex-none max-[680px]:size-24" />
           <div className="grid min-w-0 flex-1 gap-3">
             <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.08em] text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]">
-              <LockIcon className="size-3.5" />
+              <GameIcon name="padlock" className="size-5" />
               Practice is locked
             </span>
             <h2 className="m-0 font-rethink-sans text-[22px] font-semibold leading-tight text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">

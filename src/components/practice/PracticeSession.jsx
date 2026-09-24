@@ -72,14 +72,15 @@ export function PracticeSession({ sessionId, session: sessionOverride, variant =
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onExit()
       const isExitButton = event.target.closest?.('[aria-label="Exit practice session"]')
-      if (phase === 'intro' && event.key === 'Enter' && !event.repeat && !isExitButton) {
+      // The warm-up intro handles Enter itself, so Devy's exit still plays.
+      if (phase === 'intro' && !isWarmUp && event.key === 'Enter' && !event.repeat && !isExitButton) {
         event.preventDefault()
         setPhase('quiz')
       }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onExit, phase])
+  }, [onExit, phase, isWarmUp])
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow
@@ -182,9 +183,11 @@ export function PracticeSession({ sessionId, session: sessionOverride, variant =
         <>
           <motion.main
             className="min-w-0 min-h-0 overflow-auto bg-[#1f1f1f] [[data-theme=light]_&]:bg-white"
-            initial={{ opacity: 0, y: 14 }}
+            // After the warm-up intro the questions drop in from above, the
+            // next screen Devy pulls down; elsewhere they rise in gently.
+            initial={{ opacity: 0, y: isWarmUp ? -56 : 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            transition={isWarmUp ? { type: 'spring', stiffness: 220, damping: 22 } : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="grid min-h-full w-[min(100%,760px)] place-items-center mx-auto px-7 py-10 max-[720px]:px-5 max-[720px]:py-6">
               <LessonQuestion

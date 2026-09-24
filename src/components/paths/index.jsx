@@ -7,7 +7,7 @@ import { CustomPathIntroduction } from './CustomPathIntroduction'
 import { ExplorePathCard, PathPreviewModal } from './ExplorePathCard'
 import { LearningPathDetail } from './LearningPathDetail'
 
-export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, onChooseFramework, initialView, initialSelectedPathId, customPaths = {}, primaryPathId, onCreateCustomPath, onSwitchPrimaryPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile, onFullScreenChange }) {
+export default function PathsView({ currentLearnerPath = currentPath, completedLessons, onOpenLesson, onChooseFramework, initialView, initialSelectedPathId, customPaths = {}, primaryPathId, onCreateCustomPath, onStartPath, hasSeenCustomPathIntroduction, onDismissCustomPathIntroduction, profile, onFullScreenChange }) {
   // A caller (Home's "Also learning" quick-switch) can land directly on a
   // specific path's detail rather than the overview — `path` only needs an
   // `id`, since LearningPathDetail always re-fetches the full record via
@@ -18,7 +18,6 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
   const [selectedPath, setSelectedPath] = useState(() => initialSelectedPathId ? { id: initialSelectedPathId } : null)
   const [selectedCustomPath, setSelectedCustomPath] = useState(null)
   const [previewPath, setPreviewPath] = useState(null)
-  const [customPathToSwitch, setCustomPathToSwitch] = useState(null)
 
   // Custom path building is its own focused surface, not just another Paths
   // subview — the chrome-free callback lets the shell drop the top nav for it.
@@ -57,7 +56,6 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
         onOpenLesson={onOpenLesson}
         onBack={() => setView('overview')}
         isCurrentPath={isSelectedCurrent}
-        onSwitchPrimaryPath={onSwitchPrimaryPath}
         onChooseFramework={onChooseFramework}
         profile={profile}
       />
@@ -69,7 +67,7 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
       key={selectedCustomPath?.id ?? 'new-custom-path'}
       existingPath={selectedCustomPath}
       isPrimary={selectedCustomPath?.id === primaryPathId}
-      onMakePrimary={(path) => { onSwitchPrimaryPath(path.id); setSelectedCustomPath(null); setView('overview') }}
+      onMakePrimary={(path) => { onStartPath(path.id); setSelectedCustomPath(null); setView('overview') }}
       onBack={() => { setSelectedCustomPath(null); setView('overview') }}
       onStart={(route) => { onCreateCustomPath(route); setSelectedCustomPath(null); setView('overview') }}
     />
@@ -90,13 +88,13 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
       {pausedCustomPaths.length > 0 && (
         <>
             {pausedCustomPaths.map((path) => (
-              <button key={path.id} type="button" onClick={() => setCustomPathToSwitch(path)} className="grid min-h-[164px] content-between gap-3 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-5 text-left transition-[border-color,background,transform] duration-150 hover:-translate-y-0.5 hover:border-[#525252] hover:bg-[#252525] focus-visible:outline-3 focus-visible:outline-[#8ee6ad] focus-visible:outline-offset-3 [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#fafafa]">
+              <button key={path.id} type="button" onClick={() => onStartPath(path.id)} className="grid min-h-[164px] content-between gap-3 rounded-2xl border border-[#404040] bg-[#1f1f1f] p-5 text-left transition-[border-color,background,transform] duration-150 hover:-translate-y-0.5 hover:border-[#525252] hover:bg-[#252525] focus-visible:outline-3 focus-visible:outline-[#8ee6ad] focus-visible:outline-offset-3 [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:hover:border-[#d4d4d4] [[data-theme=light]_&]:hover:bg-[#fafafa]">
                 <div className="min-w-0">
                   <h3 className="truncate font-rethink-sans text-[19px] font-medium leading-[1.3] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{path.title}</h3>
                   <p className="mt-1 line-clamp-2 text-[13px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Building: {path.project}</p>
                 </div>
                 <div className="flex items-center justify-end gap-3">
-                  <span className="rounded-lg bg-[#16a34a] px-3 py-2 text-[13px] font-semibold text-white">Open path</span>
+                  <span className="rounded-lg bg-[#16a34a] px-3 py-2 text-[13px] font-semibold text-white">Resume</span>
                   <span className="inline-flex rounded-full bg-[#1d3b2a] px-2 py-1 text-[10px] font-bold uppercase tracking-[.08em] text-[#8ee6ad] [[data-theme=light]_&]:bg-[#e2f6e8] [[data-theme=light]_&]:text-[#168a46]">Custom</span>
                 </div>
               </button>
@@ -139,43 +137,9 @@ export default function PathsView({ currentLearnerPath = currentPath, completedL
           path={previewPath}
           onClose={() => setPreviewPath(null)}
           isCurrentPath={previewPath.id === primaryPathId}
-          onSwitchPrimaryPath={onSwitchPrimaryPath}
-        />
-      )}
-      {customPathToSwitch && (
-        <CustomPathSwitchDialog
-          path={customPathToSwitch}
-          onClose={() => setCustomPathToSwitch(null)}
-          onConfirm={() => {
-            onSwitchPrimaryPath(customPathToSwitch.id)
-            setCustomPathToSwitch(null)
-          }}
+          onStartPath={onStartPath}
         />
       )}
     </section>
-  )
-}
-
-function CustomPathSwitchDialog({ path, onClose, onConfirm }) {
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="fixed inset-0 z-40 grid place-items-center bg-black/65 p-5 backdrop-blur-sm" role="presentation" onMouseDown={onClose}>
-      <article className="w-full max-w-[440px] rounded-2xl border border-[#404040] bg-[#1f1f1f] p-6 shadow-[0_24px_60px_rgba(0,0,0,.45)] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white" role="dialog" aria-modal="true" aria-labelledby="custom-path-switch-title" onMouseDown={(event) => event.stopPropagation()}>
-        <span className="inline-flex rounded-full bg-[#1d3b2a] px-2 py-1 text-[10px] font-bold uppercase tracking-[.08em] text-[#8ee6ad] [[data-theme=light]_&]:bg-[#e2f6e8] [[data-theme=light]_&]:text-[#168a46]">Custom</span>
-        <h2 id="custom-path-switch-title" className="mt-3 font-rethink-sans text-[22px] font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Make {path.title} your primary path?</h2>
-        <p className="mt-2 text-[14px] leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Your current path will be saved, so you can return to it later.</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <button type="button" className="min-h-10 rounded-xl px-4 text-[13px] font-semibold text-[#d4d4d4] hover:bg-[#303030] focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-3 [[data-theme=light]_&]:text-[#525252] [[data-theme=light]_&]:hover:bg-[#f5f5f4]" onClick={onClose}>Cancel</button>
-          <button type="button" className="min-h-10 rounded-xl bg-[#168a46] px-4 text-[13px] font-semibold text-white hover:bg-[#11753a] focus-visible:outline-3 focus-visible:outline-[#8ee6ad] focus-visible:outline-offset-3" onClick={onConfirm}>Make primary</button>
-        </div>
-      </article>
-    </div>
   )
 }

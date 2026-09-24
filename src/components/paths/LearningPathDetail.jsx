@@ -11,7 +11,7 @@ import { FAMILY_ACCENTS } from './ExplorePathCard';
 import { GuidebookView } from './GuidebookView';
 import { LessonRow } from './LessonRow';
 
-export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onSwitchPrimaryPath, onChooseFramework, profile }) {
+export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onChooseFramework, profile }) {
   const cheatsheetPersonalization = getCheatsheetPersonalization(profile)
   const regions = path.cards
   const lessons = regions.flatMap((region) => region.lessons)
@@ -103,18 +103,6 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
             <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('cheatsheet')}><ChecklistIcon className="size-4" />Cheatsheet</ActionButton>
             <ActionButton variant="neutral" className="inline-flex min-h-11 items-center justify-center gap-2 px-3 text-xs font-semibold" onClick={() => setOpenResource('guidebook')}><BookOpenIcon className="size-4" />Guidebook</ActionButton>
           </div>
-          {!isCurrentPath && onSwitchPrimaryPath && (
-            <ActionButton
-              variant="primary"
-              className="w-full min-h-[46px] mt-2 text-sm font-semibold max-[900px]:col-span-full"
-              onClick={() => {
-                onSwitchPrimaryPath(path.id)
-                onBack()
-              }}
-            >
-              Make active mission path →
-            </ActionButton>
-          )}
         </aside>
 
         <div className="grid w-[min(100%,700px)] min-w-0 gap-12 mx-auto">
@@ -167,6 +155,13 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                 <span className="text-[10px] font-bold tracking-[.08em] uppercase text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{canOpenLesson ? 'Current lesson' : 'Lesson preview'}</span>
                 <h2 className="mt-[5px] overflow-hidden text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800 font-rethink-sans text-[18px] font-medium text-ellipsis whitespace-nowrap max-[680px]:max-w-[140px] max-[680px]:text-[15px]">{selectedLesson.title}</h2>
                 {selectedLesson.description && <p className="max-w-[420px] mt-1.5 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{selectedLesson.description}</p>}
+                {/* Starting a lesson here is what switches paths — there's no
+                    separate "make active" step — so say so before the click. */}
+                {canOpenLesson && !isCurrentPath && (
+                  <p className="mt-1.5 text-[12px] font-semibold text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]">
+                    Starting this makes {path.title} your active path
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3.5 max-[680px]:gap-2.5">
                 {canOpenLesson && (
@@ -174,7 +169,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                   setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
                     ? startedIds
                     : [...startedIds, selectedLesson.id])
-                  onOpenLesson(selectedLesson.id)
+                  onOpenLesson(selectedLesson.id, path.id)
                 }}>
                   {selectedLessonStarted ? 'Continue' : 'Start lesson'}
                 </ActionButton>

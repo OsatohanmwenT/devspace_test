@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { getDailyQuests } from "../../lib/dailyQuests";
+import { GameIcon } from "../ui/GameIcon";
 import { CheckIcon } from "../ui/icons";
 
 const QUESTS_SEEN_KEY = "devspace-daily-quests-seen";
@@ -86,7 +87,10 @@ export function DailyTasks({ dailyXp, xpGoal, lessonDoneToday, practiceDoneToday
       {open && (
         <div className="home-quick-tasks__panel" id={panelId} role="group" aria-label="Daily quests">
           <span className="home-quick-tasks__title">
-            Daily quests
+            <span className="home-quick-tasks__heading">
+              <GameIcon name="daily-tasks-notebook" className="size-5" />
+              Daily quests
+            </span>
             <span>{doneCount}/{tasks.length}</span>
           </span>
           {tasks.map((task) => (

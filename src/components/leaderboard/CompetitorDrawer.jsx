@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Avatar } from '../ui/Avatar'
 import { Drawer } from '../ui/Drawer'
 import { getRivalProfile } from '../../lib/rivalProfile'
+import { CoinIcon } from '../ui/GameIcon'
 
 function Stat({ label, value }) {
   return (
@@ -74,7 +75,7 @@ export function CompetitorDrawer({ entry, rival, league, seasonIndex, onClose, o
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
-          <Stat label="Season Coins" value={`🪙 ${entry.score.toLocaleString()}`} />
+          <Stat label="Season Coins" value={<><CoinIcon /> {entry.score.toLocaleString()}</>} />
           <Stat label="Streak" value={`${profile.streakDays}d`} />
           <Stat label="Concepts mastered" value={profile.conceptsMastered} />
           <Stat label="Reinforcement checks" value={profile.reinforcementChecks} />
