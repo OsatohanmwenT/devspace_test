@@ -4,8 +4,24 @@ import { LessonDataTable } from './LessonDataTable';
 import { LockIcon } from '../ui/icons';
 import { YouTubeSegmentPlayer } from './YouTubeSegmentPlayer';
 
+// "2m 05s" / "45s" — short enough to sit inline next to the framing line,
+// precise enough that a learner knows exactly how much of their time it asks.
+function formatClipDuration(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes === 0) return `${seconds}s`
+  return `${minutes}m ${String(seconds).padStart(2, '0')}s`
+}
+
+// 322 → "5:22", for the chapter's time range on the poster badge.
+function formatTimestamp(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  return `${minutes}:${String(totalSeconds % 60).padStart(2, '0')}`
+}
+
 export function LessonArticle({ article, lessonTitle }) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
   const segments = article.video?.segments ?? []
   const [activeSegmentId, setActiveSegmentId] = useState(segments[0]?.id)
   // Watching one chapter to its end unlocks the next — you can always revisit
@@ -41,39 +57,13 @@ export function LessonArticle({ article, lessonTitle }) {
           {article.intro}
         </p>
 
-        {article.video && !(canPlay && isPlaying) && (
-          <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 mt-[22px] rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] max-w-[82ch] text-center">
-            <div className="grid gap-2">
-              <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
-              <p className="m-0 text-[rgba(244,244,242,0.55)] text-xs font-bold tracking-[0.14em] uppercase">{article.video.subtitle}</p>
-            </div>
-            <div className="relative">
-              <button
-                type="button"
-                disabled={!canPlay}
-                className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out enabled:hover:bg-[#2ab9c9] enabled:hover:scale-[1.06] disabled:cursor-default disabled:opacity-80"
-                aria-label={canPlay ? `Play: ${article.video.title}` : `${article.video.title} (video coming soon)`}
-                onClick={() => canPlay && setIsPlaying(true)}
-              >
-                <svg className="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
-              </button>
-              {article.video.badgeLabel && (
-                <span
-                  className="absolute -right-1.5 -bottom-1.5 grid w-[26px] h-[26px] place-items-center border-2 border-[#121212] rounded-full bg-[#525252] text-white text-[10px] font-bold tracking-[0.02em]"
-                  aria-hidden="true"
-                >
-                  {article.video.badgeLabel}
-                </span>
-              )}
-            </div>
-            <span className="absolute top-3.5 right-4 rounded-md bg-[rgba(255,255,255,0.12)] px-2 py-[3px] text-[#f4f4f2] text-xs font-semibold">{article.video.duration}</span>
-            <img className="absolute left-[18px] bottom-3.5 h-[14px] w-auto opacity-50" src="/assets/logo.svg" alt="" />
-          </div>
-        )}
-
-        {article.video && canPlay && isPlaying && (
+        {article.video && (
           <div className="mt-[22px] max-w-[82ch]">
-            {segments.length > 1 && (
+            {/* Chapter chips are pickable before the first play too, so a
+                learner chooses which part matters before committing to watch
+                anything. Later chapters still unlock only once the one before
+                has been watched through. */}
+            {canPlay && segments.length > 1 && (
               <div className="mb-2.5 flex flex-wrap gap-2" role="group" aria-label="Video chapter">
                 {segments.map((segment, index) => {
                   const unlocked = index <= furthestUnlockedIndex
@@ -86,7 +76,7 @@ export function LessonArticle({ article, lessonTitle }) {
                       onClick={() => setActiveSegmentId(segment.id)}
                       aria-pressed={isActive}
                       title={unlocked ? segment.label : `Watch "${activeSegment?.label ?? 'this chapter'}" first`}
-                      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium ${isActive ? 'border-[#04adc0] bg-[#213c3f] text-[#f4f4f2]' : unlocked ? 'border-[#4a4a4a] text-[#c4c4c7] hover:border-[#6699ec] cursor-pointer' : 'border-[#333336] text-[#68686c] cursor-default'}`}
+                      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium ${isActive ? 'border-[#04adc0] bg-[#213c3f] text-[#f4f4f2] [[data-theme=light]_&]:bg-[#e0f5f7] [[data-theme=light]_&]:text-neutral-800' : unlocked ? 'border-[#4a4a4a] text-[#c4c4c7] hover:border-[#6699ec] cursor-pointer [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-[#525252]' : 'border-[#333336] text-[#68686c] cursor-default [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:text-[#a0a0a0]'}`}
                     >
                       {!unlocked && <LockIcon className="size-3" />}
                       {segment.label}
@@ -95,14 +85,83 @@ export function LessonArticle({ article, lessonTitle }) {
                 })}
               </div>
             )}
-            <YouTubeSegmentPlayer
-              key={`${article.video.videoId}-${activeSegment.id}`}
-              videoId={article.video.videoId}
-              startSeconds={activeSegment.startSeconds}
-              endSeconds={activeSegment.endSeconds}
-              title={article.video.title}
-              onSegmentComplete={() => setCompletedSegmentIds((current) => (current.includes(activeSegment.id) ? current : [...current, activeSegment.id]))}
-            />
+
+            {/* The framing line: what this clip is and how long it asks for —
+                kept visible through play and every chapter switch, not just on
+                the poster before the first click. */}
+            {canPlay && (
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="m-0 text-[13px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                  Watch: <span className="font-medium text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{activeSegment.label ?? article.video.subtitle ?? article.video.title}</span>
+                  <span className="text-[#68686c] [[data-theme=light]_&]:text-[#a0a0a0]"> · {formatClipDuration(activeSegment.endSeconds - activeSegment.startSeconds)} clip</span>
+                </p>
+                {/* Never force watching to get the idea — a short read-instead
+                    version sits right beside it. */}
+                {article.video.transcriptSummary && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSummary((open) => !open)}
+                    aria-expanded={showSummary}
+                    aria-controls="lesson-video-summary"
+                    className="inline-flex items-center gap-1 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[#6699ec] hover:underline [[data-theme=light]_&]:text-[#2563eb]"
+                  >
+                    {showSummary ? 'Hide summary' : 'Prefer to read? Show a summary'}
+                    <svg className={`size-3.5 transition-transform duration-200 ${showSummary ? 'rotate-180' : ''}`} viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4.5 6.5 3.5 3.5 3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showSummary && article.video.transcriptSummary && (
+              <p id="lesson-video-summary" className="m-0 mb-3 rounded-xl border border-[#404040] [[data-theme=light]_&]:border-[#e1e1e1] bg-[#262626] [[data-theme=light]_&]:bg-[#f5f5f5] px-4 py-3 text-[13.5px] leading-[1.55] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252]">
+                {article.video.transcriptSummary}
+              </p>
+            )}
+
+            {canPlay && isPlaying ? (
+              <YouTubeSegmentPlayer
+                key={`${article.video.videoId}-${activeSegment.id}`}
+                videoId={article.video.videoId}
+                startSeconds={activeSegment.startSeconds}
+                endSeconds={activeSegment.endSeconds}
+                title={article.video.title}
+                onSegmentComplete={() => setCompletedSegmentIds((current) => (current.includes(activeSegment.id) ? current : [...current, activeSegment.id]))}
+              />
+            ) : (
+              <div className="relative flex w-full overflow-hidden flex-col items-center justify-center gap-6 rounded-[20px] bg-[#1a1a1a] px-6 py-10 aspect-[16/9] text-center">
+                <div className="grid gap-2">
+                  <h2 className="m-0 text-[#f4f4f2] font-rethink-sans text-[clamp(22px,3vw,30px)] font-semibold">{article.video.title}</h2>
+                  <p className="m-0 text-[rgba(244,244,242,0.55)] text-xs font-bold tracking-[0.14em] uppercase">{article.video.subtitle}</p>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    disabled={!canPlay}
+                    className="grid w-16 h-16 place-items-center border-0 rounded-full bg-[#04adc0] text-neutral-800 shadow-[0_10px_24px_-8px_rgba(0,0,0,0.5)] transition-[background,transform] duration-[120ms] ease-in-out enabled:hover:bg-[#2ab9c9] enabled:hover:scale-[1.06] disabled:cursor-default disabled:opacity-80"
+                    aria-label={canPlay ? `Play: ${article.video.title}` : `${article.video.title} (video coming soon)`}
+                    onClick={() => canPlay && setIsPlaying(true)}
+                  >
+                    <svg className="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
+                  </button>
+                  {article.video.badgeLabel && (
+                    <span
+                      className="absolute -right-1.5 -bottom-1.5 grid w-[26px] h-[26px] place-items-center border-2 border-[#121212] rounded-full bg-[#525252] text-white text-[10px] font-bold tracking-[0.02em]"
+                      aria-hidden="true"
+                    >
+                      {article.video.badgeLabel}
+                    </span>
+                  )}
+                </div>
+                {/* The timeline to watch, top-right: the picked chapter's own
+                    range when there are chapters, otherwise the video's. */}
+                <span className="absolute top-3.5 right-4 rounded-md bg-[rgba(255,255,255,0.12)] px-2 py-[3px] text-[#f4f4f2] text-xs font-semibold tabular-nums">
+                  {canPlay && segments.length > 1
+                    ? `${formatTimestamp(activeSegment.startSeconds)}–${formatTimestamp(activeSegment.endSeconds)}`
+                    : article.video.duration}
+                </span>
+                <img className="absolute left-[18px] bottom-3.5 h-[14px] w-auto opacity-50" src="/assets/logo.svg" alt="" />
+              </div>
+            )}
           </div>
         )}
 

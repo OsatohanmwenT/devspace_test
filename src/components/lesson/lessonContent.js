@@ -14,6 +14,8 @@ export const programExecutionArticle = {
     // concept's intro-to-execution scope.
     videoId: 'rfscVS0vtbw',
     segments: [{ id: 'intro', label: 'Getting started', startSeconds: 0, endSeconds: 192 }],
+    // The read-instead version of the clip, for learners who'd rather skim.
+    transcriptSummary: 'A Python program is a list of instructions saved in a file. When you run it, Python reads the file from the top and carries out each line in order — a print() line shows its text the moment Python reaches it. If a line has a mistake, everything above it has already run, and Python stops right there.',
   },
   sections: [
     {
