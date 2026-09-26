@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CheckIcon } from '../ui/icons'
 import { ActionButton } from '../ui/ActionButton'
 import {
@@ -12,8 +13,9 @@ import {
 import { explorePaths } from '../../data/paths'
 import { getLeague } from '../../data/leagues'
 import { STREAK_MILESTONES } from '../../lib/streak'
-import { getProfileProgress, normalizeProfile } from '../../lib/profile'
+import { getProfileProgress, isProfileUrl, normalizeProfile } from '../../lib/profile'
 import { TierMedal } from '../leaderboard/TierMedal'
+import { ProfileEditor, workTypeLabel } from './ProfileEditor'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
 
@@ -199,10 +201,86 @@ function RecordRow({ label, value, isLast }) {
   )
 }
 
+// Links show their host, not the full address — "github.com/ada" is what a
+// reader scans for; the protocol and trailing slash are noise.
+function displayUrl(url) {
+  try {
+    const parsed = new URL(url)
+    const path = parsed.pathname.replace(/\/$/, '')
+    return `${parsed.host.replace(/^www\./, '')}${path}`
+  } catch {
+    return url
+  }
+}
+
+function WorkEntry({ work }) {
+  const hasProof = isProfileUrl(work.url)
+  const typeLabel = workTypeLabel(work.type)
+
+  return (
+    <li className="grid gap-1.5">
+      <h3 className={`m-0 text-[15px] font-semibold tracking-[-.01em] ${INK}`}>
+        {hasProof ? (
+          <a href={work.url} target="_blank" rel="noopener noreferrer" className="text-inherit underline decoration-[#6699ec]/40 underline-offset-4 hover:decoration-[#6699ec]">
+            {work.title}
+          </a>
+        ) : work.title}
+      </h3>
+      <p className={`m-0 text-[13px] ${MUTED}`}>
+        {[typeLabel, hasProof ? displayUrl(work.url) : 'No link yet'].filter(Boolean).join(' · ')}
+      </p>
+      {work.description && (
+        <p className="m-0 max-w-[62ch] pt-1 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
+          {work.description}
+        </p>
+      )}
+    </li>
+  )
+}
+
+// Mirrors the real layout's proportions so the page doesn't jump when the
+// record lands — header, two body sections, and the sidebar column.
+function ProfileSkeleton() {
+  const bar = 'rounded-md bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]'
+  return (
+    <div className="grid animate-pulse grid-cols-[minmax(0,1fr)_312px] items-start gap-5 max-[900px]:grid-cols-1" aria-busy="true" aria-label="Loading profile">
+      <div className="grid gap-5">
+        <div className={`grid overflow-hidden rounded-2xl ${SURFACE}`}>
+          <div className="h-28 bg-[#6699ec]/8" />
+          <div className="grid gap-4 px-7 pb-7">
+            <span className={`-mt-11 size-[88px] rounded-full ${bar}`} />
+            <span className={`h-7 w-48 ${bar}`} />
+            <span className={`h-4 w-72 max-w-full ${bar}`} />
+            <span className={`h-2 w-full rounded-full ${bar}`} />
+          </div>
+        </div>
+        {[0, 1].map((key) => (
+          <div key={key} className={`grid gap-3 rounded-2xl ${SURFACE} p-7`}>
+            <span className={`h-3 w-24 ${bar}`} />
+            <span className={`h-4 w-full ${bar}`} />
+            <span className={`h-4 w-2/3 ${bar}`} />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-5">
+        {[0, 1].map((key) => (
+          <div key={key} className={`grid gap-3 rounded-2xl ${SURFACE} p-7`}>
+            <span className={`h-3 w-28 ${bar}`} />
+            <span className={`h-4 w-full ${bar}`} />
+            <span className={`h-4 w-full ${bar}`} />
+          </div>
+        ))}
+      </div>
+      <span className="sr-only" role="status">Loading profile</span>
+    </div>
+  )
+}
+
 // A CV, not a dashboard: what this learner has covered, what it demonstrates,
 // and when — sourced entirely from existing onboarding answers and real
 // lesson-completion records rather than any new stored field.
-export default function ProfileView({ profile, progress, currentPath, pathProgress, onEditProfile }) {
+export default function ProfileView({ profile, progress, currentPath, pathProgress, onSaveProfile, onStartLearning, isLoading = false }) {
+  const [editing, setEditing] = useState(false)
   const { xp, weeklyXp, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
   const league = getLeague(leagueIndex)
   const levelInfo = getLevel(xp)
@@ -254,12 +332,21 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
       .map((lesson) => ({ ...lesson, completedAt: completedLessons[lesson.id].completedAt, regionTitle: region.title })),
   )
 
-  const about = [
+  const displayName = identity?.name.trim() || 'Learner'
+  const initial = displayName[0].toUpperCase()
+  const headline = identity?.headline.trim() || `Aspiring ${roleLabel}`
+  const works = (identity?.projects ?? []).filter((work) => work?.title?.trim())
+  const links = (identity?.links ?? []).filter((link) => isProfileUrl(link?.url))
+
+  // The learner's own words win; the onboarding-derived summary is the
+  // fallback so a fresh profile still reads as a person, not a blank.
+  const derivedAbout = [
     motivationLabel ? `${motivationLabel}.` : null,
     experienceLabel ? `Starting from: ${experienceLabel.toLowerCase()}.` : null,
     currentPath ? `Currently working through the ${currentPath.title} path toward ${roleLabel}.` : null,
     profile?.dailyMinutes ? `Committed to ${profile.dailyMinutes} minutes of practice a day.` : null,
   ].filter(Boolean).join(' ')
+  const about = identity?.bio.trim() || derivedAbout
 
   const profileQuests = getProfileProgress(identity, { lessonsCompleted: verifiedLessons })
 
@@ -270,8 +357,13 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
     { label: 'Longest streak', value: `${longestStreak} days` },
   ]
 
+  if (isLoading) return <ProfileSkeleton />
+
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_312px] items-start gap-5 max-[900px]:grid-cols-1" aria-label="Profile">
+      {editing && onSaveProfile && (
+        <ProfileEditor identity={identity} onSave={onSaveProfile} onClose={() => setEditing(false)} />
+      )}
       <section className="grid gap-5">
         <header className={`grid overflow-hidden rounded-2xl ${SURFACE}`}>
           {/* A fine diagonal rule field rather than a soft gradient wash —
@@ -286,12 +378,20 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
           />
           <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
             <div className="relative -mt-11 w-[88px]">
-              <span
-                className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                aria-hidden="true"
-              >
-                L
-              </span>
+              {identity?.photo ? (
+                <img
+                  src={identity.photo}
+                  alt=""
+                  className="size-[88px] rounded-full object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                />
+              ) : (
+                <span
+                  className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
+                  aria-hidden="true"
+                >
+                  {initial}
+                </span>
+              )}
               <span
                 className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
                 aria-hidden="true"
@@ -303,10 +403,10 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
 
             <div className="grid gap-1.5">
               <h1 className={`m-0 font-rethink-sans text-[30px] font-medium leading-[1.1] tracking-[-.025em] ${INK}`}>
-                Learner
+                {displayName}
               </h1>
               <p className={`m-0 text-[16px] leading-[1.45] ${INK}`}>
-                Aspiring {roleLabel}
+                {headline}
                 {branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
               </p>
               <p className={`m-0 pt-1 text-[13px] ${MUTED}`}>
@@ -335,9 +435,9 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               </div>
             </div>
 
-            {onEditProfile && (
+            {onSaveProfile && (
               <div className="flex flex-wrap gap-2">
-                <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={onEditProfile}>
+                <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={() => setEditing(true)} aria-haspopup="dialog">
                   Edit profile
                 </ActionButton>
               </div>
@@ -359,6 +459,11 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
               Nothing here yet. Finish a lesson and the region it belongs to appears as an
               entry, with the dates you worked through it and what it demonstrates.
             </p>
+            {onStartLearning && (
+              <ActionButton className="min-h-10 justify-self-start text-[14px]" onClick={onStartLearning}>
+                Start a lesson
+              </ActionButton>
+            )}
           </SectionCard>
         ) : (
           <SectionCard title="Experience">
@@ -367,6 +472,28 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                 <ExperienceEntry key={region.id ?? region.title} region={region} pathTitle={currentPath?.title ?? ''} />
               ))}
             </ol>
+          </SectionCard>
+        )}
+
+        {works.length > 0 ? (
+          <SectionCard title="Work">
+            <ul className="m-0 grid list-none gap-6 p-0">
+              {works.map((work) => <WorkEntry key={work.id ?? work.title} work={work} />)}
+            </ul>
+          </SectionCard>
+        ) : onSaveProfile && (
+          <SectionCard title="Work">
+            <p className={`m-0 max-w-[60ch] text-[14px] leading-[1.7] ${MUTED}`}>
+              Lessons show what you've covered; work shows what you can do with it. Add a
+              project, analysis, or design with a link a reader can open.
+            </p>
+            <button
+              type="button"
+              className="justify-self-start border-0 bg-transparent p-0 text-[13px] font-semibold text-[#88bdf2] hover:underline focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-2 [[data-theme=light]_&]:text-[#2563eb]"
+              onClick={() => setEditing(true)}
+            >
+              + Add work sample
+            </button>
           </SectionCard>
         )}
 
@@ -442,6 +569,26 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
       </section>
 
       <aside className="grid gap-5">
+        {links.length > 0 && (
+          <SectionCard title="Links">
+            <ul className="m-0 grid list-none gap-3 p-0">
+              {links.map((link) => (
+                <li key={link.id ?? link.url} className="grid min-w-0 gap-0.5">
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`truncate text-[14px] font-medium ${INK} underline decoration-[#6699ec]/40 underline-offset-4 hover:decoration-[#6699ec]`}
+                  >
+                    {link.label?.trim() || displayUrl(link.url)}
+                  </a>
+                  {link.label?.trim() && <span className={`truncate text-[12px] ${FAINT}`}>{displayUrl(link.url)}</span>}
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        )}
+
         <SectionCard title="Learning record">
           <dl className="m-0 grid gap-3">
             {record.map((item, index) => (

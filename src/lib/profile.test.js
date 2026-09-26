@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getProfileProgress, isProfileUrl, normalizeProfile, WORK_TYPES } from './profile.js'
+import { BIO_LIMIT, cleanProfileDraft, getProfileProgress, isProfileUrl, normalizeProfile, validateProfileDraft, WORK_TYPES } from './profile.js'
 
 test('profile migration keeps existing onboarding data and adds safe defaults', () => {
   assert.deepEqual(normalizeProfile({ role: 'frontend_developer' }), {
@@ -61,4 +61,41 @@ test('profile progress requires valid proof and relevant links', () => {
   const realEvidence = getProfileProgress({ name: 'Ari', headline: 'Editor', projects: [{ title: 'Reel', url: 'https://vimeo.com/ari' }], links: [{ url: 'https://behance.net/ari' }] }, {})
   assert.equal(realEvidence.items[1].complete, true)
   assert.equal(realEvidence.items[2].complete, true)
+})
+
+const emptyDraft = (overrides = {}) => ({ name: '', headline: '', bio: '', links: [], projects: [], ...overrides })
+
+test('blank link and work rows are neither errors nor saved', () => {
+  const draft = emptyDraft({
+    links: [{ id: 'l1', label: ' ', url: '' }],
+    projects: [{ id: 'w1', title: '', url: '', description: '', type: '' }],
+  })
+
+  assert.deepEqual(validateProfileDraft(draft), {})
+  assert.deepEqual(cleanProfileDraft(draft), { name: '', headline: '', bio: '', links: [], projects: [] })
+})
+
+test('profile drafts reject non-http links and untitled work', () => {
+  const errors = validateProfileDraft(emptyDraft({
+    bio: 'x'.repeat(BIO_LIMIT + 1),
+    links: [{ id: 'l1', label: 'GitHub', url: 'github.com/ada' }],
+    projects: [{ id: 'w1', title: '', url: 'javascript:alert(1)', description: 'notes', type: '' }],
+  }))
+
+  assert.deepEqual(Object.keys(errors).sort(), ['bio', 'link-l1', 'work-title-w1', 'work-url-w1'])
+})
+
+test('cleaned drafts are trimmed and satisfy the profile quests', () => {
+  const cleaned = cleanProfileDraft(emptyDraft({
+    name: ' Ada ',
+    headline: ' Aspiring analyst ',
+    links: [{ id: 'l1', label: ' GitHub ', url: ' https://github.com/ada ' }],
+    projects: [{ id: 'w1', title: ' Sales dashboard ', url: 'https://example.com/d', description: '', type: 'data' }],
+  }))
+
+  assert.equal(cleaned.name, 'Ada')
+  assert.deepEqual(cleaned.links, [{ id: 'l1', label: 'GitHub', url: 'https://github.com/ada' }])
+  assert.equal(cleaned.projects[0].type, 'data')
+  const quests = getProfileProgress(cleaned, { lessonsCompleted: 1 })
+  assert.equal(quests.percent, 100)
 })
