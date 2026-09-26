@@ -115,7 +115,6 @@ function StreakCelebration({ before, after, dates, onContinue }) {
       gsap.timeline({ defaults: { ease: 'power2.out' } })
         .from('[data-streak-glow]', { autoAlpha: 0, scale: 0.5, duration: 0.6 })
         .from('[data-streak-fire]', { autoAlpha: 0, scale: 0.3, y: 30, transformOrigin: '50% 100%', duration: 0.6, ease: 'back.out(2.2)' }, '<')
-        .from('[data-streak-devy]', { autoAlpha: 0, x: 24, rotate: 12, duration: 0.45, ease: 'back.out(2)' }, '-=0.25')
         .from('[data-streak-bubble]', { autoAlpha: 0, y: 10, scale: 0.9, transformOrigin: '70% 100%', duration: 0.35, ease: 'back.out(2)' }, '-=0.15')
         .from('[data-streak-count]', { scale: 1.4, duration: 0.45, ease: 'back.out(3)' }, 0.65)
         .from('[data-streak-week]', { autoAlpha: 0, y: 14, duration: 0.4 }, '-=0.2')
@@ -139,9 +138,8 @@ function StreakCelebration({ before, after, dates, onContinue }) {
             </p>
           </div>
 
-          {/* Lightning is the app's streak mark (the header counter, the
-              streak journey), so the streak moment uses it too. Devy leans on
-              it rather than standing beside it — one character moment. */}
+          {/* Lightning is the app's streak mark (the header counter and streak
+              journey), so it carries this moment on its own. */}
           <div className="relative size-[200px] max-[720px]:size-[168px]">
             <span
               data-streak-glow
@@ -150,9 +148,6 @@ function StreakCelebration({ before, after, dates, onContinue }) {
             />
             <span data-streak-fire className="absolute inset-x-0 top-0 grid justify-items-center">
               <GameIcon name="lightning-bolt" className="streak-bolt h-[184px] w-[180px] max-[720px]:h-[154px] max-[720px]:w-[150px]" />
-            </span>
-            <span data-streak-devy className="absolute -right-20 -bottom-8 size-[150px] max-[720px]:-right-14 max-[720px]:-bottom-6 max-[720px]:size-[118px]">
-              <DevyLottie clip="lesson-complete" loop={false} className="size-full" />
             </span>
           </div>
 

@@ -151,14 +151,9 @@ function SectionCard({ title, icon: Icon, children, className = '', plain = fals
 
   return (
     <section className={`grid gap-5 rounded-2xl ${SURFACE} p-7 shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)] max-[480px]:p-5 ${className}`}>
-      <div className="flex items-center gap-3">
-        {Icon && (
-          <span className="grid size-7 flex-none place-items-center rounded-lg bg-[#1c2a4d] text-[#88bdf2] [[data-theme=light]_&]:bg-[#f0f5fd] [[data-theme=light]_&]:text-[#2563eb]" aria-hidden="true">
-            <Icon className="size-[15px]" />
-          </span>
-        )}
-        <h2 className={`m-0 text-[11px] font-bold uppercase tracking-[.09em] ${MUTED}`}>{title}</h2>
-        <span className={`h-px flex-1 ${RULE}`} />
+      <div className="flex items-center gap-2.5">
+        {Icon && <Icon className="size-[17px] flex-none text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]" />}
+        <h2 className={`m-0 font-rethink-sans text-[16px] font-semibold tracking-[-.01em] ${INK}`}>{title}</h2>
       </div>
       {children}
     </section>
@@ -235,19 +230,24 @@ function ExperienceEntry({ region, pathTitle }) {
 
 function StreakBadge({ tier, earned, current }) {
   return (
-    <div className="grid justify-items-center gap-1.5" title={tier.label}>
+    <div className="grid justify-items-center gap-1.5" title={earned ? tier.label : `${tier.label} · ${tier.days}-day streak`}>
+      {/* Collectible coins: earned ones are minted gold, unearned ones an
+          empty socket — no counters inside, like the home badge strip. */}
       <span
-        className={`grid size-12 place-items-center rounded-xl text-[13px] font-bold tabular-nums ${
+        className={`grid size-12 place-items-center rounded-full ${
           earned
-            ? 'bg-amber-400 text-amber-950 shadow-[0_0_0_3px_rgba(245,166,35,.18)]'
-            : `border ${HAIRLINE} bg-[#212124] [[data-theme=light]_&]:bg-[#f4f4f1] ${FAINT}`
+            ? 'bg-[radial-gradient(circle_at_35%_30%,#ffe7a3,#f5b82e_55%,#c98a12)] text-amber-900 shadow-[inset_0_0_0_2px_rgba(255,255,255,.35),0_4px_10px_-4px_rgba(201,138,18,.7)]'
+            : `border-2 border-dashed ${HAIRLINE} bg-[#212124] [[data-theme=light]_&]:bg-[#f4f4f1] ${FAINT}`
         }`}
         aria-hidden="true"
       >
-        {tier.days}
+        <svg viewBox="0 0 24 24" fill="none" className={earned ? 'size-6' : 'size-5 opacity-60'}>
+          <circle cx="12" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.8" />
+          <path d="m8.5 14-1.25 5.25L12 17l4.75 2.25L15.5 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </span>
       <span className={`text-center text-[11px] leading-[1.3] ${earned ? MUTED : FAINT}`}>
-        {earned ? tier.label : current > 0 ? `${tier.days - current} to go` : `${tier.days} days`}
+        {earned ? tier.label : `${tier.days} days`}
       </span>
     </div>
   )
@@ -755,10 +755,13 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
                     {identity?.headline?.trim() || roleLabel}
                     {branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
                   </p>
-                  <p className={`m-0 pt-1 text-[13px] ${MUTED}`}>
-                    {currentPath ? `${currentPath.title} path` : 'No path selected'}
-                    {joinedDate ? ` · Joined ${joinedDate}` : ''}
-                  </p>
+                  {/* The path itself lives in the Learning Path card below, so
+                      this line only carries what nothing else on the page does. */}
+                  {(joinedDate || profile?.dailyMinutes) && (
+                    <p className={`m-0 pt-1 text-[13px] ${MUTED}`}>
+                      {[joinedDate && `Joined ${joinedDate}`, profile?.dailyMinutes && `${profile.dailyMinutes} min daily goal`].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-1.5">

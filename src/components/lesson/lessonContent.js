@@ -254,18 +254,40 @@ export const writingProgramsClickFillQuiz = {
   ],
 }
 
+// Shared by both yearly-hours editors. Each task carries its own check (see
+// codeExercise.js) and the line Devy says while it's the next one to do; the
+// hints climb from a nudge to the full answer, one per tap.
+const YEARLY_HOURS_TASKS = [
+  {
+    title: 'Calculate the yearly total',
+    description: 'Multiply `hours_per_week` by `weeks_per_year` and save the result in a new variable.',
+    check: { pattern: '^[ \\t]*[A-Za-z_]\\w*[ \\t]*=[ \\t]*(hours_per_week[ \\t]*\\*[ \\t]*weeks_per_year|weeks_per_year[ \\t]*\\*[ \\t]*hours_per_week)[ \\t]*$' },
+    nudge: 'The numbers are ready — now make a new variable that multiplies `hours_per_week` by `weeks_per_year`.',
+  },
+  {
+    title: 'Print the result',
+    description: 'Use `print()` with the variable you created.',
+    check: { output: '2080' },
+    nudge: 'Your calculation is there, but nothing shows it yet. Pass your new variable to `print()`.',
+  },
+]
+
+const YEARLY_HOURS_HINTS = [
+  'Multiplication in Python uses `*`. A new variable is just a name, `=`, and the calculation on the right.',
+  'Try a line like `yearly_total = hours_per_week * weeks_per_year`, then a second line that prints `yearly_total`.',
+  'yearly_total = hours_per_week * weeks_per_year\nprint(yearly_total)',
+]
+
 export const variablesExpressionsEditor = {
   title: 'Build the yearly-hours program',
   description: 'Use the two variables to calculate the yearly total, then print it.',
   example: 'hours_per_week = 40',
+  devyIntro: 'Two variables are already set up for you. Calculate the yearly total from them, then print it. Run it whenever you like — I’ll tell you how it’s going.',
   filename: 'yearly_hours.py',
   starterCode: 'hours_per_week = 40\nweeks_per_year = 52\n\n# Calculate and print the yearly total',
   output: '2080',
-  tasks: [
-    { title: 'Calculate the yearly total', description: 'Multiply hours_per_week by weeks_per_year and save the result.' },
-    { title: 'Print the result', description: 'Use print() with the variable you created.' },
-  ],
-  hint: 'yearly_total = hours_per_week * weeks_per_year\nprint(yearly_total)',
+  tasks: YEARLY_HOURS_TASKS,
+  hints: YEARLY_HOURS_HINTS,
 }
 
 export const variablesExpressionsGuidedEditor = {
@@ -277,11 +299,8 @@ export const variablesExpressionsGuidedEditor = {
   output: '2080',
   layout: 'guided',
   continueLabel: 'Open full editor',
-  tasks: [
-    { title: 'Calculate the yearly total', description: 'Multiply hours_per_week by weeks_per_year and save the result.' },
-    { title: 'Print the result', description: 'Use print() with the variable you created.' },
-  ],
-  hint: 'yearly_total = hours_per_week * weeks_per_year\nprint(yearly_total)',
+  tasks: YEARLY_HOURS_TASKS,
+  hints: YEARLY_HOURS_HINTS,
 }
 
 export const writingProgramsLesson = {

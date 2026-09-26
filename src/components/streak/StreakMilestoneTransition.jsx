@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import confetti from 'canvas-confetti'
 import { motion } from 'motion/react'
 import { ActionButton } from '../ui/ActionButton'
-import { TrophyIcon } from '../ui/icons'
+import { MilestoneTrophy, TROPHY_BURST_AT } from './MilestoneTrophy'
 import { CONFETTI_COLORS } from '../../lib/confetti'
 import { STREAK_MILESTONES } from '../../lib/streak'
 
@@ -10,8 +10,7 @@ import { STREAK_MILESTONES } from '../../lib/streak'
 // roadmap-complete moment by default and only matches it at the top tier
 // (restores === 3, day 100) — the same proportional-to-meaning rule that
 // keeps RoadmapTransition from spending confetti on a region finish.
-function celebrate(restores) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+function burst(restores) {
 
   if (restores >= 3) {
     confetti({ particleCount: 90, spread: 75, startVelocity: 42, origin: { y: 0.32 }, colors: CONFETTI_COLORS })
@@ -26,23 +25,6 @@ function celebrate(restores) {
   }
   confetti({ particleCount: 28, spread: 60, startVelocity: 24, origin: { y: 0.32 }, colors: CONFETTI_COLORS })
   return undefined
-}
-
-// The same amber + trophy pairing StreakCard already uses for "streak",
-// just scaled up into the badge this moment is built around — no new color
-// or icon introduced for a celebration that already has a locked identity.
-function MilestoneBadge() {
-  return (
-    <motion.div
-      initial={{ scale: 0.6, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.55, delay: 0.1, ease: [0.34, 1.56, 0.64, 1] }}
-      className="grid size-28 place-items-center rounded-full bg-[#f5a623] text-white shadow-[0_0_0_6px_rgba(245,166,35,0.18)]"
-      aria-hidden="true"
-    >
-      <TrophyIcon className="size-14" />
-    </motion.div>
-  )
 }
 
 // A day-pill row for every tier up to and including the one just earned —
@@ -68,7 +50,17 @@ function EarnedTiers({ throughDay }) {
 export function StreakMilestoneTransition({ milestone, onContinue, onViewJourney }) {
   const { days, restores, label } = milestone
 
-  useEffect(() => celebrate(restores), [restores, days])
+  // The confetti goes off as the trophy locks into its badge, not on mount,
+  // so the two read as one burst.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    let cleanup
+    const timer = window.setTimeout(() => { cleanup = burst(restores) }, TROPHY_BURST_AT * 1000)
+    return () => {
+      window.clearTimeout(timer)
+      cleanup?.()
+    }
+  }, [restores, days])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -89,9 +81,9 @@ export function StreakMilestoneTransition({ milestone, onContinue, onViewJourney
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 0.61, 0.36, 1] }}
       >
-        <MilestoneBadge />
+        <MilestoneTrophy tier={restores} className="w-[220px] max-[680px]:w-[180px]" />
 
-        <p className="mt-5 mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
+        <p className="mt-6 mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
           Streak milestone
         </p>
         <h1 className="m-0 mb-2 font-rethink-sans text-3xl font-semibold leading-[1.3] max-[680px]:text-[26px]">

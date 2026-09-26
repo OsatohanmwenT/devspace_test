@@ -3726,3 +3726,16 @@
     display: none;
   }
 }
+
+/* Streak milestone trophy — soft golden rays that fade out toward the edge,
+   rotated slowly by MilestoneTrophy. */
+.milestone-trophy-rays {
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgb(255 214 94 / 0.34) 0deg 7deg, transparent 7deg 22.5deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, rgb(0 0 0 / 0.5) 42%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 18%, rgb(0 0 0 / 0.5) 42%, transparent 68%);
+}
+
+[data-theme='light'] .milestone-trophy-rays {
+  background: repeating-conic-gradient(from 0deg, rgb(245 166 35 / 0.3) 0deg 7deg, transparent 7deg 22.5deg);
+}
