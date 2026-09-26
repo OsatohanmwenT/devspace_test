@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getDemoteCount, getLeague, getPromoteCount } from '../../data/leagues';
+import { getPath } from '../../data/paths';
 import { rivals } from '../../data/rivals';
 import { can, CAPABILITIES } from '../../lib/entitlements';
 import { canCompeteInLeague } from '../../lib/leagueAccess';
 import { getAllTimeStandings, getBoardWindow, getStandings, getZoneSummary, USER_ID } from '../../lib/leagueSim';
-import { getSeasonIndex, now } from '../../lib/season';
+import { getSeasonIndex, getSeasonProgress, now } from '../../lib/season';
 import { buildClimbCard, buildH2HWinCard, buildLeagueUnlockedCard, buildTopPercentCard } from '../../lib/shareCards';
 import { InfoTooltip } from '../ui/InfoTooltip';
 import { ForwardLink } from '../ui/NavArrowLink';
@@ -189,6 +190,21 @@ export default function LeaderboardView({
     setShareCard(buildTopPercentCard(userEntry.rank, seasonly.length))
   }
 
+  // Private leagues and H2H show the learner as themselves — their real path,
+  // photo, and avatar style — rather than a hardcoded persona.
+  const userPath = progress?.profile?.pathId ? getPath(progress.profile.pathId, progress?.customPaths) : null
+  const viewer = {
+    role: userPath?.title ? `${userPath.title} path` : undefined,
+    photo: progress?.profile?.photo,
+    avatarStyle: progress?.profile?.avatarStyle,
+  }
+  const privateStandingsOptions = {
+    seasonProgress: getSeasonProgress(clock),
+    leagueIndex,
+    userRole: viewer.role,
+    userTag: hasProTag ? 'PRO' : null,
+  }
+
   const selectedRival = selectedRivalId ? seasonly.find((entry) => entry.id === selectedRivalId) : null
   const selectedRivalData = selectedRival ? rivals.find((rival) => rival.id === selectedRival.id) : null
 
@@ -207,6 +223,8 @@ export default function LeaderboardView({
           privateLeagues={progress?.privateLeagues}
           seasonCoins={seasonCoins}
           seasonIndex={seasonIndex}
+          standingsOptions={privateStandingsOptions}
+          user={viewer}
           onBack={() => setView('official')}
           onCreate={onCreatePrivateLeague}
           onJoin={onJoinPrivateLeague}
@@ -230,10 +248,15 @@ export default function LeaderboardView({
         <HeadToHead
           h2h={progress?.h2h}
           seasonCoins={seasonCoins}
+          seasonIndex={seasonIndex}
+          leagueIndex={leagueIndex}
           clock={clock}
+          user={viewer}
           onBack={() => setView('official')}
           onShareWin={(match) => setShareCard(buildH2HWinCard(match.opponentName))}
           onChooseOpponent={onChooseH2HOpponent}
+          onStartPractice={onStartPractice}
+          hasPractice={hasPractice}
         />
         {shareCard && <ShareCardModal card={shareCard} inviteLink={inviteLink} onClose={() => setShareCard(null)} />}
       </>

@@ -3739,3 +3739,71 @@
 [data-theme='light'] .milestone-trophy-rays {
   background: repeating-conic-gradient(from 0deg, rgb(245 166 35 / 0.3) 0deg 7deg, transparent 7deg 22.5deg);
 }
+
+/* Profile achievement coins — the same collectible language as the home badge
+   strip (.home-dashboard-badge-slot): unearned is a recessed socket waiting to
+   be filled, earned is a minted coin. `--coin` tints league badges in their
+   league's metal; everything else is gold. */
+.badge-coin {
+  --coin-size: 48px;
+  position: relative;
+  display: grid;
+  flex: none;
+  width: var(--coin-size);
+  height: var(--coin-size);
+  place-items: center;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02) 72%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    inset 0 2px 6px rgb(0 0 0 / 0.45),
+    0 1px 0 rgb(255 255 255 / 0.05);
+  color: rgb(255 255 255 / 0.28);
+}
+
+.badge-coin::before {
+  position: absolute;
+  inset: calc(var(--coin-size) * 0.11);
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: inherit;
+  content: '';
+}
+
+.badge-coin svg {
+  position: relative;
+  width: 46%;
+  height: 46%;
+}
+
+.badge-coin[data-earned='true'] {
+  --coin: #f5c542;
+  background: radial-gradient(
+    circle at 35% 28%,
+    color-mix(in srgb, var(--coin) 28%, #fffbe8) 0%,
+    var(--coin) 40%,
+    color-mix(in srgb, var(--coin) 78%, #5a3a00) 78%,
+    color-mix(in srgb, var(--coin) 62%, #3a2500) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.35),
+    inset 0 -3px 6px rgb(0 0 0 / 0.22),
+    0 4px 10px color-mix(in srgb, var(--coin) 35%, transparent);
+  color: color-mix(in srgb, var(--coin) 38%, #2a1a00);
+}
+
+.badge-coin[data-earned='true']::before {
+  border-color: rgb(255 255 255 / 0.45);
+}
+
+[data-theme='light'] .badge-coin:not([data-earned='true']) {
+  background: radial-gradient(circle at 50% 28%, #ffffff 0%, #eef0f3 78%);
+  box-shadow:
+    inset 0 0 0 1px #e1e3e8,
+    inset 0 2px 5px rgb(15 23 42 / 0.08),
+    0 1px 2px rgb(15 23 42 / 0.04);
+  color: #b3b7c0;
+}
+
+[data-theme='light'] .badge-coin:not([data-earned='true'])::before {
+  border-color: rgb(15 23 42 / 0.06);
+}

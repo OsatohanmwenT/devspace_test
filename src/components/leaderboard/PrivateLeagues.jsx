@@ -3,7 +3,8 @@ import { ActionButton } from '../ui/ActionButton'
 import { Avatar } from '../ui/Avatar'
 import { Drawer } from '../ui/Drawer'
 import { BackLink } from '../ui/NavArrowLink'
-import { getPrivateLeagueStandings, LEAGUE_EMOJIS, MAX_MEMBERS } from '../../lib/privateLeagues'
+import { getJoinCodeError, getPrivateLeagueStandings, getPrivateLeagueSummary, LEAGUE_EMOJIS, MAX_MEMBERS } from '../../lib/privateLeagues'
+import { CoinIcon } from '../ui/GameIcon'
 import { rivals } from '../../data/rivals'
 import { CompetitorDrawer } from './CompetitorDrawer'
 import { LeaderboardRow } from './LeaderboardRow'
@@ -61,8 +62,9 @@ function CreateLeagueDrawer({ onClose, onCreate }) {
   )
 }
 
-function JoinLeagueDrawer({ onClose, onJoin }) {
+function JoinLeagueDrawer({ privateLeagues, onClose, onJoin }) {
   const [code, setCode] = useState('')
+  const [error, setError] = useState(null)
 
   return (
     <Drawer id="join-private-league" title="Join with a code" onClose={onClose} labelledBy="join-private-league-title">
@@ -70,7 +72,11 @@ function JoinLeagueDrawer({ onClose, onJoin }) {
         className="grid gap-4"
         onSubmit={(event) => {
           event.preventDefault()
-          if (!code.trim()) return
+          const problem = getJoinCodeError({ privateLeagues }, code)
+          if (problem) {
+            setError(problem)
+            return
+          }
           onJoin(code.trim())
           onClose()
         }}
@@ -80,13 +86,21 @@ function JoinLeagueDrawer({ onClose, onJoin }) {
           <input
             autoFocus
             value={code}
-            onChange={(event) => setCode(event.target.value.toUpperCase())}
+            onChange={(event) => {
+              setCode(event.target.value.toUpperCase().replace(/\s/g, ''))
+              setError(null)
+            }}
             maxLength={6}
             placeholder="ABC234"
-            className="rounded-xl border border-[#404040] bg-[#1f1f1f] px-3.5 py-3 text-[15px] font-semibold tracking-[.1em] text-[#f4f4f2] outline-none focus-visible:border-[#88bdf2] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'join-code-error' : undefined}
+            className="rounded-xl border border-[#404040] aria-invalid:border-[#ff676d] bg-[#1f1f1f] px-3.5 py-3 text-[15px] font-semibold tracking-[.1em] text-[#f4f4f2] outline-none focus-visible:border-[#88bdf2] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800"
           />
+          {error && <span id="join-code-error" role="alert" className="text-[13px] text-[#ff676d] [[data-theme=light]_&]:text-[#b3272d]">{error}</span>}
         </label>
-        <ActionButton type="submit" className="min-h-12" disabled={!code.trim()}>Join league</ActionButton>
+        <ActionButton type="submit" className="min-h-12" disabled={code.trim().length < 6}>Join league</ActionButton>
       </form>
     </Drawer>
   )
@@ -113,8 +127,8 @@ function CopyButton({ label, value }) {
   )
 }
 
-function LeagueListRow({ league, onOpen }) {
-  const memberCount = league.memberRivalIds.length + 1
+function LeagueListRow({ league, standingsOptions, seasonCoins, seasonIndex, onOpen }) {
+  const summary = getPrivateLeagueSummary(getPrivateLeagueStandings(league, seasonCoins, seasonIndex, standingsOptions))
   return (
     <button
       type="button"
@@ -131,9 +145,12 @@ function LeagueListRow({ league, onOpen }) {
             <span className="flex-none rounded-full bg-[#2a2a2e] px-1.5 py-px text-[10px] font-bold tracking-[.04em] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#eeeeeb] [[data-theme=light]_&]:text-[#686968]">OWNER</span>
           )}
         </span>
-        <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{memberCount} of {MAX_MEMBERS + 1} members · code {league.code}</span>
+        <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{summary.total} of {MAX_MEMBERS + 1} members · code {league.code}</span>
       </div>
-      <span aria-hidden="true" className="flex-none text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">→</span>
+      <span className="grid flex-none justify-items-end">
+        <strong className={`text-[18px] font-semibold tabular-nums ${summary.rank === 1 ? 'text-[#ffcf8b] [[data-theme=light]_&]:text-[#b8860b]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'}`}>#{summary.rank}</strong>
+        <span className="text-[11px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">your place</span>
+      </span>
     </button>
   )
 }
@@ -259,12 +276,100 @@ function LeagueSettingsDrawer({ league, onClose, onRemoveMember, onRename, onReg
   )
 }
 
-function LeagueDetail({ league, seasonCoins, seasonIndex, onBack, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
+// The one sentence a small board needs: your place, and the gap that
+// matters — to the person above, or your cushion if you're on top.
+function StandingSummary({ summary }) {
+  const coin = <CoinIcon />
+  let detail
+  if (summary.total === 1) detail = 'Just you so far — share the code to get a race going.'
+  else if (!summary.above) detail = summary.below.gap === 0 ? <>Tied with {summary.below.name} at the top.</> : <>{summary.below.gap} {coin} clear of {summary.below.name}.</>
+  else if (summary.above.gap === 0) detail = <>Level with {summary.above.name} — one more coin passes them.</>
+  else detail = <>{summary.above.gap} {coin} behind {summary.above.name}.</>
+
+  return (
+    <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+      <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">You’re #{summary.rank} of {summary.total}</strong>
+      <span className="inline-flex items-center gap-1">{detail}</span>
+    </p>
+  )
+}
+
+function OpenSpotRow({ onInvite }) {
+  return (
+    <li className="border-t border-[#404040] first:border-t-0 [[data-theme=light]_&]:border-[#ebe9e4]">
+      <button
+        type="button"
+        onClick={onInvite}
+        className="flex w-full items-center gap-3.5 rounded-xl px-4 py-3 text-left text-[13px] text-[#7d7d80] transition-colors hover:bg-[#262626] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#737371] [[data-theme=light]_&]:hover:bg-[#f3f1ec] [[data-theme=light]_&]:hover:text-neutral-800"
+      >
+        <span aria-hidden="true" className="ml-8 grid size-10 flex-none place-items-center rounded-full border border-dashed border-[#5a5a60] text-lg [[data-theme=light]_&]:border-[#d4d4d4]">+</span>
+        Open spot — copy the invite link
+      </button>
+    </li>
+  )
+}
+
+function LeaveLeagueControl({ league, isOwner, onLeave }) {
+  const [confirming, setConfirming] = useState(false)
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="text-[13px] font-medium text-[#ff676d] hover:underline [[data-theme=light]_&]:text-[#b3272d]"
+      >
+        {isOwner ? 'Delete league' : 'Leave league'}
+      </button>
+    )
+  }
+
+  return (
+    <div role="alertdialog" aria-label={isOwner ? 'Delete league?' : 'Leave league?'} className="grid gap-3 rounded-2xl border border-[#ff676d]/50 bg-[#ff676d]/5 px-5 py-4 [[data-theme=light]_&]:border-[#f3a5a8] [[data-theme=light]_&]:bg-[#fdf3f3]">
+      <p className="m-0 text-[13px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+        {isOwner
+          ? <>You own <strong>{league.name}</strong>. Deleting it retires code <strong>{league.code}</strong> and removes the board for everyone.</>
+          : <>Leave <strong>{league.name}</strong>? You can rejoin any time with code <strong>{league.code}</strong>.</>}
+        {' '}Your official coins and rank aren’t affected.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onLeave(league.id)}
+          className="rounded-lg border border-[#ff676d] px-3 py-2 text-[12px] font-semibold text-[#ff676d] hover:bg-[#ff676d]/10 [[data-theme=light]_&]:border-[#b3272d] [[data-theme=light]_&]:text-[#b3272d]"
+        >
+          {isOwner ? 'Yes, delete it' : 'Yes, leave'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="rounded-lg border border-[#404040] px-3 py-2 text-[12px] font-medium text-[#9a9a9d] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:text-[#686968]"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function LeagueDetail({ league, seasonCoins, seasonIndex, standingsOptions, user, onBack, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
   const [showSettings, setShowSettings] = useState(false)
   const [selectedRivalId, setSelectedRivalId] = useState(null)
-  const standings = getPrivateLeagueStandings(league, seasonCoins, seasonIndex)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const standings = getPrivateLeagueStandings(league, seasonCoins, seasonIndex, standingsOptions)
+  const summary = getPrivateLeagueSummary(standings)
+  const openSpots = Math.max(0, MAX_MEMBERS - (league.memberRivalIds?.length ?? 0))
   const inviteLink = `devspace.dev/league/${league.code}`
   const isOwner = Boolean(league.ownerId && onRemoveMember)
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`https://${inviteLink}`)
+    } catch {
+      // Same fallback as CopyButton — confirm anyway so the flow doesn't dead-end.
+    }
+    setLinkCopied(true)
+    window.setTimeout(() => setLinkCopied(false), 2000)
+  }
   const selectedEntry = selectedRivalId ? standings.find((entry) => entry.id === selectedRivalId) : null
   const selectedRival = selectedEntry ? rivals.find((rival) => rival.id === selectedEntry.id) : null
 
@@ -282,13 +387,6 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, onBack, onLeave, onRem
               League settings
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onLeave(league.id)}
-            className="text-[13px] font-medium text-[#ff676d] hover:underline [[data-theme=light]_&]:text-[#b3272d]"
-          >
-            Leave league
-          </button>
         </div>
       </div>
 
@@ -297,7 +395,8 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, onBack, onLeave, onRem
           <span aria-hidden="true" className="grid size-11 flex-none place-items-center rounded-xl bg-[#262626] text-xl [[data-theme=light]_&]:bg-[#f0f0ee]">{league.emoji ?? '👥'}</span>
           <h2 className="m-0 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{league.name}</h2>
         </div>
-        <p className="m-0 text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+        <StandingSummary summary={summary} />
+        <p className="m-0 text-[12px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
           Ranked by the same Season Devy Coins as the official board — joining or leaving never changes your rank, coins, or promotion.
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -312,11 +411,19 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, onBack, onLeave, onRem
             <LeaderboardRow
               entry={entry}
               isCurrentUser={entry.isCurrentUser}
+              photo={entry.isCurrentUser ? user?.photo : undefined}
+              avatarStyle={entry.isCurrentUser ? user?.avatarStyle : undefined}
               onSelect={entry.isCurrentUser ? undefined : (row) => setSelectedRivalId(row.id)}
             />
           </li>
         ))}
+        {isOwner && Array.from({ length: openSpots }, (_, index) => <OpenSpotRow key={`open-${index}`} onInvite={copyInviteLink} />)}
       </ol>
+      {linkCopied && <p role="status" className="m-0 -mt-3 text-center text-[12px] text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]">Invite link copied</p>}
+
+      <div className="justify-self-start">
+        <LeaveLeagueControl league={league} isOwner={isOwner} onLeave={onLeave} />
+      </div>
 
       {selectedEntry && selectedRival && (
         <CompetitorDrawer
@@ -349,7 +456,7 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, onBack, onLeave, onRem
   )
 }
 
-export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, onBack, onCreate, onJoin, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
+export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, standingsOptions, user, onBack, onCreate, onJoin, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
   const [selectedId, setSelectedId] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
@@ -368,6 +475,8 @@ export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, onBac
           league={selected}
           seasonCoins={seasonCoins}
           seasonIndex={seasonIndex}
+          standingsOptions={standingsOptions}
+          user={user}
           onBack={() => setSelectedId(null)}
           onLeave={(id) => {
             onLeave(id)
@@ -388,13 +497,25 @@ export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, onBac
           </div>
 
           {leagues.length === 0 ? (
-            <p className="m-0 rounded-2xl border border-dashed border-[#404040] px-5 py-8 text-center text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:text-[#686968]">
-              No private leagues yet. Create one to invite friends, or join one with a code.
-            </p>
+            <div className="grid justify-items-center gap-3 rounded-2xl border border-dashed border-[#404040] px-5 py-10 text-center [[data-theme=light]_&]:border-[#d4d4d4]">
+              <span aria-hidden="true" className="text-3xl">🏁</span>
+              <strong className="text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Race the people you actually know</strong>
+              <p className="m-0 max-w-[420px] text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+                Start a league for your study group or classmates, or join one with a friend’s 6-character code.
+              </p>
+              <ActionButton className="mt-1 min-h-10 px-4 text-sm font-medium" onClick={() => setShowCreate(true)}>Create your first league</ActionButton>
+            </div>
           ) : (
             <div className="grid gap-3">
               {leagues.map((league) => (
-                <LeagueListRow key={league.id} league={league} onOpen={setSelectedId} />
+                <LeagueListRow
+                  key={league.id}
+                  league={league}
+                  standingsOptions={standingsOptions}
+                  seasonCoins={seasonCoins}
+                  seasonIndex={seasonIndex}
+                  onOpen={setSelectedId}
+                />
               ))}
             </div>
           )}
@@ -402,7 +523,7 @@ export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, onBac
       )}
 
       {showCreate && <CreateLeagueDrawer onClose={() => setShowCreate(false)} onCreate={onCreate} />}
-      {showJoin && <JoinLeagueDrawer onClose={() => setShowJoin(false)} onJoin={onJoin} />}
+      {showJoin && <JoinLeagueDrawer privateLeagues={privateLeagues} onClose={() => setShowJoin(false)} onJoin={onJoin} />}
     </div>
   )
 }

@@ -1,10 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getProfileProgress, isProfileUrl, normalizeProfile, WORK_TYPES } from './profile.js'
+import { getProfileLinks, getProfileProgress, getSocialUrl, isProfileUrl, normalizeProfile, WORK_TYPES } from './profile.js'
 
 test('profile migration keeps existing onboarding data and adds safe defaults', () => {
   assert.deepEqual(normalizeProfile({ role: 'frontend_developer' }), {
     role: 'frontend_developer', name: '', headline: '', bio: '', photo: null, avatarStyle: null, projectInterest: [], immediateNeed: [], projects: [], links: [],
+    pronouns: '', bioSource: 'devspace', headlineSource: 'devspace', availability: null, bannerTheme: null, bannerImage: null, featuredBadges: [],
+    contact: { email: '', phone: '', location: '', website: '', github: '', linkedin: '', x: '', showEmail: false, showPhone: false },
   })
 })
 
@@ -61,4 +63,23 @@ test('profile progress requires valid proof and relevant links', () => {
   const realEvidence = getProfileProgress({ name: 'Ari', headline: 'Editor', projects: [{ title: 'Reel', url: 'https://vimeo.com/ari' }], links: [{ url: 'https://behance.net/ari' }] }, {})
   assert.equal(realEvidence.items[1].complete, true)
   assert.equal(realEvidence.items[2].complete, true)
+})
+
+test('social handles become links whether typed as a name, @handle or URL', () => {
+  assert.equal(getSocialUrl('github', 'ari-dev'), 'https://github.com/ari-dev')
+  assert.equal(getSocialUrl('x', '@ari'), 'https://x.com/ari')
+  assert.equal(getSocialUrl('linkedin', 'linkedin.com/in/ari/'), 'https://www.linkedin.com/in/ari')
+  assert.equal(getSocialUrl('github', 'https://github.com/ari'), 'https://github.com/ari')
+  assert.equal(getSocialUrl('github', 'not a handle'), null)
+  assert.equal(getSocialUrl('website', 'ari.dev'), 'https://ari.dev')
+  assert.equal(getSocialUrl('website', 'nonsense'), null)
+})
+
+test('profile links list socials first, then valid custom links', () => {
+  const links = getProfileLinks({ contact: { github: 'ari', website: 'ari.dev' }, links: [{ label: 'Blog', url: 'https://blog.ari.dev' }, { url: 'bad' }] })
+  assert.deepEqual(links.map((link) => link.label), ['Website', 'GitHub', 'Blog'])
+})
+
+test('a social handle alone completes the link quest', () => {
+  assert.equal(getProfileProgress({ contact: { github: 'ari' } }, {}).items[2].complete, true)
 })

@@ -12,10 +12,10 @@
 // so it stays stable across reloads and "joins" feel real even though
 // nothing is actually being fetched from anywhere.
 import { rivals } from '../data/rivals.js'
-import { rankEntries, USER_ID } from './leagueSim.js'
+import { rankEntries, rivalSeasonCoins, USER_ID } from './leagueSim.js'
 import { seededRandom } from './rng.js'
 
-const USER_ROLE = 'Machine Learning Engineer path'
+const DEFAULT_USER_ROLE = 'Machine Learning Engineer path'
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I — easy to read aloud
 const CODE_LENGTH = 6
 const MIN_MEMBERS = 4
@@ -33,6 +33,10 @@ function pickEmoji(random) {
   return LEAGUE_EMOJIS[Math.floor(source() * LEAGUE_EMOJIS.length)]
 }
 
+export function newLeagueId() {
+  return `private-${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+}
+
 export function generateInviteCode() {
   let code = ''
   for (let index = 0; index < CODE_LENGTH; index += 1) {
@@ -43,6 +47,21 @@ export function generateInviteCode() {
 
 function normalizeCode(code) {
   return (code ?? '').trim().toUpperCase()
+}
+
+const CODE_PATTERN = new RegExp(`^[${CODE_ALPHABET}]{${CODE_LENGTH}}$`)
+
+// Why a code can't be joined, or null if it can. Checked before joining so
+// the drawer can explain the problem in place — previously any string at all
+// "joined" something, including a typo'd code or your own league's code
+// (which produced a second, stranger copy of a league you already own).
+export function getJoinCodeError(current, code) {
+  const normalized = normalizeCode(code)
+  if (!normalized) return 'Enter an invite code.'
+  if (!CODE_PATTERN.test(normalized)) return `Invite codes are ${CODE_LENGTH} letters and numbers — double-check it.`
+  const existing = Object.values(current.privateLeagues ?? {}).find((league) => league.code === normalized)
+  if (existing) return existing.ownerId === USER_ID ? `That's the code for ${existing.name} — your own league.` : `You're already in ${existing.name}.`
+  return null
 }
 
 // Picks a fixed, stable subset of rivals for a league — seeded so the same
@@ -81,12 +100,13 @@ function deriveLeagueFromCode(code) {
   }
 }
 
-export function createPrivateLeague(current, name, emoji) {
+// `id` and `code` can be rolled by the caller so this stays pure — a React
+// state updater may run twice (StrictMode), and rolling them in here meant
+// the league on screen and the one saved could end up with different codes.
+export function createPrivateLeague(current, name, emoji, { id = newLeagueId(), code = generateInviteCode() } = {}) {
   const trimmedName = (name ?? '').trim()
   if (!trimmedName) return current
 
-  const id = `private-${Date.now()}-${Math.floor(Math.random() * 1e6)}`
-  const code = generateInviteCode()
   const league = {
     id,
     name: trimmedName,
@@ -128,11 +148,11 @@ export function renamePrivateLeague(current, leagueId, name) {
 // Invalidates the old code (an owner's response to it leaking somewhere it
 // shouldn't have) — anyone who only has the old code can no longer resolve
 // to this league, since deriveLeagueFromCode is keyed on the code string.
-export function regeneratePrivateLeagueCode(current, leagueId) {
+export function regeneratePrivateLeagueCode(current, leagueId, code = generateInviteCode()) {
   const league = current.privateLeagues?.[leagueId]
   if (!league || league.ownerId !== USER_ID) return current
 
-  const nextLeague = { ...league, code: generateInviteCode() }
+  const nextLeague = { ...league, code }
   return { ...current, privateLeagues: { ...current.privateLeagues, [leagueId]: nextLeague } }
 }
 
@@ -140,8 +160,8 @@ export function regeneratePrivateLeagueCode(current, leagueId) {
 // — the derived league's id is the code itself, so the existing-key check
 // is exactly "have I already got this league".
 export function joinPrivateLeagueByCode(current, code) {
+  if (getJoinCodeError(current, code)) return current
   const normalized = normalizeCode(code)
-  if (!normalized) return current
 
   const league = deriveLeagueFromCode(normalized)
   if (current.privateLeagues?.[league.id]) return current
@@ -156,21 +176,40 @@ export function leavePrivateLeague(current, leagueId) {
   return { ...current, privateLeagues: next }
 }
 
-// Ranks a private league's members alongside the learner, using the exact
-// score they already have on the official board — a private league has no
-// pace/difficulty concept of its own, so members' coins come straight off
-// rival.pace/consistency rather than being routed through any league's pace
-// multiplier (mixing learners who may be in different official leagues).
-export function getPrivateLeagueStandings(league, userSeasonCoins, seasonIndex) {
+// Ranks a private league's members alongside the learner. Members accrue
+// through the season exactly like the official board (rivalSeasonCoins, at
+// the learner's league pace) — they used to hold their full-season total
+// from day one, so every new season opened with the learner dead last
+// behind people who hadn't done anything yet.
+export function getPrivateLeagueStandings(league, userSeasonCoins, seasonIndex, options = {}) {
+  const { seasonProgress = 1, leagueIndex = 0, userRole = DEFAULT_USER_ROLE, userTag = null } = options
   const entries = (league.memberRivalIds ?? [])
     .map((rivalId) => rivals.find((rival) => rival.id === rivalId))
     .filter(Boolean)
-    .map((rival) => {
-      const random = seededRandom('private-coins', league.id, rival.id, seasonIndex)
-      const score = Math.round(rival.pace * rival.consistency * (0.7 + random() * 0.7))
-      return { id: rival.id, name: rival.name, role: rival.role, tag: rival.tag, score, isCurrentUser: false }
-    })
+    .map((rival) => ({
+      id: rival.id,
+      name: rival.name,
+      role: rival.role,
+      tag: rival.tag,
+      score: rivalSeasonCoins(rival, seasonIndex, leagueIndex, seasonProgress),
+      isCurrentUser: false,
+    }))
 
-  entries.push({ id: USER_ID, name: 'You', role: USER_ROLE, tag: null, score: userSeasonCoins, isCurrentUser: true })
+  entries.push({ id: USER_ID, name: 'You', role: userRole, tag: userTag, score: userSeasonCoins, isCurrentUser: true })
   return rankEntries(entries)
+}
+
+// The one line a learner actually wants from a small board: where am I, and
+// how far is the next person up (or how much am I holding first place by).
+export function getPrivateLeagueSummary(standings) {
+  const user = standings.find((entry) => entry.isCurrentUser)
+  if (!user) return null
+  const above = standings[user.rank - 2] ?? null
+  const below = standings[user.rank] ?? null
+  return {
+    rank: user.rank,
+    total: standings.length,
+    above: above ? { name: above.name, gap: above.score - user.score } : null,
+    below: below ? { name: below.name, gap: user.score - below.score } : null,
+  }
 }

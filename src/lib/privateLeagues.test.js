@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import {
   createPrivateLeague,
   generateInviteCode,
+  getJoinCodeError,
   getPrivateLeagueStandings,
+  getPrivateLeagueSummary,
   joinPrivateLeagueByCode,
   leavePrivateLeague,
   regeneratePrivateLeagueCode,
@@ -152,4 +154,44 @@ test('private league standings never reference official league fields', () => {
   getPrivateLeagueStandings(league, before.seasonCoins, before.seasonIndex)
 
   assert.deepEqual(before, { leagueIndex: 2, seasonCoins: 900, seasonIndex: 34 }, 'official state must be untouched')
+})
+
+test('malformed codes are rejected with a reason and never join', () => {
+  for (const code of ['ABC', 'ABC2345', 'ABC0O1', 'AB-234']) {
+    assert.ok(getJoinCodeError(base, code), `${code} should be rejected`)
+    assert.deepEqual(joinPrivateLeagueByCode(base, code), base)
+  }
+})
+
+test('entering your own league code does not create a copy of it', () => {
+  const withLeague = createPrivateLeague(base, 'Study Crew')
+  const [league] = Object.values(withLeague.privateLeagues)
+
+  assert.match(getJoinCodeError(withLeague, league.code.toLowerCase()), /your own league/)
+  assert.equal(joinPrivateLeagueByCode(withLeague, league.code), withLeague)
+})
+
+test('members start the season at zero and climb as it runs', () => {
+  const { privateLeagues } = joinPrivateLeagueByCode(base, 'ABC234')
+  const [league] = Object.values(privateLeagues)
+  const rivalsOnly = (progress) => getPrivateLeagueStandings(league, 0, 34, { seasonProgress: progress }).filter((entry) => !entry.isCurrentUser)
+
+  assert.ok(rivalsOnly(0).every((entry) => entry.score === 0))
+  const mid = rivalsOnly(0.5).reduce((sum, entry) => sum + entry.score, 0)
+  const end = rivalsOnly(1).reduce((sum, entry) => sum + entry.score, 0)
+  assert.ok(end >= mid && mid > 0)
+})
+
+test('the summary names the gap to the next person up and down', () => {
+  const standings = [
+    { id: 'a', name: 'A', score: 30, rank: 1, isCurrentUser: false },
+    { id: USER_ID, name: 'You', score: 20, rank: 2, isCurrentUser: true },
+    { id: 'b', name: 'B', score: 5, rank: 3, isCurrentUser: false },
+  ]
+  assert.deepEqual(getPrivateLeagueSummary(standings), {
+    rank: 2,
+    total: 3,
+    above: { name: 'A', gap: 10 },
+    below: { name: 'B', gap: 15 },
+  })
 })

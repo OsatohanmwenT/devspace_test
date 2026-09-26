@@ -41,7 +41,9 @@ import { computeDailyGoal } from './lib/onboarding';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
 import {
     createPrivateLeague as createPrivateLeagueRecord,
+    generateInviteCode,
     joinPrivateLeagueByCode,
+    newLeagueId,
     leavePrivateLeague as leavePrivateLeagueRecord,
     regeneratePrivateLeagueCode as regeneratePrivateLeagueCodeRecord,
     removePrivateLeagueMember as removePrivateLeagueMemberRecord,
@@ -234,8 +236,14 @@ function App() {
       const result = resolveSeason(current, now())
       if (!result) return current
       const rewardAmount = getRewardForRank(getLeague(current.leagueIndex).id, result.rank)
+      // Seasons end on a week boundary, so the H2H week that just closed has
+      // to be settled against the old coin total *before* it resets —
+      // otherwise the final week of every season scores the learner at 0.
+      // The next window then opens from the reset total.
+      const settledH2H = advanceH2HWeek(current.h2h, current.seasonCoins, weekNow(), current.leagueIndex).h2h
       const next = {
         ...current,
+        h2h: settledH2H.weekIndex === null || settledH2H.weekIndex === undefined ? settledH2H : { ...settledH2H, windowStartCoins: 0 },
         seasonIndex: getSeasonIndex(now()),
         seasonCoins: 0,
         leagueIndex: result.nextLeagueIndex,
@@ -259,7 +267,7 @@ function App() {
   // 28-day season).
   useEffect(() => {
     setProgress((current) => {
-      const { h2h, resolved } = advanceH2HWeek(current.h2h, current.seasonCoins, weekNow())
+      const { h2h, resolved } = advanceH2HWeek(current.h2h, current.seasonCoins, weekNow(), current.leagueIndex)
       if (!resolved && h2h === current.h2h) return current
       const next = { ...current, h2h }
       saveProgress(next)
@@ -277,6 +285,7 @@ function App() {
       // has no Premium replay exception — a repeat is worth 0 coins to anyone.
       const withXp = applyActivity(current, getPracticeXpAward(current, sessionId, today), today)
       const newStreakMilestone = highestNewMilestone(current.earnedStreakMilestones, withXp.earnedStreakMilestones)
+      const shouldShowStreakMilestone = newStreakMilestone?.days > 3
       const next = {
         ...applyCoins(withXp, getPracticeCoinAward(current, sessionId)),
         completedSessions: {
@@ -286,7 +295,7 @@ function App() {
       }
       // Practice has no other full-screen moment competing for the screen,
       // so a milestone earned here can always show right away.
-      if (newStreakMilestone) setStreakMilestone(newStreakMilestone)
+      if (shouldShowStreakMilestone) setStreakMilestone(newStreakMilestone)
       saveProgress(next)
       return next
     })
@@ -322,6 +331,7 @@ function App() {
       // runs on every completion, including replays, and a streak tier can be
       // crossed by a replay on a new day just as well as a first completion.
       const newStreakMilestone = highestNewMilestone(current.earnedStreakMilestones, next.earnedStreakMilestones)
+      const shouldShowStreakMilestone = newStreakMilestone?.days > 3
 
       // Earning your first coin puts a learner on the board (LeaderboardView
       // gates on `seasonCoins > 0`) — starting a mission doesn't count, only
@@ -339,12 +349,12 @@ function App() {
         const celebration = { leagueIndex: next.leagueIndex, seasonCoins: next.seasonCoins }
         if (transition) pendingLeagueCelebrationRef.current = celebration
         else setLeagueCelebration(celebration)
-        if (newStreakMilestone) pendingStreakMilestoneRef.current = newStreakMilestone
+        if (shouldShowStreakMilestone) pendingStreakMilestoneRef.current = newStreakMilestone
         const seen = markPageIntroductionSeen(next, 'league-qualified')
         saveProgress(seen)
         return seen
       }
-      if (newStreakMilestone) {
+      if (shouldShowStreakMilestone) {
         if (transition) pendingStreakMilestoneRef.current = newStreakMilestone
         else setStreakMilestone(newStreakMilestone)
       }
@@ -446,8 +456,11 @@ function App() {
   }
 
   const createPrivateLeague = (name, emoji) => {
+    // Rolled once, outside the updater, so a double-invoked updater can't
+    // save a different code than the one rendered.
+    const identity = { id: newLeagueId(), code: generateInviteCode() }
     setProgress((current) => {
-      const next = createPrivateLeagueRecord(current, name, emoji)
+      const next = createPrivateLeagueRecord(current, name, emoji, identity)
       saveProgress(next)
       return next
     })
@@ -471,8 +484,9 @@ function App() {
   }
 
   const regeneratePrivateLeagueCode = (leagueId) => {
+    const code = generateInviteCode()
     setProgress((current) => {
-      const next = regeneratePrivateLeagueCodeRecord(current, leagueId)
+      const next = regeneratePrivateLeagueCodeRecord(current, leagueId, code)
       saveProgress(next)
       return next
     })

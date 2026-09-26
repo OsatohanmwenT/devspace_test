@@ -12,22 +12,26 @@ export function ExplorePathCard({ path, onSelect }) {
   const family = FAMILY_ACCENTS[path.family] ?? FAMILY_ACCENTS.backend
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-3xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-none">
+    <article className="flex h-full min-w-0 overflow-hidden rounded-3xl border border-[#404040] bg-[#1f1f1f] transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[#4169e1] focus-within:border-[#4169e1] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-none">
       <button type="button" className="flex h-full w-full flex-col text-left max-[680px]:flex-row" onClick={() => onSelect(path)} aria-label={`Open ${path.title} path`}>
         {/* On phones the card turns into a row — art on the left, text beside it —
             so the catalogue scans like a list instead of one card per screen. */}
-        <div className={`grid min-h-40 place-items-center overflow-hidden max-[680px]:min-h-0 max-[680px]:w-[92px] max-[680px]:flex-none [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_70%,#fafaf8)]`}>
-          <img className="block h-32 w-[min(66%,180px)] object-contain max-[680px]:h-16 max-[680px]:w-16" src={path.image} alt="" />
+        {/* Fixed art frame and a square image box, so every illustration gets
+            the same footprint whatever its own proportions are. */}
+        <div className={`grid h-40 flex-none place-items-center overflow-hidden max-[680px]:h-auto max-[680px]:w-[92px] [[data-theme=light]_&]:bg-[color-mix(in_srgb,${family.soft}_70%,#fafaf8)]`}>
+          <img className="block size-28 object-contain max-[680px]:size-16" src={path.image} alt="" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col border-t border-neutral-800 bg-neutral-800 p-[18px] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-[#fdfcf9] max-[680px]:border-t-0 max-[680px]:border-l max-[680px]:p-3.5">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col border-t border-neutral-800 bg-neutral-800 p-[18px] [[data-theme=light]_&]:border-[#e8e6e1] [[data-theme=light]_&]:bg-[#fdfcf9] max-[680px]:min-h-[136px] max-[680px]:justify-center max-[680px]:border-t-0 max-[680px]:border-l max-[680px]:p-3.5">
+        <div className="flex h-5 items-center justify-between gap-3">
           <span className="text-[11px] font-bold tracking-[.08em] text-neutral-300 uppercase [[data-theme=light]_&]:text-[#525252] max-[680px]:text-[10px]">{path.type === 'career' ? 'Career path' : 'Skill path'}</span>
-          {path.recommended && <span className="rounded-full bg-[#4169e1]/15 px-2 py-1 text-[10px] font-bold tracking-[.06em] text-[#84a5ff] uppercase [[data-theme=light]_&]:text-[#4169e1]">Recommended</span>}
+          {path.recommended && <span className="rounded-full bg-[#4169e1]/15 px-2 py-0.5 text-[10px] leading-4 font-bold tracking-[.06em] text-[#84a5ff] uppercase [[data-theme=light]_&]:text-[#4169e1]">Recommended</span>}
         </div>
-        <h3 className="mt-2 text-xl leading-[1.15] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800 max-[680px]:mt-1 max-[680px]:text-[17px]">{path.title}</h3>
-        <p className="mt-2 text-sm leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1 max-[680px]:line-clamp-2 max-[680px]:text-[13px]">{path.description}</p>
-        <div className="mt-4 border-t border-[#404040] pt-3 [[data-theme=light]_&]:border-[#dededb] max-[680px]:hidden">
-          <div className="flex flex-wrap gap-1.5">{path.tools.map((tool) => <span key={tool} className="rounded-full bg-[#363636] px-2.5 py-1 text-[11px] text-[#d4d4d4] [[data-theme=light]_&]:bg-[#f1efe9] [[data-theme=light]_&]:text-[#525252]">{tool}</span>)}</div>
+        <h3 className="mt-2 min-[681px]:truncate text-xl leading-[1.15] font-medium text-[#f4f4f2] font-rethink-sans [[data-theme=light]_&]:text-neutral-800 max-[680px]:mt-1 max-[680px]:text-[17px]" title={path.title}>{path.title}</h3>
+        {/* Three lines reserved on every card whether used or not — a third line
+            on only some cards was what knocked the tool chips out of line. */}
+        <p className="mt-2 line-clamp-3 min-h-[4.5em] text-sm leading-[1.5] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968] max-[680px]:mt-1 max-[680px]:min-h-0 max-[680px]:line-clamp-2 max-[680px]:text-[13px]">{path.description}</p>
+        <div className="mt-auto pt-4 max-[680px]:hidden">
+          <div className="flex h-[25px] flex-wrap gap-1.5 overflow-hidden border-t border-[#404040] pt-3 box-content [[data-theme=light]_&]:border-[#dededb]">{path.tools.slice(0, 3).map((tool) => <span key={tool} className="rounded-full bg-[#363636] px-2.5 py-1 text-[11px] leading-[17px] text-[#d4d4d4] [[data-theme=light]_&]:bg-[#f1efe9] [[data-theme=light]_&]:text-[#525252]">{tool}</span>)}</div>
         </div>
         </div>
       </button>

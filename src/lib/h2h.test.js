@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { advanceH2HWeek, getLiveH2HStanding, getOpponentWeekCoins, getWeeklyOpponent } from './h2h.js'
+import { advanceH2HWeek, chooseH2HOpponent, getH2HRecord, getLiveH2HStanding, getOpponentCandidates, getOpponentWeekCoins, getSeasonIndexForWeek, getWeeklyOpponent } from './h2h.js'
+import { rivals } from '../data/rivals.js'
 import { getWeekStartFromIndex } from './week.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -87,4 +88,48 @@ test('the live standing never mutates and reflects the coins earned so far this 
   const live = getLiveH2HStanding(h2h, 130, timestamp)
   assert.equal(live.userCoins, 80)
   assert.ok(live.opponentName.length > 0)
+})
+
+test('a full week of opponent coins stays in the same economy as a Bronze season', () => {
+  // A Bronze season of honest work is worth roughly 40-100 coins, so no
+  // single-week rival total should dwarf that.
+  for (const rival of rivals) {
+    assert.ok(getOpponentWeekCoins(rival, 120, 1, 0) < 60, `${rival.id} earns too much in one week`)
+  }
+})
+
+test('picking a rival locks it in for the rest of the week', () => {
+  const h2h = { weekIndex: 120, windowStartCoins: 0, points: 0, history: [], chosenOpponentId: null }
+  const [, first, second] = getOpponentCandidates(120)
+
+  const picked = chooseH2HOpponent(h2h, first.id)
+  assert.equal(picked.chosenOpponentId, first.id)
+  assert.equal(chooseH2HOpponent(picked, second.id), picked)
+})
+
+test('picking an unknown rival id is ignored', () => {
+  const h2h = { weekIndex: 120, windowStartCoins: 0, points: 0, history: [], chosenOpponentId: null }
+  assert.equal(chooseH2HOpponent(h2h, 'nobody'), h2h)
+})
+
+test('the season record only counts matches from that season', () => {
+  const season = getSeasonIndexForWeek(120)
+  const inSeason = [120, 121, 122, 123].filter((week) => getSeasonIndexForWeek(week) === season)
+  const history = [
+    { weekIndex: inSeason[0], result: 'win', pointsEarned: 3 },
+    { weekIndex: inSeason[0] - 8, result: 'win', pointsEarned: 3 },
+  ]
+
+  const record = getH2HRecord(history, season)
+  assert.equal(record.win, 1)
+  assert.equal(record.points, 3)
+})
+
+test('every season is exactly four H2H weeks', () => {
+  const counts = new Map()
+  for (let week = 0; week < 40; week += 1) {
+    const season = getSeasonIndexForWeek(week)
+    counts.set(season, (counts.get(season) ?? 0) + 1)
+  }
+  for (const count of counts.values()) assert.equal(count, 4)
 })

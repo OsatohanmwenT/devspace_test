@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeftIcon, BookOpenIcon, BoltIcon, ChecklistIcon, CheckIcon, EyeIcon, InfoIcon, ShareIcon, TrophyIcon } from '../ui/icons'
+import { ArrowLeftIcon, BookOpenIcon, BoltIcon, ChecklistIcon, CheckIcon, EyeIcon, InfoIcon, ShareIcon, SparkleIcon, TrophyIcon } from '../ui/icons'
 import { ActionButton } from '../ui/ActionButton'
 import {
   BRANCHES,
@@ -12,11 +12,14 @@ import {
 } from '../../data/onboarding'
 import { explorePaths } from '../../data/paths'
 import { getLeague } from '../../data/leagues'
-import { STREAK_MILESTONES } from '../../lib/streak'
-import { getProfileProgress, getRoleLabel, normalizeProfile } from '../../lib/profile'
+import { AVAILABILITY_OPTIONS, getDisplayUrl, getProfileLinks, getProfileProgress, getRoleLabel, normalizeProfile } from '../../lib/profile'
+import { getBadges, getFeaturedBadges, toggleFeaturedBadge } from '../../lib/badges'
 import { getAvatarDataUri } from '../../lib/avatarStyles'
 import { TierMedal } from '../leaderboard/TierMedal'
 import { EditProfileModal } from './EditProfileModal'
+import { BadgesDrawer } from './BadgesDrawer'
+import { BadgeCoin } from './BadgeCoin'
+import { getBannerTheme, LinkIcon, ProfileBanner } from './profileTheme'
 import { CoinIcon } from '../ui/GameIcon'
 
 const labelMap = (options) => Object.fromEntries(options.map((option) => [option.value, option.label]))
@@ -107,20 +110,11 @@ function HeartIcon({ className }) {
   )
 }
 
-function BarChartIcon({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M5 20V12M11 20V6M17 20v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function TrendingUpIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="m3 17 6-6 4 4 8-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15 7h6v6" stroke="currentColor" strokeWidth="1.8" strokeLineround="round" strokeLinejoin="round" />
+      <path d="M15 7h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -134,7 +128,7 @@ function FlagIcon({ className }) {
   )
 }
 
-function SectionCard({ title, icon: Icon, children, className = '', plain = false }) {
+function SectionCard({ title, icon: Icon, action, children, className = '', plain = false }) {
   if (plain) {
     return (
       <section className={`grid gap-3.5 ${className}`}>
@@ -143,6 +137,7 @@ function SectionCard({ title, icon: Icon, children, className = '', plain = fals
             {title}
           </h2>
           <span className={`h-px flex-1 ${RULE}`} />
+          {action}
         </div>
         <div className={`grid gap-5 rounded-2xl ${SURFACE} p-6 max-[480px]:p-5 shadow-sm`}>{children}</div>
       </section>
@@ -152,8 +147,9 @@ function SectionCard({ title, icon: Icon, children, className = '', plain = fals
   return (
     <section className={`grid gap-5 rounded-2xl ${SURFACE} p-7 shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)] max-[480px]:p-5 ${className}`}>
       <div className="flex items-center gap-2.5">
-        {Icon && <Icon className="size-[17px] flex-none text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]" />}
-        <h2 className={`m-0 font-rethink-sans text-[16px] font-semibold tracking-[-.01em] ${INK}`}>{title}</h2>
+        {Icon && <Icon className="size-[17px] flex-none text-[var(--accent)]" />}
+        <h2 className={`m-0 flex-1 font-rethink-sans text-[16px] font-semibold tracking-[-.01em] ${INK}`}>{title}</h2>
+        {action}
       </div>
       {children}
     </section>
@@ -217,7 +213,7 @@ function ExperienceEntry({ region, pathTitle }) {
           <ul className="m-0 grid list-none gap-2 p-0 pt-1">
             {bullets.map((goal) => (
               <li key={goal} className="flex gap-2.5 text-[13.5px] leading-[1.55] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">
-                <span className="mt-[8px] size-1.5 flex-none rounded-full bg-[#6699ec]" aria-hidden="true" />
+                <span className="mt-[8px] size-1.5 flex-none rounded-full bg-[var(--accent)]" aria-hidden="true" />
                 {goal}
               </li>
             ))}
@@ -228,37 +224,12 @@ function ExperienceEntry({ region, pathTitle }) {
   )
 }
 
-function StreakBadge({ tier, earned, current }) {
-  return (
-    <div className="grid justify-items-center gap-1.5" title={earned ? tier.label : `${tier.label} · ${tier.days}-day streak`}>
-      {/* Collectible coins: earned ones are minted gold, unearned ones an
-          empty socket — no counters inside, like the home badge strip. */}
-      <span
-        className={`grid size-12 place-items-center rounded-full ${
-          earned
-            ? 'bg-[radial-gradient(circle_at_35%_30%,#ffe7a3,#f5b82e_55%,#c98a12)] text-amber-900 shadow-[inset_0_0_0_2px_rgba(255,255,255,.35),0_4px_10px_-4px_rgba(201,138,18,.7)]'
-            : `border-2 border-dashed ${HAIRLINE} bg-[#212124] [[data-theme=light]_&]:bg-[#f4f4f1] ${FAINT}`
-        }`}
-        aria-hidden="true"
-      >
-        <svg viewBox="0 0 24 24" fill="none" className={earned ? 'size-6' : 'size-5 opacity-60'}>
-          <circle cx="12" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.8" />
-          <path d="m8.5 14-1.25 5.25L12 17l4.75 2.25L15.5 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
-      <span className={`text-center text-[11px] leading-[1.3] ${earned ? MUTED : FAINT}`}>
-        {earned ? tier.label : `${tier.days} days`}
-      </span>
-    </div>
-  )
-}
-
 function QuestRow({ label, complete }) {
   return (
     <li className="flex items-center gap-2.5">
       <span
         className={`grid size-5 flex-none place-items-center rounded-full ${
-          complete ? 'bg-[#6699ec] text-white' : `border ${HAIRLINE}`
+          complete ? 'bg-[var(--accent)] text-white' : `border ${HAIRLINE}`
         }`}
         aria-hidden="true"
       >
@@ -269,109 +240,334 @@ function QuestRow({ label, complete }) {
   )
 }
 
-function RecordRow({ label, value, isLast }) {
+const AVAILABILITY_LABELS = labelMap(AVAILABILITY_OPTIONS)
+const QUIET_BUTTON = `inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold ${MUTED} hover:bg-[#262629] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:bg-[#f0f0ed] [[data-theme=light]_&]:hover:text-neutral-800`
+
+function PencilIcon({ className }) {
   return (
-    <div className={`flex items-baseline justify-between gap-3 ${isLast ? '' : `border-b ${HAIRLINE} pb-3`}`}>
-      <dt className={`text-[13px] ${MUTED}`}>{label}</dt>
-      <dd className={`m-0 text-[14px] font-semibold tabular-nums tracking-[-.01em] ${INK}`}>{value}</dd>
-    </div>
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="m13.5 6.5 4 4" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
   )
 }
 
-function ShareProfileModal({ shareUrl, roleLabel, skills = [], experienceCount = 0, checkpointCount = 0, onClose, onPreviewVisitor }) {
+function ProfileAvatar({ identity, className }) {
+  const name = identity?.name?.trim()
+  if (identity?.photo) return <img src={identity.photo} alt="" aria-hidden="true" className={`object-cover ${className}`} />
+  if (identity?.avatarStyle) {
+    return <img src={getAvatarDataUri(identity.avatarStyle, name || 'you')} alt="" aria-hidden="true" className={`bg-[#262629] object-cover ${className}`} />
+  }
+  return (
+    <span className={`grid place-items-center bg-[var(--accent)] font-rethink-sans font-medium text-white ${className}`} aria-hidden="true">
+      {name ? name.charAt(0).toUpperCase() : 'L'}
+    </span>
+  )
+}
+
+// Phone and email are private until switched on, so the owner's contact card
+// says which ones a visitor can see.
+function VisibilityTag({ isPublic }) {
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${isPublic ? 'bg-[#168a46]/15 text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]' : `bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed] ${FAINT}`}`}>
+      {isPublic ? 'Public' : 'Only you'}
+    </span>
+  )
+}
+
+// One hero for both audiences. The owner gets the edit button and XP bar; a
+// visitor gets the verified stamp and only the contact details made public.
+// Banner, badges and links are identical, so the visitor preview is honest.
+function ProfileHero({ identity, theme, isPublic, shareUrl, headline, branchLabel, joinedDate, dailyMinutes, levelInfo, xp, stats, featuredBadges, links, onEdit, onOpenBadges }) {
+  const name = identity?.name?.trim() || 'Learner'
+  const contact = identity?.contact ?? {}
+  const availability = AVAILABILITY_LABELS[identity?.availability]
+  const website = links.find((link) => link.id === 'website')
+  const iconLinks = links.filter((link) => link.id !== 'website')
+  const showEmail = contact.email && (!isPublic || contact.showEmail)
+  const showPhone = contact.phone && (!isPublic || contact.showPhone)
+  const meta = [
+    contact.location && { icon: 'location', label: contact.location },
+    website && { icon: 'website', label: getDisplayUrl(website.url), href: website.url },
+    joinedDate && { icon: 'calendar', label: `Joined ${joinedDate}` },
+    dailyMinutes && { icon: 'bolt', label: `${dailyMinutes} min a day` },
+  ].filter(Boolean)
+
+  return (
+    <header className={`grid overflow-hidden rounded-2xl ${SURFACE} shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)]`}>
+      <ProfileBanner theme={theme} image={identity?.bannerImage} className="h-40 max-[560px]:h-28">
+        <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3.5">
+          {isPublic ? (
+            <span className="truncate rounded-full bg-black/35 px-2.5 py-1 text-[11.5px] font-semibold text-white/90 backdrop-blur-md">{shareUrl}</span>
+          ) : <span />}
+          {isPublic ? (
+            <span className="inline-flex flex-none items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[11.5px] font-semibold text-[#8ff0bd] backdrop-blur-md">
+              <CheckIcon className="size-3" /> Verified by DevSpace
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-black/35 px-3.5 text-[13px] font-semibold text-white backdrop-blur-md transition-colors hover:bg-black/50"
+            >
+              <PencilIcon className="size-3.5" /> Edit profile
+            </button>
+          )}
+        </div>
+      </ProfileBanner>
+
+      <div className="grid gap-5 px-7 pb-6 max-[480px]:px-5 max-[480px]:pb-5">
+        <div className="flex items-end justify-between gap-4">
+          <div className="relative -mt-14 max-[560px]:-mt-11">
+            <ProfileAvatar identity={identity} className="size-[108px] rounded-full text-[40px] ring-[5px] ring-[#1b1b1d] max-[560px]:size-[88px] max-[560px]:text-[34px] [[data-theme=light]_&]:ring-white" />
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-[11px] font-bold text-white tabular-nums ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white" aria-hidden="true">
+              LV {levelInfo.level}
+            </span>
+            <span className="sr-only">Level {levelInfo.level}</span>
+          </div>
+
+          {featuredBadges.length > 0 && (
+            <button type="button" onClick={onOpenBadges} className="group flex items-center rounded-full p-1" aria-label={`Featured badges: ${featuredBadges.map((badge) => badge.label).join(', ')}. See all badges`}>
+              <span className="flex -space-x-2.5">
+                {featuredBadges.map((badge) => (
+                  <span key={badge.id} title={badge.label} className="rounded-full ring-[3px] ring-[#1b1b1d] transition-transform group-hover:-translate-y-0.5 [[data-theme=light]_&]:ring-white">
+                    <BadgeCoin badge={badge} size={40} />
+                  </span>
+                ))}
+              </span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <h1 className={`m-0 font-rethink-sans text-[30px] font-semibold leading-[1.1] tracking-[-.025em] max-[480px]:text-[26px] ${INK}`}>{name}</h1>
+            {identity?.pronouns && <span className={`text-[14px] ${FAINT}`}>{identity.pronouns}</span>}
+          </div>
+          <p className={`m-0 text-[16px] leading-[1.45] ${INK}`}>
+            {headline}
+            {branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
+          </p>
+          {availability && (
+            <span className="inline-flex items-center gap-2 justify-self-start rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/12 px-3 py-1 text-[12.5px] font-semibold text-[var(--accent)]">
+              <span className="relative flex size-2">
+                <span className="absolute inset-0 animate-ping rounded-full bg-[var(--accent)] opacity-50 motion-reduce:animate-none" />
+                <span className="relative size-2 rounded-full bg-[var(--accent)]" />
+              </span>
+              {availability}
+            </span>
+          )}
+          {meta.length > 0 && (
+            <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 pt-1">
+              {meta.map((item) => (
+                <li key={item.label} className={`inline-flex min-w-0 items-center gap-1.5 text-[13px] ${MUTED}`}>
+                  {item.icon === 'bolt' ? <BoltIcon className="size-3.5 flex-none" /> : <LinkIcon kind={item.icon} className="size-3.5 flex-none" />}
+                  {item.href ? (
+                    <a href={item.href} target="_blank" rel="noopener noreferrer" className="truncate font-medium text-[var(--accent)] hover:underline">{item.label}</a>
+                  ) : (
+                    <span className="truncate">{item.label}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {(iconLinks.length > 0 || showEmail || showPhone) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {showEmail && (
+              <a href={`mailto:${contact.email}`} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[var(--accent)] px-3.5 text-[13px] font-semibold text-white transition-[filter] hover:brightness-110">
+                <LinkIcon kind="email" className="size-4" /> Email me
+              </a>
+            )}
+            {showPhone && (
+              <a href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`} className={`inline-flex min-h-9 items-center gap-2 rounded-lg border ${HAIRLINE} px-3 text-[13px] font-semibold ${INK} hover:border-[var(--accent)]`}>
+                <LinkIcon kind="phone" className="size-4" /> {contact.phone}
+              </a>
+            )}
+            {iconLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={link.label}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-lg border ${HAIRLINE} ${link.custom ? 'px-3' : 'w-9 justify-center'} text-[13px] font-semibold ${MUTED} transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]`}
+              >
+                <LinkIcon kind={link.custom ? 'link' : link.id} className="size-4 flex-none" />
+                {link.custom ? <span className="max-w-[14ch] truncate">{link.label}</span> : <span className="sr-only">{link.label}</span>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {!isPublic && (
+          <div className="grid gap-1.5">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className={`text-[12px] font-semibold uppercase tracking-[.07em] tabular-nums ${MUTED}`}>{xp} XP</span>
+              <span className={`text-[12px] tabular-nums ${FAINT}`}>
+                {levelInfo.next === null ? 'Max level' : `${levelInfo.remaining} XP to level ${levelInfo.level + 1}`}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]">
+              <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-500 ease-out" style={{ width: `${levelInfo.percent}%` }} />
+            </div>
+          </div>
+        )}
+
+        <dl className={`m-0 grid grid-cols-4 border-t pt-4 ${HAIRLINE} max-[480px]:grid-cols-2 max-[480px]:gap-y-4`}>
+          {stats.map((stat, index) => (
+            <div key={stat.label} className={`flex flex-col gap-0.5 px-4 first:pl-0 max-[480px]:odd:pl-0 ${index > 0 ? `border-l ${HAIRLINE} max-[480px]:odd:border-l-0` : ''}`}>
+              <dt className={`text-[12px] ${MUTED}`}>{stat.label}</dt>
+              <dd className={`m-0 font-rethink-sans text-[22px] font-semibold tabular-nums tracking-[-.02em] ${INK}`}>{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </header>
+  )
+}
+
+// A slice of the collection: what's been earned, topped up with the badges
+// closest to being earned, all as coins. The full set lives in the drawer.
+function BadgeShelf({ badges, columns = 4, slots = 8, showLocked = true }) {
+  const earned = badges.filter((badge) => badge.earned)
+  const upcoming = showLocked
+    ? badges.filter((badge) => !badge.earned).sort((a, b) => completion(b) - completion(a))
+    : []
+  const shown = [...earned.slice(-slots), ...upcoming].slice(0, slots)
+
+  return (
+    <ul className="m-0 grid list-none gap-x-2 gap-y-4 p-0" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+      {shown.map((badge) => (
+        <li key={badge.id} className="grid justify-items-center gap-1.5 text-center" title={badge.earned ? badge.label : `${badge.label} — ${badge.description}`}>
+          <BadgeCoin badge={badge} size={46} />
+          <span className={`line-clamp-2 text-[11px] leading-[1.3] ${badge.earned ? MUTED : FAINT}`}>{badge.label}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+const completion = (badge) => (badge.progress ? badge.progress.current / badge.progress.target : 0)
+
+function nextBadge(badges) {
+  return badges
+    .filter((badge) => !badge.earned && badge.progress && badge.progress.current > 0)
+    .sort((a, b) => completion(b) - completion(a))[0]
+}
+
+function ContactCard({ identity, links, onEdit }) {
+  const contact = identity?.contact ?? {}
+  const rows = [
+    contact.email && { id: 'email', label: contact.email, href: `mailto:${contact.email}`, isPublic: contact.showEmail },
+    contact.phone && { id: 'phone', label: contact.phone, href: `tel:${contact.phone.replace(/[^\d+]/g, '')}`, isPublic: contact.showPhone },
+    ...links.map((link) => ({ id: link.custom ? 'link' : link.id, key: link.id, label: link.custom ? link.label : getDisplayUrl(link.url), href: link.url, external: true })),
+  ].filter(Boolean)
+
+  return (
+    <SectionCard
+      title="Contact & links"
+      icon={ChainIcon}
+      action={rows.length > 0 && <button type="button" className={`${QUIET_BUTTON} -my-2 -mr-2`} onClick={onEdit}>Edit</button>}
+    >
+      {rows.length === 0 ? (
+        <div className="grid gap-3">
+          <p className={`m-0 text-[13.5px] leading-[1.6] ${MUTED}`}>Add your GitHub, portfolio and how to reach you — it's what turns a visit into a conversation.</p>
+          <ActionButton variant="neutral" className="min-h-9 justify-self-start text-[13px]" onClick={onEdit}>Add links</ActionButton>
+        </div>
+      ) : (
+        <ul className="m-0 grid list-none gap-0.5 p-0">
+          {rows.map((row) => (
+            <li key={row.key ?? row.id}>
+              <a
+                href={row.href}
+                {...(row.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className={`-mx-2 flex min-h-10 items-center gap-3 rounded-lg px-2 text-[13.5px] ${INK} hover:bg-[#262629] [[data-theme=light]_&]:hover:bg-[#f4f4f1]`}
+              >
+                <span className="grid size-7 flex-none place-items-center rounded-lg bg-[var(--accent)]/12 text-[var(--accent)]">
+                  <LinkIcon kind={row.id} className="size-[15px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate">{row.label}</span>
+                {row.isPublic !== undefined && <VisibilityTag isPublic={row.isPublic} />}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  )
+}
+
+function ChainIcon({ className }) {
+  return <LinkIcon kind="link" className={className} />
+}
+
+function ShareProfileModal({ shareUrl, identity, theme, headline, skills = [], experienceCount = 0, checkpointCount = 0, earnedBadges = 0, onClose, onPreviewVisitor }) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(`https://${shareUrl}`)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
     } catch {
-      setCopied(true)
+      // Clipboard can be blocked; the link is still selectable in the field.
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
-      <div className="w-full max-w-[540px] rounded-3xl border border-[#404040] bg-[#1f1f1f] p-6 text-left shadow-2xl [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white max-[480px]:p-5">
-        <div className="flex items-center justify-between gap-4 border-b border-[#404040] pb-4 [[data-theme=light]_&]:border-[#eeeeeb]">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" style={{ '--accent': theme.accent }}>
+      <div className="w-full max-w-[520px] rounded-3xl border border-[#404040] bg-[#1f1f1f] p-6 text-left shadow-2xl [[data-theme=light]_&]:border-[#e0e0dc] [[data-theme=light]_&]:bg-white max-[480px]:p-5">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="share-modal-title" className="m-0 font-rethink-sans text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-              Share your DevSpace Portfolio
-            </h2>
-            <p className="mt-1 mb-0 text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-              Your public profile showcases verified projects, completed milestones, and skills.
-            </p>
+            <h2 id="share-modal-title" className="m-0 font-rethink-sans text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">Share your profile</h2>
+            <p className={`mt-1 mb-0 text-[13px] ${MUTED}`}>Verified projects, milestones, badges and skills — in one link.</p>
           </div>
-          <button
-            type="button"
-            className="grid size-8 place-items-center rounded-lg text-[#9a9a9d] hover:bg-[#262626] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-neutral-800"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            ✕
+          <button type="button" className="grid size-8 flex-none place-items-center rounded-lg text-[#9a9a9d] hover:bg-[#262626] hover:text-[#f4f4f2] [[data-theme=light]_&]:hover:bg-[#f2f2f0] [[data-theme=light]_&]:hover:text-neutral-800" onClick={onClose} aria-label="Close">
+            <svg className="size-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
 
-        <div className="mt-5 grid gap-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-              Public Portfolio Link
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={`https://${shareUrl}`}
-                className="h-11 flex-1 rounded-xl border border-[#404040] bg-[#171717] px-3.5 text-xs font-medium text-[#f4f4f2] outline-none select-all [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-[#f8f9fa] [[data-theme=light]_&]:text-neutral-800"
-              />
-              <ActionButton variant="primary" className="min-h-11 px-4 text-xs font-semibold" onClick={copy}>
-                {copied ? '✓ Copied' : 'Copy link'}
-              </ActionButton>
+        {/* The card a recipient sees — same banner and accent as the profile. */}
+        <div className={`mt-5 overflow-hidden rounded-2xl border ${HAIRLINE} bg-[#171717] [[data-theme=light]_&]:bg-[#fafaf8]`}>
+          <ProfileBanner theme={theme} image={identity?.bannerImage} className="h-16" />
+          <div className="grid gap-2 px-4 pb-4">
+            <ProfileAvatar identity={identity} className="-mt-7 size-14 rounded-full text-xl ring-4 ring-[#171717] [[data-theme=light]_&]:ring-[#fafaf8]" />
+            <div className="grid gap-0.5">
+              <span className={`font-rethink-sans text-[16px] font-semibold ${INK}`}>{identity?.name?.trim() || 'Learner'}</span>
+              <span className={`text-[13px] ${MUTED}`}>{headline}</span>
             </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-              Public Portfolio Preview
-            </label>
-            <div className="overflow-hidden rounded-2xl border border-[#404040] bg-[#171717] p-4 [[data-theme=light]_&]:border-[#e3e3e0] [[data-theme=light]_&]:bg-[#f8f9fa]">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold text-[#8b7cf6]">{shareUrl}</span>
-                <span className="rounded-full bg-[#168a46]/20 px-2 py-0.5 text-[10px] font-semibold text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">✓ Verified Skills</span>
+            <p className={`m-0 text-[12px] tabular-nums ${FAINT}`}>
+              {experienceCount} section{experienceCount === 1 ? '' : 's'} of work · {checkpointCount} milestone{checkpointCount === 1 ? '' : 's'} · {earnedBadges} badge{earnedBadges === 1 ? '' : 's'}
+            </p>
+            {skills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {skills.slice(0, 5).map((skill) => (
+                  <span key={skill} className="rounded-md bg-[#262629] px-2 py-0.5 text-[11px] font-medium text-[#d4d4d4] [[data-theme=light]_&]:bg-[#ececea] [[data-theme=light]_&]:text-[#495057]">{skill}</span>
+                ))}
               </div>
-              <h3 className="mt-2 mb-1 font-rethink-sans text-base font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
-                {roleLabel} Portfolio
-              </h3>
-              <p className="m-0 text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
-                {experienceCount} project module{experienceCount === 1 ? '' : 's'} completed · {checkpointCount} milestone{checkpointCount === 1 ? '' : 's'} verified
-              </p>
-              {skills.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {skills.slice(0, 5).map((skill) => (
-                    <span key={skill} className="rounded-md bg-[#262629] px-2 py-0.5 text-[11px] font-medium text-[#d4d4d4] [[data-theme=light]_&]:bg-[#e9ecef] [[data-theme=light]_&]:text-[#495057]">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#404040] pt-4 [[data-theme=light]_&]:border-[#eeeeeb]">
-          <ActionButton
-            variant="neutral"
-            className="min-h-10 text-xs"
-            onClick={() => {
-              onClose()
-              onPreviewVisitor()
-            }}
-          >
-            <span className="flex items-center gap-1.5"><EyeIcon className="size-3.5" /> View public profile</span>
+        <div className="mt-4 flex items-center gap-2">
+          <input
+            type="text"
+            readOnly
+            value={`https://${shareUrl}`}
+            onFocus={(event) => event.target.select()}
+            aria-label="Profile link"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-[#404040] bg-[#171717] px-3.5 text-[13px] font-medium text-[#f4f4f2] outline-none [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-[#f8f9fa] [[data-theme=light]_&]:text-neutral-800"
+          />
+          <ActionButton variant="primary" className="min-h-11 px-4 text-[13px] font-semibold" onClick={copy}>
+            {copied ? 'Copied' : 'Copy link'}
           </ActionButton>
-          <ActionButton variant="neutral" className="min-h-10 text-xs" onClick={onClose}>
-            Done
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <ActionButton variant="neutral" className="min-h-10 text-[13px]" onClick={onPreviewVisitor}>
+            <span className="flex items-center gap-1.5"><EyeIcon className="size-3.5" /> See it as a visitor</span>
           </ActionButton>
         </div>
       </div>
@@ -383,15 +579,15 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
   const [localPublicView, setLocalPublicView] = useState(false)
   const isPublicView = isPublicViewProp ?? localPublicView
   const setIsPublicView = onTogglePublicView ?? setLocalPublicView
-  const [linkCopied, setLinkCopied] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
-  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editSection, setEditSection] = useState(null)
+  const [isBadgesOpen, setIsBadgesOpen] = useState(false)
 
-  const { xp, seasonCoins, streakDays, longestStreak, leagueIndex, earnedStreakMilestones } = progress
+  const { xp, seasonCoins, streakDays, longestStreak, leagueIndex } = progress
   const league = getLeague(leagueIndex)
   const levelInfo = getLevel(xp)
-  const earnedTiers = earnedStreakMilestones ?? []
   const identity = normalizeProfile(profile)
+  const theme = getBannerTheme(identity?.bannerTheme)
   const roleLabel = getRoleLabel(profile?.role)
   const branchLabel = BRANCH_LABELS[profile?.branch]
   const motivationLabel = MOTIVATION_LABELS[profile?.motivation]
@@ -447,41 +643,174 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
     currentPath ? `Currently focusing on the “${currentPath.title}” learning track.` : null,
     profile?.dailyMinutes ? `Dedicated to ${profile.dailyMinutes} minutes of daily practice.` : null,
   ].filter(Boolean).join(' ')
-  // The learner's own bio, when they've written one, leads — the generated
-  // sentence still follows so the auto-filled facts (track, daily goal)
-  // don't just disappear once someone customizes their profile.
-  const about = [identity?.bio, generatedAbout].filter(Boolean).join(' ')
+  // Bio and headline are each either DevSpace's (built from real progress,
+  // so it stays current on its own) or the learner's — never a mix.
+  const about = identity?.bioSource === 'custom' && identity.bio.trim() ? identity.bio.trim() : generatedAbout
+  const headline = identity?.headlineSource === 'custom' && identity.headline.trim() ? identity.headline.trim() : roleLabel
 
   const profileQuests = getProfileProgress(identity, { lessonsCompleted: verifiedLessons })
+  const links = getProfileLinks(identity)
 
-  const record = [
-    { label: 'Modules completed', value: `${verifiedLessons} / ${pathProgress?.lessonsTotal ?? 0}` },
-    { label: 'Milestones passed', value: `${certifications.length} / ${pathProgress?.checkpointsTotal ?? 0}` },
-    { label: 'Total XP', value: `${xp}` },
-    { label: 'Longest streak', value: `${longestStreak} days` },
+  const badges = getBadges({
+    streakDays,
+    longestStreak,
+    earnedStreakMilestones: progress.earnedStreakMilestones ?? [],
+    lessonsCompleted: Object.keys(completedLessons).length,
+    milestonesPassed: certifications.length,
+    regionsCompleted: authoredRegions.filter((region) => region.state === 'completed').length,
+    practiceSessions: Object.keys(progress.completedSessions ?? {}).length,
+    xp,
+    highestLeagueIndex: progress.highestLeagueIndex ?? 0,
+    seasonRewards: (progress.seasonRewardHistory ?? []).filter((entry) => entry?.amount > 0).length,
+    profileComplete: profileQuests.percent === 100,
+    linkCount: links.length,
+  })
+  const earnedBadges = badges.filter((badge) => badge.earned)
+  const featuredBadges = getFeaturedBadges(badges, identity?.featuredBadges)
+  const upNext = nextBadge(badges)
+
+  const stats = [
+    { label: 'Modules', value: verifiedLessons },
+    { label: 'Milestones', value: certifications.length },
+    { label: 'Badges', value: earnedBadges.length },
+    { label: 'Best streak', value: `${Math.max(longestStreak ?? 0, streakDays ?? 0)}d` },
   ]
 
-  const shareUrl = `devspace.dev/u/${identity?.name?.trim() ? identity.name.trim().toLowerCase().replace(/\s+/g, '-') : 'learner'}`
+  const slug = identity?.name?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const shareUrl = `devspace.dev/u/${slug || 'learner'}`
 
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(`https://${shareUrl}`)
-    } catch {
-      // Clipboard fallback
-    }
-    setLinkCopied(true)
-    window.setTimeout(() => setLinkCopied(false), 1800)
+  const openEdit = (section = 'look') => setEditSection(section)
+
+  const heroProps = {
+    identity,
+    theme,
+    shareUrl,
+    headline,
+    branchLabel,
+    joinedDate,
+    dailyMinutes: profile?.dailyMinutes,
+    levelInfo,
+    xp,
+    stats,
+    featuredBadges,
+    links,
+    onEdit: () => openEdit('look'),
+    onOpenBadges: () => setIsBadgesOpen(true),
   }
 
+  const viewAllBadges = (
+    <button type="button" className={`${QUIET_BUTTON} -my-2 -mr-2`} onClick={() => setIsBadgesOpen(true)}>
+      View all
+    </button>
+  )
+
+  const experienceSection = (plain) => (
+    <SectionCard title="Experience & Practical Projects" icon={BriefcaseIcon} plain={plain}>
+      {experienceRegions.length === 0 ? (
+        <p className={`m-0 max-w-[60ch] text-[14px] leading-[1.7] ${MUTED}`}>
+          Nothing here yet. Complete a learning module and its practical application appears as an
+          entry with verified dates and demonstrated competencies.
+        </p>
+      ) : (
+        <ol className={`m-0 grid list-none p-0 ${plain ? 'gap-8' : 'gap-7'}`}>
+          {experienceRegions.map((region) => (
+            <ExperienceEntry key={region.id ?? region.title} region={region} pathTitle={currentPath?.title ?? ''} />
+          ))}
+        </ol>
+      )}
+    </SectionCard>
+  )
+
+  const milestonesSection = (plain) => certifications.length > 0 && (
+    <SectionCard title="Milestones & Credentials" icon={TrophyIcon} plain={plain}>
+      <ul className="m-0 grid list-none gap-4 p-0">
+        {certifications.map((lesson) => (
+          <li key={lesson.id} className={DATED_ROW}>
+            <DateCell>{formatMonth(lesson.completedAt) ?? ''}</DateCell>
+            <div className="grid min-w-0 gap-0.5">
+              <span className={`flex items-baseline gap-2 text-[14px] font-semibold ${INK}`}>
+                <CheckIcon className="size-3.5 flex-none translate-y-[2px] text-amber-400" aria-hidden="true" />
+                {lesson.title}
+              </span>
+              <span className={`text-[12px] ${MUTED}`}>Milestone passed · {lesson.regionTitle}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  )
+
+  const skillsSection = (plain) => skills.length > 0 && (
+    <SectionCard title="Skills & Competencies" icon={LayersIcon} plain={plain}>
+      <div className="flex flex-wrap gap-2">
+        {skills.map((skill) => <Chip key={skill}>{skill}</Chip>)}
+      </div>
+    </SectionCard>
+  )
+
+  const pathSection = (plain) => currentPath && (
+    <SectionCard title="Learning Path & Curriculum" icon={BookOpenIcon} plain={plain}>
+      <div className={DATED_ROW}>
+        <DateCell>{joinedYear ? `${joinedYear} – Present` : 'Present'}</DateCell>
+        <div className="grid gap-1.5">
+          <h3 className={`m-0 text-[15px] font-semibold tracking-[-.01em] ${INK}`}>{currentPath.title}</h3>
+          <p className={`m-0 text-[13px] ${MUTED}`}>Devspace · {currentPath.level ?? 'Track'}</p>
+          <p className={`m-0 text-[12px] tabular-nums ${FAINT}`}>
+            {verifiedLessons} of {pathProgress?.lessonsTotal ?? 0} modules · {certifications.length} of {pathProgress?.checkpointsTotal ?? 0} milestones
+          </p>
+          {startingPointLabel && (
+            <p className="m-0 pt-2 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">Placed at {startingPointLabel}.</p>
+          )}
+          {frameworkStatus && <p className="m-0 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">{frameworkStatus}</p>}
+        </div>
+      </div>
+    </SectionCard>
+  )
+
+  const focusSection = (plain) => (interestLabels.length > 0 || needLabels.length > 0) && (
+    <SectionCard title="Focus Areas & Interests" icon={HeartIcon} plain={plain}>
+      <div className="grid gap-5">
+        {interestLabels.length > 0 && (
+          <div className="grid gap-2.5">
+            <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Domains</span>
+            <div className="flex flex-wrap gap-2">
+              {interestLabels.map((label) => <Chip key={label}>{label}</Chip>)}
+            </div>
+          </div>
+        )}
+        {needLabels.length > 0 && (
+          <div className="grid gap-2.5">
+            <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Focused on</span>
+            <div className="flex flex-wrap gap-2">
+              {needLabels.map((label) => <Chip key={label}>{label}</Chip>)}
+            </div>
+          </div>
+        )}
+      </div>
+    </SectionCard>
+  )
+
+  const standingSection = (plain) => league && (
+    <SectionCard title="Cohort Standing" icon={TrendingUpIcon} plain={plain}>
+      <div className="flex items-center gap-3">
+        <TierMedal league={league} state="current" size={44} />
+        <div className="grid gap-0.5">
+          <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
+          <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} <CoinIcon /> this season</span>
+        </div>
+      </div>
+    </SectionCard>
+  )
+
   return (
-    <div className="grid gap-5" aria-label="Profile">
+    <div className="grid gap-5" aria-label="Profile" style={{ '--accent': theme.accent }}>
       {isPublicView ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#3b82f6]/30 bg-[#162138] p-4 font-rubik text-sm text-[#dbe6ff] [[data-theme=light]_&]:border-[#bfdbfe] [[data-theme=light]_&]:bg-[#eff6ff] [[data-theme=light]_&]:text-[#1e3a8a]">
           <div className="flex min-w-0 items-center gap-2.5">
             <EyeIcon className="size-4 flex-none text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]" />
             <span>
-              <strong>Public Portfolio Preview</strong>
-              <span className="text-[#a8c2ef] [[data-theme=light]_&]:text-[#3b82f6]"> · This is what collaborators, hiring teams, and peers see when you share your link.</span>
+              <strong>Visitor preview</strong>
+              <span className="text-[#a8c2ef] [[data-theme=light]_&]:text-[#3b82f6]"> · This is what people see when you share your link.</span>
             </span>
           </div>
           <div className="flex shrink-0 items-center justify-center gap-2 max-[540px]:w-full">
@@ -495,446 +824,116 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className={`text-xs ${MUTED}`}>Your verified skill profile, projects & achievements</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Your verified skill profile, projects & achievements</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={() => setIsShareModalOpen(true)}>
-              <span className="flex items-center gap-1.5"><ShareIcon className="size-4" /> Share profile</span>
+            <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={() => setIsPublicView(true)}>
+              <span className="flex items-center gap-1.5"><EyeIcon className="size-4" /> View as visitor</span>
             </ActionButton>
-            <ActionButton variant="primary" className="min-h-9 text-[13px]" onClick={() => setIsPublicView(true)}>
-              <span className="flex items-center gap-1.5"><EyeIcon className="size-4" /> Preview public CV</span>
+            <ActionButton variant="primary" className="min-h-9 text-[13px]" onClick={() => setIsShareModalOpen(true)}>
+              <span className="flex items-center gap-1.5"><ShareIcon className="size-4" /> Share profile</span>
             </ActionButton>
           </div>
         </div>
       )}
 
       {isPublicView ? (
-        <div className="grid w-full max-w-[820px] gap-6 mx-auto">
-          <header className={`overflow-hidden rounded-2xl ${SURFACE} shadow-sm`}>
-            <div className={`flex items-center justify-between border-b px-6 py-3 ${HAIRLINE} bg-black/[.15] [[data-theme=light]_&]:bg-[#f7f7f4]`}>
-              <span className={`text-[12.5px] font-semibold text-[#8b7cf6] [[data-theme=light]_&]:text-[#4338ca]`}>
-                {shareUrl}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#168a46]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#6ee7a8] [[data-theme=light]_&]:text-[#168a46]">
-                <CheckIcon className="size-3" /> Verified by DevSpace
-              </span>
-            </div>
+        <div className="mx-auto grid w-full max-w-[820px] gap-6">
+          <ProfileHero {...heroProps} isPublic />
 
-            <div className="grid gap-4 px-7 py-6 max-[480px]:px-5">
-              <div className="flex items-center gap-4">
-                {identity?.photo ? (
-                  <img src={identity.photo} alt="" aria-hidden="true" className="size-14 flex-none rounded-2xl object-cover shadow-md" />
-                ) : identity?.avatarStyle ? (
-                  <img
-                    src={getAvatarDataUri(identity.avatarStyle, identity?.name?.trim() || 'you')}
-                    alt=""
-                    aria-hidden="true"
-                    className="size-14 flex-none rounded-2xl bg-[#262629] object-cover shadow-md"
-                  />
-                ) : (
-                  <div className="relative size-14 flex-none rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#4338ca] grid place-items-center font-rethink-sans text-2xl font-bold text-white shadow-md">
-                    {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                  </div>
-                )}
-                <div className="grid gap-0.5">
-                  <h1 className={`m-0 font-rethink-sans text-[28px] font-semibold leading-[1.15] tracking-[-.02em] ${INK}`}>
-                    {identity?.name?.trim() || 'Learner'}
-                  </h1>
-                  <p className="m-0 text-[15px] font-semibold text-[#8f97f2] [[data-theme=light]_&]:text-[#4338ca]">
-                    {identity?.headline?.trim() || roleLabel}{branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
-                  </p>
-                </div>
-              </div>
-
-              {about && (
-                <p className={`m-0 max-w-[64ch] text-[14.5px] leading-[1.7] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252]`}>
-                  {about}
-                </p>
-              )}
-
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#333336]/60 [[data-theme=light]_&]:border-[#e6e6e2]">
-                {profile?.dailyMinutes && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed] px-3 py-1 text-xs font-medium text-[#d4d4d4] [[data-theme=light]_&]:text-[#404040]">
-                    <BoltIcon className="size-3.5 text-amber-400" /> {profile.dailyMinutes} min daily goal
-                  </span>
-                )}
-                {currentPath && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed] px-3 py-1 text-xs font-medium text-[#d4d4d4] [[data-theme=light]_&]:text-[#404040]">
-                    <BookOpenIcon className="size-3.5 text-[#88bdf2] [[data-theme=light]_&]:text-[#2563eb]" /> {currentPath.title}
-                  </span>
-                )}
-                {joinedDate && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed] px-3 py-1 text-xs font-medium text-[#86868a] [[data-theme=light]_&]:text-[#767674]">
-                    Joined {joinedDate}
-                  </span>
-                )}
-              </div>
-            </div>
-          </header>
-
-          {experienceRegions.length === 0 ? (
-            <SectionCard title="Experience & Practical Projects" plain>
-              <p className={`m-0 max-w-[60ch] text-[14px] leading-[1.7] ${MUTED}`}>
-                Nothing here yet. Complete a learning module and its practical application appears as an
-                entry with verified dates and demonstrated competencies.
-              </p>
-            </SectionCard>
-          ) : (
-            <SectionCard title="Experience & Practical Projects" plain>
-              <ol className="m-0 grid list-none gap-8 p-0">
-                {experienceRegions.map((region) => (
-                  <ExperienceEntry key={region.id ?? region.title} region={region} pathTitle={currentPath?.title ?? ''} />
-                ))}
-              </ol>
+          {about && (
+            <SectionCard title="About" plain>
+              <p className="m-0 max-w-[64ch] text-[14.5px] leading-[1.7] text-[#c4c4c7] [[data-theme=light]_&]:text-[#525252]">{about}</p>
             </SectionCard>
           )}
 
-          {certifications.length > 0 && (
-            <SectionCard title="Milestones & Credentials" plain>
-              <ul className="m-0 grid list-none gap-5 p-0">
-                {certifications.map((lesson) => (
-                  <li key={lesson.id} className={DATED_ROW}>
-                    <DateCell>{formatMonth(lesson.completedAt) ?? ''}</DateCell>
-                    <div className="grid min-w-0 gap-0.5">
-                      <span className={`flex items-baseline gap-2 text-[14px] font-medium ${INK}`}>
-                        <CheckIcon className="size-3.5 flex-none translate-y-[2px] text-amber-400" aria-hidden="true" />
-                        {lesson.title}
-                      </span>
-                      <span className={`text-[12px] ${MUTED}`}>Milestone passed · {lesson.regionTitle}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          {experienceSection(true)}
+          {milestonesSection(true)}
+
+          {earnedBadges.length > 0 && (
+            <SectionCard title={`Badges · ${earnedBadges.length}`} plain action={viewAllBadges}>
+              <BadgeShelf badges={badges} columns={6} slots={12} showLocked={false} />
             </SectionCard>
           )}
 
-          {skills.length > 0 && (
-            <SectionCard title="Skills & Competencies" plain>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => <Chip key={skill}>{skill}</Chip>)}
-              </div>
-            </SectionCard>
-          )}
-
-          {currentPath && (
-            <SectionCard title="Learning Path & Curriculum" plain>
-              <div className={DATED_ROW}>
-                <DateCell>{joinedYear ? `${joinedYear} – Present` : 'Present'}</DateCell>
-                <div className="grid gap-1.5">
-                  <h3 className={`m-0 text-[15px] font-semibold tracking-[-.01em] ${INK}`}>{currentPath.title}</h3>
-                  <p className={`m-0 text-[13px] ${MUTED}`}>Devspace · {currentPath.level ?? 'Track'}</p>
-                  <p className={`m-0 text-[12px] tabular-nums ${FAINT}`}>
-                    {verifiedLessons} of {pathProgress?.lessonsTotal ?? 0} modules · {certifications.length} of {pathProgress?.checkpointsTotal ?? 0} milestones
-                  </p>
-                  {startingPointLabel && (
-                    <p className={`m-0 pt-2 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
-                      Placed at {startingPointLabel}.
-                    </p>
-                  )}
-                  {frameworkStatus && <p className={`m-0 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>{frameworkStatus}</p>}
-                </div>
-              </div>
-            </SectionCard>
-          )}
-
-          {(interestLabels.length > 0 || needLabels.length > 0) && (
-            <SectionCard title="Focus Areas & Interests" plain>
-              <div className="grid gap-5">
-                {interestLabels.length > 0 && (
-                  <div className="grid gap-2.5">
-                    <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Domains</span>
-                    <div className="flex flex-wrap gap-2">
-                      {interestLabels.map((label) => <Chip key={label}>{label}</Chip>)}
-                    </div>
-                  </div>
-                )}
-                {needLabels.length > 0 && (
-                  <div className="grid gap-2.5">
-                    <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Focused on</span>
-                    <div className="flex flex-wrap gap-2">
-                      {needLabels.map((label) => <Chip key={label}>{label}</Chip>)}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </SectionCard>
-          )}
-
-          <div className="grid grid-cols-2 gap-6 max-[680px]:grid-cols-1">
-            <SectionCard title="Verified Record" plain>
-              <dl className="m-0 grid gap-3">
-                {record.map((item, index) => (
-                  <RecordRow key={item.label} label={item.label} value={item.value} isLast={index === record.length - 1} />
-                ))}
-              </dl>
-            </SectionCard>
-
-            {league && (
-              <SectionCard title="Cohort Standing" plain>
-                <div className="flex items-center gap-3">
-                  <TierMedal league={league} state="current" size={44} />
-                  <div className="grid gap-0.5">
-                    <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} <CoinIcon /> this season</span>
-                  </div>
-                </div>
-              </SectionCard>
-            )}
-          </div>
-
-          <SectionCard title="Streak Badges" plain>
-            <div className="grid grid-cols-6 gap-3 max-[560px]:grid-cols-3">
-              {STREAK_MILESTONES.map((tier) => (
-                <StreakBadge
-                  key={tier.days}
-                  tier={tier}
-                  earned={earnedTiers.includes(tier.days)}
-                  current={streakDays}
-                />
-              ))}
-            </div>
-          </SectionCard>
+          {skillsSection(true)}
+          {pathSection(true)}
+          {focusSection(true)}
+          {standingSection(true)}
 
           <footer className="mt-2 text-center">
-            <p className="m-0 text-xs font-medium text-[#86868a] [[data-theme=light]_&]:text-[#767674]">
-              Verified by DevSpace · Certified competency & practical project milestones
-            </p>
+            <p className={`m-0 text-xs font-medium ${FAINT}`}>Verified by DevSpace · Certified competency & practical project milestones</p>
           </footer>
         </div>
       ) : (
-        <div className="grid grid-cols-[minmax(0,1fr)_312px] items-start gap-5 max-[900px]:grid-cols-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_320px] items-start gap-5 max-[900px]:grid-cols-1">
           <section className="grid gap-5">
-            <header className={`grid overflow-hidden rounded-2xl ${SURFACE} shadow-[0_1px_2px_rgba(0,0,0,.24),0_8px_20px_-14px_rgba(0,0,0,.4)] [[data-theme=light]_&]:shadow-[0_1px_2px_rgba(20,20,20,.04),0_8px_20px_-14px_rgba(20,20,20,.12)]`}>
-              <div
-                className="h-28 bg-[#6699ec]/12 [[data-theme=light]_&]:bg-[#6699ec]/8"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(135deg, rgba(102, 153, 236,.16) 0 1px, transparent 1px 9px)',
-                }}
-                aria-hidden="true"
-              />
-              <div className="grid gap-5 px-7 pb-7 max-[480px]:px-5 max-[480px]:pb-5">
-                <div className="relative -mt-11 w-[88px]">
-                  {identity?.photo ? (
-                    <img
-                      src={identity.photo}
-                      alt=""
-                      aria-hidden="true"
-                      className="size-[88px] rounded-full object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                    />
-                  ) : identity?.avatarStyle ? (
-                    <img
-                      src={getAvatarDataUri(identity.avatarStyle, identity?.name?.trim() || 'you')}
-                      alt=""
-                      aria-hidden="true"
-                      className="size-[88px] rounded-full bg-[#262629] object-cover ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                    />
-                  ) : (
-                    <span
-                      className="grid size-[88px] place-items-center rounded-full bg-[#6699ec] font-rethink-sans text-[34px] font-medium text-white ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                      aria-hidden="true"
-                    >
-                      {identity?.name?.trim() ? identity.name.trim().charAt(0).toUpperCase() : 'L'}
-                    </span>
-                  )}
-                  <span
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-950 ring-4 ring-[#1b1b1d] [[data-theme=light]_&]:ring-white"
-                    aria-hidden="true"
-                  >
-                    LV {levelInfo.level}
-                  </span>
-                  <span className="absolute w-px h-px overflow-hidden -m-px p-0 border-0 [clip:rect(0,0,0,0)]">Level {levelInfo.level}</span>
-                </div>
-
-                <div className="grid gap-1.5">
-                  <h1 className={`m-0 font-rethink-sans text-[30px] font-medium leading-[1.1] tracking-[-.025em] ${INK}`}>
-                    {identity?.name?.trim() || 'Learner'}
-                  </h1>
-                  <p className={`m-0 text-[16px] leading-[1.45] ${INK}`}>
-                    {identity?.headline?.trim() || roleLabel}
-                    {branchLabel ? <span className={FAINT}> · {branchLabel}</span> : null}
-                  </p>
-                  {/* The path itself lives in the Learning Path card below, so
-                      this line only carries what nothing else on the page does. */}
-                  {(joinedDate || profile?.dailyMinutes) && (
-                    <p className={`m-0 pt-1 text-[13px] ${MUTED}`}>
-                      {[joinedDate && `Joined ${joinedDate}`, profile?.dailyMinutes && `${profile.dailyMinutes} min daily goal`].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid gap-1.5">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className={`text-[12px] font-semibold uppercase tracking-[.07em] tabular-nums ${MUTED}`}>
-                      {xp} XP
-                    </span>
-                    <span className={`text-[12px] tabular-nums ${FAINT}`}>
-                      {levelInfo.next === null ? `${xp} XP · max level` : `${levelInfo.remaining} XP to level ${levelInfo.level + 1}`}
-                    </span>
-                  </div>
-                  <div className={`h-2 w-full overflow-hidden rounded-full bg-[#262629] [[data-theme=light]_&]:bg-[#f0f0ed]`}>
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#6699ec] to-[#2563eb] transition-[width] duration-500 ease-out"
-                      style={{ width: `${levelInfo.percent}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <ActionButton variant="neutral" className="min-h-9 text-[13px]" onClick={() => setIsEditOpen(true)}>
-                    Edit profile
-                  </ActionButton>
-                </div>
-              </div>
-            </header>
+            <ProfileHero {...heroProps} isPublic={false} />
 
             {about && (
-              <SectionCard title="About" icon={InfoIcon}>
-                <p className={`m-0 max-w-[68ch] text-[14px] leading-[1.75] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
-                  {about}
-                </p>
+              <SectionCard
+                title="About"
+                icon={InfoIcon}
+                action={<button type="button" className={`${QUIET_BUTTON} -my-2 -mr-2`} onClick={() => openEdit('about')}>{identity?.bioSource === 'custom' ? 'Edit' : 'Write your own'}</button>}
+              >
+                <p className="m-0 max-w-[68ch] text-[14px] leading-[1.75] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">{about}</p>
+                {identity?.bioSource !== 'custom' && (
+                  <span className={`inline-flex items-center gap-1.5 text-[12px] ${FAINT}`}>
+                    <SparkleIcon className="size-3.5 text-[var(--accent)]" /> Written by DevSpace from your progress
+                  </span>
+                )}
               </SectionCard>
             )}
 
-            {experienceRegions.length === 0 ? (
-              <SectionCard title="Experience & Practical Projects" icon={BriefcaseIcon}>
-                <p className={`m-0 max-w-[60ch] text-[14px] leading-[1.7] ${MUTED}`}>
-                  Nothing here yet. Complete a learning module and its practical application appears as an
-                  entry with verified dates and demonstrated competencies.
-                </p>
-              </SectionCard>
-            ) : (
-              <SectionCard title="Experience & Practical Projects" icon={BriefcaseIcon}>
-                <ol className="m-0 grid list-none gap-7 p-0">
-                  {experienceRegions.map((region) => (
-                    <ExperienceEntry key={region.id ?? region.title} region={region} pathTitle={currentPath?.title ?? ''} />
-                  ))}
-                </ol>
-              </SectionCard>
-            )}
-
-            {certifications.length > 0 && (
-              <SectionCard title="Milestones & Credentials" icon={TrophyIcon}>
-                <ul className="m-0 grid list-none gap-4 p-0">
-                  {certifications.map((lesson) => (
-                    <li key={lesson.id} className={DATED_ROW}>
-                      <DateCell>{formatMonth(lesson.completedAt) ?? ''}</DateCell>
-                      <div className="grid min-w-0 gap-0.5">
-                        <span className={`flex items-baseline gap-2 text-[14px] font-semibold ${INK}`}>
-                          <CheckIcon className="size-3.5 flex-none translate-y-[2px] text-amber-400" aria-hidden="true" />
-                          {lesson.title}
-                        </span>
-                        <span className={`text-[12px] ${MUTED}`}>Milestone passed · {lesson.regionTitle}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </SectionCard>
-            )}
-
-            {skills.length > 0 && (
-              <SectionCard title="Skills & Competencies" icon={LayersIcon}>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => <Chip key={skill}>{skill}</Chip>)}
-                </div>
-              </SectionCard>
-            )}
-
-            {currentPath && (
-              <SectionCard title="Learning Path & Curriculum" icon={BookOpenIcon}>
-                <div className={DATED_ROW}>
-                  <DateCell>{joinedYear ? `${joinedYear} – Present` : 'Present'}</DateCell>
-                  <div className="grid gap-1.5">
-                    <h3 className={`m-0 text-[15px] font-semibold tracking-[-.01em] ${INK}`}>{currentPath.title}</h3>
-                    <p className={`m-0 text-[13px] ${MUTED}`}>Devspace · {currentPath.level ?? 'Track'}</p>
-                    <p className={`m-0 text-[12px] tabular-nums ${FAINT}`}>
-                      {verifiedLessons} of {pathProgress?.lessonsTotal ?? 0} modules · {certifications.length} of {pathProgress?.checkpointsTotal ?? 0} milestones
-                    </p>
-                    {startingPointLabel && (
-                      <p className={`m-0 pt-2 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>
-                        Placed at {startingPointLabel}.
-                      </p>
-                    )}
-                    {frameworkStatus && <p className={`m-0 text-[14px] leading-[1.65] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]`}>{frameworkStatus}</p>}
-                  </div>
-                </div>
-              </SectionCard>
-            )}
-
-            {(interestLabels.length > 0 || needLabels.length > 0) && (
-              <SectionCard title="Focus Areas & Interests" icon={HeartIcon}>
-                <div className="grid gap-5">
-                  {interestLabels.length > 0 && (
-                    <div className="grid gap-2.5">
-                      <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Domains</span>
-                      <div className="flex flex-wrap gap-2">
-                        {interestLabels.map((label) => <Chip key={label}>{label}</Chip>)}
-                      </div>
-                    </div>
-                  )}
-                  {needLabels.length > 0 && (
-                    <div className="grid gap-2.5">
-                      <span className={`text-[12px] font-semibold uppercase tracking-[.08em] ${MUTED}`}>Focused on</span>
-                      <div className="flex flex-wrap gap-2">
-                        {needLabels.map((label) => <Chip key={label}>{label}</Chip>)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </SectionCard>
-            )}
+            {experienceSection(false)}
+            {milestonesSection(false)}
+            {skillsSection(false)}
+            {pathSection(false)}
+            {focusSection(false)}
           </section>
 
           <aside className="grid gap-5">
-            <SectionCard title="Verified Record" icon={BarChartIcon}>
-              <dl className="m-0 grid gap-3">
-                {record.map((item, index) => (
-                  <RecordRow key={item.label} label={item.label} value={item.value} isLast={index === record.length - 1} />
-                ))}
-              </dl>
-            </SectionCard>
-
-            <SectionCard title="Streak Badges" icon={BoltIcon}>
-              <div className="grid grid-cols-3 gap-3">
-                {STREAK_MILESTONES.map((tier) => (
-                  <StreakBadge
-                    key={tier.days}
-                    tier={tier}
-                    earned={earnedTiers.includes(tier.days)}
-                    current={streakDays}
-                  />
-                ))}
+            <SectionCard title="Badges" icon={TrophyIcon} action={viewAllBadges}>
+              <div className="grid gap-4">
+                <span className={`text-[13px] ${MUTED}`}>
+                  <strong className={`font-semibold ${INK}`}>{earnedBadges.length}</strong> of {badges.length} collected
+                </span>
+                <BadgeShelf badges={badges} />
+                {upNext && (
+                  <div className={`flex items-center gap-3 rounded-xl border ${HAIRLINE} p-3`}>
+                    <BadgeCoin badge={upNext} size={34} />
+                    <div className="grid min-w-0 gap-0.5">
+                      <span className={`text-[12px] ${FAINT}`}>Closest next</span>
+                      <span className={`truncate text-[13px] font-semibold ${INK}`}>{upNext.label}</span>
+                      <span className={`text-[12px] tabular-nums ${MUTED}`}>
+                        {upNext.progress.target - upNext.progress.current} {upNext.progress.noun} to go
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </SectionCard>
 
-            {league && (
-              <SectionCard title="Cohort Standing" icon={TrendingUpIcon}>
-                <div className="flex items-center gap-3">
-                  <TierMedal league={league} state="current" size={44} />
-                  <div className="grid gap-0.5">
-                    <span className={`text-[15px] font-medium ${INK}`}>{league.name}</span>
-                    <span className={`text-[13px] tabular-nums ${MUTED}`}>{seasonCoins} <CoinIcon /> this season</span>
+            <ContactCard identity={identity} links={links} onEdit={() => openEdit('links')} />
+
+            {standingSection(false)}
+
+            {profileQuests.percent < 100 && (
+              <SectionCard title="Profile Quests" icon={ChecklistIcon}>
+                <div className="grid gap-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className={`text-[13px] ${MUTED}`}>{profileQuests.percent}% complete</span>
+                    <span className={`text-[12px] tabular-nums ${FAINT}`}>
+                      {profileQuests.items.filter((item) => item.complete).length} / {profileQuests.items.length}
+                    </span>
                   </div>
+                  <ul className="m-0 grid list-none gap-2.5 p-0">
+                    {profileQuests.items.map((item) => (
+                      <QuestRow key={item.label} label={item.label} complete={item.complete} />
+                    ))}
+                  </ul>
                 </div>
               </SectionCard>
             )}
-
-            <SectionCard title="Profile Quests" icon={ChecklistIcon}>
-              <div className="grid gap-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className={`text-[13px] ${MUTED}`}>{profileQuests.percent}% complete</span>
-                  <span className={`text-[12px] tabular-nums ${FAINT}`}>
-                    {profileQuests.items.filter((item) => item.complete).length} / {profileQuests.items.length}
-                  </span>
-                </div>
-                <ul className="m-0 grid list-none gap-2.5 p-0">
-                  {profileQuests.items.map((item) => (
-                    <QuestRow key={item.label} label={item.label} complete={item.complete} />
-                  ))}
-                </ul>
-              </div>
-            </SectionCard>
 
             {pathProgress?.nextCheckpoint && (
               <SectionCard title="Next Milestone" icon={FlagIcon}>
@@ -955,10 +954,13 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
       {isShareModalOpen && (
         <ShareProfileModal
           shareUrl={shareUrl}
-          roleLabel={roleLabel}
+          identity={identity}
+          theme={theme}
+          headline={headline}
           skills={skills}
           experienceCount={experienceRegions.length}
           checkpointCount={certifications.length}
+          earnedBadges={earnedBadges.length}
           onClose={() => setIsShareModalOpen(false)}
           onPreviewVisitor={() => {
             setIsShareModalOpen(false)
@@ -967,12 +969,37 @@ export default function ProfileView({ profile, progress, currentPath, pathProgre
         />
       )}
 
-      {isEditOpen && (
+      {isBadgesOpen && (
+        <BadgesDrawer
+          badges={badges}
+          pinnedIds={identity?.featuredBadges ?? []}
+          readOnly={isPublicView}
+          onTogglePin={(id) => onSaveProfile?.({ featuredBadges: toggleFeaturedBadge(identity?.featuredBadges ?? [], id) })}
+          onClose={() => setIsBadgesOpen(false)}
+        />
+      )}
+
+      {editSection && (
         <EditProfileModal
           profile={identity}
+          initialSection={editSection}
           highestLeagueIndex={progress?.highestLeagueIndex}
+          generated={{
+            about: generatedAbout,
+            headline: roleLabel,
+            skills,
+            experience: experienceRegions.map((region) => region.title),
+            milestones: certifications.length,
+            badges: earnedBadges.length,
+            badgesTotal: badges.length,
+            pathTitle: currentPath?.title,
+          }}
+          onOpenBadges={() => {
+            setEditSection(null)
+            setIsBadgesOpen(true)
+          }}
           onSave={(fields) => onSaveProfile?.(fields)}
-          onClose={() => setIsEditOpen(false)}
+          onClose={() => setEditSection(null)}
         />
       )}
     </div>

@@ -2,12 +2,17 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { DevyRive } from '../ui/DevyRive'
 
-// Timed against the rope clip (DevyRive starts it 3.4s in): Devy appears at
-// the top ~0.6s after mount and lands ~1.4s, then swings.
+// Timed against the rope clip (DevyRive starts it 3.4s in): once Devy's clip
+// is actually playing, he lands ~1.4s later, then swings.
 const PULL_DELAY_S = 0.55
 const LANDED_MS = 1400
 const HOLD_MS = 1900
 const LEAVE_MS = 420
+// The .riv asset loads async (fetch + WASM instantiate), so on a cold cache
+// Devy can take a beat to appear. If he isn't ready by this deadline, stop
+// waiting and run the hold-then-leave beat anyway rather than stranding the
+// screen — the tap/Enter skip still works throughout.
+const READY_TIMEOUT_MS = 4000
 
 // The warm-up's opening beat. Devy slides down the rope and drags the warm-up
 // card down into view with him, like pulling a shade — it hangs from his feet,
@@ -16,15 +21,29 @@ const LEAVE_MS = 420
 export function WarmUpIntro({ session, onDone }) {
   const reduceMotion = useReducedMotion()
   const [leaving, setLeaving] = useState(false)
+  // Reduced motion never plays the clip, so there's nothing to wait on.
+  const [devyReady, setDevyReady] = useState(false)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
 
   const leave = () => setLeaving(true)
 
   useEffect(() => {
-    const timer = window.setTimeout(leave, reduceMotion ? 1200 : LANDED_MS + HOLD_MS)
+    if (reduceMotion) {
+      const timer = window.setTimeout(leave, 1200)
+      return () => window.clearTimeout(timer)
+    }
+    // Wait for Devy's clip to actually start before counting down the hold —
+    // otherwise a slow asset load lets the leave-timer fire first and the
+    // card retracts before he's ever appeared. A deadline keeps this from
+    // waiting forever if the clip never loads.
+    if (!devyReady) {
+      const timer = window.setTimeout(() => setDevyReady(true), READY_TIMEOUT_MS)
+      return () => window.clearTimeout(timer)
+    }
+    const timer = window.setTimeout(leave, LANDED_MS + HOLD_MS)
     return () => window.clearTimeout(timer)
-  }, [reduceMotion])
+  }, [reduceMotion, devyReady])
 
   useEffect(() => {
     if (!leaving) return undefined
@@ -62,7 +81,7 @@ export function WarmUpIntro({ session, onDone }) {
             the rope extended above it, that line would float mid-air, so the
             top few pixels are cropped off. */}
         <span className="pointer-events-none relative z-10 block overflow-hidden">
-          <DevyRive clip="rope-into" className="-mt-2 size-[300px] max-[680px]:size-[230px]" />
+          <DevyRive clip="rope-into" className="-mt-2 size-[300px] max-[680px]:size-[230px]" onReady={() => setDevyReady(true)} />
         </span>
 
         {/* The card hangs from Devy's feet: it starts above the screen and

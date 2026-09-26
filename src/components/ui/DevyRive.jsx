@@ -1,5 +1,5 @@
 import { useRive } from '@rive-app/react-webgl2';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Native .riv exports of the Devy rig, each built around one entrance
 // motion, rendered with a real transparent background.
@@ -42,11 +42,18 @@ const ENTRANCE = {
   'up-down-pop-out': { animation: 'Timeline 2' },
 }
 
-export function DevyRive({ clip, className = '', ariaLabel, ...rest }) {
+// `onReady` fires the moment this clip actually starts playing (or, under
+// reduced motion, the moment it's scrubbed to its resting frame) — not on
+// mount. The .riv asset loads async (fetch + WASM instantiate), so a caller
+// that times a follow-up beat off mount instead of this can end up
+// advancing before Devy ever appears on a cold cache. See WarmUpIntro.
+export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
   const src = SOURCES[clip]
   const isDual = DUAL_STATE_MACHINE_CLIPS.has(clip)
   const { animation: entrance = 'Timeline 1', startAt = 0, restAt } = ENTRANCE[clip] ?? {}
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
 
   const { rive, RiveComponent } = useRive({
     src,
@@ -59,14 +66,17 @@ export function DevyRive({ clip, className = '', ariaLabel, ...rest }) {
     if (!rive) return
     if (!isDual) {
       if (!reducedMotion) rive.play()
+      onReadyRef.current?.()
       return
     }
     if (reducedMotion) {
       if (restAt != null) rive.scrub(entrance, restAt)
+      onReadyRef.current?.()
       return
     }
     if (startAt) rive.scrub(entrance, startAt)
     rive.play(entrance)
+    onReadyRef.current?.()
   }, [rive, isDual, entrance, startAt, restAt, reducedMotion])
 
   if (!src) return null
