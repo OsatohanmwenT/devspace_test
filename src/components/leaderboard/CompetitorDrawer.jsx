@@ -57,7 +57,10 @@ function OwnerActions({ name, onRemove }) {
 // point is the standings list stays visible behind it. There's no real
 // "Proof Book" for a simulated rival to link to, so that CTA from the spec
 // is dropped rather than pointing at a page that doesn't exist.
-export function CompetitorDrawer({ entry, rival, league, seasonIndex, onClose, onRemove }) {
+// `insight` (from lib/leagueInsights.js) is passed when the drawer is opened
+// from an organizer dashboard — its streak and activity come from the same
+// daily series as the coins, so they replace the invented profile streak.
+export function CompetitorDrawer({ entry, rival, league, seasonIndex, insight, onClose, onRemove }) {
   const profile = getRivalProfile(rival, seasonIndex)
 
   return (
@@ -76,7 +79,9 @@ export function CompetitorDrawer({ entry, rival, league, seasonIndex, onClose, o
 
         <div className="grid grid-cols-2 gap-2.5">
           <Stat label="Season Coins" value={<><CoinIcon /> {entry.score.toLocaleString()}</>} />
-          <Stat label="Streak" value={`${profile.streakDays}d`} />
+          <Stat label="Streak" value={`${insight ? insight.streak : profile.streakDays}d`} />
+          {insight && <Stat label="Last 7 days" value={<><CoinIcon /> {insight.last7}</>} />}
+          {insight && <Stat label="Active days" value={`${insight.activeDays} of ${insight.daily.length}`} />}
           <Stat label="Concepts mastered" value={profile.conceptsMastered} />
           <Stat label="Reinforcement checks" value={profile.reinforcementChecks} />
           <Stat label="Project milestones" value={profile.projectMilestones} />

@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { DevyRive } from '../ui/DevyRive'
 import { LessonPedestalIcon } from '../ui/icons'
 
@@ -20,6 +20,7 @@ function CurrentTileBeacon({ children }) {
 }
 
 export function LessonRow({ lesson, index, isSelected, onSelect }) {
+  const reducedMotion = useReducedMotion()
   const isCurrent = lesson.state === 'current'
   const isLocked = lesson.state === 'locked'
   const stateLabel = lesson.state === 'completed'
@@ -30,11 +31,9 @@ export function LessonRow({ lesson, index, isSelected, onSelect }) {
         ? 'Locked'
         : 'Available'
   const alignment = ['justify-start', 'justify-end', 'justify-center'][index % 3]
-  // devy-launchpad-intro.riv already draws its own launch platform, so for
-  // the current lesson it replaces the pedestal icon rather than sitting on
-  // top of it (which read as two stacked platforms). First real home for
-  // this clip — previously only in the ?preview=devy-riv harness in main.jsx.
-  const icon = isCurrent
+  // The state machine draws its own launchpad; use the static pedestal when
+  // reduced motion is requested because the Rive file starts on an empty frame.
+  const icon = isCurrent && !reducedMotion
     ? <DevyRive clip="launchpad-intro" className="h-[210px] w-[200px]" ariaLabel="" />
     : <LessonPedestalIcon state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
 

@@ -21,6 +21,30 @@ const CODE_LENGTH = 6
 const MIN_MEMBERS = 4
 export const MAX_MEMBERS = 6
 
+// Two shapes of private league. A friends league is the original small
+// board. A class league is for a school or bootcamp running a competition:
+// a much bigger roster, an organizer dashboard, and the option for the
+// organizer (a teacher) to run it without appearing on the board. The rival
+// pool has 45 personas, so 40 seats still leaves room for variety.
+export const LEAGUE_KINDS = {
+  friends: { label: 'Friends', seats: MAX_MEMBERS, starting: [MIN_MEMBERS, MAX_MEMBERS] },
+  class: { label: 'Class or school', seats: 40, starting: [18, 28] },
+}
+
+export function getLeagueKind(league) {
+  return LEAGUE_KINDS[league?.kind] ?? LEAGUE_KINDS.friends
+}
+
+// Seats for other participants — the organizer's own seat is extra, and only
+// exists when they're competing.
+export function getLeagueSeats(league) {
+  return getLeagueKind(league).seats
+}
+
+export function isCompeting(league) {
+  return !league?.organizerOnly
+}
+
 const LEAGUE_NAME_ADJECTIVES = ['Midnight', 'Steady', 'Bright', 'Quiet', 'Rapid', 'Golden', 'Northern', 'Prime']
 const LEAGUE_NAME_NOUNS = ['Coders', 'Learners', 'Builders', 'Crew', 'Circle', 'Squad', 'Collective', 'League']
 
@@ -67,9 +91,10 @@ export function getJoinCodeError(current, code) {
 // Picks a fixed, stable subset of rivals for a league — seeded so the same
 // id always draws the same roster, same determinism principle as
 // leagueSim.js's buildCohort.
-function pickMembers(seedKey) {
+function pickMembers(seedKey, kind = 'friends') {
   const random = seededRandom('private-members', seedKey)
-  const count = MIN_MEMBERS + Math.floor(random() * (MAX_MEMBERS - MIN_MEMBERS + 1))
+  const [min, max] = (LEAGUE_KINDS[kind] ?? LEAGUE_KINDS.friends).starting
+  const count = min + Math.floor(random() * (max - min + 1))
   const pool = [...rivals]
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const swap = Math.floor(random() * (index + 1))
@@ -103,7 +128,7 @@ function deriveLeagueFromCode(code) {
 // `id` and `code` can be rolled by the caller so this stays pure — a React
 // state updater may run twice (StrictMode), and rolling them in here meant
 // the league on screen and the one saved could end up with different codes.
-export function createPrivateLeague(current, name, emoji, { id = newLeagueId(), code = generateInviteCode() } = {}) {
+export function createPrivateLeague(current, name, emoji, { id = newLeagueId(), code = generateInviteCode(), kind = 'friends', organizerOnly = false } = {}) {
   const trimmedName = (name ?? '').trim()
   if (!trimmedName) return current
 
@@ -113,7 +138,11 @@ export function createPrivateLeague(current, name, emoji, { id = newLeagueId(), 
     code,
     emoji: LEAGUE_EMOJIS.includes(emoji) ? emoji : pickEmoji(),
     ownerId: USER_ID,
-    memberRivalIds: pickMembers(id),
+    kind: LEAGUE_KINDS[kind] ? kind : 'friends',
+    // Only a class league can be run from the sidelines; a friends league
+    // with no you in it is just someone else's board.
+    organizerOnly: kind === 'class' && Boolean(organizerOnly),
+    memberRivalIds: pickMembers(id, kind),
     createdAt: Date.now(),
   }
 
@@ -173,7 +202,10 @@ export function leavePrivateLeague(current, leagueId) {
   if (!current.privateLeagues?.[leagueId]) return current
   const next = { ...current.privateLeagues }
   delete next[leagueId]
-  return { ...current, privateLeagues: next }
+  // The league's class space goes with it — there's nowhere left to read it.
+  const leagueChats = { ...(current.leagueChats ?? {}) }
+  delete leagueChats[leagueId]
+  return { ...current, privateLeagues: next, leagueChats }
 }
 
 // Ranks a private league's members alongside the learner. Members accrue
@@ -195,7 +227,7 @@ export function getPrivateLeagueStandings(league, userSeasonCoins, seasonIndex, 
       isCurrentUser: false,
     }))
 
-  entries.push({ id: USER_ID, name: 'You', role: userRole, tag: userTag, score: userSeasonCoins, isCurrentUser: true })
+  if (isCompeting(league)) entries.push({ id: USER_ID, name: 'You', role: userRole, tag: userTag, score: userSeasonCoins, isCurrentUser: true })
   return rankEntries(entries)
 }
 

@@ -8,11 +8,13 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveAvatar } from "../../lib/avatarStyles";
 import { answerHomePrompt } from "../../lib/devy";
-import { STREAK_MILESTONES } from "../../lib/streak";
 import { getRoleLabel, normalizeProfile } from "../../lib/profile";
+import { STREAK_MILESTONES } from "../../lib/streak";
+import { WARM_UP_ID } from "../../lib/warmUp";
 import { TierMedal } from "../leaderboard/TierMedal";
 import { ActionButton } from "../ui/ActionButton";
 import { DevyLottie } from "../ui/DevyLottie";
+import { GameIcon } from "../ui/GameIcon";
 import {
     ArrowLeftIcon,
     BoltIcon,
@@ -24,8 +26,6 @@ import {
 import { DevyComposeStage } from "./DevyComposeStage";
 import { DevyPromptBand } from "./DevyPromptBand";
 import { DailyTasks } from "./HomeQuickActions";
-import { GameIcon } from "../ui/GameIcon";
-import { WARM_UP_ID } from "../../lib/warmUp";
 import { useCardCarousel } from "./useCardCarousel";
 
 // The Leaderboard card's own identity color, as a hex — same value as

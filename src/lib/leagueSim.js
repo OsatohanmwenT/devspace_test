@@ -26,10 +26,15 @@ export function buildCohort(seasonIndex, leagueIndex) {
 // A rival's coin total is a pure function of who they are, which season it
 // is, and how far through that season we are — so no rival state is ever
 // stored.
-export function rivalSeasonCoins(rival, seasonIndex, leagueIndex, progress) {
+//
+// The per-day series is the source of truth and the total is just its sum,
+// so a private league's organizer dashboard (lib/leagueInsights.js) can show
+// day-by-day activity that always adds up to the standings. Days that haven't
+// started yet are 0; the current day is accrued proportionally.
+export function rivalDailyCoins(rival, seasonIndex, leagueIndex, progress) {
   const random = seededRandom('coins', rival.id, seasonIndex, leagueIndex)
   const paceScale = getLeague(leagueIndex).pace
-  let total = 0
+  const days = []
 
   for (let day = 0; day < SEASON_LENGTH_DAYS; day += 1) {
     const isActiveDay = random() < rival.consistency
@@ -37,11 +42,16 @@ export function rivalSeasonCoins(rival, seasonIndex, leagueIndex, progress) {
     const dayStart = day * DAY_FRACTION
     const dayEnd = dayStart + DAY_FRACTION
 
-    if (progress >= dayEnd) total += earned
-    else if (progress > dayStart) total += Math.round(earned * ((progress - dayStart) / DAY_FRACTION))
+    if (progress >= dayEnd) days.push(earned)
+    else if (progress > dayStart) days.push(Math.round(earned * ((progress - dayStart) / DAY_FRACTION)))
+    else days.push(0)
   }
 
-  return total
+  return days
+}
+
+export function rivalSeasonCoins(rival, seasonIndex, leagueIndex, progress) {
+  return rivalDailyCoins(rival, seasonIndex, leagueIndex, progress).reduce((sum, coins) => sum + coins, 0)
 }
 
 // Ties break on a stable hash rather than array order, so equal scores never

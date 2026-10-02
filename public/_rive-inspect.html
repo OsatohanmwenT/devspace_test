@@ -1,0 +1,9 @@
+<!doctype html><body style="margin:0;background:#1a1a1c;color:#ddd;font:11px monospace"><div id="sheet" style="display:flex;flex-wrap:wrap;gap:2px;padding:2px"></div>
+<script src="https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.31.0/rive.js"></script>
+<script>
+function poses(src,anim,ts){ return ts.reduce((p,t)=>p.then(()=>new Promise((res)=>{ const c=document.createElement('canvas'); c.style.cssText='width:150px;height:150px;background:#2a2c33;display:block';
+  const d=document.createElement('div'); d.style.cssText='text-align:center;width:150px'; d.appendChild(c); const s=document.createElement('div'); s.textContent=anim+' @'+t.toFixed(2)+'s'; d.appendChild(s); document.getElementById('sheet').appendChild(d);
+  const r=new rive.Rive({src,canvas:c,autoplay:false,animations:anim,onLoad:()=>{r.resizeDrawingSurfaceToCanvas();r.scrub(anim,t);res()}}) })),Promise.resolve()) }
+const ts=[]; for(let t=4.8;t<=6.9;t+=0.15) ts.push(Math.round(t*100)/100);
+poses('/assets/animations/devy-jump.riv','Jump',ts);
+</script>

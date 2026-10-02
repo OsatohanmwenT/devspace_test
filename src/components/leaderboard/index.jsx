@@ -103,6 +103,7 @@ export default function LeaderboardView({
   onCreatePrivateLeague,
   onJoinPrivateLeague,
   onLeavePrivateLeague,
+  onPostLeagueMessage,
   onRemovePrivateLeagueMember,
   onRenamePrivateLeague,
   onRegeneratePrivateLeagueCode,
@@ -224,11 +225,16 @@ export default function LeaderboardView({
           seasonCoins={seasonCoins}
           seasonIndex={seasonIndex}
           standingsOptions={privateStandingsOptions}
+          clock={clock}
+          coinLog={progress?.seasonCoinLog}
+          activityDates={progress?.streakActivityDates}
           user={viewer}
           onBack={() => setView('official')}
           onCreate={onCreatePrivateLeague}
           onJoin={onJoinPrivateLeague}
           onLeave={onLeavePrivateLeague}
+          leagueChats={progress?.leagueChats}
+          onPostMessage={onPostLeagueMessage}
           onRemoveMember={onRemovePrivateLeagueMember}
           onRename={onRenamePrivateLeague}
           onRegenerateCode={onRegeneratePrivateLeagueCode}

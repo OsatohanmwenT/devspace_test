@@ -1,6 +1,6 @@
 // Extension included so this module also resolves under `node --test`, which
 // does not do Vite's extensionless resolution.
-import { getSeasonIndex, now } from '../lib/season.js'
+import { getSeasonIndex, getSeasonProgress, now, SEASON_LENGTH_DAYS } from '../lib/season.js'
 // The streak shield/restore gate is "once per calendar week" — a real week,
 // not the 28-day league season — so it keeps its own clock read via week.js
 // rather than reusing the league's seasonIndex.
@@ -17,6 +17,11 @@ const defaultProgress = {
   seasonCoins: 0,
   // Historical total across all seasons — status/history only, never ranked.
   lifetimeCoins: 0,
+  // Coins earned per day of the current season — { seasonIndex, days: [] }.
+  // Only the private-league organizer dashboard reads it (day-by-day
+  // activity); standings still rank on seasonCoins. Coins earned before this
+  // existed simply aren't broken down by day.
+  seasonCoinLog: null,
   seasonIndex: null,
   leagueIndex: 0,
   // The furthest league ever *reached* — unlike `leagueIndex`, this never
@@ -70,6 +75,9 @@ const defaultProgress = {
   // lib/privateLeagues.js. Ranked by the same seasonCoins everyone already
   // has; never touches official promotion/demotion or coin totals.
   privateLeagues: {},
+  // Your own messages in each private league's class space, keyed by league
+  // then conversation ('general', 'dm:<memberId>', …) — see lib/leagueChat.js.
+  leagueChats: {},
   // Confirmed rewards not yet paid out — see lib/rewards.js and
   // components/leaderboard/PayoutCenter.jsx.
   rewardBalance: 0,
@@ -120,6 +128,7 @@ export function migrateProgress(stored, seasonIndex) {
   if (merged.seenPageIntroductions == null || typeof merged.seenPageIntroductions !== 'object') merged.seenPageIntroductions = {}
   if (!Array.isArray(merged.pathHistory)) merged.pathHistory = []
   if (merged.privateLeagues == null || typeof merged.privateLeagues !== 'object') merged.privateLeagues = {}
+  if (merged.leagueChats == null || typeof merged.leagueChats !== 'object') merged.leagueChats = {}
   if (!Array.isArray(merged.seasonRewardHistory)) merged.seasonRewardHistory = []
   if (!Array.isArray(merged.payoutHistory)) merged.payoutHistory = []
   if (merged.payoutProfile != null && typeof merged.payoutProfile !== 'object') merged.payoutProfile = null
@@ -204,14 +213,23 @@ export function applyActivity(current, xpGain, today = new Date().toDateString()
   }
 }
 
+export function logSeasonCoins(log, coinGain, timestamp) {
+  const seasonIndex = getSeasonIndex(timestamp)
+  const day = Math.min(SEASON_LENGTH_DAYS - 1, Math.floor(getSeasonProgress(timestamp) * SEASON_LENGTH_DAYS))
+  const days = log?.seasonIndex === seasonIndex ? [...log.days] : Array(SEASON_LENGTH_DAYS).fill(0)
+  days[day] = (days[day] ?? 0) + coinGain
+  return { seasonIndex, days }
+}
+
 // The only place Season Devy Coins are ever added, mirroring applyActivity's
 // shape. No Premium branch — see lib/coins.js for why.
-export function applyCoins(current, coinGain) {
+export function applyCoins(current, coinGain, timestamp = now()) {
   if (coinGain <= 0) return current
   return {
     ...current,
     seasonCoins: current.seasonCoins + coinGain,
     lifetimeCoins: current.lifetimeCoins + coinGain,
+    seasonCoinLog: logSeasonCoins(current.seasonCoinLog, coinGain, timestamp),
   }
 }
 

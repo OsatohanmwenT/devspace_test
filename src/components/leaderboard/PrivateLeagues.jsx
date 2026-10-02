@@ -1,17 +1,32 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActionButton } from '../ui/ActionButton'
 import { Avatar } from '../ui/Avatar'
 import { Drawer } from '../ui/Drawer'
 import { BackLink } from '../ui/NavArrowLink'
-import { getJoinCodeError, getPrivateLeagueStandings, getPrivateLeagueSummary, LEAGUE_EMOJIS, MAX_MEMBERS } from '../../lib/privateLeagues'
+import { getLeagueInsights } from '../../lib/leagueInsights'
+import { getJoinCodeError, getLeagueSeats, getPrivateLeagueStandings, getPrivateLeagueSummary, isCompeting, LEAGUE_EMOJIS, LEAGUE_KINDS } from '../../lib/privateLeagues'
 import { CoinIcon } from '../ui/GameIcon'
 import { rivals } from '../../data/rivals'
 import { CompetitorDrawer } from './CompetitorDrawer'
 import { LeaderboardRow } from './LeaderboardRow'
+import { ClassSpace } from './ClassSpace'
+import { DashboardPage } from './LeagueDashboard'
+import { dmKey } from '../../lib/leagueChat'
+
+const FIELD_LABEL = 'text-[13px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
+const OPTION_BASE = 'grid gap-0.5 rounded-xl border px-3.5 py-3 text-left transition-colors'
+const OPTION_ON = 'border-[#88bdf2] bg-[#1f2a3d] [[data-theme=light]_&]:border-[#3d77eb] [[data-theme=light]_&]:bg-[#eaf1ff]'
+const OPTION_OFF = 'border-[#404040] bg-[#1f1f1f] hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white'
+const KIND_BLURB = {
+  friends: `Up to ${LEAGUE_KINDS.friends.seats + 1} people. A quick race with your study group.`,
+  class: `Up to ${LEAGUE_KINDS.class.seats} participants, with an organizer dashboard. For a class, school, or bootcamp competition.`,
+}
 
 function CreateLeagueDrawer({ onClose, onCreate }) {
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState(LEAGUE_EMOJIS[0])
+  const [kind, setKind] = useState('friends')
+  const [organizerOnly, setOrganizerOnly] = useState(false)
 
   return (
     <Drawer id="create-private-league" title="Create a league" onClose={onClose} labelledBy="create-private-league-title">
@@ -20,7 +35,7 @@ function CreateLeagueDrawer({ onClose, onCreate }) {
         onSubmit={(event) => {
           event.preventDefault()
           if (!name.trim()) return
-          onCreate(name.trim(), emoji)
+          onCreate(name.trim(), emoji, { kind, organizerOnly: kind === 'class' && organizerOnly })
           onClose()
         }}
       >
@@ -31,12 +46,32 @@ function CreateLeagueDrawer({ onClose, onCreate }) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={40}
-            placeholder="Study Crew"
+            placeholder={kind === 'class' ? 'Year 11 Coding Cup' : 'Study Crew'}
             className="rounded-xl border border-[#404040] bg-[#1f1f1f] px-3.5 py-3 text-[15px] text-[#f4f4f2] outline-none focus-visible:border-[#88bdf2] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800"
           />
         </label>
         <fieldset className="grid gap-1.5 border-0 p-0 m-0">
-          <legend className="text-[13px] font-semibold text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">Badge</legend>
+          <legend className={FIELD_LABEL}>Who's it for?</legend>
+          <div className="grid grid-cols-2 gap-2 max-[420px]:grid-cols-1">
+            {Object.entries(LEAGUE_KINDS).map(([id, option]) => (
+              <button key={id} type="button" aria-pressed={kind === id} onClick={() => setKind(id)} className={`${OPTION_BASE} ${kind === id ? OPTION_ON : OPTION_OFF}`}>
+                <span className="text-[14px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{option.label}</span>
+                <span className="text-[12px] leading-[1.4] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{KIND_BLURB[id]}</span>
+              </button>
+            ))}
+          </div>
+          {kind === 'class' && (
+            <label className="mt-1 flex items-start gap-2.5 rounded-xl px-1 py-1.5 text-[13px] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">
+              <input type="checkbox" checked={organizerOnly} onChange={(event) => setOrganizerOnly(event.target.checked)} className="mt-0.5 size-4 accent-[#4169e1]" />
+              <span className="grid gap-0.5">
+                <span className="font-medium">I'm organizing, not competing</span>
+                <span className="text-[12px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">For teachers and organizers: you run the league and see the dashboard, but you're not on the board.</span>
+              </span>
+            </label>
+          )}
+        </fieldset>
+        <fieldset className="grid gap-1.5 border-0 p-0 m-0">
+          <legend className={FIELD_LABEL}>Badge</legend>
           <div className="flex flex-wrap gap-2">
             {LEAGUE_EMOJIS.map((option) => (
               <button
@@ -106,29 +141,10 @@ function JoinLeagueDrawer({ privateLeagues, onClose, onJoin }) {
   )
 }
 
-function CopyButton({ label, value }) {
-  const [copied, setCopied] = useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value)
-    } catch {
-      // Clipboard can be unavailable (permissions, insecure context); the
-      // button still flips to "Copied" so the flow doesn't dead-end.
-    }
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <ActionButton variant="neutral" className="min-h-10 px-4 text-sm font-medium" onClick={copy}>
-      {copied ? 'Copied' : label}
-    </ActionButton>
-  )
-}
-
 function LeagueListRow({ league, standingsOptions, seasonCoins, seasonIndex, onOpen }) {
-  const summary = getPrivateLeagueSummary(getPrivateLeagueStandings(league, seasonCoins, seasonIndex, standingsOptions))
+  const standings = getPrivateLeagueStandings(league, seasonCoins, seasonIndex, standingsOptions)
+  const summary = getPrivateLeagueSummary(standings)
+  const capacity = getLeagueSeats(league) + (isCompeting(league) ? 1 : 0)
   return (
     <button
       type="button"
@@ -141,16 +157,23 @@ function LeagueListRow({ league, standingsOptions, seasonCoins, seasonIndex, onO
       <div className="grid min-w-0 flex-1 gap-0.5">
         <span className="flex items-center gap-2">
           <strong className="truncate text-[15px] font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{league.name}</strong>
+          {league.kind === 'class' && (
+            <span className="flex-none rounded-full bg-[#4169e1]/15 px-1.5 py-px text-[10px] font-bold tracking-[.04em] text-[#84a5ff] [[data-theme=light]_&]:text-[#3d5fc4]">CLASS</span>
+          )}
           {league.ownerId && (
-            <span className="flex-none rounded-full bg-[#2a2a2e] px-1.5 py-px text-[10px] font-bold tracking-[.04em] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#eeeeeb] [[data-theme=light]_&]:text-[#686968]">OWNER</span>
+            <span className="flex-none rounded-full bg-[#2a2a2e] px-1.5 py-px text-[10px] font-bold tracking-[.04em] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#eeeeeb] [[data-theme=light]_&]:text-[#686968]">{league.organizerOnly ? 'ORGANIZER' : 'OWNER'}</span>
           )}
         </span>
-        <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{summary.total} of {MAX_MEMBERS + 1} members · code {league.code}</span>
+        <span className="text-[13px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{standings.length} of {capacity} {league.kind === 'class' ? 'participants' : 'members'} · code {league.code}</span>
       </div>
-      <span className="grid flex-none justify-items-end">
-        <strong className={`text-[18px] font-semibold tabular-nums ${summary.rank === 1 ? 'text-[#ffcf8b] [[data-theme=light]_&]:text-[#b8860b]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'}`}>#{summary.rank}</strong>
-        <span className="text-[11px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">your place</span>
-      </span>
+      {summary ? (
+        <span className="grid flex-none justify-items-end">
+          <strong className={`text-[18px] font-semibold tabular-nums ${summary.rank === 1 ? 'text-[#ffcf8b] [[data-theme=light]_&]:text-[#b8860b]' : 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'}`}>#{summary.rank}</strong>
+          <span className="text-[11px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">your place</span>
+        </span>
+      ) : (
+        <span aria-hidden="true" className="flex-none text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">→</span>
+      )}
     </button>
   )
 }
@@ -193,7 +216,7 @@ function LeagueSettingsDrawer({ league, onClose, onRemoveMember, onRename, onReg
   const [confirmingId, setConfirmingId] = useState(null)
   const [codeJustRegenerated, setCodeJustRegenerated] = useState(false)
   const members = (league.memberRivalIds ?? []).map((rivalId) => rivals.find((rival) => rival.id === rivalId)).filter(Boolean)
-  const openSpots = MAX_MEMBERS - members.length
+  const openSpots = getLeagueSeats(league) - members.length
 
   return (
     <Drawer id="private-league-settings" title="League settings" subtitle={league.name} onClose={onClose} labelledBy="private-league-settings-title">
@@ -352,15 +375,141 @@ function LeaveLeagueControl({ league, isOwner, onLeave }) {
   )
 }
 
-function LeagueDetail({ league, seasonCoins, seasonIndex, standingsOptions, user, onBack, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
+const NAV_TABS = [
+  { id: 'standings', label: 'Standings' },
+  { id: 'space', label: 'Class space' },
+  { id: 'dashboard', label: 'Dashboard', ownerOnly: true },
+]
+
+// Where you are within a league. Class space opens full screen and the
+// dashboard is its own page, so these are navigation, not view toggles —
+// which is why they're a link bar with the current page marked, rather than
+// a row of equal buttons next to the invite actions.
+function LeagueNav({ active, isOwner, onSelect }) {
+  return (
+    <nav aria-label="League sections" className="flex gap-1 border-b border-[#2e2e30] [[data-theme=light]_&]:border-[#e4e2dc]">
+      {NAV_TABS.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => {
+        const isActive = tab.id === active
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => !isActive && onSelect(tab.id)}
+            aria-current={isActive ? 'page' : undefined}
+            className={`-mb-px min-h-11 border-b-2 px-4 text-[14px] font-semibold transition-colors ${
+              isActive
+                ? 'border-[#4169e1] text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'
+                : 'border-transparent text-[#9a9a9d] hover:text-[#f4f4f2] [[data-theme=light]_&]:text-[#686968] [[data-theme=light]_&]:hover:text-neutral-800'
+            }`}
+          >
+            {tab.label}
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
+function CopyIcon({ done }) {
+  return done ? (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  ) : (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5" stroke="currentColor" strokeWidth="2" /><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+  )
+}
+
+// The two ways to bring someone in, kept together and visually separate from
+// navigation: a code you can read out, and a link you can paste.
+function InviteControls({ code, link }) {
+  const [copied, setCopied] = useState(null)
+
+  const copy = async (which, value) => {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      // Clipboard can be unavailable (permissions, insecure context); the
+      // control still confirms so the flow doesn't dead-end.
+    }
+    setCopied(which)
+    window.setTimeout(() => setCopied((current) => (current === which ? null : current)), 2000)
+  }
+
+  return (
+    <div className="grid gap-1.5 justify-items-start min-[760px]:justify-items-end">
+      <span className="text-[11px] font-semibold uppercase tracking-[.08em] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">Invite friends</span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => copy('code', code)}
+          aria-label={`Copy invite code ${code}`}
+          className="inline-flex min-h-10 items-center gap-2.5 rounded-xl border border-[#404040] bg-[#1f1f1f] pl-3.5 pr-3 text-[#f4f4f2] transition-colors hover:border-[#5a5a60] [[data-theme=light]_&]:border-[#e1e1e1] [[data-theme=light]_&]:bg-[#faf9f6] [[data-theme=light]_&]:text-neutral-800 [[data-theme=light]_&]:hover:border-[#c9c9c9]"
+        >
+          <span className="text-[15px] font-semibold tracking-[.14em] tabular-nums">{code}</span>
+          <span className={copied === 'code' ? 'text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]' : 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'}><CopyIcon done={copied === 'code'} /></span>
+        </button>
+        <button
+          type="button"
+          onClick={() => copy('link', link)}
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold text-[#89baff] transition-colors hover:bg-[#89baff]/10 [[data-theme=light]_&]:text-[#3d77eb] [[data-theme=light]_&]:hover:bg-[#3d77eb]/10"
+        >
+          <CopyIcon done={copied === 'link'} />
+          {copied === 'link' ? 'Link copied' : 'Copy link'}
+        </button>
+      </div>
+      <span role="status" className="sr-only">{copied === 'code' ? 'Invite code copied' : copied === 'link' ? 'Invite link copied' : ''}</span>
+    </div>
+  )
+}
+
+function LeagueHeader({ league, summary, participantCount, inviteLink }) {
+  const chip = 'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.05em]'
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4 rounded-2xl border border-[#404040] bg-[#1a1a1c] p-5 [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white">
+      <div className="flex min-w-0 items-start gap-4 min-[520px]:items-center">
+        <span aria-hidden="true" className="grid size-14 flex-none place-items-center rounded-2xl bg-[#262626] text-2xl [[data-theme=light]_&]:bg-[#f0f0ee]">{league.emoji ?? '👥'}</span>
+        <div className="grid min-w-0 gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h2 className="m-0 truncate text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{league.name}</h2>
+            {league.kind === 'class' && <span className={`${chip} bg-[#4169e1]/15 text-[#84a5ff] [[data-theme=light]_&]:text-[#3d5fc4]`}>Class</span>}
+            {league.organizerOnly && <span className={`${chip} bg-[#2a2a2e] text-[#9a9a9d] [[data-theme=light]_&]:bg-[#eeeeeb] [[data-theme=light]_&]:text-[#686968]`}>Organizer</span>}
+          </div>
+          {summary ? (
+            <StandingSummary summary={summary} />
+          ) : (
+            <p className="m-0 text-[14px] text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">
+              <strong className="text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">You’re organizing</strong> · {participantCount} participants competing
+            </p>
+          )}
+        </div>
+      </div>
+      <InviteControls code={league.code} link={inviteLink} />
+    </header>
+  )
+}
+
+function LeagueDetail({ league, allLeagues, onSwitchLeague, seasonCoins, seasonIndex, standingsOptions, clock, coinLog, activityDates, leagueChats, onPostMessage, user, onBack, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
   const [showSettings, setShowSettings] = useState(false)
   const [selectedRivalId, setSelectedRivalId] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [page, setPage] = useState('standings')
+  // Memoised so the class space's conversation isn't recomputed on every
+  // clock tick that doesn't change anything it shows.
+  const spaceClock = useMemo(() => ({ seasonIndex, timestamp: clock }), [seasonIndex, clock])
+  const [spaceKey, setSpaceKey] = useState('general')
+  const isOwner = Boolean(league.ownerId && onRemoveMember)
   const standings = getPrivateLeagueStandings(league, seasonCoins, seasonIndex, standingsOptions)
   const summary = getPrivateLeagueSummary(standings)
-  const openSpots = Math.max(0, MAX_MEMBERS - (league.memberRivalIds?.length ?? 0))
+  const openSpots = Math.max(0, getLeagueSeats(league) - (league.memberRivalIds?.length ?? 0))
   const inviteLink = `devspace.dev/league/${league.code}`
-  const isOwner = Boolean(league.ownerId && onRemoveMember)
+  const insights = isOwner && page === 'dashboard'
+    ? getLeagueInsights(league, {
+        seasonIndex,
+        leagueIndex: standingsOptions?.leagueIndex,
+        timestamp: clock,
+        user: { seasonCoins, coinLog, activityDates, role: standingsOptions?.userRole, tag: standingsOptions?.userTag },
+      })
+    : null
+  const selectedInsight = insights && selectedRivalId ? insights.participants.find((entry) => entry.id === selectedRivalId) : null
   const copyInviteLink = async () => {
     try {
       await navigator.clipboard.writeText(`https://${inviteLink}`)
@@ -370,40 +519,107 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, standingsOptions, user
     setLinkCopied(true)
     window.setTimeout(() => setLinkCopied(false), 2000)
   }
+  const goTo = (next, key) => {
+    setSelectedRivalId(null)
+    if (key) setSpaceKey(key)
+    setPage(next)
+    window.scrollTo({ top: 0 })
+  }
   const selectedEntry = selectedRivalId ? standings.find((entry) => entry.id === selectedRivalId) : null
   const selectedRival = selectedEntry ? rivals.find((rival) => rival.id === selectedEntry.id) : null
 
+  const competitorDrawer = selectedEntry && selectedRival && (
+    <CompetitorDrawer
+      entry={selectedEntry}
+      rival={selectedRival}
+      league={league}
+      seasonIndex={seasonIndex}
+      insight={selectedInsight}
+      onClose={() => setSelectedRivalId(null)}
+      onRemove={
+        isOwner
+          ? () => {
+              onRemoveMember(league.id, selectedRival.id)
+              setSelectedRivalId(null)
+            }
+          : undefined
+      }
+    />
+  )
+
+  if (page === 'space') {
+    return (
+      <ClassSpace
+        key={`${league.id}:${spaceKey}`}
+        league={league}
+        leagues={allLeagues}
+        leagueChats={leagueChats}
+        clock={spaceClock}
+        user={user}
+        initialKey={spaceKey}
+        onExit={() => goTo('standings')}
+        onSwitchLeague={(id) => {
+          setSpaceKey('general')
+          onSwitchLeague?.(id)
+        }}
+        onPost={(key, text) => onPostMessage?.(league.id, key, text)}
+      />
+    )
+  }
+
+  const topBar = (
+    <div className="flex items-center justify-between gap-3">
+      <BackLink onClick={onBack}>All private leagues</BackLink>
+      {isOwner && (
+        <button
+          type="button"
+          onClick={() => setShowSettings(true)}
+          className="text-[13px] font-medium text-[#89baff] hover:underline [[data-theme=light]_&]:text-[#3d77eb]"
+        >
+          League settings
+        </button>
+      )}
+    </div>
+  )
+  const header = (
+    <LeagueHeader league={league} summary={summary} participantCount={standings.length} inviteLink={`https://${inviteLink}`} />
+  )
+  const nav = <LeagueNav active={page} isOwner={isOwner} onSelect={(next) => (next === 'space' ? goTo('space', 'general') : goTo(next))} />
+  const settingsDrawer = isOwner && showSettings && (
+    <LeagueSettingsDrawer
+      league={league}
+      onClose={() => setShowSettings(false)}
+      onRemoveMember={onRemoveMember}
+      onRename={onRename}
+      onRegenerateCode={onRegenerateCode}
+    />
+  )
+
+  if (insights) {
+    return (
+      <>
+        <DashboardPage
+          league={league}
+          insights={insights}
+          user={user}
+          topNav={nav}
+          onExit={() => goTo('standings')}
+          onOpenSettings={isOwner ? () => setShowSettings(true) : undefined}
+          onSelectParticipant={(participant) => setSelectedRivalId(participant.id)}
+          onRemoveParticipant={isOwner ? (rivalId) => onRemoveMember(league.id, rivalId) : undefined}
+          onMessageParticipant={(participant) => goTo('space', dmKey(participant.id))}
+        />
+        {competitorDrawer}
+        {settingsDrawer}
+      </>
+    )
+  }
+
   return (
     <div className="grid gap-5">
-      <div className="flex items-center justify-between gap-3">
-        <BackLink onClick={onBack}>All private leagues</BackLink>
-        <div className="flex items-center gap-4">
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setShowSettings(true)}
-              className="text-[13px] font-medium text-[#89baff] hover:underline [[data-theme=light]_&]:text-[#3d77eb]"
-            >
-              League settings
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid gap-2 rounded-2xl border border-[#404040] bg-[#1a1a1c] p-5 [[data-theme=light]_&]:border-[#eeeeeb] [[data-theme=light]_&]:bg-white">
-        <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="grid size-11 flex-none place-items-center rounded-xl bg-[#262626] text-xl [[data-theme=light]_&]:bg-[#f0f0ee]">{league.emoji ?? '👥'}</span>
-          <h2 className="m-0 text-xl font-semibold text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800">{league.name}</h2>
-        </div>
-        <StandingSummary summary={summary} />
-        <p className="m-0 text-[12px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
-          Ranked by the same Season Devy Coins as the official board — joining or leaving never changes your rank, coins, or promotion.
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <CopyButton label={`Copy code · ${league.code}`} value={league.code} />
-          <CopyButton label="Copy invite link" value={`https://${inviteLink}`} />
-        </div>
-      </div>
+      {topBar}
+      {header}
+      {nav}
 
       <ol className="grid list-none m-0 overflow-hidden rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)] p-1.5" aria-label={`${league.name} standings`}>
         {standings.map((entry) => (
@@ -421,42 +637,21 @@ function LeagueDetail({ league, seasonCoins, seasonIndex, standingsOptions, user
       </ol>
       {linkCopied && <p role="status" className="m-0 -mt-3 text-center text-[12px] text-[#04adc0] [[data-theme=light]_&]:text-[#065f6b]">Invite link copied</p>}
 
+      <p className="m-0 text-[12px] text-[#7d7d80] [[data-theme=light]_&]:text-[#737371]">
+        Ranked by the same Season Devy Coins as the official board — joining or leaving never changes anyone’s official rank, coins, or promotion.
+      </p>
+
       <div className="justify-self-start">
         <LeaveLeagueControl league={league} isOwner={isOwner} onLeave={onLeave} />
       </div>
 
-      {selectedEntry && selectedRival && (
-        <CompetitorDrawer
-          entry={selectedEntry}
-          rival={selectedRival}
-          league={league}
-          seasonIndex={seasonIndex}
-          onClose={() => setSelectedRivalId(null)}
-          onRemove={
-            isOwner
-              ? () => {
-                  onRemoveMember(league.id, selectedRival.id)
-                  setSelectedRivalId(null)
-                }
-              : undefined
-          }
-        />
-      )}
-
-      {isOwner && showSettings && (
-        <LeagueSettingsDrawer
-          league={league}
-          onClose={() => setShowSettings(false)}
-          onRemoveMember={onRemoveMember}
-          onRename={onRename}
-          onRegenerateCode={onRegenerateCode}
-        />
-      )}
+      {competitorDrawer}
+      {settingsDrawer}
     </div>
   )
 }
 
-export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, standingsOptions, user, onBack, onCreate, onJoin, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
+export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, standingsOptions, clock, coinLog, activityDates, user, leagueChats, onPostMessage, onBack, onCreate, onJoin, onLeave, onRemoveMember, onRename, onRegenerateCode }) {
   const [selectedId, setSelectedId] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
@@ -473,9 +668,16 @@ export function PrivateLeagues({ privateLeagues, seasonCoins, seasonIndex, stand
       {selected ? (
         <LeagueDetail
           league={selected}
+          allLeagues={leagues}
+          onSwitchLeague={setSelectedId}
           seasonCoins={seasonCoins}
           seasonIndex={seasonIndex}
           standingsOptions={standingsOptions}
+          clock={clock}
+          coinLog={coinLog}
+          activityDates={activityDates}
+          leagueChats={leagueChats}
+          onPostMessage={onPostMessage}
           user={user}
           onBack={() => setSelectedId(null)}
           onLeave={(id) => {

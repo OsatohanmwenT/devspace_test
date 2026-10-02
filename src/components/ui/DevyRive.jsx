@@ -28,7 +28,7 @@ function usePrefersReducedMotion() {
 // ("Timeline 1") rather than a state machine — driving either state machine
 // never produced a visible frame change under direct pixel-diffing, so they
 // play "Timeline 1" directly instead.
-const DUAL_STATE_MACHINE_CLIPS = new Set(['launchpad-intro', 'rope-into', 'side-pop-out-intro', 'up-down-pop-out'])
+const DUAL_STATE_MACHINE_CLIPS = new Set(['rope-into', 'side-pop-out-intro', 'up-down-pop-out'])
 
 // Not every export names its entrance "Timeline 1" — the rope file's only
 // timeline is "Timeline 4" (alongside Wink / Brow raise / blink), and asking
@@ -60,10 +60,18 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
     stateMachine: isDual ? undefined : 'State Machine 1',
     animations: isDual ? entrance : undefined,
     autoplay: false,
-  })
+  }, { shouldResizeCanvasToContainer: clip !== 'launchpad-intro' })
 
   useEffect(() => {
     if (!rive) return
+    if (clip === 'launchpad-intro') {
+      rive.canvas.style.width = '100%'
+      rive.canvas.style.height = '100%'
+      rive.canvas.width = 600
+      rive.canvas.height = 630
+      rive.resizeToCanvas()
+      console.log('devy resolution', rive.canvas.width, rive.canvas.height)
+    }
     if (!isDual) {
       if (!reducedMotion) rive.play()
       onReadyRef.current?.()
@@ -77,7 +85,7 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
     if (startAt) rive.scrub(entrance, startAt)
     rive.play(entrance)
     onReadyRef.current?.()
-  }, [rive, isDual, entrance, startAt, restAt, reducedMotion])
+  }, [rive, clip, isDual, entrance, startAt, restAt, reducedMotion])
 
   if (!src) return null
 
@@ -89,7 +97,11 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
       aria-hidden={ariaLabel ? undefined : 'true'}
       {...rest}
     >
-      <RiveComponent className="relative h-full w-full" />
+      <RiveComponent
+        className="relative h-full w-full"
+        width={clip === 'launchpad-intro' ? 600 : undefined}
+        height={clip === 'launchpad-intro' ? 630 : undefined}
+      />
     </div>
   )
 }

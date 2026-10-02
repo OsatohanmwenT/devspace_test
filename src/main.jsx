@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { StreakJourneyModal } from './components/header/StreakJourneyModal';
 import { XpPopover } from './components/header/XpPopover';
 import HomeView from './components/home';
+import CardConceptPreview from './components/concept/CardConceptPreview';
 import { PageWipe } from './components/layout/PageWipe';
 import LeaderboardView from './components/leaderboard';
 import { LeagueQualifiedCelebration } from './components/leaderboard/LeagueQualifiedCelebration';
@@ -35,6 +36,7 @@ import { buildCustomPathRecord, getPath } from './data/paths';
 import { activatePremium, applyActivity, applyCoins, deactivatePremium, getDailyXp, getPracticeXpAward, loadProgress, markPageIntroductionSeen, saveCustomPath, saveProgress, switchPrimaryPath } from './data/progress';
 import { getLessonCoinAward, getPracticeCoinAward } from './lib/coins';
 import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './lib/h2h';
+import { postLeagueMessage as postLeagueMessageRecord } from './lib/leagueChat';
 import { getStandings, resolveSeason } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
 import { computeDailyGoal } from './lib/onboarding';
@@ -455,10 +457,10 @@ function App() {
     })
   }
 
-  const createPrivateLeague = (name, emoji) => {
+  const createPrivateLeague = (name, emoji, options = {}) => {
     // Rolled once, outside the updater, so a double-invoked updater can't
     // save a different code than the one rendered.
-    const identity = { id: newLeagueId(), code: generateInviteCode() }
+    const identity = { ...options, id: newLeagueId(), code: generateInviteCode() }
     setProgress((current) => {
       const next = createPrivateLeagueRecord(current, name, emoji, identity)
       saveProgress(next)
@@ -508,6 +510,18 @@ function App() {
       return next
     })
     showNotice('Joined league')
+  }
+
+  const postLeagueMessage = (leagueId, key, text) => {
+    // Rolled outside the updater so a double-invoked updater can't save two
+    // different ids for one message.
+    const identity = { id: `msg-${Date.now()}-${Math.floor(Math.random() * 1e6)}`, at: now() }
+    setProgress((current) => {
+      const next = postLeagueMessageRecord(current, leagueId, key, text, identity)
+      if (next === current) return current
+      saveProgress(next)
+      return next
+    })
   }
 
   const leavePrivateLeague = (leagueId) => {
@@ -1257,6 +1271,7 @@ function App() {
             onCreatePrivateLeague={createPrivateLeague}
             onJoinPrivateLeague={joinPrivateLeague}
             onLeavePrivateLeague={leavePrivateLeague}
+            onPostLeagueMessage={postLeagueMessage}
             onRemovePrivateLeagueMember={removePrivateLeagueMember}
             onRenamePrivateLeague={renamePrivateLeague}
             onRegeneratePrivateLeagueCode={regeneratePrivateLeagueCode}
@@ -1390,7 +1405,7 @@ function App() {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <MotionConfig reducedMotion="user">
-      <App />
+      {window.location.pathname === '/card-concept' ? <CardConceptPreview /> : <App />}
     </MotionConfig>
   </StrictMode>,
 )
