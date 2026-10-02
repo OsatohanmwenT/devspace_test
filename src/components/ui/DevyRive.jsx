@@ -60,18 +60,17 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
     stateMachine: isDual ? undefined : 'State Machine 1',
     animations: isDual ? entrance : undefined,
     autoplay: false,
-  }, { shouldResizeCanvasToContainer: clip !== 'launchpad-intro' })
+  }, { customDevicePixelRatio: clip === 'launchpad-intro' ? 3 : undefined })
+
+  useEffect(() => {
+    if (!rive || clip !== 'launchpad-intro') return
+    // Rive resets the canvas size once during load, so apply the sharper size afterward.
+    const timer = setTimeout(() => rive.resizeDrawingSurfaceToCanvas(3), 100)
+    return () => clearTimeout(timer)
+  }, [rive, clip])
 
   useEffect(() => {
     if (!rive) return
-    if (clip === 'launchpad-intro') {
-      rive.canvas.style.width = '100%'
-      rive.canvas.style.height = '100%'
-      rive.canvas.width = 600
-      rive.canvas.height = 630
-      rive.resizeToCanvas()
-      console.log('devy resolution', rive.canvas.width, rive.canvas.height)
-    }
     if (!isDual) {
       if (!reducedMotion) rive.play()
       onReadyRef.current?.()
@@ -97,11 +96,7 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
       aria-hidden={ariaLabel ? undefined : 'true'}
       {...rest}
     >
-      <RiveComponent
-        className="relative h-full w-full"
-        width={clip === 'launchpad-intro' ? 600 : undefined}
-        height={clip === 'launchpad-intro' ? 630 : undefined}
-      />
+      <RiveComponent className="relative h-full w-full" />
     </div>
   )
 }
