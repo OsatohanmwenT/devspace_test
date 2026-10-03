@@ -3807,3 +3807,62 @@
 [data-theme='light'] .badge-coin:not([data-earned='true'])::before {
   border-color: rgb(15 23 42 / 0.06);
 }
+
+/* ---------------------------------------------------------------------------
+   Roadmap current tile: a spotlight from above, landing on Devy's platform.
+   The launchpad artboard is 200x210 and the platform's top face sits ~70% of
+   the way down, so the cone's wide end is anchored at 30% from the bottom.
+   The cone is clipped on an inner element so the blur on this one softens its
+   edges instead of being cut off by the clip.
+--------------------------------------------------------------------------- */
+.devy-spotlight {
+  --spot-color: 150 174 255;
+  --spot-a: 0.24;
+  position: absolute;
+  left: 50%;
+  bottom: 30%;
+  z-index: 0;
+  width: 122%;
+  height: 132%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: blur(11px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 62%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 62%);
+  animation: devy-spotlight-pulse 6s ease-in-out infinite;
+}
+
+[data-theme='light'] .devy-spotlight {
+  --spot-color: 96 124 235;
+  --spot-a: 0.15;
+}
+
+.devy-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--spot-color) / 0) 0%,
+    rgb(var(--spot-color) / var(--spot-a)) 34%,
+    rgb(var(--spot-color) / calc(var(--spot-a) * 0.7)) 74%,
+    rgb(var(--spot-color) / 0) 100%
+  );
+}
+
+@keyframes devy-spotlight-pulse {
+  0%,
+  100% {
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devy-spotlight {
+    animation: none;
+  }
+}

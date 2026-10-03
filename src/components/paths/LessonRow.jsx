@@ -4,10 +4,11 @@ import { LessonPedestalIcon } from '../ui/icons'
 
 // The current-lesson tile is the one thing on the roadmap worth acting on
 // next, so it gets a soft halo breathing behind it, like it's gently
-// calling for a tap.
+// calling for a tap, and a spotlight from above that lands on the platform.
 function CurrentTileBeacon({ children }) {
   return (
     <span className="relative grid place-items-center">
+      <span className="devy-spotlight" aria-hidden="true" />
       <motion.span
         className="absolute size-16 rounded-full bg-[#4169e1]/25 blur-md"
         aria-hidden="true"
