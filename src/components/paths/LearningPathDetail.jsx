@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { getRegionTopics } from '../../data/learningResources';
 import { isFrameworkCheckpointReady } from '../../lib/onboarding';
 import { getCheatsheetPersonalization } from '../../lib/personalization';
@@ -11,6 +12,10 @@ import { FAMILY_ACCENTS } from './ExplorePathCard';
 import { GuidebookView } from './GuidebookView';
 import { LessonRow } from './LessonRow';
 
+// How long after "Start lesson" the lesson opens, so Devy is visibly taking
+// off first. Tune it to the launch animation's length.
+const FLY_OPEN_MS = 900
+
 export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBack, isCurrentPath = true, onChooseFramework, profile }) {
   const cheatsheetPersonalization = getCheatsheetPersonalization(profile)
   const regions = path.cards
@@ -22,6 +27,9 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   const [openResource, setOpenResource] = useState(null)
   const [showLessonPreview, setShowLessonPreview] = useState(false)
   const [showPodcast, setShowPodcast] = useState(false)
+  const [flying, setFlying] = useState(false)
+  const openTimer = useRef(0)
+  const reducedMotion = useReducedMotion()
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId)
   const podcastLesson = selectedLesson ? getLesson(selectedLesson.id) : null
   const hasPodcastContent = Boolean(podcastLesson?.concepts?.some((concept) => concept.activities.some((activity) => activity.type === 'article')))
@@ -34,6 +42,31 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   // The lesson list can run for several screens, so opening straight on a
   // path shouldn't leave the current lesson buried below the fold — land on
   // it immediately rather than making people scroll to find where they are.
+  useEffect(() => () => window.clearTimeout(openTimer.current), [])
+
+  // Click handler for "Start lesson": Devy takes off (flying = true) and the
+  // lesson opens as he goes. Skipped when the tile is off-screen or motion is
+  // reduced; pressing again mid-flight opens the lesson at once.
+  const startSelectedLesson = () => {
+    setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
+      ? startedIds
+      : [...startedIds, selectedLesson.id])
+    const open = () => onOpenLesson(selectedLesson.id, path.id)
+    if (flying) {
+      window.clearTimeout(openTimer.current)
+      open()
+      return
+    }
+    const tile = document.querySelector('[data-current-lesson]')?.getBoundingClientRect()
+    const tileOnScreen = tile && tile.bottom > 0 && tile.top < window.innerHeight
+    if (reducedMotion || !tileOnScreen || selectedLesson.id !== currentLesson?.id) {
+      open()
+      return
+    }
+    setFlying(true)
+    openTimer.current = window.setTimeout(open, FLY_OPEN_MS)
+  }
+
   useEffect(() => {
     const currentLessonRow = document.querySelector('[data-current-lesson]')
     currentLessonRow?.scrollIntoView({ block: 'center' })
@@ -135,6 +168,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                 <div className="relative grid gap-2.5 pt-8 px-6 pb-1 before:content-[''] before:absolute before:top-3 before:bottom-[18px] before:left-1/2 before:-translate-x-1/2 before:w-0.5 before:bg-[#404040] [[data-theme=light]_&]:before:bg-[#eeeeeb] max-[680px]:pt-6 max-[680px]:px-0 max-[680px]:pb-0.5">
                   {region.lessons.map((lesson, index) => (
                     <LessonRow
+                      flying={lesson.state === 'current' && flying}
                       key={lesson.id}
                       lesson={lesson}
                       index={index}
@@ -166,12 +200,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
               </div>
               <div className="flex flex-none items-center gap-3.5 max-[680px]:gap-2">
                 {canOpenLesson && (
-                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap max-[680px]:px-5" onClick={() => {
-                  setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
-                    ? startedIds
-                    : [...startedIds, selectedLesson.id])
-                  onOpenLesson(selectedLesson.id, path.id)
-                }}>
+                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap max-[680px]:px-5" onClick={startSelectedLesson}>
                   {selectedLessonStarted ? 'Continue' : (
                     <>
                       <span className="max-[680px]:hidden">Start lesson</span>

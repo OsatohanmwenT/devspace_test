@@ -8,7 +8,14 @@ const SOURCES = {
   'rope-into': '/assets/animations/devy-rope-into.riv',
   'side-pop-out-intro': '/assets/animations/devy-side-pop-out-intro.riv',
   'up-down-pop-out': '/assets/animations/devy-up-down-pop-out.riv',
+  // The whole roadmap-tile flow in one file: intro, idle, launch, flight and
+  // landing. One boolean on its view model, `flying`, drives it — see the
+  // `flying` prop on DevyRive.
+  'complete-flow': '/assets/animations/devy-complete-flow.riv',
 }
+
+// Small canvases on the roadmap: rendered at 3x so Devy stays crisp.
+const SHARP_CLIPS = new Set(['launchpad-intro', 'complete-flow'])
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false)
@@ -47,7 +54,11 @@ const ENTRANCE = {
 // mount. The .riv asset loads async (fetch + WASM instantiate), so a caller
 // that times a follow-up beat off mount instead of this can end up
 // advancing before Devy ever appears on a cold cache. See WarmUpIntro.
-export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) {
+//
+// `flying` (complete-flow only) sets the clip's `flying` boolean: true takes
+// off, false lands again. The file has no state-machine inputs; it's data
+// bound, so the property lives on the auto-bound view model instance.
+export function DevyRive({ clip, className = '', ariaLabel, onReady, flying = false, ...rest }) {
   const reducedMotion = usePrefersReducedMotion()
   const src = SOURCES[clip]
   const isDual = DUAL_STATE_MACHINE_CLIPS.has(clip)
@@ -60,10 +71,17 @@ export function DevyRive({ clip, className = '', ariaLabel, onReady, ...rest }) 
     stateMachine: isDual ? undefined : 'State Machine 1',
     animations: isDual ? entrance : undefined,
     autoplay: false,
-  }, { customDevicePixelRatio: clip === 'launchpad-intro' ? 3 : undefined })
+    autoBind: clip === 'complete-flow',
+  }, { customDevicePixelRatio: SHARP_CLIPS.has(clip) ? 3 : undefined })
 
   useEffect(() => {
-    if (!rive || clip !== 'launchpad-intro') return
+    if (!rive || clip !== 'complete-flow') return
+    const property = rive.viewModelInstance?.boolean('flying')
+    if (property) property.value = Boolean(flying)
+  }, [rive, clip, flying])
+
+  useEffect(() => {
+    if (!rive || !SHARP_CLIPS.has(clip)) return
     // Rive resets the canvas size once during load, so apply the sharper size afterward.
     const timer = setTimeout(() => rive.resizeDrawingSurfaceToCanvas(3), 100)
     return () => clearTimeout(timer)

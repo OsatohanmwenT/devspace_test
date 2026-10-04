@@ -20,7 +20,7 @@ function CurrentTileBeacon({ children }) {
   )
 }
 
-export function LessonRow({ lesson, index, isSelected, onSelect }) {
+export function LessonRow({ lesson, index, isSelected, onSelect, flying = false }) {
   const reducedMotion = useReducedMotion()
   const isCurrent = lesson.state === 'current'
   const isLocked = lesson.state === 'locked'
@@ -35,7 +35,7 @@ export function LessonRow({ lesson, index, isSelected, onSelect }) {
   // The state machine draws its own launchpad; use the static pedestal when
   // reduced motion is requested because the Rive file starts on an empty frame.
   const icon = isCurrent && !reducedMotion
-    ? <DevyRive clip="launchpad-intro" className="h-[210px] w-[200px]" ariaLabel="" />
+    ? <DevyRive clip="complete-flow" flying={flying} className="h-[210px] w-[200px]" ariaLabel="" />
     : <LessonPedestalIcon state={lesson.state} checkpoint={lesson.checkpoint} selected={isSelected} />
 
   return (
