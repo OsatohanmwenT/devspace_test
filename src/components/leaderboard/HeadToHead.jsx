@@ -18,6 +18,12 @@ const MUTED = 'text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]'
 const STRONG = 'text-[#f4f4f2] [[data-theme=light]_&]:text-neutral-800'
 const CARD = 'rounded-3xl bg-[#1a1a1c] [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:shadow-[0_1px_3px_rgba(20,20,20,0.06)]'
 
+// Score share → -1..1, easing off so one lopsided coin count can't hide a name.
+function getPush({ userCoins, opponentCoins }) {
+  const total = userCoins + opponentCoins
+  return total === 0 ? 0 : Math.max(-1, Math.min(1, (userCoins - opponentCoins) / total * 1.5))
+}
+
 const firstName = (name) => name.split(' ')[0]
 
 function weekLabel(weekIndex) {
@@ -40,17 +46,52 @@ function matchupStatus({ userCoins, opponentCoins, opponentName }) {
 
 function Contender({ name, role, coins, avatar, align }) {
   return (
-    <div className={`grid min-w-0 gap-2 ${align === 'end' ? 'justify-items-end text-right' : 'justify-items-start text-left'}`}>
+    <div className={`relative z-10 grid min-w-0 gap-2 ${align === 'end' ? 'justify-items-end text-right' : 'justify-items-start text-left'}`}>
       {avatar}
       <div className="grid min-w-0 gap-0.5">
-        <span className={`truncate text-[14px] font-semibold ${STRONG}`}>{name}</span>
-        {role && <span className={`truncate text-[12px] ${MUTED}`}>{role}</span>}
+        <span className="truncate text-[14px] font-semibold text-white">{name}</span>
+        {role && <span className="truncate text-[12px] text-white/70">{role}</span>}
       </div>
-      <strong className={`flex items-center gap-1.5 text-3xl font-semibold tabular-nums ${STRONG}`}>
+      <strong className="flex items-center gap-1.5 text-3xl font-semibold tabular-nums text-white">
         {coins.toLocaleString()}
         <CoinIcon className="text-[18px]" />
       </strong>
     </div>
+  )
+}
+
+// Lightning divider in the 0–100 box the arena SVG stretches over: long
+// strikes joined by short sideways jogs, so it reads as a bolt, not a zigzag.
+const BOLT = [[53, 0], [45, 38], [53, 42], [43, 76], [51, 80], [47, 100]]
+const BOLT_POINTS = BOLT.map((p) => p.join(',')).join(' ')
+// Sides overshoot the box so the whole group can slide without showing gaps.
+const SIDE_LEFT = `-40,0 ${BOLT_POINTS} -40,100`
+const SIDE_RIGHT = `140,0 ${BOLT_POINTS} 140,100`
+const MAX_PUSH = 14
+
+// Blue (you) vs red (rival), split by a bolt. Only the fighters strip is
+// coloured — the stats and actions below stay on the neutral card.
+// `push` (-1..1) slides the bolt toward whoever is behind: out-earn your rival
+// and you physically shove the lightning into their side.
+function ArenaBackdrop({ push = 0 }) {
+  return (
+    <svg className="h2h-arena pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="h2h-blue" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="var(--h2h-blue-edge)" />
+          <stop offset="1" stopColor="var(--h2h-blue-core)" />
+        </linearGradient>
+        <linearGradient id="h2h-red" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor="var(--h2h-red-edge)" />
+          <stop offset="1" stopColor="var(--h2h-red-core)" />
+        </linearGradient>
+      </defs>
+      <g className="h2h-push" style={{ transform: `translateX(${push * MAX_PUSH}px)` }}>
+        <polygon points={SIDE_LEFT} fill="url(#h2h-blue)" />
+        <polygon points={SIDE_RIGHT} fill="url(#h2h-red)" />
+        <polyline points={BOLT_POINTS} fill="none" stroke="var(--h2h-bolt)" strokeWidth="2.5" strokeLinejoin="miter" vectorEffect="non-scaling-stroke" className="h2h-bolt" />
+      </g>
+    </svg>
   )
 }
 
@@ -62,7 +103,7 @@ function TugBar({ userCoins, opponentCoins }) {
   return (
     <div className="relative h-2.5 overflow-hidden rounded-full bg-[#ff676d]/70 [[data-theme=light]_&]:bg-[#f3a5a8]" aria-hidden="true">
       <span
-        className="absolute inset-y-0 left-0 rounded-full bg-[#04adc0] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+        className="absolute inset-y-0 left-0 rounded-full bg-[#4d8dff] transition-[width] duration-500 ease-out motion-reduce:transition-none"
         style={{ width: `${userShare}%` }}
       />
       <span className="absolute inset-y-[-2px] left-1/2 w-px bg-[#f4f4f2]/40 [[data-theme=light]_&]:bg-neutral-800/30" />
@@ -191,14 +232,15 @@ export function HeadToHead({ h2h, seasonCoins, seasonIndex, leagueIndex = 0, clo
           <span className={`rounded-full bg-[#262626] px-2.5 py-1 text-[12px] font-medium [[data-theme=light]_&]:bg-[#f0f0ee] ${MUTED}`}>{remaining}</span>
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-4">
+        <div className="h2h-arena-wrap relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 overflow-hidden rounded-2xl px-5 py-6 max-[680px]:px-3">
+          <ArenaBackdrop push={getPush(live)} />
           <Contender
             name="You"
             role={user.role}
             coins={live.userCoins}
             avatar={<Avatar name={user.name ?? 'You'} photo={user.photo} avatarStyle={user.avatarStyle} avatarSeed="you" size="lg" />}
           />
-          <span className={`pb-2 text-[13px] font-semibold ${MUTED}`}>vs</span>
+          <span className="relative z-10 grid size-9 place-items-center rounded-full bg-black/60 text-[12px] font-extrabold tracking-[.08em] text-white uppercase ring-1 ring-white/30">vs</span>
           <Contender
             name={live.opponentName}
             role={live.opponentRole}

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badge drafts</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #141416; color: #f4f4f2; font: 15px/1.4 system-ui, sans-serif; padding: 32px 20px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.lede { margin: 0 0 8px; color: #9a9a9d; }
+  h2.sec { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #89baff; margin: 36px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; max-width: 1040px; }
+  .card { background: #1a1a1c; border-radius: 20px; padding: 18px 12px 16px; display: grid; justify-items: center; gap: 2px; text-align: center; }
+  .card svg { width: 112px; height: 112px; overflow: visible; transition: transform .25s cubic-bezier(.3,1.6,.5,1); filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
+  .card:hover svg { transform: translateY(-4px) rotate(-5deg) scale(1.07); }
+  .card h3 { font-size: 14px; margin: 10px 0 0; }
+  .card p { color: #9a9a9d; font-size: 12px; margin: 0; }
+  /* emblem paint */
+  .s { fill: none; stroke: #fff; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+  .t { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+  .f { fill: #fff; } .y { fill: #ffd966; } .k { fill: rgba(0,0,0,.4); } .g { fill: #7dffb0; } .r { fill: #ff6b6b; } .b { fill: #7db8ff; }
+  .sg { fill: none; stroke: #7dffb0; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  .sy { fill: none; stroke: #ffd966; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+  .sb { fill: none; stroke: #9fd0ff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  .sr { fill: none; stroke: #ffb0b0; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  text { font-family: ui-monospace, Consolas, monospace; font-weight: 800; fill: #fff; text-anchor: middle; }
+</style>
+</head>
+<body>
+<h1>Badge drafts · round 2</h1>
+<p class="lede">All 35 badges in a circular field. The colour of the field marks the category; the emblem is the dev object the name points to.</p>
+<div id="root"></div>
+
+<script>
+const PAL = {
+  streak:   ['#ffb347', '#e8452a', '#8f1d10'],
+  learning: ['#5fe0a1', '#15915a', '#0b5b38'],
+  practice: ['#6fb7ff', '#2457d6', '#12307f'],
+  xp:       ['#c68bff', '#6a2cd6', '#35157a'],
+  league:   ['#4fe0d0', '#12847f', '#0a4a4e'],
+  profile:  ['#ff8ad0', '#c02c8a', '#6d124d'],
+  secret:   ['#4a4a58', '#1e1e26', '#0d0d12'],
+  split:    ['#2f6bff', '#e0364a', '#1a1a3a'],
+  gold:     ['#ffe08a', '#e8a21a', '#8a5a00'],
+}
+
+// n-point starburst, centred on 60,60
+const star = (n, r1, r2) => Array.from({ length: n * 2 }, (_, i) => {
+  const r = i % 2 ? r1 : r2, a = (i / (n * 2)) * Math.PI * 2 - Math.PI / 2
+  return (60 + r * Math.cos(a)).toFixed(1) + ',' + (60 + r * Math.sin(a)).toFixed(1)
+}).join(' ')
+
+const blade = (deg) => `<path transform="rotate(${deg} 60 60)" class="f" d="M60 53c-4-10 0-18 8-20 4 8 0 16-8 20Z"/>`
+
+const SECTIONS = [
+  ['Streaks', 'streak', [
+    ['Warm Cache', '3-day streak', `
+      <rect class="s" x="40" y="40" width="40" height="40" rx="7"/>
+      <path class="t" d="M50 32v8M60 32v8M70 32v8M50 80v8M60 80v8M70 80v8M32 50h8M32 60h8M32 70h8M80 50h8M80 60h8M80 70h8"/>
+      <path class="y" d="M60 48c3 6 8 8 8 14a8 8 0 0 1-16 0c0-4 3-6 4-9 1 3 2 4 4 3Z"/>`],
+    ['Uptime', '7-day streak', `
+      <rect class="s" x="35" y="35" width="50" height="20" rx="5"/><rect class="s" x="35" y="62" width="50" height="20" rx="5"/>
+      <circle class="g" cx="46" cy="45" r="3.6"/><circle class="g" cx="46" cy="72" r="3.6"/>
+      <path class="t" d="M58 45h19M58 72h19"/>`],
+    ['Hot Reload', '14-day streak', `
+      <path class="s" d="M82 50A24 24 0 0 0 40 42"/><path class="f" d="M32 36l14 3-6 12Z"/>
+      <path class="s" d="M38 70A24 24 0 0 0 80 78"/><path class="f" d="M88 84 74 81l6-12Z"/>
+      <path class="y" d="M60 46c3 6 8 8 8 14a8 8 0 0 1-16 0c0-4 3-6 4-9 1 3 2 4 4 3Z"/>`],
+    ['Five Nines', '30-day streak', `
+      <circle class="g" cx="60" cy="40" r="4.5"/>
+      <text x="60" y="68" font-size="19">99.999</text><text x="60" y="68" font-size="19" opacity="0"></text>
+      <path class="t" d="M38 78h44"/><path class="sg" d="M38 78h38" style="stroke-width:3"/>
+      <text x="60" y="92" font-size="9" style="opacity:.8">% uptime</text>`],
+    ['Daemon', '100-day streak', `
+      <path class="f" d="M43 84V60a17 17 0 0 1 34 0v24l-8.5-6-8.5 6-8.5-6Z"/>
+      <circle class="k" cx="53" cy="60" r="3.4"/><circle class="k" cx="67" cy="60" r="3.4"/>
+      <path class="r" d="M46 46l-6-11 11 5Zm28 0 6-11-11 5Z"/>`],
+    ['Cron Job', '365-day streak', `
+      <circle class="s" cx="60" cy="64" r="22"/><path class="s" d="M60 50v14l10 6"/>
+      <path class="s" d="M36 38A32 32 0 0 1 84 38"/><path class="f" d="M90 34 80 48l-4-14Z"/>`],
+  ]],
+  ['Learning', 'learning', [
+    ['Hello, World', 'Finish your first module', `
+      <rect class="s" x="30" y="38" width="60" height="46" rx="7"/><path class="t" d="M30 51h60"/>
+      <circle class="f" cx="39" cy="44.5" r="2"/><circle class="f" cx="46" cy="44.5" r="2"/><circle class="f" cx="53" cy="44.5" r="2"/>
+      <path class="s" d="M41 62l8 6-8 6"/><path class="s" d="M55 75h14"/>`],
+    ['It Compiles', 'Complete 5 modules', `
+      <rect class="s" x="30" y="38" width="60" height="46" rx="7"/>
+      <path class="t" d="M40 50h22M40 58h14"/><path class="sg" d="M54 72l8 8 18-20" />`],
+    ['Merge Ready', 'Complete 15 modules', `
+      <circle class="s" cx="44" cy="38" r="6"/><circle class="s" cx="76" cy="38" r="6"/><circle class="s" cx="60" cy="82" r="6"/>
+      <path class="s" d="M44 44c0 16 16 14 16 26M76 44c0 16-16 14-16 26"/>
+      <circle class="g" cx="82" cy="78" r="9"/><path class="s" style="stroke:#0b5b38;stroke-width:3" d="m77.5 78 3 3 6-6.5"/>`],
+    ['Read the Docs', 'Complete 30 modules', `
+      <path class="s" d="M60 46C52 40 42 40 34 42v34c8-2 18-2 26 4 8-6 18-6 26-4V42c-8-2-18-2-26 4Z"/><path class="s" d="M60 46v34"/>
+      <path class="t" d="M41 52h12M41 60h12M67 52h12M67 60h8"/>`],
+    ['Tests Passing', 'Pass your first milestone', `
+      <path class="sg" style="stroke-width:5" d="m36 44 5 5 8-9M36 60l5 5 8-9M36 76l5 5 8-9"/>
+      <path class="t" d="M58 44h26M58 60h26M58 76h26"/>`],
+    ['Green Build', 'Pass 3 milestones', `
+      <path class="s" d="M42 60h36"/>
+      <circle class="g" cx="34" cy="60" r="9"/><circle class="g" cx="60" cy="60" r="9"/><circle class="g" cx="86" cy="60" r="9"/>
+      <path class="s" style="stroke:#0b5b38;stroke-width:3" d="m30 60 3 3 5-6M56 60l3 3 5-6M82 60l3 3 5-6"/>
+      <path class="t" d="M34 78h52M34 86h30"/>`],
+    ['Shipped', 'Clear a whole section', `
+      <path class="f" d="M60 30c11 8 15 22 13 40H47c-2-18 2-32 13-40Z"/><circle class="k" cx="60" cy="52" r="5.5"/>
+      <path class="f" d="M47 62 38 76l11-3ZM73 62l9 14-11-3Z"/>
+      <path class="y" d="M53 76q7 16 14 0Z"/>`],
+  ]],
+  ['Practice', 'practice', [
+    ['First Commit', 'Finish your first practice session', `
+      <path class="s" d="M28 60h64"/><circle class="f" cx="60" cy="60" r="11"/>
+      <circle class="s" cx="36" cy="60" r="5"/><circle class="s" cx="84" cy="60" r="5"/>
+      <path class="t" d="M60 71v10"/><text x="60" y="94" font-size="10" style="opacity:.85">a1b2c3d</text>`],
+    ['Refactor', 'Finish 10 practice sessions', `
+      <path class="s" d="M32 44q7-9 14 0t14 0t14 0t14 0"/>
+      <path class="s" d="M60 55v13"/><path class="f" d="m52 66 8 9 8-9Z"/>
+      <path class="s" d="M36 84h48"/>`],
+    ['Zero Warnings', 'Finish a session with no mistakes', `
+      <path class="s" d="M60 32 90 84H30Z"/><text x="60" y="78" font-size="30">0</text>`],
+    ['Ctrl+Z', 'Fail a question, retry it, pass', `
+      <rect x="32" y="38" width="56" height="46" rx="10" fill="rgba(255,255,255,.22)" stroke="#fff" stroke-width="4"/>
+      <text x="62" y="52" font-size="11" style="opacity:.9">Ctrl</text>
+      <text x="70" y="78" font-size="26">Z</text>
+      <path class="s" d="M41 76a9 9 0 0 1 14-9"/><path class="f" d="m38 67 4 12 8-8Z"/>`],
+    ['Hotfix', 'Win a streak back within 2 days', `
+      <circle class="f" cx="60" cy="40" r="7"/><ellipse class="f" cx="60" cy="64" rx="14" ry="19"/>
+      <path class="s" style="stroke-width:3.5" d="M46 52l-11-5M46 64H33M47 76l-9 7M74 52l11-5M74 64h13M73 76l9 7M55 34l-5-7M65 34l5-7"/>
+      <rect class="y" x="38" y="58" width="44" height="11" rx="3" transform="rotate(-24 60 63)"/>
+      <path class="t" style="stroke:#8a5a00;stroke-width:2" d="m55 58 0 0M57 66l4-8M65 69l4-8" transform="rotate(-24 60 63)"/>`],
+  ]],
+  ['Experience', 'xp', [
+    ['Boot Sequence', 'Earn 100 XP', `
+      <path class="s" style="stroke-width:6" d="M44 44a24 24 0 1 0 32 0"/><path class="s" style="stroke-width:6" d="M60 34v26"/>`],
+    ['Overclocked', 'Earn 500 XP', `
+      <circle class="s" cx="60" cy="60" r="28"/>
+      ${blade(0)}${blade(120)}${blade(240)}<circle class="y" cx="60" cy="60" r="5"/>`],
+    ['Root Access', 'Earn 1,000 XP', `
+      <circle class="s" cx="48" cy="50" r="11"/><circle class="y" cx="48" cy="50" r="3.5"/>
+      <path class="s" d="M56 58l28 24M72 71l6-6M80 79l6-6"/><text x="38" y="92" font-size="14" style="opacity:.9">root#</text>`],
+    ['Supernova', 'Earn 2,500 XP', `
+      <polygon class="y" points="${star(14, 26, 40)}"/><circle class="f" cx="60" cy="60" r="16"/>
+      <path class="r" d="M62 46 52 62h7l-2 12 11-16h-7Z"/>`],
+  ]],
+  ['Leagues & head-to-head', 'league', [
+    ['Off-by-One', 'Win a head-to-head by 1 coin', `
+      <text x="58" y="70" font-size="30">n+1</text>
+      <ellipse class="r" cx="86" cy="40" rx="6" ry="7"/><circle class="k" cx="86" cy="34" r="3"/>
+      <path class="t" style="stroke-width:2.5" d="M80 38l-5-3M80 43l-6 1M92 38l5-3M92 43l6 1"/>`],
+    ['Merge Conflict', 'Draw a head-to-head', 'split', `
+      <path class="sb" d="M30 60h20M40 50l10 10-10 10" /><path class="sr" d="M90 60H70M80 50 70 60l10 10"/>
+      <polygon class="y" points="${star(7, 6, 13).split(' ').map(p => { const [x, y] = p.split(','); return (+x).toFixed(1) + ',' + (+y).toFixed(1) }).join(' ')}"/>`],
+    ['Giant Slayer', 'Beat a rival from a higher league', `
+      <path d="M32 58 36 34l14 12 10-18 10 18 14-12 4 24Z" fill="#ffd966" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+      <path class="f" d="M57 24h6l2 58-5 9-5-9Z"/><rect class="y" x="44" y="76" width="32" height="7" rx="3.5" stroke="#fff" stroke-width="2"/>
+      <rect class="f" x="57" y="83" width="6" height="12" rx="2"/>`],
+    ['Underdog', 'Bottom half to promoted in a week', `
+      <path d="M26 86 46 52l12 14 14-28 22 48Z" fill="rgba(0,0,0,.35)" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+      <path class="f" d="m72 38-8 15 6-3 3 4 4-4 5 3Z"/>
+      <path class="s" d="M72 38V22"/><path class="r" d="M72 22l16 6-16 6Z"/>`],
+    ['Promoted to Prod', 'Reach a new league', `
+      <path class="s" d="M60 84V42M44 58l16-16 16 16"/><path class="t" d="M40 90h40"/>
+      <circle class="g" cx="86" cy="84" r="5"/>`],
+    ['Rubber Duck', 'Join a private league', `
+      <path class="y" stroke="#fff" stroke-width="3" stroke-linejoin="round" d="M30 70c-3-10 2-17 9-18 3 11 9 16 18 18Z"/>
+      <ellipse class="y" cx="62" cy="72" rx="26" ry="18" stroke="#fff" stroke-width="3"/>
+      <circle class="y" cx="74" cy="47" r="15" stroke="#fff" stroke-width="3"/>
+      <ellipse cx="60" cy="74" rx="11" ry="7" fill="#f2b21a"/>
+      <path d="M86 44c7 0 11 2 12 6-2 4-8 6-14 5Z" fill="#ff8f2e" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle class="k" cx="78" cy="43" r="2.6"/>
+      <path class="t" style="stroke:#9fd0ff" d="M28 92c6 4 12 4 18 0s12-4 18 0 12 4 18 0"/>`],
+  ]],
+  ['Profile & moments', 'profile', [
+    ['README.md', 'Finish every profile quest', `
+      <rect class="s" x="36" y="32" width="48" height="58" rx="6"/>
+      <path class="s" d="M44 46h14"/><path class="t" d="M44 58h32M44 67h32M44 76h20"/>`],
+    ['Open Source', 'Add 3 links to your profile', `
+      <rect class="f" x="38" y="56" width="44" height="32" rx="7"/>
+      <path class="s" d="M47 56V44a13 13 0 0 1 26 0"/><path class="s" d="M73 44v-3" style="opacity:0"/>
+      <circle class="k" cx="60" cy="70" r="4.5"/><path class="k" d="M58 72h4l1 9h-6Z"/>`],
+    ['Forked', 'Create a custom path', `
+      <circle class="s" cx="60" cy="38" r="6"/><circle class="s" cx="42" cy="82" r="6"/><circle class="s" cx="78" cy="82" r="6"/>
+      <path class="s" d="M60 44v10c0 10-18 10-18 22M60 54c0 10 18 10 18 22"/>`],
+    ['Graveyard Shift', 'Finish a module after midnight', `
+      <path class="y" d="M72 32a28 28 0 1 0 18 46 22 22 0 0 1-18-46Z"/>
+      <path class="f" d="m88 38 1.5 4 4 1.5-4 1.5L88 49l-1.5-4-4-1.5 4-1.5Z"/>
+      <path class="s" style="stroke:#35157a" d="M46 62l8 6-8 6"/><path class="s" style="stroke:#35157a" d="M58 76h10"/>`],
+    ['Friday Deploy', 'Finish a module on a Friday night', `
+      <ellipse cx="60" cy="78" rx="26" ry="9" fill="rgba(0,0,0,.4)"/>
+      <path d="M36 70v-8h48v8c0 6-12 10-24 10S36 76 36 70Z" fill="#8a1f24" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="62" rx="24" ry="10" fill="#ff5a5f" stroke="#fff" stroke-width="3"/>
+      <path class="t" style="stroke:#ffd0d0;stroke-width:3" d="M48 60q6-3 12-3"/><text x="60" y="94" font-size="11">FRI 17:00</text>`],
+    ['404', 'Secret · hit a page that doesn’t exist', 'secret', `
+      <text x="57" y="70" font-size="30" style="fill:#4ff;opacity:.8">404</text><text x="63" y="70" font-size="30" style="fill:#f4a;opacity:.8">404</text><text x="60" y="70" font-size="30">404</text>
+      <path class="t" d="M34 82h52" style="stroke-dasharray:4 5"/>`],
+    ['Easter Egg', 'Secret · find a hidden interaction', 'secret', `
+      <path d="M60 28c14 0 22 20 22 36a22 22 0 0 1-44 0c0-16 8-36 22-36Z" fill="#c9a7ff" stroke="#fff" stroke-width="3.5"/>
+      <path d="M39 62l7-6 7 6 7-6 7 6 7-6 7 6" fill="none" stroke="#ff6b9d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle class="y" cx="52" cy="44" r="3"/><circle class="y" cx="68" cy="76" r="3"/><circle class="f" cx="50" cy="76" r="2.4"/>`],
+  ]],
+]
+
+const root = document.getElementById('root')
+let uid = 0
+for (const [title, cat, badges] of SECTIONS) {
+  const sec = document.createElement('div')
+  sec.innerHTML = `<h2 class="sec">${title}</h2><div class="grid"></div>`
+  const grid = sec.querySelector('.grid')
+  for (const item of badges) {
+    // [name, desc, emblem] or [name, desc, paletteKey, emblem]
+    const [name, desc] = item
+    const pal = item.length === 4 ? item[2] : cat
+    const emblem = item[item.length - 1]
+    const [c1, c2, ring] = PAL[pal]
+    const id = 'b' + uid++
+    const fill = pal === 'split'
+      ? `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c1}"/><stop offset=".5" stop-color="${c1}"/><stop offset=".5" stop-color="${c2}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
+      : `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`
+    const dashed = pal === 'secret' ? ' stroke-dasharray="5 6"' : ''
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="card">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs>${fill}</defs>
+          <circle cx="60" cy="60" r="57" fill="${ring}"/>
+          <circle cx="60" cy="60" r="52" fill="url(#${id})"/>
+          <circle cx="60" cy="60" r="47" fill="none" stroke="#fff" stroke-opacity="${pal === 'secret' ? .3 : .22}" stroke-width="2"${dashed}/>
+          <path d="M22 44A42 42 0 0 1 60 18" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+          ${emblem}
+        </svg>
+        <h3>${name}</h3><p>${desc}</p>
+      </div>`)
+  }
+  root.appendChild(sec)
+}
+</script>
+</body>
+</html>
