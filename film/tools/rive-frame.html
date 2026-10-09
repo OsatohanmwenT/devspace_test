@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><base href="../"><style>body{margin:0;background:#f5f5f2}canvas{display:block}</style></head>
+<body><canvas id="c" width="600" height="600"></canvas>
+<script src="vendor/rive.js"></script>
+<script type="module">
+// One Rive frame at 600×600 on a transparent canvas: ?layers=a@t~b@t
+import { RiveSeek } from './lib/rive-seek.js'
+try {
+  const q = new URLSearchParams(location.search)
+  const devy = await RiveSeek.load('assets/devy/all_devy.riv', document.getElementById('c'))
+  devy.draw(q.get('layers').split('~').map((l) => { const [name, time] = l.split('@'); return { name, time: Number(time) } }))
+  window.result = document.getElementById('c').toDataURL('image/png')
+} catch (e) { window.result = { error: String(e?.stack ?? e) } }
+</script></body></html>

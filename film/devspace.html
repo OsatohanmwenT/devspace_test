@@ -1,0 +1,1495 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Devspace film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Rethink+Sans:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #f5f5f2;
+    --ink: #0e0e10;
+    --navy: #28346f;
+    --blue: #2563eb;
+    --text: #262626;
+    --muted: #686968;
+    /* Warm white washed with brand blue from the top (the logo mark's blue → cyan). */
+    --flood: linear-gradient(180deg, #2350e6 0%, #3d7bf5 28%, #8fd3f2 60%, #f5efe6 100%);
+    --accent: linear-gradient(90deg, #2350e6, #19a9e6);
+  }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--canvas); }
+  #stage { position: absolute; inset: 0; overflow: hidden; background: var(--canvas); font-family: Geist, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  #world { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; z-index: 1; }
+  .abs { position: absolute; }
+  .hidden { display: none !important; }
+  .layer { position: absolute; inset: 0; }
+
+  /* Text that rises out of a mask line: every word sits in its own clip box. */
+  .mask { display: inline-block; overflow: hidden; vertical-align: top; padding: 0.06em 0.02em 0.16em; margin: -0.06em -0.02em -0.16em; }
+  .w { display: inline-block; }
+
+  /* ── Brand ── */
+  #brand { left: 0; top: 0; width: 1920px; height: 1080px; z-index: 10; }
+  .lockup { position: absolute; height: 90px; }
+  .lockup .pill { position: absolute; background: var(--navy); z-index: 2; }
+  .lockup .mark { position: absolute; z-index: 3; }
+  .lockup .word { position: absolute; z-index: 1; }
+  #lockup { left: 50%; top: 430px; }
+  #tagline { position: absolute; left: 0; width: 1920px; top: 590px; text-align: center; font-size: 76px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.1; }
+  #taglineHi { position: relative; display: inline-block; }
+  #taglineHi .hl { position: absolute; left: -10px; right: -10px; top: 0.12em; bottom: 0.02em; background: var(--accent); border-radius: 12px; z-index: -1; transform-origin: 0 50%; }
+  #taglineHiText { color: #fff; }
+
+  /* ── Meet Devy ── */
+  #devyScene { left: 0; top: 0; width: 1920px; height: 1080px; z-index: 11; }
+  #meet { position: absolute; left: 900px; top: 360px; font-size: 168px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; white-space: nowrap; }
+  #meetSub { position: absolute; left: 906px; top: 560px; font-size: 64px; font-weight: 500; letter-spacing: -0.03em; color: #6b6b70; white-space: nowrap; }
+  #devy { position: absolute; left: 0; top: 0; width: 840px; height: 840px; transform-origin: 0 0; z-index: 25; }
+
+  /* ── Onboarding (light theme, OnboardingStep.jsx) ── */
+  #onb { z-index: 20; }
+  .q { position: absolute; left: 820px; top: 0; width: 820px; height: 1080px; font-family: Rubik, sans-serif; }
+  .q h2 { position: absolute; left: 0; top: 196px; margin: 0; font-family: 'Rethink Sans', sans-serif; font-weight: 500; font-size: 56px; letter-spacing: -0.02em; color: var(--text); white-space: nowrap; }
+  .q p { position: absolute; left: 0; top: 284px; margin: 0; font-size: 24px; color: var(--muted); white-space: nowrap; }
+  .opt { position: absolute; left: 0; width: 780px; height: 64px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #d4d4d4; background: #fff; color: var(--text); font-size: 23px; display: flex; align-items: center; padding: 0 26px; transform-origin: 50% 50%; }
+  .opt.sel { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .bubble { position: absolute; max-width: 430px; box-sizing: border-box; padding: 18px 24px; border-radius: 22px 22px 22px 8px; background: #fff; border: 1px solid rgba(0,0,0,.06); font-family: 'Rethink Sans', sans-serif; font-weight: 500; font-size: 27px; line-height: 1.3; color: var(--text); transform-origin: 0 100%;
+    box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(20,20,40,.08), 0 24px 48px -16px rgba(20,20,40,.22); }
+  .caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -0.12em; background: currentColor; }
+
+  #build { z-index: 20; }
+  #buildTitle { position: absolute; left: 0; width: 1920px; top: 740px; text-align: center; font-family: 'Rethink Sans', sans-serif; font-weight: 500; font-size: 50px; color: var(--text); }
+  .buildLine { position: absolute; left: 0; width: 1920px; top: 816px; text-align: center; font-family: Rubik, sans-serif; font-size: 27px; color: var(--muted); }
+  #buildDots { position: absolute; left: 942px; top: 876px; display: flex; gap: 10px; }
+  #buildDots i { width: 10px; height: 10px; border-radius: 99px; background: #8b7cf6; }
+
+  /* ── Drop: path cards ── */
+  #flood { position: absolute; inset: 0; background: var(--flood); z-index: 30; }
+  #pathScene { position: absolute; inset: 0; z-index: 31; }
+  #pathEyebrow { position: absolute; left: 0; width: 1920px; top: 112px; text-align: center; font-size: 26px; font-weight: 500; color: rgba(255,255,255,.82); }
+  #pathTitle { position: absolute; left: 0; width: 1920px; top: 150px; text-align: center; color: #fff; font-size: 84px; font-weight: 600; letter-spacing: -0.04em; white-space: nowrap; }
+  #pathSub { position: absolute; left: 0; width: 1920px; top: 262px; text-align: center; color: rgba(255,255,255,.88); font-size: 28px; font-weight: 500; }
+  .stage-card { position: absolute; left: 960px; top: 590px; width: 212px; height: 224px; margin: -112px 0 0 -106px; box-sizing: border-box; border-radius: 16px; padding: 14px; color: #fff; display: flex; flex-direction: column; font-family: 'Rethink Sans', sans-serif;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 18px 34px -18px rgba(14,14,16,.55); }
+  .stage-card .top { display: flex; align-items: center; justify-content: space-between; }
+  .stage-card .num { width: 32px; height: 32px; border-radius: 99px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 13px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .stage-card .start { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.85); }
+  .stage-card .label { margin: 8px 0 0; font-size: 15px; font-weight: 600; line-height: 1.2; min-height: 36px; }
+  .stage-card .art { position: relative; margin-top: 10px; flex: 1; border-radius: 12px; background: rgba(0,0,0,.18); overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+  .stage-card .art img { height: 86%; max-height: 120px; object-fit: contain; filter: drop-shadow(0 10px 14px rgba(0,0,0,.35)); }
+  #pathDots { position: absolute; left: 960px; top: 900px; display: flex; gap: 14px; transform: translateX(-50%); }
+  #pathDots i { display: block; height: 14px; width: 14px; border-radius: 99px; background: rgba(14,14,16,.28); }
+
+  /* ── Lesson page (light theme) ── */
+  .page { position: absolute; left: 160px; top: 70px; width: 1600px; height: 940px; background: #fff; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 1px 0 rgba(14,14,16,.04), 0 40px 80px -48px rgba(14,14,16,.35); }
+  #lesson { z-index: 40; font-family: Rubik, sans-serif; color: var(--text); }
+  #lessonClose { position: absolute; left: 44px; top: 34px; width: 32px; height: 32px; color: #737371; }
+  #progress { position: absolute; left: 110px; top: 42px; width: 1440px; height: 16px; display: flex; gap: 10px; }
+  #progress i { position: relative; flex: 1; border-radius: 99px; background: #ebe9e4; overflow: hidden; }
+  #progress i b { position: absolute; left: 0; top: 0; bottom: 0; background: var(--blue); border-radius: 99px; }
+  #mcq { position: absolute; left: 0; top: 100px; width: 1600px; height: 710px; overflow: hidden; }
+  #mcqEyebrow { position: absolute; left: 400px; top: 46px; font-size: 22px; font-weight: 500; color: #3d77eb; }
+  #mcqPrompt { position: absolute; left: 400px; top: 86px; font-family: 'Rethink Sans', sans-serif; font-weight: 600; font-size: 52px; letter-spacing: -0.02em; white-space: nowrap; }
+  #mcq .opt { left: 400px; width: 800px; height: 72px; font-size: 25px; }
+  #mcq .opt.ok { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  #mcq .opt .tick { position: absolute; right: 22px; width: 36px; height: 36px; border-radius: 99px; background: #22c55e; color: #fff; display: grid; place-items: center; }
+  #lab { position: absolute; inset: 0; background: #fff; }
+  #labTitle { position: absolute; left: 80px; top: 130px; font-family: 'Rethink Sans', sans-serif; font-weight: 600; font-size: 46px; letter-spacing: -0.02em; white-space: nowrap; }
+  #labDesc { position: absolute; left: 80px; top: 200px; width: 480px; font-size: 23px; line-height: 1.45; color: var(--muted); }
+  #labTasksHead { position: absolute; left: 80px; top: 372px; font-size: 17px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #9a9a9d; }
+  .task { position: absolute; left: 80px; display: flex; align-items: center; gap: 16px; font-size: 23px; white-space: nowrap; }
+  .task .box { width: 30px; height: 30px; border-radius: 99px; border: 2px solid #d4d4d4; box-sizing: border-box; display: grid; place-items: center; color: #fff; }
+  .task.done .box { background: #22c55e; border-color: #22c55e; }
+  #editor { position: absolute; left: 620px; top: 110px; width: 900px; height: 530px; background: #1b1b1f; border-radius: 18px; overflow: hidden; }
+  #editorBar { position: absolute; left: 0; top: 0; right: 0; height: 64px; border-bottom: 1px solid #2c2c31; }
+  #editorTab { position: absolute; left: 24px; top: 18px; font-family: 'JetBrains Mono', monospace; font-size: 20px; color: #e4e4e7; }
+  #run { position: absolute; right: 18px; top: 12px; width: 120px; height: 40px; border-radius: 10px; background: var(--blue); color: #fff; font-family: Rubik, sans-serif; font-size: 18px; font-weight: 600; display: grid; place-items: center; box-shadow: 0 3px 0 #1d4ed8; }
+  #code { position: absolute; left: 0; top: 86px; right: 0; font-family: 'JetBrains Mono', monospace; font-size: 25px; line-height: 46px; color: #e4e4e7; white-space: pre; }
+  #code .ln { display: inline-block; width: 64px; text-align: right; padding-right: 22px; color: #52525b; }
+  .tk-num { color: #fdba74; } .tk-com { color: #71717a; font-style: italic; } .tk-fn { color: #93c5fd; } .tk-op { color: #a1a1aa; }
+  #output { position: absolute; left: 620px; top: 660px; width: 900px; height: 130px; box-sizing: border-box; border-radius: 16px; background: #f6f6f3; border: 1px solid #e6e6e2; overflow: hidden; }
+  #outputLabel { position: absolute; left: 24px; top: 16px; font-size: 16px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #9a9a9d; }
+  #outputText { position: absolute; left: 24px; top: 52px; font-family: 'JetBrains Mono', monospace; font-size: 36px; color: var(--text); }
+  #footer { position: absolute; left: 0; right: 0; top: 820px; bottom: 0; border-top: 1px solid #ebe9e4; }
+  #lessonBubble { left: 210px; top: 20px; font-size: 24px; padding: 14px 20px; border-radius: 18px 18px 18px 6px; white-space: nowrap; }
+  #continue { position: absolute; left: 1230px; top: 26px; width: 320px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; font-weight: 600; box-sizing: border-box; }
+  #continue.on { background: linear-gradient(180deg, rgba(255,255,255,.2), transparent 50%), var(--blue); color: #fff; border: 1px solid #3b82f6; box-shadow: 0 4px 0 #1e40af; }
+  #continue.off { background: #ebe9e4; color: #a8a8a4; }
+
+  /* ── Lesson complete (LessonCompleteSequence.jsx, light theme) ── */
+  #complete { z-index: 42; }
+  #completeInner { position: absolute; left: 200px; top: 40px; width: 600px; height: 430px; transform: scale(2); transform-origin: 0 0; display: grid; justify-items: center; align-content: start; padding-top: 36px; box-sizing: border-box; font-family: 'Rethink Sans', sans-serif; }
+  #completeDevy { width: 132px; height: 132px; }
+  #completeDevy canvas { width: 132px; height: 132px; display: block; }
+  #completeTitle { margin: 10px 0 0; font-size: 26px; font-weight: 600; line-height: 1.12; color: #f59e0b; }
+  #completeBody { margin: 6px 0 0; font-size: 12.5px; color: #686968; }
+  #resultCards { margin-top: 22px; display: grid; grid-template-columns: repeat(3, 118px); gap: 10px; }
+  .result-card { position: relative; display: grid; border-radius: 13px; padding: 0 2.5px 2.5px; text-align: center; overflow: hidden; }
+  .result-card .rl { padding: 4px 0; font-size: 10.5px; font-weight: 700; color: #1a1a1a; text-shadow: 0 1px 0 rgba(255,255,255,.25); font-family: Rubik, sans-serif; }
+  .result-card .rv { display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 11px; background: #fff; padding: 10px 6px; font-size: 18px; font-weight: 700; box-shadow: inset 0 3px 0 rgba(0,0,0,.05); font-family: Rubik, sans-serif; }
+  .result-card svg { width: 15px; height: 15px; }
+  #claim { position: absolute; left: 50%; top: 360px; width: 380px; height: 44px; margin-left: -190px; border-radius: 12px; border: 1px solid #3b82f6; background: linear-gradient(180deg, rgba(255,255,255,.2), transparent 50%), #2563eb; color: #fff; display: grid; place-items: center; font-family: Rubik, sans-serif; font-size: 14px; font-weight: 600; box-shadow: 0 4px 0 #1e40af; box-sizing: border-box; }
+  .curtain { position: absolute; inset: 0; z-index: 5; }
+  #streak { position: absolute; inset: 0; background: #fff; z-index: 4; font-family: 'Rethink Sans', sans-serif; }
+  #streakBubble { left: 50%; top: 56px; max-width: none; white-space: nowrap; font-size: 26px; transform-origin: 70% 100%; border-radius: 20px; }
+  #streakBolt { position: absolute; left: 650px; top: 160px; width: 300px; height: 306px; object-fit: contain; transform-origin: 50% 100%; }
+  #streakCount { position: absolute; left: 0; width: 1600px; top: 456px; text-align: center; font-size: 150px; font-weight: 800; line-height: 1; background: linear-gradient(180deg, #fde047, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #streakLabel { position: absolute; left: 0; width: 1600px; top: 612px; text-align: center; font-size: 34px; font-weight: 700; color: #f59e0b; }
+  #week { position: absolute; left: 420px; top: 680px; width: 760px; height: 160px; box-sizing: border-box; border-radius: 36px; border: 1px solid #ececea; background: #fafaf8; }
+  .day { position: absolute; top: 24px; width: 97px; text-align: center; }
+  .day span { display: block; font-family: Rubik, sans-serif; font-size: 20px; font-weight: 700; color: #9a9a9d; height: 30px; }
+  .day span.today { color: #f59e0b; }
+  .day i { display: block; margin: 12px auto 0; width: 58px; height: 58px; border-radius: 99px; box-sizing: border-box; border: 3px dashed #dededa; }
+  .day i.done { border: 0; background: linear-gradient(180deg, #fde047, #f59e0b); color: #fff; display: grid; place-items: center; box-shadow: 0 0 0 7px rgba(251,191,36,.25); }
+
+  /* ── Compete ── */
+  #motif { z-index: 50; }
+  #motif img { position: absolute; width: 74px; opacity: 0.07; }
+  #competeTitle { position: absolute; left: 0; width: 1920px; top: 476px; text-align: center; z-index: 52; font-size: 88px; font-weight: 600; letter-spacing: -0.045em; white-space: nowrap; }
+  .tok { position: absolute; z-index: 53; border-radius: 99px; background: #f0f0ee; overflow: hidden; box-shadow: 0 0 0 5px #fff, 0 18px 30px -16px rgba(14,14,16,.45); }
+  .tok img { width: 100%; height: 100%; display: block; }
+  #league { position: absolute; left: 510px; top: 120px; width: 900px; height: 860px; background: #fff; border-radius: 28px; z-index: 51; font-family: Rubik, sans-serif; color: var(--text); overflow: hidden;
+    box-shadow: 0 1px 0 rgba(14,14,16,.04), 0 40px 80px -48px rgba(14,14,16,.35); }
+  #leagueHead { position: absolute; left: 40px; top: 34px; display: flex; align-items: center; gap: 16px; font-family: 'Rethink Sans', sans-serif; font-size: 36px; font-weight: 600; }
+  #leagueHead i { width: 46px; height: 46px; border-radius: 99px; background: linear-gradient(180deg, #f0b58a, #d98a52); box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+  #leagueLeft { position: absolute; right: 40px; top: 40px; padding: 8px 18px; border-radius: 99px; background: #f0f0ee; font-size: 20px; font-weight: 500; color: var(--muted); }
+  #leagueSub { position: absolute; left: 40px; top: 96px; font-size: 20px; color: var(--muted); }
+  .row { position: absolute; left: 24px; width: 852px; height: 76px; box-sizing: border-box; border-radius: 16px; border: 1.5px solid transparent; }
+  .row.you { background: #e9f2ff; border-color: #b9d4f7; }
+  .row .rank { position: absolute; left: 0; width: 64px; top: 22px; text-align: center; font-size: 22px; color: #737371; }
+  .row .name { position: absolute; left: 140px; top: 11px; font-size: 22px; font-weight: 600; white-space: nowrap; }
+  .row .role { position: absolute; left: 140px; top: 41px; font-size: 17px; color: var(--muted); white-space: nowrap; }
+  .row .coins { position: absolute; right: 26px; top: 22px; font-size: 23px; font-variant-numeric: tabular-nums; }
+  .row .slot { position: absolute; left: 66px; top: 10px; width: 56px; height: 56px; border-radius: 99px; background: #f0f0ee; overflow: hidden; }
+  .row .slot img { width: 100%; height: 100%; display: block; }
+  #h2h { position: absolute; left: 410px; top: 220px; width: 1100px; height: 640px; background: #fff; border-radius: 28px; z-index: 55; font-family: Rubik, sans-serif; color: var(--text); overflow: hidden;
+    box-shadow: 0 1px 0 rgba(14,14,16,.04), 0 40px 80px -48px rgba(14,14,16,.35); }
+  #h2hLabel { position: absolute; left: 48px; top: 44px; font-size: 18px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  #h2hLeft { position: absolute; right: 48px; top: 36px; padding: 8px 18px; border-radius: 99px; background: #f0f0ee; font-size: 19px; font-weight: 500; color: var(--muted); }
+  #arena { position: absolute; left: 48px; top: 100px; width: 1004px; height: 290px; border-radius: 24px; overflow: hidden; background: linear-gradient(90deg, #e8f0ff 0%, #f4f3f8 50%, #ffecec 100%); }
+  .contender { position: absolute; top: 40px; width: 360px; display: grid; justify-items: center; text-align: center; }
+  .contender .av { width: 124px; height: 124px; border-radius: 99px; background: #f0f0ee; overflow: hidden; box-shadow: 0 0 0 5px #fff; }
+  .contender .av img { width: 100%; height: 100%; display: block; }
+  .contender b { margin-top: 16px; font-family: 'Rethink Sans', sans-serif; font-size: 30px; font-weight: 600; }
+  .contender span { font-size: 18px; color: var(--muted); }
+  .contender em { margin-top: 6px; font-style: normal; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #vs { position: absolute; left: 472px; top: 116px; width: 60px; height: 60px; border-radius: 99px; background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; font-size: 18px; font-weight: 800; letter-spacing: .08em; }
+  #tug { position: absolute; left: 48px; top: 420px; width: 1004px; height: 18px; border-radius: 99px; background: #f3a5a8; overflow: hidden; }
+  #tug b { position: absolute; left: 0; top: 0; bottom: 0; background: #4d8dff; border-radius: 99px; }
+  #tug s { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgba(38,38,38,.3); }
+  #h2hStatus { position: absolute; left: 48px; top: 462px; font-size: 26px; font-weight: 600; color: #065f6b; }
+  #h2hFoot { position: absolute; left: 48px; right: 48px; top: 536px; padding-top: 22px; border-top: 1px solid #ebe9e4; font-size: 18px; line-height: 1.5; color: var(--muted); }
+  #private { position: absolute; left: 410px; top: 300px; width: 1100px; height: 480px; background: #fff; border-radius: 28px; z-index: 56; font-family: Rubik, sans-serif; color: var(--text); overflow: hidden;
+    box-shadow: 0 1px 0 rgba(14,14,16,.04), 0 40px 80px -48px rgba(14,14,16,.35); }
+  #privateTitle { position: absolute; left: 50px; top: 46px; font-size: 40px; font-weight: 600; }
+  .btn { position: absolute; height: 62px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; font-weight: 500; box-sizing: border-box; }
+  .btn.neutral { background: #fff; border: 1px solid #b8b2a8; box-shadow: 0 4px 0 #d8d4cd; }
+  .btn.primary { background: linear-gradient(180deg, rgba(255,255,255,.2), transparent 50%), var(--blue); color: #fff; border: 1px solid #3b82f6; box-shadow: 0 4px 0 #1e40af; }
+  #privateEmpty { position: absolute; left: 50px; top: 150px; width: 1000px; height: 280px; box-sizing: border-box; border-radius: 22px; border: 2px dashed #d4d4d4; display: grid; justify-items: center; align-content: center; gap: 10px; text-align: center; }
+  #privateEmpty .flag { font-size: 44px; }
+  #privateEmpty strong { font-size: 28px; font-weight: 600; }
+  #privateEmpty p { margin: 0; width: 620px; font-size: 21px; line-height: 1.45; color: var(--muted); }
+
+  /* ── Outro ── */
+  #grow { position: absolute; z-index: 60; background: var(--blue); overflow: hidden; }
+  #growLabel { position: absolute; left: 0; right: 0; top: 50%; text-align: center; color: #fff; font-family: Rubik, sans-serif; font-weight: 600; white-space: nowrap; transform: translateY(-50%); }
+  #outroLine { position: absolute; left: 0; width: 1920px; top: 470px; text-align: center; z-index: 61; color: #fff; font-size: 104px; font-weight: 600; letter-spacing: -0.045em; line-height: 1.1; white-space: nowrap; }
+  #outroO { position: relative; display: inline-block; width: 2.48em; height: 0.8em; vertical-align: -0.1em; margin: 0 0.02em; }
+  #outroO .av { position: absolute; top: 0; width: 0.8em; height: 0.8em; border-radius: 99px; background: #f0f0ee; box-shadow: 0 0 0 5px var(--blue); overflow: hidden; }
+  #outroO .av img { width: 100%; height: 100%; display: block; transform: scale(1.12); }
+  #endDot { position: absolute; z-index: 62; background: var(--navy); border-radius: 99px; }
+  #end { z-index: 63; }
+  #endLockup { left: 50%; top: 380px; }
+  #endTag { position: absolute; left: 0; width: 1920px; top: 520px; text-align: center; font-size: 46px; font-weight: 500; letter-spacing: -0.02em; color: #4a4a4f; }
+  #cta { position: absolute; left: 810px; top: 640px; width: 300px; height: 80px; border-radius: 99px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+
+
+  /* ── Intro: ambition → uncertainty → "Meet Devspace." ── */
+  #intro { position: absolute; inset: 0; z-index: 70; background: var(--canvas); }
+  #introCam { position: absolute; inset: 0; transform-origin: 960px 540px; }
+  .il { position: absolute; left: 0; width: 1920px; text-align: center; font-weight: 600; letter-spacing: -0.045em; line-height: 1.12; white-space: nowrap; color: var(--ink); }
+  #il1 { top: 476px; font-size: 104px; }
+  #il2, #il3 { top: 432px; font-size: 76px; }
+  .il .grad { background: var(--accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #ilMeet { top: 250px; font-size: 92px; z-index: 2; }
+  .scrap { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; font-family: Rubik, sans-serif; color: var(--text); }
+  .card { background: #fff; border-radius: 18px; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 1px 2px rgba(20,20,40,.08), 0 22px 44px -18px rgba(20,20,40,.28); }
+  .chip { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 99px; font-size: 24px; font-weight: 500; white-space: nowrap; }
+  .chip i { width: 14px; height: 14px; border-radius: 99px; }
+  .tab { display: flex; align-items: center; gap: 12px; padding: 14px 22px 14px 18px; border-radius: 14px 14px 6px 6px; font-size: 22px; white-space: nowrap; }
+  .tab i { width: 22px; height: 22px; border-radius: 6px; background: #e8f0ff; }
+  .tab b { margin-left: 10px; font-weight: 400; color: #a8a8a4; }
+  .vid { width: 330px; overflow: hidden; }
+  .vid .thumb { position: relative; height: 170px; background: #1b1b1f; display: grid; place-items: center; }
+  .vid .thumb img { height: 140px; }
+  .vid .thumb s { position: absolute; width: 58px; height: 58px; border-radius: 99px; background: rgba(255,255,255,.92); display: grid; place-items: center; text-decoration: none; color: #0e0e10; font-size: 22px; }
+  .vid .bar { height: 6px; background: #ebe9e4; } .vid .bar u { display: block; height: 100%; width: 12%; background: var(--blue); }
+  .vid p { margin: 0; padding: 14px 18px 16px; font-size: 21px; font-weight: 500; }
+  .mini-stage { width: 210px; height: 222px; box-sizing: border-box; border-radius: 16px; padding: 14px; color: #fff; display: flex; flex-direction: column; font-family: 'Rethink Sans', sans-serif; box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 18px 34px -18px rgba(14,14,16,.55); }
+  .mini-stage p { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .mini-stage div { margin-top: 10px; flex: 1; border-radius: 12px; background: rgba(0,0,0,.18); display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+  .mini-stage img { height: 86%; }
+  .list { width: 330px; padding: 18px 20px; box-sizing: border-box; }
+  .list h4 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+  .list div { display: flex; align-items: center; gap: 12px; height: 34px; font-size: 19px; color: var(--muted); white-space: nowrap; }
+  .list div i { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #d4d4d4; box-sizing: border-box; flex: none; }
+  .list div i.ok { background: #22c55e; border-color: #22c55e; }
+  .list div i.q { border-color: #f59e0b; }
+  .code { width: 440px; background: #1b1b1f; color: #e4e4e7; border-radius: 16px; font-family: 'JetBrains Mono', monospace; font-size: 19px; line-height: 32px; padding: 14px 20px 16px; box-sizing: border-box; box-shadow: 0 22px 44px -18px rgba(20,20,40,.4); white-space: pre; }
+  .code em { display: block; font-style: normal; color: #a1a1aa; font-size: 16px; margin-bottom: 6px; }
+  .code .err { color: #ff8a8f; }
+  .sticky { width: 230px; padding: 22px 22px 26px; background: #fde68a; border-radius: 6px; font-family: 'Rethink Sans', sans-serif; font-size: 27px; font-weight: 600; color: #4a3b00; box-shadow: 0 22px 40px -20px rgba(120,90,0,.5); }
+
+  #cursor { position: absolute; left: 0; top: 0; width: 44px; height: 44px; z-index: 90; transform-origin: 6px 4px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div id="brand" class="abs">
+      <div id="lockup" class="lockup"></div>
+      <div id="tagline"></div>
+    </div>
+    <div id="devyScene" class="abs">
+      <div id="meet"></div>
+      <div id="meetSub"></div>
+    </div>
+  </div>
+
+  <canvas id="devy" width="840" height="840"></canvas>
+
+  <div id="onb" class="layer hidden"></div>
+  <div id="build" class="layer hidden">
+    <div id="buildTitle"></div>
+    <div id="buildDots"><i></i><i></i><i></i></div>
+  </div>
+
+  <div id="flood" class="hidden"></div>
+  <div id="pathScene" class="hidden">
+    <div id="pathEyebrow"></div>
+    <div id="pathTitle"></div>
+    <div id="pathSub"></div>
+    <div id="pathCards"></div>
+    <div id="pathDots"></div>
+  </div>
+
+  <div id="lesson" class="page hidden">
+    <svg id="lessonClose" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    <div id="progress"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div>
+    <div id="mcq">
+      <div id="mcqEyebrow"></div>
+      <div id="mcqPrompt"></div>
+    </div>
+    <div id="lab">
+      <div id="labTitle"></div>
+      <div id="labDesc">Finish the calculation, then print the yearly total. This focused lab keeps the task in one place.</div>
+      <div id="labTasksHead">Tasks</div>
+      <div id="editor">
+        <div id="editorBar"><span id="editorTab">yearly_hours.py</span><span id="run">▶ Run</span></div>
+        <div id="code"></div>
+      </div>
+      <div id="output"><span id="outputLabel">Output</span><span id="outputText"></span></div>
+    </div>
+    <div id="footer">
+      <div id="lessonBubble" class="bubble"></div>
+      <div id="continue" class="on">Continue</div>
+    </div>
+  </div>
+
+  <div id="complete" class="page hidden">
+    <div id="completeInner">
+      <div id="completeDevy"></div>
+      <h1 id="completeTitle">Lesson complete!</h1>
+      <p id="completeBody">You did it. You built something real with Python.</p>
+      <div id="resultCards"></div>
+      <div id="claim">Claim XP</div>
+    </div>
+    <div id="streak">
+      <div id="streakBubble" class="bubble">A new streak! Practice every day to help it grow.</div>
+      <img id="streakBolt" src="assets/icons/lightning-bolt.webp" alt="">
+      <div id="streakCount">0</div>
+      <div id="streakLabel">day streak</div>
+      <div id="week"></div>
+    </div>
+    <div class="curtain" style="background:#93c5fd"></div>
+    <div class="curtain" style="background:#3b82f6"></div>
+  </div>
+
+  <div id="motif" class="layer hidden"></div>
+  <div id="competeTitle" class="hidden"></div>
+  <div id="league" class="hidden">
+    <div id="leagueHead"><i></i>Bronze League</div>
+    <div id="leagueLeft">5 days left</div>
+    <div id="leagueSub">Ranked by Season Devy Coins earned this season</div>
+  </div>
+  <div id="h2h" class="hidden">
+    <div id="h2hLabel">This week’s matchup</div>
+    <div id="h2hLeft">4 days left</div>
+    <div id="arena"></div>
+    <div id="tug"><b></b><s></s></div>
+    <div id="h2hStatus"></div>
+    <div id="h2hFoot">Most verified coins earned this week wins. Win 3 pts · Draw 1 · Loss 0. Rivalry only — never changes your official coins or rank.</div>
+  </div>
+  <div id="private" class="hidden">
+    <div id="privateTitle">Private leagues</div>
+    <div class="btn neutral" style="left:600px;top:42px;width:220px">Join with code</div>
+    <div id="createBtn" class="btn primary" style="left:840px;top:42px;width:212px">Create a league</div>
+    <div id="privateEmpty">
+      <span class="flag">🏁</span>
+      <strong>Race the people you actually know</strong>
+      <p>Start a league for your study group or classmates, or join one with a friend’s 6-character code.</p>
+    </div>
+  </div>
+
+  <div id="grow" class="hidden"><div id="growLabel"></div></div>
+  <div id="outroLine" class="hidden"></div>
+  <div id="endDot" class="hidden"></div>
+  <div id="end" class="layer hidden">
+    <div id="endLockup" class="lockup"></div>
+    <div id="endTag"></div>
+    <div id="cta">Start learning</div>
+  </div>
+
+  <div id="intro" class="hidden">
+    <div id="introCam">
+      <div id="introScraps"></div>
+      <div id="il1" class="il"></div>
+      <div id="il2" class="il"></div>
+      <div id="il3" class="il"></div>
+    </div>
+    <div id="ilMeet" class="il"></div>
+  </div>
+
+  <svg id="cursor" class="hidden" viewBox="0 0 44 44"><path d="M6 4 L6 34 L14 26 L19.5 38 L25 35.5 L19.5 23.5 L30 23.5 Z" fill="#0e0e10" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></svg>
+</div>
+
+<script src="vendor/rive.js"></script>
+<script type="module">
+import { DotLottie } from './vendor/dotlottie-web.js'
+import { RiveSeek } from './lib/rive-seek.js'
+
+// ════════ Everything the timeline reads is declared before the first seek(). ════════
+
+const BEAT = 60 / 130
+const B = (n) => n * BEAT
+const DURATION = B(96)
+const fixture = await (await fetch('fixture.json')).json()
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const prog = (t, a, b) => clamp((t - a) / (b - a))
+const easeOutCubic = (k) => 1 - (1 - k) ** 3
+const easeInCubic = (k) => k ** 3
+const easeInOutCubic = (k) => (k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2)
+const easeOutExpo = (k) => (k >= 1 ? 1 : 1 - 2 ** (-10 * k))
+const easeOutQuint = (k) => 1 - (1 - k) ** 5
+// back.out(s), as gsap defines it — the app's own pop curve for bubbles and badges.
+const backOut = (k, s = 1.9) => 1 + (s + 1) * (k - 1) ** 3 + s * (k - 1) ** 2
+// Deterministic 0..1 noise for keystroke rhythm.
+const hash = (i) => { const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+
+// Closed-form underdamped spring step response, 0 → 1.
+function spring(t, freq = 2.2, damping = 0.55) {
+  if (t <= 0) return 0
+  const w = 2 * Math.PI * freq
+  const wd = w * Math.sqrt(1 - damping * damping)
+  return 1 - Math.exp(-damping * w * t) * (Math.cos(wd * t) + (damping * w / wd) * Math.sin(wd * t))
+}
+
+const $ = (id) => document.getElementById(id)
+const show = (el, on) => el.classList.toggle('hidden', !on)
+function make(tag, cls, parent, html = '') {
+  const el = document.createElement(tag)
+  if (cls) el.className = cls
+  if (html) el.innerHTML = html
+  parent?.appendChild(el)
+  return el
+}
+const px = (v) => `${v}px`
+function place(el, x, y, w, h) {
+  Object.assign(el.style, { left: px(x), top: px(y), ...(w != null ? { width: px(w) } : {}), ...(h != null ? { height: px(h) } : {}) })
+}
+// Clip an element (of size W×H) to the rect (x, y, w, h) in its own coordinates.
+function clipRect(el, W, H, x, y, w, h, r = 0) {
+  el.style.clipPath = `inset(${y}px ${W - x - w}px ${H - y - h}px ${x}px round ${r}px)`
+}
+const rectLerp = (a, b, k) => a.map((v, i) => lerp(v, b[i], k))
+
+// Rise out of a mask line / sink back into it.
+function maskWords(el, text) {
+  el.innerHTML = text.split(' ').map((word) => `<span class="mask"><span class="w">${word}</span></span>`).join(' ')
+  return [...el.querySelectorAll('.w')]
+}
+function riseWords(words, t, start, { stagger = 0.06, dur = 0.5 } = {}) {
+  words.forEach((w, i) => {
+    const k = easeOutCubic(prog(t, start + i * stagger, start + i * stagger + dur))
+    w.style.transform = `translateY(${(1 - k) * 110}%)`
+  })
+}
+function sinkWords(words, t, start, { stagger = 0.03, dur = 0.35, up = false } = {}) {
+  words.forEach((w, i) => {
+    const k = easeInOutCubic(prog(t, start + i * stagger, start + i * stagger + dur))
+    if (k > 0) w.style.transform = `translateY(${(up ? -1 : 1) * k * 110}%)`
+  })
+}
+// Typewriter at the app's own 18 ms per character (useTypewriter in onboarding).
+function typed(text, t, start, msPerChar = 18) {
+  const n = clamp(Math.floor((t - start) / (msPerChar / 1000)), 0, text.length)
+  return text.slice(0, n)
+}
+
+// ════════ Sound cues (read by tools/mix.py). align: onset | peak ════════
+const SFX = []
+const cue = (name, t, align = 'onset', gain = 1, dur = null) => SFX.push({ name, t, align, gain, dur })
+
+// ════════ Camera (world layer only: brand + Meet Devy) ════════
+const ZOOM = 1.06
+const CAMERA = [
+  [0, 1.0, 960, 540],
+  [B(8), ZOOM, 960, 540, easeInOutCubic],
+]
+function camera(t) {
+  let i = CAMERA.findIndex((key) => key[0] > t)
+  if (i === -1) i = CAMERA.length
+  const a = CAMERA[Math.max(0, i - 1)]
+  const b = CAMERA[Math.min(CAMERA.length - 1, i)]
+  const k = a === b ? 0 : (b[4] ?? easeInOutCubic)(prog(t, a[0], b[0]))
+  const zoom = Math.exp(lerp(Math.log(a[1]), Math.log(b[1]), k))
+  $('world').style.transform = `translate(960px, 540px) scale(${zoom}) translate(${-lerp(a[2], b[2], k)}px, ${-lerp(a[3], b[3], k)}px)`
+}
+const worldToScreen = (x, y) => ({ x: 960 + (x - 960) * ZOOM, y: 540 + (y - 540) * ZOOM })
+
+// ════════ Lottie (only the crown/medal pose, which the .riv doesn't have) ════════
+DotLottie.setWasmUrl(new URL('./vendor/dotlottie-player.wasm', import.meta.url).href)
+function lottiePlayer(host, src, w, h, fps) {
+  const canvas = make('canvas', '', host)
+  canvas.width = w
+  canvas.height = h
+  const player = new DotLottie({ canvas, src, autoplay: false, loop: false, renderConfig: { autoResize: false, devicePixelRatio: 1 } })
+  const loaded = new Promise((resolve, reject) => {
+    player.addEventListener('load', resolve)
+    player.addEventListener('loadError', reject)
+  })
+  return { loaded, at(t, start) { player.setFrame(clamp((t - start) * fps, 0, player.totalFrames - 1)) } }
+}
+const crownDevy = lottiePlayer($('completeDevy'), 'assets/devy/lesson-complete.lottie', 360, 360, 24)
+
+// ════════ Devy (Rive, all_devy.riv via lib/rive-seek.js) ════════
+const devyRive = await RiveSeek.load('assets/devy/all_devy.riv', $('devy'))
+// Platform centre inside the 840 canvas: measured at 600 px (296.5, 426) × 1.4.
+const PC = { x: 296.5 * 1.4, y: 426 * 1.4 }
+const PLATFORM_W = 309 * 1.4
+const PLATFORM_H = 144 * 1.4
+// Meet Devy's platform, in world space (the brand pill lands here).
+const MEET_PLATFORM = { x: 185 + PC.x, y: 104 + PC.y }
+const MEET_SCREEN = worldToScreen(MEET_PLATFORM.x, MEET_PLATFORM.y)
+
+// ════════ Brand lockups (logo.svg is 129×19; the mark is its first 30.76×15.07) ════════
+const LOGO_SCALE = 6
+const MARK_W = 30.7623 * LOGO_SCALE
+const MARK_H = 15.0746 * LOGO_SCALE
+const WORD_X = 32.8 * LOGO_SCALE
+const WORD_W = (129 - 32.8) * LOGO_SCALE
+const LOCKUP_W = WORD_X + WORD_W
+const logoSvg = await (await fetch('assets/brand/logo.svg')).text()
+function buildLockup(host) {
+  const doc = new DOMParser().parseFromString(logoSvg, 'image/svg+xml')
+  doc.querySelector('rect')?.remove()
+  doc.querySelector('defs')?.remove()
+  doc.querySelectorAll('[fill="white"]').forEach((p) => p.setAttribute('fill', '#0e0e10'))
+  const root = doc.documentElement
+  root.setAttribute('viewBox', '32.8 0 96.2 19')
+  root.setAttribute('width', WORD_W)
+  root.setAttribute('height', 19 * LOGO_SCALE)
+  const pill = make('div', 'pill', host)
+  const mark = make('img', 'mark', host)
+  mark.src = 'assets/brand/logo-mark.png'
+  const word = make('div', 'word', host)
+  word.appendChild(root)
+  Object.assign(host.style, { width: px(LOCKUP_W), marginLeft: px(-LOCKUP_W / 2) })
+  place(word, WORD_X, (MARK_H - 19 * LOGO_SCALE) / 2 + 2)
+  place(mark, 0, 0, MARK_W, MARK_H)
+  return { pill, mark, word }
+}
+// The black→pill→mark build, shared by the opening and the end card.
+function lockupBuild(L, t, start, { closeAt = Infinity, wordOutAt = Infinity } = {}) {
+  const stretch = spring(t - start - 0.2, 1.7, 0.5)
+  const h = MARK_H * spring(t - start, 2.6, 0.7)
+  const pw = lerp(h, MARK_W, stretch)
+  Object.assign(L.pill.style, { width: px(pw), height: px(h), borderRadius: px(h / 2), left: px(MARK_W / 2 - pw / 2), top: px(MARK_H / 2 - h / 2) })
+  const open = easeOutCubic(prog(t, start + 0.55, start + 0.95)) * (1 - easeInOutCubic(prog(t, closeAt, closeAt + B(0.6))))
+  L.mark.style.clipPath = `circle(${open * 60}% at 50% 50%)`
+  const wipe = easeOutExpo(prog(t, start + 0.9, start + 1.6)) * (1 - easeInOutCubic(prog(t, wordOutAt, wordOutAt + 0.32)))
+  L.word.style.clipPath = `inset(0 ${(1 - wipe) * 100}% 0 0)`
+  L.word.style.transform = `translateX(${(1 - wipe) * -60}px)`
+  return { open, h, pw }
+}
+const brandL = buildLockup($('lockup'))
+const endL = buildLockup($('endLockup'))
+
+$('tagline').innerHTML = '<span id="taglineLead"></span> <span id="taglineHi"><span class="hl"></span><span id="taglineHiText"></span></span>'
+const taglineLead = maskWords($('taglineLead'), 'A learning platform for')
+const taglineHiWords = maskWords($('taglineHiText'), 'tech aspirants.')
+const taglineWords = [...taglineLead, ...taglineHiWords]
+const meetWords = maskWords($('meet'), 'Meet Devy.')
+const meetSubWords = maskWords($('meetSub'), 'Your learning guide.')
+
+// ════════ Onboarding: three real questions (src/components/onboarding/index.jsx COPY + data) ════════
+const QUESTIONS = [
+  { qs: 16, title: 'What brings you here?', sub: 'This shapes the examples we use, not what you can access.',
+    options: ['I want to build a professional career', 'To advance my current career', 'To create useful work and real projects', 'Just to have fun', 'I have a different reason'],
+    pick: 0, reply: 'That’s a strong reason to start.' },
+  { qs: 20, title: 'Which of these sounds most like you?', sub: 'Not sure? Pick “Help me choose” and we’ll ask a different way.',
+    options: ['Help me choose', 'Machine Learning Engineer', 'AI Application Developer', 'Automation Developer'],
+    pick: 1, reply: 'Machine Learning Engineer it is.' },
+  { qs: 24, title: 'Where are you starting from?', sub: 'Be honest — it only affects where we begin, not what you can reach.',
+    options: ['Complete beginner', 'I’ve watched tutorials', 'I’ve tried small exercises', 'I’ve built small projects', 'I’ve built something people used'],
+    pick: 0, reply: 'We’ll start at your level.' },
+]
+const OPT_TOP = 370
+const OPT_STEP = 78
+for (const q of QUESTIONS) {
+  q.el = make('div', 'q', $('onb'))
+  q.titleWords = maskWords(make('h2', '', q.el), q.title)
+  q.subWords = maskWords(make('p', '', q.el), q.sub)
+  q.opts = q.options.map((label, i) => {
+    const o = make('div', 'opt', q.el, label)
+    o.style.top = px(OPT_TOP + i * OPT_STEP)
+    return o
+  })
+  q.bubble = make('div', 'bubble', $('onb'))
+  q.click = B(q.qs + 2)
+  q.replyAt = q.click + 0.18
+  q.exitAt = B(q.qs + 3.55)
+  cue('chip-tap', q.click)
+  cue('bubble-pop', q.replyAt + 0.12, 'peak', 0.8)
+}
+// Devy's onboarding seat (screen space): platform centre and scale.
+const SEAT = { x: 360, y: 900, s: 0.6 }
+const BUBBLE_ANCHOR = { x: 440, y: 650 } // bubble's bottom-left corner
+
+const BUILD_LINES = ['Mapping what you already know…', 'Ordering the concepts…', 'Finding where practice fits…']
+const buildTitleWords = maskWords($('buildTitle'), 'Building your route')
+const buildLines = BUILD_LINES.map((text, i) => {
+  const el = make('div', 'buildLine', $('build'))
+  return { words: maskWords(el, text), at: B(28.7) + i * 1.25 }
+})
+const buildDots = [...$('buildDots').children]
+const THINK = { x: 960, y: 620, s: 0.8 }
+
+// ════════ Drop: path stage cards (ml_engineer ladder, StageCards.jsx art + tints) ════════
+const STAGES = [
+  ['Python fundamentals', 'programming-with-variables'],
+  ['Math & statistics for ML', 'exploring-data-visually'],
+  ['Core ML algorithms', 'scientific-thinking'],
+  ['Model training & evaluation', 'probability-and-chance'],
+  ['Deployment & MLOps', 'thinking-in-code'],
+]
+const CARD_TINTS = ['#168a46', '#e8702a', '#2563eb', '#d4a017', '#7c3aed']
+const CARD_SCALE = 2.0
+const cards = STAGES.map(([label, art], i) => {
+  const el = make('div', 'stage-card', $('pathCards'), `<div class="top"><span class="num">${i + 1}</span>${i === 0 ? '<span class="start">Start here</span>' : ''}</div>
+    <p class="label">${label}</p><div class="art"><img src="assets/art/${art}.png" alt=""></div>`)
+  el.style.background = `linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 55%), ${CARD_TINTS[i]}`
+  return el
+})
+const pathDots = STAGES.map(() => make('i', '', $('pathDots')))
+const pathEyebrowWords = maskWords($('pathEyebrow'), 'Your learning path')
+const pathTitleWords = maskWords($('pathTitle'), 'Machine Learning Engineer it is.')
+const pathSubWords = maskWords($('pathSub'), 'Here’s a quick view of the skills you’ll build, step by step.')
+function slotFor(offset) {
+  const side = Math.sign(offset)
+  const distance = Math.abs(offset)
+  const x = distance <= 1 ? 92 * distance : 92 + 84 * (distance - 1)
+  const scale = distance <= 1 ? 1 - 0.1 * distance : 0.9
+  return { x: side * x, scale, rotate: side * 2 * Math.min(distance, 1) }
+}
+const DROP = B(32)
+const FLOOD_ORIGIN = THINK
+const SCAN_START = B(33.4)
+const SCAN_DUR = 1.15 + STAGES.length * 0.08
+cue('drop-impact', DROP, 'onset', 0.9)
+cue('cards-swoosh', SCAN_START + 0.55, 'peak', 0.8)
+
+// ════════ Lesson page: Writing Programs (lessonContent.js) ════════
+const PAGE = { x: 160, y: 70, w: 1600, h: 940 }
+const mcqEyebrowWords = maskWords($('mcqEyebrow'), 'Check variables and expressions')
+const mcqPromptWords = maskWords($('mcqPrompt'), 'What do computers use variables for?')
+const MCQ_OPTIONS = ['To display information on the screen', 'To store information for later use', 'To make the program run faster', 'To hide values from the console']
+const MCQ_CORRECT = 1
+const mcqOpts = MCQ_OPTIONS.map((label, i) => {
+  const o = make('div', 'opt', $('mcq'), `<span>${label}</span>`)
+  o.style.top = px(200 + i * 88)
+  if (i === MCQ_CORRECT) make('span', 'tick', o, '✓')
+  return o
+})
+const mcqTick = mcqOpts[MCQ_CORRECT].querySelector('.tick')
+const progressFills = [...$('progress').querySelectorAll('b')]
+const labTitleWords = maskWords($('labTitle'), 'Try the calculation')
+const TASKS = ['Calculate the yearly total', 'Print the result']
+const taskEls = TASKS.map((label, i) => {
+  const el = make('div', 'task', $('lab'), `<span class="box">✓</span><span>${label}</span>`)
+  el.style.top = px(412 + i * 58)
+  return el
+})
+// The real starter code, then the two lines the learner types.
+const CODE = [
+  'hours_per_week = 40',
+  'weeks_per_year = 52',
+  '',
+  '# Calculate and print the yearly total',
+  'yearly_total = hours_per_week * weeks_per_year',
+  'print(yearly_total)',
+]
+const TYPED_FROM_LINE = 4
+const OUTPUT = '2080'
+function tokens(line) {
+  if (line.startsWith('#')) return [['tk-com', line]]
+  return line.split(/(\d+|print|[=*()])/).filter(Boolean).map((part) => [
+    /^\d+$/.test(part) ? 'tk-num' : part === 'print' ? 'tk-fn' : /^[=*()]$/.test(part) ? 'tk-op' : '', part,
+  ])
+}
+function renderLine(line, n) {
+  let left = n
+  return tokens(line).map(([cls, text]) => {
+    const shown = text.slice(0, Math.max(0, left))
+    left -= text.length
+    return shown ? `<span class="${cls}">${shown}</span>` : ''
+  }).join('')
+}
+// Keystroke schedule: a real rhythm — uneven gaps, longer after spaces and symbols.
+const TYPE_START = B(43.5)
+const TYPE_WINDOW = 2.5
+const keyTimes = []
+{
+  let t = 0
+  let k = 0
+  CODE.slice(TYPED_FROM_LINE).forEach((line, li) => {
+    if (li > 0) t += 0.22 // Enter, then a breath
+    for (let c = 0; c < line.length; c++) {
+      const ch = line[c]
+      t += 0.03 + 0.03 * hash(k++) + (ch === ' ' || '=*()_'.includes(ch) ? 0.018 : 0)
+      keyTimes.push({ line: li, col: c + 1, t })
+    }
+  })
+  // Fit the uneven rhythm into the window without losing its shape.
+  const scale = TYPE_WINDOW / t
+  keyTimes.forEach((key) => { key.t = TYPE_START + key.t * scale })
+}
+const TYPE_END = keyTimes.at(-1).t
+const LINE5_DONE = keyTimes.filter((k) => k.line === 0).at(-1).t
+const RUN_AT = B(49.4)
+const OUTPUT_AT = RUN_AT + 0.28
+cue('typing', TYPE_START, 'onset', 0.55, TYPE_END - TYPE_START + 0.1)
+cue('run-click', RUN_AT)
+
+const MCQ_CLICK = B(39.2)
+const MCQ_CHECK = MCQ_CLICK + 0.45
+const CONTINUE_CLICK = B(42.2)
+cue('chip-tap', MCQ_CLICK)
+cue('bubble-pop', MCQ_CHECK + 0.2, 'peak', 0.8)
+cue('chip-tap', CONTINUE_CLICK)
+cue('bubble-pop', OUTPUT_AT + 0.35, 'peak', 0.8)
+
+// ════════ Lesson complete + streak ════════
+const ICONS = {
+  bolt: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2.2"/><path d="M12 9v4l2.5 2M10 3h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+}
+const secs = fixture.lesson.seconds
+const RESULTS = [
+  { tone: '245 180 0', label: 'Total XP', icon: 'bolt', value: null },
+  { tone: '34 197 94', label: fixture.lesson.accuracy >= 100 ? 'Perfect' : 'Great', icon: 'target', value: `${fixture.lesson.accuracy}%` },
+  { tone: '59 130 246', label: secs < 180 ? 'Speedy' : 'Time', icon: 'clock', value: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` },
+]
+const resultEls = RESULTS.map((r) => {
+  const el = make('div', 'result-card', $('resultCards'), `<span class="rl">${r.label}</span><span class="rv" style="color: rgb(${r.tone})">${ICONS[r.icon]}<span class="num">${r.value ?? ''}</span></span>`)
+  el.style.background = `linear-gradient(180deg, rgb(255 255 255 / 0.22), transparent 45%), rgb(${r.tone})`
+  el.style.boxShadow = `0 4px 0 color-mix(in srgb, rgb(${r.tone}) 68%, #000)`
+  return el
+})
+const xpNum = resultEls[0].querySelector('.num')
+const COMPLETE_AT = B(52)
+// Output panel rect inside the page — the completion page grows out of it.
+const OUTPUT_RECT = [620, 660, 900, 130]
+// Claim XP centre in page coords: inner (300, 382) × 2 + offset (200, 40).
+const CLAIM = { x: 800, y: 804 }
+const CLAIM_CLICK = B(59.6)
+cue('success', COMPLETE_AT + 0.3, 'onset', 0.8)
+cue('chip-tap', CLAIM_CLICK)
+cue('coin', CLAIM_CLICK + 0.05, 'onset', 0.8)
+const curtains = [...document.querySelectorAll('.curtain')]
+const HOLE = { x: 800, y: 320 }
+const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const TODAY = 3 // 2026-10-08 is a Thursday
+const dayEls = WEEKDAYS.map((letter, i) => {
+  const d = make('div', 'day', $('week'), `<span class="${i === TODAY ? 'today' : ''}">${letter}</span><i class="${i === TODAY ? 'done' : ''}">${i === TODAY ? '✓' : ''}</i>`)
+  d.style.left = px(40 + i * 97.1)
+  return d
+})
+const streakBubble = $('streakBubble')
+
+// ════════ Compete ════════
+const LEAGUE = [
+  { id: 'mina-t', name: 'Mina Torres', role: 'Data Scientist path', coins: 34 },
+  { id: 'tunde-a', name: 'Tunde Adeyemi', role: 'AI Engineer path', coins: 27 },
+  { id: 'you', name: 'You', role: 'Machine Learning Engineer path', coins: 20 },
+  { id: 'lucas-m', name: 'Lucas Müller', role: 'Machine Learning Engineer path', coins: 15 },
+  { id: 'zara-q', name: 'Zara Qureshi', role: 'UX/UI Designer', coins: 12 },
+  { id: 'rasmus-j', name: 'Rasmus Jensen', role: 'Data Scientist path', coins: 9 },
+  { id: 'mei-w', name: 'Mei Wong', role: 'Machine Learning Engineer path', coins: 5 },
+  { id: 'chidi-e', name: 'Chidi Eze', role: 'Student', coins: 0 },
+]
+const TROPHY = ['#b8860b', '#8a8d97', '#a35a25']
+const LEAGUE_BOX = { x: 510, y: 120 }
+const ROW_TOP = 146
+const ROW_STEP = 84
+const rows = LEAGUE.map((p, rank) => {
+  const r = make('div', `row${p.id === 'you' ? ' you' : ''}`, $('league'))
+  r.style.top = px(ROW_TOP + rank * ROW_STEP)
+  const rankHtml = rank < 3 ? `<svg viewBox="0 0 24 24" width="26" height="26" fill="${TROPHY[rank]}" style="margin-top:-2px"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3Zm0 4H6v1a2 2 0 0 0 1 1.7V7Zm10 0v2.7A2 2 0 0 0 18 8V7h-1Z"/></svg>` : String(rank + 1)
+  r.innerHTML = `<span class="rank">${rankHtml}</span><span class="slot"><img src="assets/avatars/${p.id}.svg" alt=""></span>
+    <span class="name">${p.name}</span><span class="role">${p.role}</span><span class="coins">${p.coins}</span>`
+  return r
+})
+// Weekday dot centres (screen) — tokens lift off from here.
+const dayCenter = (i) => ({ x: PAGE.x + 420 + 40 + 97.1 * i + 48.5, y: PAGE.y + 680 + 24 + 30 + 12 + 29 })
+// Token i leaves weekday i (the eighth spawns from today) and lands in its league row.
+const TOKEN_IDS = ['mina-t', 'tunde-a', 'zara-q', 'you', 'lucas-m', 'rasmus-j', 'mei-w', 'chidi-e']
+const SCATTER = [[330, 300], [640, 210], [1290, 205], [1590, 320], [420, 790], [760, 880], [1170, 880], [1530, 770]]
+const tokens$ = TOKEN_IDS.map((id, i) => {
+  const el = make('div', 'tok hidden', $('stage'), `<img src="assets/avatars/${id}.svg" alt="">`)
+  return { id, el, img: el.firstChild, from: dayCenter(i === 7 ? TODAY : i), scatter: SCATTER[i], rank: LEAGUE.findIndex((p) => p.id === id) }
+})
+const COMPETE = B(64)
+const DOCK = B(67.7)
+tokens$.forEach((tok, i) => cue('avatar-pop', COMPETE + 0.15 + i * 0.05 + 0.22, 'onset', 0.45))
+for (let y = 0; y < 8; y++) {
+  for (let x = 0; x < 14; x++) {
+    const img = make('img', '', $('motif'))
+    img.src = 'assets/brand/logo-mark.png'
+    place(img, x * 150 + (y % 2) * 75 - 30, y * 150 - 20)
+  }
+}
+const competeWords = maskWords($('competeTitle'), 'Compete with friends in your league.')
+// H2H arena
+const contender = (id, name, role, coins, left) => {
+  const c = make('div', 'contender', $('arena'), `<span class="av"><img src="assets/avatars/${id}.svg" alt=""></span><b>${name}</b><span>${role}</span><em>${coins} coins</em>`)
+  c.style.left = px(left)
+  return c
+}
+contender('you', 'You', 'Machine Learning Engineer path', 20, 50)
+contender('lucas-m', 'Lucas Müller', 'Machine Learning Engineer path', 15, 594)
+make('div', '', $('arena')).id = 'vs'
+$('vs').textContent = 'VS'
+const statusWords = maskWords($('h2hStatus'), 'You lead Lucas by 5')
+const H2H_AT = B(72.6)
+const PRIVATE_AT = B(76.8)
+const CREATE_CLICK = B(79.6)
+cue('chip-tap', CREATE_CLICK)
+
+// ════════ Outro ════════
+const GROW_AT = B(80)
+const GROW_FROM = [410 + 840, 300 + 42, 212, 62]
+const growLabelWords = maskWords($('growLabel'), 'Create a league')
+cue('page-whoosh', GROW_AT + 1.0, 'peak', 0.7)
+const OUTRO_AVATARS = ['you', 'lucas-m', 'mina-t', 'tunde-a']
+$('outroLine').innerHTML = '<span id="outroLead"></span><span id="outroO"></span><span id="outroTail"></span>'
+const outroLeadWords = maskWords($('outroLead'), 'Learn with y')
+const outroTailWords = maskWords($('outroTail'), 'ur friends.')
+const outroAvatars = OUTRO_AVATARS.map((id, i) => {
+  const el = make('span', 'av', $('outroO'), `<img src="assets/avatars/${id}.svg" alt="">`)
+  el.style.left = `${i * 0.56}em`
+  el.style.zIndex = String(1 + i)
+  return el
+})
+const COLLAPSE = B(87.4)
+const END_AT = B(89.4)
+const O_CENTER = { x: 960, y: 520 } // measured once fonts are in (below)
+const END_CENTER = { x: 960, y: 380 + MARK_H / 2 }
+const endTagWords = maskWords($('endTag'), 'A learning platform for tech aspirants.')
+cue('sparkle', END_AT + 0.75, 'peak', 0.8)
+
+// ════════ Cursor: [time, x, y]; clicks dip the pointer ════════
+const opt = (q, i) => ({ x: 1000, y: OPT_TOP + i * OPT_STEP + 32 })
+const CURSOR = [
+  { from: B(15.8), to: B(28), keys: [
+    [B(15.8), 1700, 1150], [QUESTIONS[0].click - 0.25, opt(0, 0).x, opt(0, 0).y], [QUESTIONS[0].click + 0.3, opt(0, 0).x + 30, opt(0, 0).y + 20],
+    [QUESTIONS[1].click - 0.25, opt(1, 1).x, opt(1, 1).y], [QUESTIONS[1].click + 0.3, opt(1, 1).x + 30, opt(1, 1).y + 20],
+    [QUESTIONS[2].click - 0.25, opt(2, 0).x, opt(2, 0).y], [QUESTIONS[2].click + 0.4, 1500, 1150]],
+    clicks: QUESTIONS.map((q) => q.click) },
+  { from: B(37.9), to: B(50.4), keys: [
+    [B(37.9), 1700, 1150], [MCQ_CLICK - 0.25, PAGE.x + 640, PAGE.y + 100 + 200 + 88 + 36], [MCQ_CLICK + 0.3, PAGE.x + 700, PAGE.y + 470],
+    [CONTINUE_CLICK - 0.25, PAGE.x + 1390, PAGE.y + 820 + 58], [CONTINUE_CLICK + 0.6, PAGE.x + 1300, PAGE.y + 600],
+    [RUN_AT - 0.3, PAGE.x + 620 + 900 - 78, PAGE.y + 110 + 32], [RUN_AT + 0.6, 1750, 1150]],
+    clicks: [MCQ_CLICK, CONTINUE_CLICK, RUN_AT] },
+  { from: B(58.6), to: B(60.4), keys: [
+    [B(58.6), 1500, 1150], [CLAIM_CLICK - 0.2, PAGE.x + CLAIM.x + 40, PAGE.y + CLAIM.y + 4], [CLAIM_CLICK + 0.5, 1500, 1150]],
+    clicks: [CLAIM_CLICK] },
+  { from: B(78.2), to: B(80.3), keys: [
+    [B(78.2), 1750, 1150], [CREATE_CLICK - 0.2, GROW_FROM[0] + 120, GROW_FROM[1] + 36], [CREATE_CLICK + 0.35, GROW_FROM[0] + 130, GROW_FROM[1] + 46]],
+    clicks: [CREATE_CLICK] },
+]
+
+// ════════ Scenes ════════
+
+function brandScene(t) {
+  const on = t < B(11)
+  show($('brand'), on)
+  if (!on) return
+  const { open } = lockupBuild(brandL, t, 0, { closeAt: B(7.6), wordOutAt: B(7.2) })
+  // Fold: the navy pill folds into a circle, travels to the platform, squashes into its silhouette.
+  const fold = spring(t - B(8.2), 1.5, 0.62)
+  const h = MARK_H
+  const stretch = spring(t - 0.2, 1.7, 0.5)
+  if (t >= B(8.2)) {
+    const pw = lerp(lerp(h, MARK_W, stretch), MARK_H, fold)
+    Object.assign(brandL.pill.style, { width: px(pw), height: px(h), borderRadius: px(h / 2), left: px(MARK_W / 2 - pw / 2), top: px(MARK_H / 2 - h / 2) })
+  }
+  riseWords(taglineLead, t, 1.25, { stagger: 0.07, dur: 0.55 })
+  riseWords(taglineHiWords, t, 1.62, { stagger: 0.08, dur: 0.5 })
+  // The highlight collapses fully before the words finish sinking, so no sliver is left behind.
+  const hl = easeInOutCubic(prog(t, 1.4, 1.85)) * (1 - easeInOutCubic(prog(t, B(7.0), B(7.45))))
+  const hlEl = $('taglineHi').querySelector('.hl')
+  hlEl.style.transform = `scaleX(${hl})`
+  hlEl.style.visibility = hl < 0.01 ? 'hidden' : 'visible'
+  sinkWords(taglineWords, t, B(6.9))
+  const travel = easeInOutCubic(prog(t, B(8.2), B(9.2)))
+  const lockupCenterX = 960 - LOCKUP_W / 2 + MARK_W / 2
+  $('lockup').style.transform = `translate(${travel * (MEET_PLATFORM.x - lockupCenterX)}px, ${travel * (MEET_PLATFORM.y - (430 + MARK_H / 2))}px)`
+  const squash = spring(t - B(9.0), 2.0, 0.6)
+  if (squash > 0) {
+    const sw = lerp(MARK_H, PLATFORM_W, squash)
+    const sh = lerp(MARK_H, PLATFORM_H, squash)
+    Object.assign(brandL.pill.style, { width: px(sw), height: px(sh), borderRadius: '50%', left: px(MARK_W / 2 - sw / 2), top: px(MARK_H / 2 - sh / 2) })
+  }
+  brandL.pill.style.visibility = t < PLATFORM_REVEAL + 0.3 && open < 0.999 ? 'visible' : 'hidden'
+}
+
+const PLATFORM_REVEAL = B(9.4)
+const POP_START = B(9.9)
+// Timeline 1, remapped: ears peek, duck, pop into the air, land arms-up → the wave at 1.25× → idle.
+function devyPopTime(t) {
+  const s = t - POP_START
+  if (s < 0) return 0
+  if (s < 1.15) return 5.25 + s
+  const wave = 9.6 + (s - 1.15) * 1.25
+  return wave < 11.5 ? wave : 11.5 + (s - 1.15 - (11.5 - 9.6) / 1.25)
+}
+
+function meetScene(t) {
+  const on = t >= PLATFORM_REVEAL && t < B(17)
+  show($('devyScene'), on)
+  if (!on) return
+  riseWords(meetWords, t, B(11.3), { stagger: 0.09, dur: 0.6 })
+  riseWords(meetSubWords, t, B(12.6), { stagger: 0.06, dur: 0.5 })
+  sinkWords([...meetWords, ...meetSubWords], t, B(15), { stagger: 0.04 })
+}
+
+// Devy's whole performance, as one pose track: where he stands and which timelines play.
+const LAUNCHES = [...QUESTIONS.map((q) => q.click + 0.05), MCQ_CHECK + 0.05, OUTPUT_AT + 0.1]
+const DROP_LAUNCH = DROP - 0.45
+const LESSON_DEVY = { from: B(37.9), to: B(52.2), x: PAGE.x + 120, y: PAGE.y + 820 + 92, s: 0.22 }
+const POSES = [
+  [PLATFORM_REVEAL, { x: MEET_SCREEN.x, y: MEET_SCREEN.y, s: ZOOM }],
+  [B(15.1), { x: MEET_SCREEN.x, y: MEET_SCREEN.y, s: ZOOM }],
+  [B(16.3), SEAT],
+  [B(27.7), SEAT],
+  [B(28.6), THINK],
+]
+function poseAt(t) {
+  if (t >= LESSON_DEVY.from) return LESSON_DEVY
+  let i = POSES.findIndex(([at]) => at > t)
+  if (i === -1) return POSES.at(-1)[1]
+  if (i === 0) return POSES[0][1]
+  const [ta, a] = POSES[i - 1]
+  const [tb, b] = POSES[i]
+  const k = easeInOutCubic(prog(t, ta, tb))
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), s: lerp(a.s, b.s, k) }
+}
+function devyLayers(t) {
+  if (t < B(15.1)) return [{ name: 'Timeline 1', time: devyPopTime(t) }]
+  if (t >= LESSON_DEVY.from) {
+    const local = t - LESSON_DEVY.from
+    const hop = LAUNCHES.find((L) => t >= L && t < L + 1.6)
+    if (hop !== undefined) return [{ name: 'launch', time: t - hop }]
+    return local < 1.6 ? [{ name: 'bridge_home', time: local }] : [{ name: 'idle_state', time: local - 1.6 }, { name: 'blink', time: (local * 0.9) % 4 }]
+  }
+  if (t >= DROP_LAUNCH) return [{ name: 'launch', time: t - DROP_LAUNCH }]
+  if (t >= B(28.3)) return [{ name: 'idle_state', time: t - B(15.1) }, { name: 'look_x', time: 1 + 0.85 * Math.sin((t - B(28.3)) * 2.2) }]
+  const hop = LAUNCHES.find((L) => t >= L && t < L + 1.6)
+  if (hop !== undefined) return [{ name: 'launch', time: t - hop }]
+  return [{ name: 'idle_state', time: t - B(15.1) }, { name: 'blink', time: ((t - B(15.1)) * 0.9) % 4 }]
+}
+function devyTrack(t) {
+  const canvas = $('devy')
+  const on = (t >= PLATFORM_REVEAL && t < DROP + 0.5) || (t >= LESSON_DEVY.from && t < LESSON_DEVY.to)
+  show(canvas, on)
+  if (!on) return
+  const p = poseAt(t)
+  canvas.style.transform = `translate(${p.x - PC.x * p.s}px, ${p.y - PC.y * p.s}px) scale(${p.s})`
+  canvas.style.zIndex = t >= LESSON_DEVY.from ? '45' : '25'
+  // Meet Devy: the platform wipes open from its own centre inside the landed pill.
+  const reveal = easeOutCubic(prog(t, PLATFORM_REVEAL, PLATFORM_REVEAL + 0.3))
+  canvas.style.clipPath = t < PLATFORM_REVEAL + 0.3 ? `circle(${reveal * 600}px at ${PC.x}px ${PC.y}px)` : 'none'
+  devyRive.draw(devyLayers(t))
+}
+
+function onboardingScene(t) {
+  const on = t >= B(15.4) && t < B(28.2)
+  show($('onb'), on)
+  if (!on) return
+  for (const q of QUESTIONS) {
+    const start = B(q.qs) - 0.15
+    const enter = easeOutCubic(prog(t, start, start + 0.6))
+    const exit = easeInCubic(prog(t, q.exitAt, q.exitAt + 0.42))
+    const visible = t >= start - 0.01 && t < q.exitAt + 0.45
+    show(q.el, visible)
+    q.el.style.transform = `translateX(${(1 - enter) * 1150 - exit * 2500}px)`
+    riseWords(q.titleWords, t, start + 0.08, { stagger: 0.05, dur: 0.45 })
+    riseWords(q.subWords, t, start + 0.2, { stagger: 0.02, dur: 0.4 })
+    q.opts.forEach((o, i) => {
+      const k = spring(t - (start + 0.3 + i * 0.05), 2.4, 0.62)
+      const pop = i === q.pick ? 1 + 0.035 * Math.sin(Math.PI * prog(t, q.click, q.click + 0.26)) : 1
+      o.style.transform = `translateY(${(1 - k) * 34}px) scale(${lerp(0.94, 1, k) * pop})`
+      o.style.visibility = t >= start + 0.3 + i * 0.05 ? 'visible' : 'hidden'
+      o.classList.toggle('sel', i === q.pick && t >= q.click)
+    })
+    // Devy's reply: pops with an overshoot (back.out 2.2), types at 18 ms/char, then folds back into Devy.
+    const b = q.bubble
+    const inK = backOut(prog(t, q.replyAt, q.replyAt + 0.4), 2.2)
+    const outK = easeInCubic(prog(t, q.exitAt, q.exitAt + 0.3))
+    show(b, t >= q.replyAt && t < q.exitAt + 0.3)
+    place(b, BUBBLE_ANCHOR.x, 0)
+    b.style.top = 'auto'
+    b.style.bottom = px(1080 - BUBBLE_ANCHOR.y)
+    b.style.transform = `translateX(${(1 - clamp(inK)) * -12}px) scale(${lerp(0.8, 1, inK) * (1 - outK)})`
+    const text = typed(q.reply, t, q.replyAt + 0.1)
+    b.innerHTML = text + (text.length < q.reply.length ? '<span class="caret"></span>' : '')
+  }
+}
+
+function buildScene(t) {
+  const on = t >= B(27.9) && t < DROP + 0.4
+  show($('build'), on)
+  if (!on) return
+  riseWords(buildTitleWords, t, B(28.4), { stagger: 0.06, dur: 0.45 })
+  buildLines.forEach((line, i) => {
+    riseWords(line.words, t, line.at, { stagger: 0.03, dur: 0.35 })
+    if (i < buildLines.length - 1) sinkWords(line.words, t, buildLines[i + 1].at - 0.15, { up: true, stagger: 0.02, dur: 0.3 })
+  })
+  buildDots.forEach((d, i) => {
+    const phase = (t * 2.6 - i * 0.22) % 1
+    d.style.transform = `translateY(${-9 * Math.max(0, Math.sin(phase * Math.PI * 2))}px)`
+  })
+}
+
+function dropScene(t) {
+  const floodOn = t >= DROP && t < B(37.1)
+  show($('flood'), floodOn)
+  const card0 = { x: 960, y: 590 - 0.06 * 120 }
+  if (floodOn) {
+    const o = FLOOD_ORIGIN
+    const cover = Math.hypot(Math.max(o.x, 1920 - o.x), Math.max(o.y, 1080 - o.y)) + 4
+    const k = easeOutCubic(prog(t, DROP, DROP + 0.35))
+    // Later the gradient shrinks back into the lifted Python card.
+    const back = easeInOutCubic(prog(t, B(36.1), B(36.95)))
+    const cx = lerp(o.x, card0.x, back)
+    const cy = lerp(o.y, card0.y, back)
+    const coverBack = Math.hypot(Math.max(cx, 1920 - cx), Math.max(cy, 1080 - cy)) + 4
+    $('flood').style.clipPath = `circle(${back > 0 ? coverBack * (1 - back) : k * cover}px at ${cx}px ${cy}px)`
+  }
+
+  const on = t >= B(32.2) && t < B(37.9)
+  show($('pathScene'), on)
+  if (!on) return
+  riseWords(pathEyebrowWords, t, B(32.3), { stagger: 0.04, dur: 0.4 })
+  riseWords(pathTitleWords, t, B(32.45), { stagger: 0.07, dur: 0.5 })
+  riseWords(pathSubWords, t, B(32.9), { stagger: 0.025, dur: 0.4 })
+  sinkWords([...pathEyebrowWords, ...pathTitleWords, ...pathSubWords], t, B(35.8), { stagger: 0.015 })
+
+  const burst = (i) => spring(t - B(32.25) - i * 0.04, 1.5, 0.55)
+  const position = lerp(STAGES.length - 1, 0, easeOutQuint(prog(t, SCAN_START, SCAN_START + SCAN_DUR)))
+  const settle = spring(t - (SCAN_START + SCAN_DUR - 0.1), 2.2, 0.5)
+  // The other stages slide back behind Python fundamentals before the page opens.
+  const collapse = easeInOutCubic(prog(t, B(36), B(36.8)))
+  cards.forEach((el, i) => {
+    const s = slotFor(i - position)
+    const b = burst(i)
+    const lift = i === 0 ? settle * 0.06 : 0
+    const c = i === 0 ? 0 : collapse
+    const scale = CARD_SCALE * lerp(0.2, s.scale, b) * (1 + lift) * lerp(1, 0.7, c)
+    el.style.transform = `translate(${(s.x / 100) * 212 * CARD_SCALE * b * (1 - c)}px, ${-lift * 120}px) rotate(${s.rotate * b * (1 - c)}deg) scale(${scale})`
+    el.style.zIndex = String(i === 0 ? 20 : 10 - Math.min(Math.ceil(Math.abs(i - position)), 2))
+    el.style.visibility = (i > 0 && collapse >= 1) || (i === 0 && t >= B(37.7)) ? 'hidden' : 'visible'
+  })
+  const active = Math.round(position)
+  pathDots.forEach((d, i) => {
+    d.style.width = i === active ? '44px' : '14px'
+    d.style.background = i === active ? '#0e0e10' : 'rgba(14,14,16,.28)'
+  })
+  $('pathDots').style.visibility = t < B(36) ? 'visible' : 'hidden'
+}
+
+function lessonScene(t) {
+  const on = t >= B(37) && t < B(64.9)
+  show($('lesson'), on)
+  if (!on) return
+  // The lifted Python card opens into the page (clip from the card's rect to the page).
+  const card = { w: 212 * CARD_SCALE * 1.06, h: 224 * CARD_SCALE * 1.06 }
+  const cardRect = [960 - card.w / 2 - PAGE.x, 590 - 7.2 - card.h / 2 - PAGE.y, card.w, card.h]
+  const open = spring(t - B(37), 1.5, 0.78)
+  const r = rectLerp(cardRect, [0, 0, PAGE.w, PAGE.h], open)
+  clipRect($('lesson'), PAGE.w, PAGE.h, ...r, lerp(32, 28, open))
+  $('lesson').style.transform = `translateY(${easeInCubic(prog(t, B(64), B(64.9))) * 1150}px)`
+
+  progressFills.forEach((f, i) => {
+    const w = i < 2 ? 1 : i === 2 ? easeOutCubic(prog(t, MCQ_CHECK, MCQ_CHECK + 0.4)) : 0.6 * easeOutCubic(prog(t, OUTPUT_AT, OUTPUT_AT + 0.4))
+    f.style.width = `${w * 100}%`
+  })
+
+  // Multiple choice.
+  show($('mcq'), t < B(43.4))
+  riseWords(mcqEyebrowWords, t, B(37.5), { stagger: 0.03, dur: 0.4 })
+  riseWords(mcqPromptWords, t, B(37.6), { stagger: 0.05, dur: 0.45 })
+  mcqOpts.forEach((o, i) => {
+    const s0 = B(37.9) + i * 0.05
+    const k = spring(t - s0, 2.4, 0.62)
+    const pop = i === MCQ_CORRECT ? 1 + 0.035 * Math.sin(Math.PI * prog(t, MCQ_CLICK, MCQ_CLICK + 0.26)) : 1
+    o.style.transform = `translateY(${(1 - k) * 34}px) scale(${lerp(0.94, 1, k) * pop})`
+    o.style.visibility = t >= s0 ? 'visible' : 'hidden'
+    o.classList.toggle('sel', i === MCQ_CORRECT && t >= MCQ_CLICK && t < MCQ_CHECK)
+    o.classList.toggle('ok', i === MCQ_CORRECT && t >= MCQ_CHECK)
+  })
+  const tk = spring(t - MCQ_CHECK, 2.6, 0.55)
+  mcqTick.style.transform = `scale(${tk})`
+  mcqTick.style.visibility = t >= MCQ_CHECK ? 'visible' : 'hidden'
+
+  // Footer: Devy's line, and Continue.
+  const lines = [[MCQ_CHECK + 0.15, B(42.4), 'Exactly right.'], [OUTPUT_AT + 0.25, B(52), 'Nice — that’s it.']]
+  const now = lines.find(([a, z]) => t >= a && t < z)
+  const lb = $('lessonBubble')
+  show(lb, Boolean(now))
+  if (now) {
+    const k = backOut(prog(t, now[0], now[0] + 0.4), 2.2)
+    lb.style.transform = `scale(${lerp(0.8, 1, k)})`
+    const text = typed(now[2], t, now[0] + 0.08)
+    lb.innerHTML = text + (text.length < now[2].length ? '<span class="caret"></span>' : '')
+  }
+  const cont = $('continue')
+  const enabled = t < B(42.5) || t >= OUTPUT_AT + 0.3
+  cont.className = enabled ? 'on' : 'off'
+  const press = (at) => (t >= at && t < at + 0.16 ? 3 : 0)
+  cont.style.transform = `translateY(${press(CONTINUE_CLICK)}px)`
+  cont.style.boxShadow = press(CONTINUE_CLICK) ? 'none' : ''
+
+  // Code lab: opens out of the Continue button, over the question.
+  const contRect = [1230, 820 + 26, 320, 64]
+  const labK = spring(t - B(42.45), 1.6, 0.8)
+  show($('lab'), t >= B(42.45))
+  clipRect($('lab'), PAGE.w, PAGE.h, ...rectLerp(contRect, [0, 90, PAGE.w, 730], labK), lerp(12, 0, labK))
+  riseWords(labTitleWords, t, B(43.0), { stagger: 0.05, dur: 0.45 })
+  taskEls.forEach((el, i) => {
+    const k = spring(t - (B(43.2) + i * 0.06), 2.4, 0.62)
+    el.style.transform = `translateY(${(1 - k) * 24}px)`
+    el.style.visibility = t >= B(43.2) + i * 0.06 ? 'visible' : 'hidden'
+    const doneAt = i === 0 ? LINE5_DONE + 0.15 : OUTPUT_AT + 0.15
+    el.classList.toggle('done', t >= doneAt)
+    el.querySelector('.box').style.transform = `scale(${t >= doneAt ? lerp(0.6, 1, spring(t - doneAt, 3, 0.5)) : 1})`
+  })
+  // Code, typed on fixed lines (the camera never follows the caret).
+  const done = keyTimes.filter((k) => k.t <= t)
+  const last = done.at(-1)
+  const caretVisible = t >= TYPE_START - 0.3 && t < RUN_AT && (t < TYPE_END + 0.05 || Math.floor((t - TYPE_END) * 2) % 2 === 0)
+  $('code').innerHTML = CODE.map((line, li) => {
+    let n = line.length
+    if (li >= TYPED_FROM_LINE) {
+      const typedLine = li - TYPED_FROM_LINE
+      n = done.filter((k) => k.line === typedLine).length
+    }
+    const caret = caretVisible && li === TYPED_FROM_LINE + (last ? last.line : 0) ? '<span class="caret"></span>' : ''
+    return `<span class="ln">${li + 1}</span>${renderLine(line, n)}${caret}`
+  }).join('\n')
+  $('run').style.transform = `translateY(${press(RUN_AT)}px)`
+  const out = spring(t - OUTPUT_AT, 2.6, 0.6)
+  $('outputText').textContent = t >= OUTPUT_AT ? OUTPUT : ''
+  $('outputText').style.transform = `translateY(${(1 - out) * 20}px)`
+}
+
+function completeScene(t) {
+  const on = t >= COMPLETE_AT && t < B(64.9)
+  show($('complete'), on)
+  if (!on) return
+  // Grows out of the output panel (clip from its rect to the whole page).
+  const g = spring(t - COMPLETE_AT, 1.4, 0.78)
+  clipRect($('complete'), PAGE.w, PAGE.h, ...rectLerp(OUTPUT_RECT, [0, 0, PAGE.w, PAGE.h], g), lerp(16, 28, g))
+  $('complete').style.transform = `translateY(${easeInCubic(prog(t, B(64), B(64.9))) * 1150}px)`
+  crownDevy.at(t, COMPLETE_AT + 0.3)
+  resultEls.forEach((el, i) => {
+    const at = B(54 + i)
+    const k = spring(t - at, 2.2, 0.55)
+    el.style.transform = `translateY(${(1 - k) * 24}px) scale(${lerp(0.6, 1, k)})`
+    el.style.visibility = t >= at ? 'visible' : 'hidden'
+  })
+  xpNum.textContent = String(Math.round(fixture.lesson.xp * easeOutCubic(prog(t, B(54.3), B(54.3) + 0.7))))
+  const pressed = t >= CLAIM_CLICK && t < CLAIM_CLICK + 0.16
+  $('claim').style.transform = `translateY(${pressed ? 3 : 0}px)`
+  $('claim').style.boxShadow = pressed ? 'none' : ''
+
+  // The app's curtain: two blue waves burst from Claim XP, then open outward from the streak bolt.
+  const cover = Math.hypot(Math.max(CLAIM.x, PAGE.w - CLAIM.x), Math.max(CLAIM.y, PAGE.h - CLAIM.y)) + 4
+  const reveal = Math.hypot(Math.max(HOLE.x, PAGE.w - HOLE.x), Math.max(HOLE.y, PAGE.h - HOLE.y)) + 4
+  curtains.forEach((c, i) => {
+    const s = CLAIM_CLICK + 0.08 + i * 0.08
+    const k = easeInOutCubic(prog(t, s, s + 0.5))
+    const holeK = easeInCubic(prog(t, s + 0.62 - i * 0.14, s + 1.27 - i * 0.14))
+    show(c, t >= s && holeK < 1)
+    if (holeK <= 0) c.style.clipPath = `circle(${k * cover}px at ${CLAIM.x}px ${CLAIM.y}px)`
+    else {
+      const r = holeK * reveal
+      c.style.clipPath = `path(evenodd, 'M0 0 H${PAGE.w} V${PAGE.h} H0 Z M${HOLE.x - r} ${HOLE.y} A${r} ${r} 0 1 0 ${HOLE.x + r} ${HOLE.y} A${r} ${r} 0 1 0 ${HOLE.x - r} ${HOLE.y} Z')`
+    }
+  })
+  const streakAt = CLAIM_CLICK + 0.7
+  show($('streak'), t >= streakAt)
+  const bolt = backOut(prog(t, streakAt + 0.15, streakAt + 0.75), 2.2)
+  $('streakBolt').style.transform = `translateY(${(1 - clamp(bolt)) * 30}px) scale(${lerp(0.3, 1, bolt)})`
+  const bk = backOut(prog(t, streakAt + 0.6, streakAt + 0.95), 2)
+  streakBubble.style.transform = `translate(-50%, ${(1 - clamp(bk)) * 10}px) scale(${lerp(0.9, 1, bk)})`
+  show(streakBubble, t >= streakAt + 0.6)
+  const countAt = streakAt + 0.65
+  $('streakCount').textContent = String(t >= countAt + 0.25 ? fixture.streak.after : fixture.streak.before)
+  $('streakCount').style.transform = `scale(${lerp(1.4, 1, backOut(prog(t, countAt, countAt + 0.45), 3))})`
+  const wk = easeOutCubic(prog(t, streakAt + 0.9, streakAt + 1.3))
+  $('week').style.transform = `translateY(${(1 - wk) * 14}px)`
+  const today = dayEls[TODAY].querySelector('i')
+  today.style.transform = `scale(${backOut(prog(t, streakAt + 1.25, streakAt + 1.75), 3)})`
+  // From the break, the weekday dots have become tokens.
+  dayEls.forEach((d) => { d.querySelector('i').style.visibility = t >= COMPETE ? 'hidden' : 'visible' })
+}
+
+// League card offset while it slides up and settles.
+const leagueDy = (t) => (1 - spring(t - B(67.3), 1.5, 0.78)) * 900
+function competeScene(t) {
+  const on = t >= COMPETE && t < GROW_AT + 1.4
+  show($('motif'), on)
+  if (!on) {
+    tokens$.forEach((tok) => show(tok.el, false))
+    for (const id of ['competeTitle', 'league', 'h2h', 'private']) show($(id), false)
+    return
+  }
+  const m = easeOutCubic(prog(t, COMPETE, COMPETE + 0.9))
+  $('motif').style.clipPath = `circle(${m * 1110}px at 960px 540px)`
+  show($('competeTitle'), t < B(68.4))
+  riseWords(competeWords, t, B(64.6), { stagger: 0.07, dur: 0.5 })
+  sinkWords(competeWords, t, B(67.5), { stagger: 0.03 })
+
+  // Tokens: weekday dot → scattered avatar → its league row.
+  const leagueOn = t >= B(67.3) && t < H2H_AT + 1.2
+  show($('league'), leagueOn)
+  const dy = leagueDy(t)
+  const push = easeInOutCubic(prog(t, B(70), B(72)))
+  const youY = ROW_TOP + 2 * ROW_STEP + 38
+  $('league').style.transformOrigin = `450px ${youY}px`
+  const sink = easeInCubic(prog(t, H2H_AT + 0.3, H2H_AT + 1.1))
+  $('league').style.transform = `translateY(${dy + sink * 1000 - push * 40}px) scale(${1 + push * 0.1})`
+  rows.forEach((r, rank) => {
+    const k = easeOutCubic(prog(t, B(68.1) + rank * 0.04, B(68.1) + rank * 0.04 + 0.4))
+    r.querySelectorAll('.rank, .name, .role, .coins').forEach((el) => { el.style.transform = `translateY(${(1 - k) * 18}px)` })
+    r.querySelectorAll('.rank, .name, .role, .coins').forEach((el) => { el.style.visibility = k > 0 ? 'visible' : 'hidden' })
+    r.querySelector('.slot').style.visibility = t >= DOCK + 1.0 ? 'visible' : 'hidden'
+    const lifted = (rank === 2 || rank === 3) ? easeOutCubic(prog(t, H2H_AT - 0.3, H2H_AT)) : 0
+    r.style.transform = `translateY(${-lifted * 10}px)`
+    r.style.boxShadow = lifted ? `0 ${lifted * 18}px ${lifted * 30}px -14px rgba(14,14,16,.35)` : ''
+  })
+  tokens$.forEach((tok, i) => {
+    show(tok.el, t >= COMPETE && t < DOCK + 1.0)
+    const s0 = COMPETE + 0.15 + i * 0.05
+    const k = spring(t - s0, 1.3, 0.6)
+    const d0 = 58
+    const toRow = spring(t - (DOCK + tok.rank * 0.04), 1.6, 0.66)
+    const rowX = LEAGUE_BOX.x + 24 + 66 + 28
+    const rowY = LEAGUE_BOX.y + ROW_TOP + tok.rank * ROW_STEP + 10 + 28 + dy
+    let x = lerp(tok.from.x, tok.scatter[0], k)
+    let y = lerp(tok.from.y, tok.scatter[1], k)
+    let size = lerp(d0, 150, k)
+    x = lerp(x, rowX, toRow)
+    y = lerp(y, rowY, toRow)
+    size = lerp(size, 56, toRow)
+    place(tok.el, x - size / 2, y - size / 2, size, size)
+    const face = easeOutCubic(prog(t, s0 + 0.1, s0 + 0.45))
+    tok.img.style.clipPath = `circle(${face * 50}% at 50% 50%)`
+    tok.el.style.boxShadow = toRow > 0.5 ? 'none' : ''
+  })
+
+  // Head-to-head: opens out of the two lifted rows.
+  const h2hOn = t >= H2H_AT && t < PRIVATE_AT + 0.9
+  show($('h2h'), h2hOn)
+  if (h2hOn) {
+    // The two lifted rows' rect on screen (league card pushed 1.1× about the You row, up 40 px).
+    const sc = 1.1
+    const toScreenY = (cy) => LEAGUE_BOX.y + youY + (cy - youY) * sc - 40
+    const top = toScreenY(ROW_TOP + 2 * ROW_STEP) - 10
+    const bottom = toScreenY(ROW_TOP + 3 * ROW_STEP + 76) - 10
+    const left = LEAGUE_BOX.x + 450 + (24 - 450) * sc
+    const from = [left - 410, top - 220, 852 * sc, bottom - top]
+    const g = spring(t - H2H_AT, 1.4, 0.8)
+    clipRect($('h2h'), 1100, 640, ...rectLerp(from, [0, 0, 1100, 640], g), lerp(16, 28, g))
+    const out = easeInCubic(prog(t, PRIVATE_AT, PRIVATE_AT + 0.7))
+    $('h2h').style.transform = `translateX(${-out * 1500}px)`
+    const tug = lerp(50, 57, easeInOutCubic(prog(t, H2H_AT + 1.0, H2H_AT + 1.8)))
+    $('tug').firstElementChild.style.width = `${tug}%`
+    riseWords(statusWords, t, H2H_AT + 1.6, { stagger: 0.05, dur: 0.4 })
+  }
+  const privOn = t >= PRIVATE_AT + 0.1 && t < GROW_AT + 1.4
+  show($('private'), privOn)
+  if (privOn) {
+    const k = easeOutCubic(prog(t, PRIVATE_AT + 0.1, PRIVATE_AT + 0.8))
+    const camPush = easeInOutCubic(prog(t, GROW_AT - 0.1, GROW_AT + 1.1))
+    $('private').style.transformOrigin = '946px 73px'
+    $('private').style.transform = `translateX(${(1 - k) * 1500}px) scale(${1 + camPush * 0.15})`
+    const pressed = t >= CREATE_CLICK && t < CREATE_CLICK + 0.16
+    $('createBtn').style.transform = `translateY(${pressed ? 3 : 0}px)`
+  }
+}
+
+function outroScene(t) {
+  // "Create a league" grows into the whole page: a pill until it meets the edges.
+  const growOn = t >= GROW_AT && t < END_AT + 0.1
+  show($('grow'), growOn)
+  if (growOn) {
+    const k = easeInOutCubic(prog(t, GROW_AT, GROW_AT + 1.15))
+    const camPush = 1 + easeInOutCubic(prog(t, GROW_AT - 0.1, GROW_AT + 1.1)) * 0.15
+    const from = [1356 - 106 * camPush, 373 - 31 * camPush, 212 * camPush, 62 * camPush]
+    const [x, y, w, h] = rectLerp(from, [0, 0, 1920, 1080], k)
+    place($('grow'), x, y, w, h)
+    $('grow').style.borderRadius = px((h / 2) * (1 - easeInCubic(prog(k, 0.82, 1))))
+    $('growLabel').style.fontSize = px(lerp(21, 132, easeInOutCubic(prog(t, GROW_AT + 0.2, GROW_AT + 1.2))))
+    riseWords(growLabelWords, t, -10)
+    sinkWords(growLabelWords, t, GROW_AT + 1.35, { up: true, stagger: 0.05, dur: 0.4 })
+    // Finally the page shrinks back into the dot the avatars became.
+    const shrink = easeInOutCubic(prog(t, B(88.7), END_AT + 0.05))
+    const dot = { x: 960, y: 540 }
+    $('grow').style.clipPath = shrink > 0 ? `circle(${(1 - shrink) * 1110 + 45 * shrink}px at ${dot.x - x}px ${dot.y - y}px)` : 'none'
+  }
+
+  const lineOn = t >= B(83) && t < COLLAPSE + 0.62
+  show($('outroLine'), lineOn)
+  if (lineOn) {
+    riseWords(outroLeadWords, t, B(83.3), { stagger: 0.08, dur: 0.5 })
+    outroAvatars.forEach((el, i) => {
+      const k = spring(t - B(84.2) - i * 0.07, 2.0, 0.55)
+      // Collapse: the four faces gather into one dot.
+      const c = easeInOutCubic(prog(t, COLLAPSE + 0.1, COLLAPSE + 0.6))
+      const cx = (1.24 - (i * 0.56 + 0.4)) * c
+      el.style.transform = `translate(${cx}em, ${(1 - k) * 40}px) scale(${k * lerp(1, 0.4, c)})`
+    })
+    riseWords(outroTailWords, t, B(84.6), { stagger: 0.08, dur: 0.5 })
+    sinkWords([...outroLeadWords, ...outroTailWords], t, COLLAPSE, { stagger: 0.02 })
+  }
+
+  // The dot travels to centre, becomes the navy circle, then the end lockup builds.
+  const dotOn = t >= COLLAPSE + 0.55 && t < END_AT + 0.3
+  show($('endDot'), dotOn)
+  if (dotOn) {
+    const k = easeInOutCubic(prog(t, COLLAPSE + 0.55, END_AT))
+    const x = lerp(O_CENTER.x, 960, k)
+    const y = lerp(O_CENTER.y, 540, k)
+    const d = lerp(0.8 * 104 * 0.4, 90, k)
+    place($('endDot'), x - d / 2, y - d / 2, d, d)
+  }
+  const endOn = t >= END_AT
+  show($('end'), endOn)
+  if (endOn) {
+    // The lockup sits centred; its build starts as a circle exactly where the dot is.
+    const travel = easeInOutCubic(prog(t, END_AT + 0.3, END_AT + 1.0))
+    $('endLockup').style.transform = `translate(${(1 - travel) * (LOCKUP_W / 2 - MARK_W / 2)}px, ${(1 - travel) * (540 - 380 - MARK_H / 2)}px)`
+    lockupBuild(endL, t, END_AT - 0.3)
+    riseWords(endTagWords, t, END_AT + 1.1, { stagger: 0.05, dur: 0.45 })
+    const c = spring(t - (END_AT + 1.6), 2.2, 0.55)
+    $('cta').style.transform = `scale(${c})`
+  }
+}
+
+function cursorTrack(t) {
+  const seg = CURSOR.find((s) => t >= s.from && t < s.to)
+  show($('cursor'), Boolean(seg))
+  if (!seg) return
+  const keys = seg.keys
+  let i = keys.findIndex((k) => k[0] > t)
+  if (i === -1) i = keys.length - 1
+  const a = keys[Math.max(0, i - 1)]
+  const b = keys[i]
+  const k = easeInOutCubic(prog(t, a[0], b[0]))
+  const press = seg.clicks.some((c) => t >= c - 0.05 && t < c + 0.12) ? 0.85 : 1
+  $('cursor').style.transform = `translate(${lerp(a[1], b[1], k) - 6}px, ${lerp(a[2], b[2], k) - 4}px) scale(${press})`
+}
+
+// ════════ Intro: "You want to get into tech." → doubt → "Meet Devspace." ════════
+// Its own screen-space layer, 16 beats long. Everything from the brand build on
+// runs exactly as before, offset by INTRO (see seek()).
+const INTRO = B(16)
+const INTRO_SFX = []
+function lineWords(el, lines) {
+  el.innerHTML = lines.map((l) => `<div>${l.split(' ').map((w) => `<span class="mask"><span class="w">${w}</span></span>`).join(' ')}</div>`).join('')
+  return [...el.querySelectorAll('.w')]
+}
+// [word] marks the line's key word.
+const il1 = lineWords($('il1'), ['You want to get into [tech.]'])
+const il2 = lineWords($('il2'), ['But with so many paths and resources,', 'where do you [start?]'])
+const il3 = lineWords($('il3'), ['What should you learn—', 'and how do you put it into [practice?]'])
+const ilMeet = maskWords($('ilMeet'), 'Meet Devspace.')
+for (const w of [...il1, ...il2, ...il3]) {
+  if (w.textContent.startsWith('[')) { w.textContent = w.textContent.slice(1, -1); w.dataset.key = '' }
+}
+il1.filter((w) => 'key' in w.dataset).forEach((w) => w.classList.add('grad'))
+
+// The noise of starting out: real career titles (onboarding.js), the path
+// stage art, and the tabs, tutorials and half-built projects that pile up.
+const chip = (label, dot) => `<div class="card chip"><i style="background:${dot}"></i>${label}</div>`
+const tab = (label) => `<div class="card tab"><i></i>${label}<b>✕</b></div>`
+const SCRAPS = [
+  // set 0 arrives with "so many paths and resources"
+  { set: 0, x: 300, y: 150, r: -4, html: chip('Frontend Developer', '#2563eb') },
+  { set: 0, x: 1630, y: 130, r: 3, html: chip('Data Analyst', '#22c55e') },
+  { set: 0, x: 960, y: 112, r: -1.5, html: chip('Machine Learning Engineer', '#7c3aed') },
+  { set: 0, x: 1640, y: 950, r: -3, html: chip('DevOps Engineer', '#e8702a') },
+  { set: 0, x: 330, y: 955, r: 4, html: chip('UI/UX Designer', '#d4a017') },
+  { set: 0, x: 1290, y: 262, r: 2, html: tab('Python or JavaScript first?') },
+  { set: 0, x: 620, y: 272, r: -2, html: tab('Best tech roadmap 2026') },
+  { set: 0, x: 95, y: 560, r: -4, html: '<div class="card vid"><div class="thumb"><img src="assets/art/programming-with-variables.png" alt=""><s>▶</s></div><div class="bar"><u></u></div><p>Learn Python in 4 hours</p></div>' },
+  { set: 0, x: 1835, y: 560, r: 5, html: '<div class="mini-stage" style="background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 55%),#2563eb"><p>Core ML algorithms</p><div><img src="assets/art/scientific-thinking.png" alt=""></div></div>' },
+  { set: 0, x: 1170, y: 905, r: 2, html: '<div class="card list"><h4>Saved for later</h4><div><i></i>Intro to SQL</div><div><i></i>React crash course</div><div><i></i>Cloud basics</div></div>' },
+  { set: 0, x: 720, y: 900, r: -2, html: tab('Is it too late to learn to code?') },
+  // set 1 arrives with "how do you put it into practice?"
+  { set: 1, x: 1520, y: 790, r: 3, html: '<div class="code"><em>untitled.py</em>print("hello world"\n<span class="err">SyntaxError: \'(\' was never closed</span></div>' },
+  { set: 1, x: 400, y: 790, r: -3, html: '<div class="code" style="width:380px"><em>terminal</em>$ npm run build\n<span class="err">command not found: npm</span></div>' },
+  { set: 1, x: 960, y: 205, r: -2.5, html: '<div class="sticky">Project ideas?<br>…</div>' },
+  { set: 1, x: 1460, y: 210, r: 3, html: '<div class="card list"><h4>my-first-project/</h4><div style="color:#a8a8a4">This folder is empty</div></div>' },
+  { set: 1, x: 470, y: 205, r: -3, html: '<div class="card list"><h4>Learning plan</h4><div><i class="ok"></i>HTML basics</div><div><i class="ok"></i>CSS basics</div><div><i class="q"></i>Build something real?</div></div>' },
+]
+SCRAPS.forEach((sc, i) => {
+  sc.el = make('div', 'scrap', $('introScraps'), sc.html)
+  sc.i = i
+  sc.k = sc.set === 0 ? i : i - 11
+})
+// Intro clock, in seconds from the very start of the film.
+const I = {
+  l1: 0.12, l1Out: 1.75,
+  l2: 1.95, aIn: 1.85, l2Key: 3.15, l2Out: 4.15,
+  l3: 4.55, bIn: 4.4, l3Key: 5.6,
+  zoom: 6.0, zoomEnd: 6.62,
+  meet: 6.62,
+}
+INTRO_SFX.push({ name: 'cards-swoosh', t: I.aIn + 0.35, align: 'peak', gain: 0.45, dur: null })
+INTRO_SFX.push({ name: 'cards-swoosh', t: I.bIn + 0.3, align: 'peak', gain: 0.4, dur: null })
+INTRO_SFX.push({ name: 'page-whoosh', t: I.zoom + 0.45, align: 'peak', gain: 0.6, dur: null })
+SCRAPS.filter((sc) => sc.set === 1).forEach((sc) => INTRO_SFX.push({ name: 'avatar-pop', t: I.bIn + sc.k * 0.08 + 0.2, align: 'onset', gain: 0.3, dur: null }))
+
+// The key word lands grey and settles to ink, like the reference's "tough."
+function keyTone(words, t, at) {
+  const k = easeInOutCubic(prog(t, at, at + 0.35))
+  const c = Math.round(lerp(168, 14, k))
+  words.filter((w) => 'key' in w.dataset).forEach((w) => { w.style.color = `rgb(${c},${c},${c + 2})` })
+}
+
+function introScene(t) {
+  const on = t < INTRO + B(2.6)
+  show($('intro'), on)
+  if (!on) return
+  // After the punch-through only "Meet Devspace." remains; the canvas goes so
+  // the brand build underneath shows through.
+  $('intro').style.background = t < I.zoomEnd ? 'var(--canvas)' : 'transparent'
+  show($('introCam'), t < I.zoomEnd)
+
+  riseWords(il1, t, I.l1, { stagger: 0.14, dur: 0.45 })
+  sinkWords(il1, t, I.l1Out, { up: true, stagger: 0.03, dur: 0.32 })
+  riseWords(il2, t, I.l2, { stagger: 0.085, dur: 0.42 })
+  keyTone(il2, t, I.l2Key)
+  sinkWords(il2, t, I.l2Out, { up: true, stagger: 0.012, dur: 0.26 })
+  riseWords(il3, t, I.l3, { stagger: 0.09, dur: 0.42 })
+  keyTone(il3, t, I.l3Key)
+  show($('il1'), t < I.l1Out + 0.6)
+  show($('il2'), t >= I.l2 - 0.05 && t < I.l2Out + 0.46)
+  show($('il3'), t >= I.l3 - 0.05)
+
+  // Punch-through: one push into the line, zoom in log space, easing in.
+  const z = easeInCubic(prog(t, I.zoom, I.zoomEnd))
+  $('introCam').style.transform = `scale(${Math.exp(lerp(0, Math.log(6), z))})`
+
+  SCRAPS.forEach((sc) => {
+    const s0 = (sc.set === 0 ? I.aIn : I.bIn) + sc.k * (sc.set === 0 ? 0.07 : 0.08)
+    const k = spring(t - s0, 1.35, 0.64)
+    // Each flies in from outside the frame along its line from the centre.
+    const dx = sc.x - 960
+    const dy = sc.y - 540
+    const len = Math.hypot(dx, dy) || 1
+    // The first pile is shouldered outward when the practice set arrives.
+    const shove = sc.set === 0 ? easeInOutCubic(prog(t, I.l2Out, I.l2Out + 0.7)) * 0.32 : 0
+    const tx = sc.x + dx * shove + (1 - k) * (dx / len) * 1100
+    const ty = sc.y + dy * shove + (1 - k) * (dy / len) * 1100
+    // A slow, deterministic drift so the pile never sits still.
+    const driftX = Math.sin(t * 0.7 + sc.i * 1.7) * 7
+    const driftY = Math.cos(t * 0.6 + sc.i * 2.3) * 6
+    show(sc.el, t >= s0)
+    sc.el.style.transform = `translate(${tx + driftX}px, ${ty + driftY}px) translate(-50%, -50%) rotate(${sc.r + (1 - k) * sc.r * 3}deg) scale(${lerp(0.85, 1, k)})`
+  })
+
+  riseWords(ilMeet, t, I.meet, { stagger: 0.12, dur: 0.5 })
+  // Hands over to the brand build: sinks as the tagline rises underneath.
+  sinkWords(ilMeet, t, INTRO + 1.1, { stagger: 0.04, dur: 0.35 })
+}
+
+// ════════ seek ════════
+window.DURATION = INTRO + DURATION
+window.SFX = SFX
+window.seek = async (T) => {
+  introScene(T)
+  const t = T - INTRO
+  camera(t)
+  brandScene(t)
+  meetScene(t)
+  devyTrack(t)
+  onboardingScene(t)
+  buildScene(t)
+  dropScene(t)
+  lessonScene(t)
+  completeScene(t)
+  competeScene(t)
+  outroScene(t)
+  cursorTrack(t)
+}
+
+await crownDevy.loaded
+await Promise.all([
+  document.fonts.load('600 100px Geist'),
+  document.fonts.load('500 100px Geist'),
+  document.fonts.load('500 20px "Rethink Sans"'),
+  document.fonts.load('600 20px "Rethink Sans"'),
+  document.fonts.load('800 20px "Rethink Sans"'),
+  document.fonts.load('400 20px Rubik'),
+  document.fonts.load('600 20px Rubik'),
+  document.fonts.load('400 20px "JetBrains Mono"'),
+])
+await Promise.all([...document.images].map((img) => img.decode().catch(() => {})))
+{
+  show($('outroLine'), true)
+  const r = $('outroO').getBoundingClientRect()
+  show($('outroLine'), false)
+  O_CENTER.x = r.left + r.width / 2
+  O_CENTER.y = r.top + r.height / 2
+}
+await window.seek(0)
+window.ready = true
+// For tools/page-eval.mjs: the cue sheet the audio mix is built from.
+window.result = {
+  duration: INTRO + DURATION,
+  musicOffset: INTRO,
+  sfx: [...INTRO_SFX, ...SFX.map((c) => ({ ...c, t: c.t + INTRO }))],
+}
+</script>
+</body>
+</html>

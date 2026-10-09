@@ -1,0 +1,23 @@
+{
+  "_note": "DEMO DATA for the film. A first-day learner on the Machine Learning Engineer path, finishing their first lesson. xp is LESSON_XP from src/lib/lessonMeta.js (a first, unassisted completion). Accuracy and time are illustrative; streak 0 -> 1 is what a first lesson on day one produces.",
+  "learner": {
+    "name": "You",
+    "avatar": { "style": "adventurer", "seed": "you" },
+    "motivation": "I want to build a professional career",
+    "branch": "AI & Automation",
+    "role": "Machine Learning Engineer",
+    "experience": "Complete beginner"
+  },
+  "lesson": {
+    "title": "Writing Programs",
+    "xp": 25,
+    "accuracy": 100,
+    "seconds": 161
+  },
+  "streak": { "before": 0, "after": 1 },
+  "league": {
+    "name": "Bronze League",
+    "rivals": ["lucas-m", "mina-t", "tunde-a", "zara-q", "rasmus-j", "mei-w", "chidi-e", "kofi-m"],
+    "headToHead": "lucas-m"
+  }
+}

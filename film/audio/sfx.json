@@ -1,0 +1,79 @@
+[
+ {
+  "file": "wav/sfx-avatar-pop.wav",
+  "duration": 0.305,
+  "onset_s": 0.0349,
+  "peak_s": 0.0479,
+  "peak_dbfs": -5.0
+ },
+ {
+  "file": "wav/sfx-bubble-pop.wav",
+  "duration": 0.381,
+  "onset_s": 0.0137,
+  "peak_s": 0.1278,
+  "peak_dbfs": -4.9
+ },
+ {
+  "file": "wav/sfx-cards-swoosh.wav",
+  "duration": 0.781,
+  "onset_s": 0.1376,
+  "peak_s": 0.2959,
+  "peak_dbfs": -3.9
+ },
+ {
+  "file": "wav/sfx-chip-tap.wav",
+  "duration": 1.104,
+  "onset_s": 0.0,
+  "peak_s": 0.0689,
+  "peak_dbfs": -4.0
+ },
+ {
+  "file": "wav/sfx-coin.wav",
+  "duration": 1.025,
+  "onset_s": 0.0065,
+  "peak_s": 0.0424,
+  "peak_dbfs": -0.5
+ },
+ {
+  "file": "wav/sfx-drop-impact.wav",
+  "duration": 5.994,
+  "onset_s": 0.1445,
+  "peak_s": 1.3036,
+  "peak_dbfs": -1.1
+ },
+ {
+  "file": "wav/sfx-page-whoosh.wav",
+  "duration": 2.321,
+  "onset_s": 0.4301,
+  "peak_s": 0.7148,
+  "peak_dbfs": -1.5
+ },
+ {
+  "file": "wav/sfx-run-click.wav",
+  "duration": 0.5,
+  "onset_s": 0.0,
+  "peak_s": 0.0131,
+  "peak_dbfs": -5.0
+ },
+ {
+  "file": "wav/sfx-sparkle.wav",
+  "duration": 1.25,
+  "onset_s": 0.1124,
+  "peak_s": 0.2456,
+  "peak_dbfs": -10.8
+ },
+ {
+  "file": "wav/sfx-success.wav",
+  "duration": 1.619,
+  "onset_s": 0.007,
+  "peak_s": 0.2595,
+  "peak_dbfs": -0.7
+ },
+ {
+  "file": "wav/sfx-typing.wav",
+  "duration": 26.213,
+  "onset_s": 0.0903,
+  "peak_s": 0.0914,
+  "peak_dbfs": -9.8
+ }
+]

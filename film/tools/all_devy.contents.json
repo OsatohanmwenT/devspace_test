@@ -1,0 +1,187 @@
+[
+ {
+  "artboard": "Artboard",
+  "bounds": [
+   0,
+   0,
+   500,
+   500
+  ],
+  "animations": [
+   {
+    "name": "idle_state",
+    "duration": 1200,
+    "fps": 60,
+    "loop": 1,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "Timeline 1",
+    "duration": 900,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "look_x",
+    "duration": 120,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "look_y",
+    "duration": 120,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "particles",
+    "duration": 15,
+    "fps": 60,
+    "loop": 1,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "particles_off",
+    "duration": 1,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "flight",
+    "duration": 420,
+    "fps": 60,
+    "loop": 1,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "tower_here",
+    "duration": 1,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "tower_away",
+    "duration": 1,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "launch",
+    "duration": 96,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "land",
+    "duration": 96,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "tower_launch",
+    "duration": 96,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "tower_return",
+    "duration": 96,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "entrance_side_pop",
+    "duration": 600,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "entrance_rope",
+    "duration": 700,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "entrance_updown_pop",
+    "duration": 600,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "walk",
+    "duration": 505,
+    "fps": 60,
+    "loop": 2,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "home_snap",
+    "duration": 2,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "bridge_home",
+    "duration": 96,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "tower_free",
+    "duration": 1,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   },
+   {
+    "name": "blink",
+    "duration": 60,
+    "fps": 60,
+    "loop": 0,
+    "workStart": 4294967295,
+    "workEnd": 4294967295
+   }
+  ],
+  "stateMachines": [
+   {
+    "name": "State Machine 1",
+    "inputs": []
+   }
+  ]
+ }
+]

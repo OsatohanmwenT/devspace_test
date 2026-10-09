@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f5f5f2; }
+  #shape { position: absolute; left: 960px; top: 540px; background: #0e0e10; }
+</style>
+</head>
+<body>
+<div id="shape"></div>
+<script>
+  // All state is derived from t inside seek(t). Nothing persists between frames.
+  const DURATION = 2
+  const shape = document.getElementById('shape')
+
+  // Closed-form underdamped spring step response, 0 -> 1.
+  function spring(t, { freq = 2.2, damping = 0.55 } = {}) {
+    if (t <= 0) return 0
+    const w = 2 * Math.PI * freq
+    const wd = w * Math.sqrt(1 - damping * damping)
+    return 1 - Math.exp(-damping * w * t) * (Math.cos(wd * t) + (damping * w / wd) * Math.sin(wd * t))
+  }
+  const lerp = (a, b, k) => a + (b - a) * k
+
+  window.DURATION = DURATION
+  window.seek = (t) => {
+    // A 160px circle sits still for 0.25 s, then springs out into a 520x160 pill.
+    const stretch = spring(t - 0.25, { freq: 1.6, damping: 0.5 })
+    const h = 160
+    const w = lerp(h, 520, stretch)
+    shape.style.width = `${w}px`
+    shape.style.height = `${h}px`
+    shape.style.borderRadius = `${h / 2}px`
+    shape.style.transform = `translate(${-w / 2}px, ${-h / 2}px)`
+  }
+  window.seek(0)
+</script>
+</body>
+</html>

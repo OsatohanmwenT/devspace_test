@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<script src="../vendor/rive.js"></script>
+<script>
+// Lists every artboard, linear animation, state machine and input in a .riv,
+// using the low-level runtime so nothing has to play to be discovered.
+;(async () => {
+  try {
+    const file = new URLSearchParams(location.search).get('file')
+    rive.RuntimeLoader.setWasmUrl(new URL('../vendor/rive.wasm', location.href).href)
+    const r = await rive.RuntimeLoader.awaitInstance()
+    const bytes = new Uint8Array(await (await fetch(file)).arrayBuffer())
+    const riv = await r.load(bytes)
+    const out = []
+    for (let i = 0; i < riv.artboardCount(); i++) {
+      const ab = riv.artboardByIndex(i)
+      const b = ab.bounds
+      const entry = { artboard: ab.name, bounds: [b.minX, b.minY, b.maxX, b.maxY], animations: [], stateMachines: [] }
+      for (let j = 0; j < ab.animationCount(); j++) {
+        const a = ab.animationByIndex(j)
+        entry.animations.push({ name: a.name, duration: a.duration, fps: a.fps, loop: a.loopValue, workStart: a.workStart, workEnd: a.workEnd })
+      }
+      for (let k = 0; k < ab.stateMachineCount(); k++) {
+        const sm = ab.stateMachineByIndex(k)
+        const inst = new r.StateMachineInstance(sm, ab)
+        const inputs = []
+        for (let n = 0; n < inst.inputCount(); n++) {
+          const input = inst.input(n)
+          inputs.push({ name: input.name, type: { 56: 'number', 58: 'trigger', 59: 'boolean' }[input.type] ?? input.type })
+        }
+        entry.stateMachines.push({ name: sm.name, inputs })
+        inst.delete()
+      }
+      out.push(entry)
+    }
+    window.result = out
+  } catch (e) {
+    window.result = { error: String(e?.stack ?? e) }
+  }
+})()
+</script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+[
+ {
+  "id": "you",
+  "name": "You",
+  "style": "adventurer"
+ },
+ {
+  "id": "stefano-d",
+  "name": "Stefano D'Avascio",
+  "role": "Product Designer",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "nuriye-s",
+  "name": "Nuriye Sarıca",
+  "role": "Product Designer",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "varun-y",
+  "name": "Varun Yadav",
+  "role": "UX/UI Designer",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "pranay-g",
+  "name": "Pranay Goud",
+  "role": "Product Designer",
+  "style": "notionists",
+  "people": true
+ },
+ {
+  "id": "narduccio-v",
+  "name": "Narduccio van der Veekens",
+  "role": "UX/UI Designer",
+  "style": "thumbs",
+  "people": false
+ },
+ {
+  "id": "amara-k",
+  "name": "Amara Kim",
+  "role": "Data Scientist path",
+  "style": "funEmoji",
+  "people": false
+ },
+ {
+  "id": "jonas-b",
+  "name": "Jonas Berg",
+  "role": "Backend Developer path",
+  "style": "openPeeps",
+  "people": true
+ },
+ {
+  "id": "priya-s",
+  "name": "Priya Sharma",
+  "role": "AI Engineer path",
+  "style": "funEmoji",
+  "people": false
+ },
+ {
+  "id": "leo-f",
+  "name": "Leo Ferreira",
+  "role": "Machine Learning Engineer path",
+  "style": "thumbs",
+  "people": false
+ },
+ {
+  "id": "mina-t",
+  "name": "Mina Torres",
+  "role": "Data Scientist path",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "hooriya-i",
+  "name": "Hooriya Ibrar",
+  "role": "Backend Developer path",
+  "style": "bottts",
+  "people": false
+ },
+ {
+  "id": "samri-b",
+  "name": "Samri Bek",
+  "role": "UX/UI Designer",
+  "style": "personas",
+  "people": true
+ },
+ {
+  "id": "grid-g",
+  "name": "Grid Guru",
+  "role": "AI Engineer path",
+  "style": "thumbs",
+  "people": false
+ },
+ {
+  "id": "kazuhiro-c",
+  "name": "Kazuhiro Chō",
+  "role": "Student",
+  "style": "micah",
+  "people": true
+ },
+ {
+  "id": "sridevi-r",
+  "name": "Sridevi Rao",
+  "role": "Data Scientist path",
+  "style": "micah",
+  "people": true
+ },
+ {
+  "id": "tomas-n",
+  "name": "Tomáš Novák",
+  "role": "Backend Developer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "aisha-m",
+  "name": "Aisha Mahmoud",
+  "role": "AI Engineer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "wei-l",
+  "name": "Wei Lin",
+  "role": "Machine Learning Engineer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "sofia-r",
+  "name": "Sofia Ramírez",
+  "role": "Data Scientist path",
+  "style": "bottts",
+  "people": false
+ },
+ {
+  "id": "daniel-o",
+  "name": "Daniel Okonkwo",
+  "role": "Student",
+  "style": "funEmoji",
+  "people": false
+ },
+ {
+  "id": "elena-v",
+  "name": "Elena Vasquez",
+  "role": "UX/UI Designer",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "hiroshi-t",
+  "name": "Hiroshi Tanaka",
+  "role": "Backend Developer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "fatima-z",
+  "name": "Fatima Zahra",
+  "role": "AI Engineer path",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "lucas-m",
+  "name": "Lucas Müller",
+  "role": "Machine Learning Engineer path",
+  "style": "adventurer",
+  "people": true
+ },
+ {
+  "id": "ingrid-l",
+  "name": "Ingrid Larsen",
+  "role": "Data Scientist path",
+  "style": "personas",
+  "people": true
+ },
+ {
+  "id": "omar-h",
+  "name": "Omar Haddad",
+  "role": "Student",
+  "style": "thumbs",
+  "people": false
+ },
+ {
+  "id": "yuki-s",
+  "name": "Yuki Sato",
+  "role": "Product Designer",
+  "style": "personas",
+  "people": true
+ },
+ {
+  "id": "nadia-p",
+  "name": "Nadia Petrova",
+  "role": "Backend Developer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "carlos-s",
+  "name": "Carlos Silva",
+  "role": "AI Engineer path",
+  "style": "thumbs",
+  "people": false
+ },
+ {
+  "id": "mei-w",
+  "name": "Mei Wong",
+  "role": "Machine Learning Engineer path",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "rasmus-j",
+  "name": "Rasmus Jensen",
+  "role": "Data Scientist path",
+  "style": "adventurer",
+  "people": true
+ },
+ {
+  "id": "chidi-e",
+  "name": "Chidi Eze",
+  "role": "Student",
+  "style": "micah",
+  "people": true
+ },
+ {
+  "id": "anya-k",
+  "name": "Anya Kowalski",
+  "role": "UX/UI Designer",
+  "style": "micah",
+  "people": true
+ },
+ {
+  "id": "ravi-p",
+  "name": "Ravi Patel",
+  "role": "Backend Developer path",
+  "style": "personas",
+  "people": true
+ },
+ {
+  "id": "clara-b",
+  "name": "Clara Bianchi",
+  "role": "Product Designer",
+  "style": "notionists",
+  "people": true
+ },
+ {
+  "id": "tunde-a",
+  "name": "Tunde Adeyemi",
+  "role": "AI Engineer path",
+  "style": "adventurer",
+  "people": true
+ },
+ {
+  "id": "sasha-i",
+  "name": "Sasha Ivanov",
+  "role": "Machine Learning Engineer path",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "linnea-o",
+  "name": "Linnéa Öberg",
+  "role": "Data Scientist path",
+  "style": "personas",
+  "people": true
+ },
+ {
+  "id": "kofi-m",
+  "name": "Kofi Mensah",
+  "role": "Student",
+  "style": "avataaars",
+  "people": true
+ },
+ {
+  "id": "zara-q",
+  "name": "Zara Qureshi",
+  "role": "UX/UI Designer",
+  "style": "adventurer",
+  "people": true
+ },
+ {
+  "id": "marco-r",
+  "name": "Marco Rossi",
+  "role": "Backend Developer path",
+  "style": "bottts",
+  "people": false
+ },
+ {
+  "id": "hana-k",
+  "name": "Hana Kim",
+  "role": "AI Engineer path",
+  "style": "notionists",
+  "people": true
+ },
+ {
+  "id": "pablo-g",
+  "name": "Pablo Gómez",
+  "role": "Machine Learning Engineer path",
+  "style": "pixelArt",
+  "people": false
+ },
+ {
+  "id": "freya-n",
+  "name": "Freya Nilsen",
+  "role": "Data Scientist path",
+  "style": "notionists",
+  "people": true
+ },
+ {
+  "id": "ibrahim-d",
+  "name": "Ibrahim Diallo",
+  "role": "Student",
+  "style": "notionists",
+  "people": true
+ }
+]
