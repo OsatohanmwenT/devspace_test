@@ -27,6 +27,7 @@ export const plans = [
     priceLabel: '$12',
     period: 'per month',
     billedLabel: 'Billed monthly',
+    thenLabel: '$12 a month',
     badge: null,
     savingLabel: null,
   },
@@ -37,6 +38,8 @@ export const plans = [
     priceLabel: '$7',
     period: 'per month',
     billedLabel: '$84 billed yearly',
+    thenLabel: '$84 a year',
+    compareLabel: '$12',
     badge: 'Best value',
     savingLabel: 'Save 42%',
   },
@@ -90,7 +93,7 @@ export const PREMIUM_PERKS = [
   {
     id: 'replay-xp',
     title: 'Practice replays count',
-    detail: 'Redo a session on a later day and still earn px.',
+    detail: 'Redo a session on a later day and still earn XP.',
   },
   {
     id: 'full-cohort',

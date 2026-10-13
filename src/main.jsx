@@ -13,6 +13,7 @@ import { PayoutCenter } from './components/leaderboard/PayoutCenter';
 import { getLesson } from './components/lesson/lessonContent';
 import { LessonLoading } from './components/lesson/LessonLoading';
 import LessonView from './components/lesson/LessonView';
+import AuthView from './components/auth';
 import OnboardingView from './components/onboarding';
 import { FirstLessonWelcome } from './components/onboarding/FirstLessonWelcome';
 import PathsView from './components/paths';
@@ -39,6 +40,7 @@ import { advanceH2HWeek, chooseH2HOpponent as chooseH2HOpponentRecord } from './
 import { postLeagueMessage as postLeagueMessageRecord } from './lib/leagueChat';
 import { getStandings, resolveSeason } from './lib/leagueSim';
 import { LESSON_XP } from './lib/lessonMeta';
+import { getSession } from './lib/auth';
 import { computeDailyGoal } from './lib/onboarding';
 import { deriveLessonCompletionTransition, derivePathProgress } from './lib/pathProgress';
 import {
@@ -114,6 +116,9 @@ function App() {
   const [roadmapTransition, setRoadmapTransition] = useState(null)
   const [streakMilestone, setStreakMilestone] = useState(null)
   const [pageTransition, setPageTransition] = useState(null)
+  // Signed-in account. New visitors meet the auth page before onboarding;
+  // anyone who already has a profile skips straight past it.
+  const [session, setSession] = useState(getSession)
   // Progress lives in localStorage and resolves instantly, but the profile is
   // the one page whose data would come from a server in a real deployment.
   // Standing the fetch up now means the skeleton is a real state the page
@@ -1007,6 +1012,7 @@ function App() {
         )}
       </div>
 
+  if (!profile && !session) return <AuthView onAuthenticated={setSession} />
   if (!profile) return <><OnboardingView onComplete={completeOnboarding} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
   if (showFirstLessonWelcome) return <><FirstLessonWelcome path={currentPath} lesson={nextLesson} onBegin={startMission} />{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>
   if (loadingLesson) return <><LessonLoading title={getLesson(loadingLesson)?.title ?? nextLesson?.title ?? 'Your lesson'} />{noticeToast}{pageTransition && <PageWipe onCovered={pageTransition.onCovered} onDone={() => setPageTransition(null)} />}</>

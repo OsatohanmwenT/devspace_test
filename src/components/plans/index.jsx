@@ -50,7 +50,23 @@ export default function PlansView({ progress, onActivate, onCancel, highlightPer
             <h1 className="m-0 font-rethink-sans text-[clamp(32px,5vw,48px)] font-medium">You&apos;re on {plan.name}</h1>
             <p className="m-0 text-[15px] leading-[1.5] text-[#b8b8c0] [[data-theme=light]_&]:text-[#626262]">Your streak protections and league extras are ready when you need them.</p>
           </div>
-          <PerkList perks={PREMIUM_PERKS} highlightPerk={highlightPerk} />
+          <dl className="m-0 grid divide-y divide-white/10 rounded-2xl border border-[#3a3a3e] text-left text-sm [[data-theme=light]_&]:divide-[#ececea] [[data-theme=light]_&]:border-[#e1e1e1]">
+            {[
+              ['Plan', plan.name],
+              ['Price', `${plan.priceLabel} ${plan.period}`],
+              ['Billing', plan.type === 'onetime' ? 'Paid once — never renews' : plan.billedLabel],
+              ...(progress.premiumSince ? [['Member since', new Date(progress.premiumSince).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })]] : []),
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">{label}</dt>
+                <dd className="m-0 font-medium text-[#f4f4f6] [[data-theme=light]_&]:text-neutral-800">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="grid gap-3 text-left">
+            <h2 className="m-0 text-sm font-semibold">What&apos;s unlocked</h2>
+            <PerkList perks={PREMIUM_PERKS} highlightPerk={highlightPerk} />
+          </div>
           <div className="grid gap-3 border-t border-white/10 pt-5 [[data-theme=light]_&]:border-[#ececea]">
             <ActionButton variant="neutral" className="min-h-11 text-sm font-medium" onClick={onCancel}>Turn off Premium</ActionButton>
             <span className="text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">This demo does not bill or require a refund.</span>
@@ -60,78 +76,88 @@ export default function PlansView({ progress, onActivate, onCancel, highlightPer
     )
   }
 
+  const isOneTime = selectedPlan.type === 'onetime'
+  // What pressing the button commits you to, said in the plan's own terms.
+  const terms = isOneTime
+    ? `One payment of ${selectedPlan.priceLabel}. No renewal, no expiry.`
+    : `Free for ${TRIAL_DAYS} days, then ${selectedPlan.thenLabel}. Cancel any time.`
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#111113] px-5 py-16 text-[#f4f4f6] max-[680px]:px-4 max-[680px]:py-20 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800" aria-label="Premium plans">
       <CloseButton onClick={onBack} />
-      <div className="mx-auto grid w-full max-w-[1160px] gap-8">
+      <div className="mx-auto grid w-full max-w-[560px] gap-8">
         <header className="mx-auto grid max-w-[630px] gap-3 text-center">
           <span className="text-[11px] font-bold tracking-[.13em] text-[#89baff] uppercase [[data-theme=light]_&]:text-[#3d77eb]">Devspace Premium</span>
-          <h1 className="m-0 font-rethink-sans text-[clamp(32px,4vw,48px)] leading-[1.02] font-medium tracking-[-.04em]">Choose the pace that fits you</h1>
+          <h1 className="m-0 font-rethink-sans text-[clamp(32px,4vw,48px)] leading-[1.05] font-medium tracking-[-.04em]">Choose the pace that fits you</h1>
           <p className="m-0 flex items-center justify-center gap-1.5 text-[16px] leading-[1.5] text-[#b8b8c0] [[data-theme=light]_&]:text-[#626262]">
             Status and safety nets for your streak and league.
             <InfoTooltip label="Does this affect my score?">
-              Every learner still competes on the same XP — Premium never buys a faster score.
+              Every learner ranks on the same Devy Coins — Premium never buys a faster score.
             </InfoTooltip>
           </p>
         </header>
 
-        <div className="mx-auto grid w-full max-w-[760px] gap-5">
+        <div className="grid gap-6">
           <div className="flex items-center justify-between gap-4 max-[560px]:flex-col max-[560px]:items-stretch">
             <h2 className="m-0 text-[15px] font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-neutral-800">How you want to pay</h2>
             <PlanTypeToggle types={PLAN_TYPES} active={planType} onSelect={selectPlanType} />
           </div>
 
-          <div
-            className={`grid gap-3 max-[680px]:grid-cols-1 ${visiblePlans.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}
-            role="radiogroup"
-            aria-label={`Choose a ${activeType.label.toLowerCase()} plan`}
-          >
-            {visiblePlans.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                isSelected={plan.id === selectedPlanId}
-                onSelect={(planId) => { setSelectedPlanId(planId); setConfirming(false) }}
-              />
-            ))}
+          {/* The note sits tight under the plans it explains, not floating
+              halfway to the button. */}
+          <div className="grid gap-3">
+            <div className="grid gap-3" role="radiogroup" aria-label={`Choose a ${activeType.label.toLowerCase()} plan`}>
+              {visiblePlans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  isSelected={plan.id === selectedPlanId}
+                  onSelect={(planId) => { setSelectedPlanId(planId); setConfirming(false) }}
+                />
+              ))}
+            </div>
+
+            {/* The point of the toggle: say what this model commits you to, and
+                what the other one would cost, without making them switch to find out. */}
+            <p className="m-0 text-[13px] leading-[1.5] text-[#b8b8c0] [[data-theme=light]_&]:text-[#626262]" aria-live="polite">
+              {activeType.note}{' '}
+              <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#8a8a86]">{activeType.crossRef}</span>
+            </p>
           </div>
 
-          {/* The point of the toggle: say what this model commits you to, and
-              what the other one would cost, without making them switch to find out. */}
-          <p className="m-0 text-[13px] leading-[1.5] text-[#b8b8c0] [[data-theme=light]_&]:text-[#626262]" aria-live="polite">
-            {activeType.note}{' '}
-            <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#8a8a86]">{activeType.crossRef}</span>
-          </p>
-
-          {/* Stated once. Every plan unlocks the same thing, so repeating this
-              per card was three copies of the same five lines. */}
-          <section className="grid gap-3 rounded-2xl border border-[#3a3a3e] bg-[#1d1d20] p-5 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white" aria-labelledby="premium-perks-title">
-            <h2 id="premium-perks-title" className="m-0 text-sm font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-neutral-800">Every plan includes</h2>
-            <PerkList perks={PREMIUM_PERKS} highlightPerk={highlightPerk} />
-          </section>
-
           {!confirming ? (
-            <div className="grid justify-items-center gap-2">
-              <ActionButton variant="premium" className="min-h-[52px] w-full max-w-[360px] text-[15px] font-medium" onClick={() => startTrial(selectedPlanId)}>
-                {selectedPlan.type === 'onetime'
+            <div className="grid gap-3">
+              <ActionButton variant="premium" className="min-h-[52px] w-full text-[15px] font-medium" onClick={() => startTrial(selectedPlanId)}>
+                {isOneTime
                   ? `Get ${selectedPlan.name} — ${selectedPlan.priceLabel} once`
                   : `Start your ${TRIAL_DAYS}-day ${selectedPlan.name} trial`}
               </ActionButton>
-              <span className="text-xs text-[#9a9a9d] [[data-theme=light]_&]:text-[#686968]">No card needed — this is a demo you can turn off any time.</span>
+              <p className="m-0 text-center text-[13px] leading-[1.5] text-[#c3c3ca] [[data-theme=light]_&]:text-[#525252]">
+                {terms}{' '}
+                <span className="text-[#9a9a9d] [[data-theme=light]_&]:text-[#8a8a86]">Demo — nothing is charged.</span>
+              </p>
             </div>
           ) : (
-            <section className="grid justify-items-center gap-3 rounded-2xl border border-[#6699ec] bg-[#6699ec]/10 p-5 text-center [[data-theme=light]_&]:bg-[#eff4ff]" aria-live="polite">
+            <section className="grid gap-3 rounded-2xl border border-[#6699ec] bg-[#6699ec]/10 p-5 text-center [[data-theme=light]_&]:bg-[#eff4ff]" aria-live="polite">
               <strong className="text-[15px]">Activate {selectedPlan.name} — {selectedPlan.priceLabel} {selectedPlan.period}?</strong>
-              <div className="flex justify-center gap-3 max-[480px]:w-full max-[480px]:flex-col">
-                <ActionButton variant="premium" className="min-h-11 text-sm font-medium" onClick={() => onActivate(selectedPlanId)}>
+              <span className="text-[13px] text-[#c3c3ca] [[data-theme=light]_&]:text-[#525252]">{terms}</span>
+              <div className="flex justify-center gap-3 max-[480px]:flex-col">
+                <ActionButton variant="premium" className="min-h-11 flex-1 text-sm font-medium" onClick={() => onActivate(selectedPlanId)}>
                   Yes, activate
                 </ActionButton>
-                <ActionButton variant="neutral" className="min-h-11 text-sm font-medium" onClick={() => setConfirming(false)}>
+                <ActionButton variant="neutral" className="min-h-11 flex-1 text-sm font-medium" onClick={() => setConfirming(false)}>
                   Not now
                 </ActionButton>
               </div>
             </section>
           )}
+
+          {/* Stated once. Every plan unlocks the same thing, so repeating this
+              per plan was three copies of the same six lines. */}
+          <section className="grid gap-3 rounded-2xl border border-[#3a3a3e] bg-[#1d1d20] p-5 [[data-theme=light]_&]:border-[#d4d4d4] [[data-theme=light]_&]:bg-white" aria-labelledby="premium-perks-title">
+            <h2 id="premium-perks-title" className="m-0 text-sm font-semibold text-[#f7f7f8] [[data-theme=light]_&]:text-neutral-800">Every plan includes</h2>
+            <PerkList perks={PREMIUM_PERKS} highlightPerk={highlightPerk} />
+          </section>
         </div>
       </div>
     </section>
