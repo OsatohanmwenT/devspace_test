@@ -29,15 +29,24 @@ const RADIUS_X = 230;
 const RADIUS_Y = 92;
 const LAP_MS = 36000;
 
-function placeCards(cards, angle) {
+// The orbit shrinks to fit a narrow cluster so the cards never run off the
+// edge on a phone: wide enough that each card clears Devy, no wider than the
+// desktop ellipse.
+function getRadii(cluster, card) {
+  if (!cluster || !card) return { x: RADIUS_X, y: RADIUS_Y };
+  const x = Math.min(RADIUS_X, Math.max(60, (cluster.clientWidth - card.offsetWidth) / 2 - 6));
+  return { x, y: Math.min(RADIUS_Y, Math.max(48, x * 0.42)) };
+}
+
+function placeCards(cards, angle, radii = { x: RADIUS_X, y: RADIUS_Y }) {
   let front = 0;
   let frontDepth = -1;
   cards.forEach((card, index) => {
     if (!card) return;
     const theta = angle + (index / cards.length) * Math.PI * 2;
     const depth = (Math.cos(theta) + 1) / 2;
-    const x = Math.sin(theta) * RADIUS_X;
-    const y = Math.cos(theta) * RADIUS_Y;
+    const x = Math.sin(theta) * radii.x;
+    const y = Math.cos(theta) * radii.y;
     card.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${(0.72 + depth * 0.28).toFixed(3)})`;
     card.style.opacity = (0.35 + depth * 0.65).toFixed(3);
     card.style.filter = depth < 0.6 ? `blur(${((0.6 - depth) * 3).toFixed(2)}px)` : "none";
@@ -51,12 +60,14 @@ function placeCards(cards, angle) {
   return front;
 }
 
-// Desktop-only "how can I help" stage shown while the Ask Devy input has
+// The "how can I help" stage shown while the Ask Devy input has
 // focus: the dashboard steps aside and Devy takes the middle, with a few
 // starting points drawn from what the learner is actually doing.
 export function DevyComposeStage({ open, mode = "suggest", name, suggestions, messages = [], typing = false, onPick, onClose, onFrontChange }) {
   const reduceMotion = useReducedMotion();
   const cardRefs = useRef([]);
+  const clusterRef = useRef(null);
+  const radii = useRef({ x: RADIUS_X, y: RADIUS_Y });
   const angle = useRef(0);
   const paused = useRef(false);
   const [front, setFront] = useState(0);
@@ -69,7 +80,13 @@ export function DevyComposeStage({ open, mode = "suggest", name, suggestions, me
   }, [messages.length, typing, reduceMotion]);
 
   useLayoutEffect(() => {
-    setFront(placeCards(cardRefs.current, angle.current));
+    const measure = () => {
+      radii.current = getRadii(clusterRef.current, cardRefs.current[0]);
+      setFront(placeCards(cardRefs.current, angle.current, radii.current));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, [suggestions.length]);
 
   const frontAccent = suggestions[front]?.accent;
@@ -80,7 +97,7 @@ export function DevyComposeStage({ open, mode = "suggest", name, suggestions, me
   useAnimationFrame((_, delta) => {
     if (!open || isChat || paused.current || reduceMotion) return;
     angle.current -= (delta / LAP_MS) * Math.PI * 2;
-    const next = placeCards(cardRefs.current, angle.current);
+    const next = placeCards(cardRefs.current, angle.current, radii.current);
     if (next !== front) setFront(next);
   });
 
@@ -115,6 +132,7 @@ export function DevyComposeStage({ open, mode = "suggest", name, suggestions, me
         </div>
       )}
       <div
+        ref={clusterRef}
         className="home-compose-stage__cluster"
         onMouseEnter={() => (paused.current = true)}
         onMouseLeave={() => (paused.current = false)}

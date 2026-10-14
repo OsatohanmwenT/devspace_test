@@ -1,7 +1,7 @@
 import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
-/* The mobile card stack, driven by one continuous value.
+/* The phone and tablet card stack, driven by one continuous value.
  *
  * `position` is an unbounded float measured in card units: 0 means card 0 is
  * centred, 1.5 means we are halfway between cards 1 and 2. Every card's
@@ -28,10 +28,12 @@ export const CAROUSEL = {
   VELOCITY: 500,
 };
 
-// The gap between card centres, in pixels. Read fresh on every drag-start
-// rather than cached, so a resize between gestures is never stale.
-const spreadPx = () =>
-  Math.max(240, window.innerWidth - CAROUSEL.PEEK * 2) * CAROUSEL.SPREAD_RATIO;
+// The gap between card centres, in pixels, as a fixed share of the card's own
+// width — phones size the card from the viewport, tablets give it a fixed
+// width, and both read the same. Read fresh on every drag-start rather than
+// cached, so a resize between gestures is never stale.
+const spreadPx = (node) =>
+  Math.max(240, node?.offsetWidth || window.innerWidth - CAROUSEL.PEEK * 2) * CAROUSEL.SPREAD_RATIO;
 
 // Every curve below is sampled against |offset| at these stops.
 const STOPS = [0, 0.5, 1, 2];
@@ -137,6 +139,7 @@ export function useCardCarousel({ count, activeIndex, onCommit, isMobile }) {
       });
       return;
     }
+    spread.current = spreadPx(nodes.current[0]);
     position.current = activeIndex;
     target.current = activeIndex;
     paint(position.current);
@@ -187,7 +190,7 @@ export function useCardCarousel({ count, activeIndex, onCommit, isMobile }) {
   const onPanStart = useCallback(() => {
     if (!isMobile) return;
     dragStart.current = position.current;
-    spread.current = spreadPx();
+    spread.current = spreadPx(nodes.current[0]);
     dragMoved.current = false;
     lastOffsetX.current = 0;
     lastVelocityX.current = 0;

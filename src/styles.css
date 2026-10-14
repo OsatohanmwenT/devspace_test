@@ -3160,7 +3160,7 @@
   initial-value: rgb(59 130 246);
 }
 
-/* Desktop "how can I help" stage. While the Ask Devy input has focus the
+/* "How can I help" stage (desktop and tablet). While the Ask Devy input has focus the
    dashboard steps aside to the page edges and Devy takes the middle. These
    sit last so they win over the fixed-grid !important resets above. */
 .home-compose-stage {
@@ -3197,7 +3197,12 @@
     opacity: 0.35 !important;
     pointer-events: none !important;
   }
+}
 
+/* The stage itself is shared by desktop, tablet and mobile; only how the
+   dashboard steps aside, and the stage's size, differ (see the tablet and
+   mobile blocks below). */
+@media (min-width: 0px) {
   .home-compose-stage {
     position: relative;
     z-index: 5;
@@ -3861,8 +3866,43 @@
   }
 }
 
+/* Devy's launch fills into the same blue scene as the lesson loader. */
+.lesson-start-spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #121214 0%, #121214 42%, #1d2a43 100%);
+  clip-path: circle(0 at var(--spot-x) var(--spot-y));
+  animation: lesson-start-spotlight-fill 420ms 480ms ease-in forwards;
+}
+
+.lesson-start-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--spot-x) var(--spot-y), rgb(65 105 225 / 0.5), transparent 45%);
+  animation: lesson-start-spotlight-glow 420ms 480ms ease-out forwards;
+}
+
+[data-theme='light'] .lesson-start-spotlight {
+  background: linear-gradient(to bottom, #fafaf8 0%, #fafaf8 42%, #e4effd 100%);
+}
+
+@keyframes lesson-start-spotlight-fill {
+  to { clip-path: circle(150vmax at var(--spot-x) var(--spot-y)); }
+}
+
+@keyframes lesson-start-spotlight-glow {
+  to { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .devy-spotlight {
+    animation: none;
+  }
+
+  .lesson-start-spotlight {
     animation: none;
   }
 }
@@ -3954,4 +3994,116 @@
     radial-gradient(70% 60% at 15% 0%, rgb(105 70 255 / 0.55), transparent 70%),
     radial-gradient(60% 55% at 90% 100%, rgb(255 120 70 / 0.4), transparent 70%),
     linear-gradient(160deg, #1b2a78 0%, #3a1f8f 45%, #6a1d7a 100%);
+}
+
+/* Tablet "how can I help": the card stack steps out of the layout and the
+   stage takes the exact space it held, so the input band below never moves. */
+@media (min-width: 681px) and (max-width: 1200px) {
+  /* Closed, the stage must not hold any layout space — it only takes the
+     scene's place while open. */
+  .home-compose-stage:not([data-open]) {
+    position: absolute;
+    visibility: hidden;
+  }
+
+  .home-compose-stage {
+    box-sizing: border-box;
+    width: 100%;
+    height: 520px;
+    grid-column: auto;
+    grid-row: auto;
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  .home-compose-stage__title {
+    font-size: 24px;
+  }
+
+  .home-compose-stage__close {
+    left: 16px;
+  }
+
+  .home-dashboard-grid[data-compose] .home-map-scene,
+  .home-dashboard-grid[data-compose] .home-scene-pager {
+    display: none;
+  }
+}
+
+/* Phone "how can I help": the same rotating orbit around Devy, scaled down —
+   smaller cards, and an ellipse whose radii DevyComposeStage computes from the
+   cluster's width so nothing runs off the screen. */
+@media (max-width: 680px) {
+  /* Closed, the stage must not hold any layout space — it only takes the
+     scene's place while open. */
+  .home-compose-stage:not([data-open]) {
+    position: absolute;
+    visibility: hidden;
+  }
+
+  .home-dashboard-grid[data-compose] .home-map-scene {
+    display: none;
+  }
+
+  .home-compose-stage {
+    box-sizing: border-box;
+    width: 100%;
+    height: 440px;
+    gap: 12px;
+    padding: 0 4px;
+  }
+
+  .home-compose-stage__title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .home-compose-stage__cluster {
+    width: 100%;
+    height: 250px;
+    translate: none;
+  }
+
+  .home-compose-stage__devy {
+    top: 56px;
+    left: calc(50% - 48px);
+    width: 96px;
+    height: 96px;
+  }
+
+  .home-compose-stage__card {
+    width: 124px;
+    min-height: 82px;
+    gap: 8px;
+    border-radius: 14px;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .home-compose-stage__card svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .home-compose-stage__glow {
+    bottom: -100px;
+    width: 140vw;
+    height: 320px;
+  }
+
+  .home-compose-stage__close {
+    top: 0;
+    right: 0;
+    left: auto;
+  }
+
+  .home-compose-stage__thread {
+    gap: 12px;
+  }
+
+  .home-compose-stage__msg p {
+    max-width: 88%;
+    padding: 12px 14px;
+    font-size: 15px;
+  }
 }

@@ -69,7 +69,7 @@ const badgeLg = 64;
 // written per-frame by useCardCarousel's paint(), which is why it's absent
 // from this class list even though transform-origin/backface-visibility are.
 const mapCard =
-  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border !border-white/10 p-7 text-left font-medium hover:!border-white/20 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:!border-neutral-200 [[data-theme=light]_&]:hover:!border-neutral-300 min-[681px]:max-[1200px]:!h-[360px] min-[681px]:max-[1200px]:!w-[400px] max-[680px]:!top-[96px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:10px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
+  `home-map-card absolute flex h-[340px] w-[440px] cursor-pointer flex-col items-start rounded-[24px] border !border-white/10 p-7 text-left font-medium hover:!border-white/20 focus-visible:outline-3 focus-visible:outline-[#93c5fd] focus-visible:outline-offset-4 [[data-theme=light]_&]:!border-neutral-200 [[data-theme=light]_&]:hover:!border-neutral-300 min-[681px]:max-[1200px]:!top-[60px] min-[681px]:max-[1200px]:!left-[calc(50%-240px)] min-[681px]:max-[1200px]:!w-[480px] min-[681px]:max-[1200px]:!h-[420px] min-[681px]:max-[1200px]:![padding:20px_32px_28px] min-[681px]:max-[1200px]:!origin-center min-[681px]:max-[1200px]:![backface-visibility:hidden] min-[681px]:max-[1200px]:!visible min-[681px]:max-[1200px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] max-[680px]:!top-[96px] max-[680px]:!left-[45px] max-[680px]:!w-[calc(100vw-90px)] max-[680px]:!h-[340px] max-[680px]:![padding:10px_24px_20px] max-[680px]:!origin-center max-[680px]:![backface-visibility:hidden] max-[680px]:!visible max-[680px]:![transition:transform_420ms_cubic-bezier(0.22,0.8,0.24,1),opacity_300ms_ease,filter_300ms_ease,border-color_300ms_ease,background-color_300ms_ease] ${textBody}`;
 
 const lightFrontElevation =
   "[[data-theme=light]_&]:![box-shadow:0_10px_24px_-18px_rgba(20,20,40,0.14),0_8px_18px_-20px_rgb(var(--card-accent)_/_0.04)] max-[680px]:[[data-theme=light]_&]:![box-shadow:0_8px_18px_-16px_rgba(20,20,40,0.12),0_6px_14px_-18px_rgb(var(--card-accent)_/_0.03)]";
@@ -115,7 +115,7 @@ const cardLabels = {
 function ScenePager({ activeCard, onSelect }) {
   return (
     <div
-      className="-mt-2 flex items-center justify-center gap-2 min-[1201px]:hidden max-[680px]:hidden"
+      className="home-scene-pager -mt-2 flex items-center justify-center gap-2 min-[1201px]:hidden max-[680px]:hidden"
       role="tablist"
       aria-label="Choose a card"
     >
@@ -786,12 +786,16 @@ export default function HomeView({
   const [activeCard, setActiveCard] = useState("continueLearning");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const wheelLocked = useRef(false);
-  const hoverTimer = useRef(null);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 680,
   );
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1201,
+  );
+  // Tablet runs the same finger-tracking card stack as mobile, just with a
+  // fixed-width card instead of one sized from the viewport.
+  const [isTablet, setIsTablet] = useState(
+    () => typeof window !== "undefined" && window.innerWidth > 680 && window.innerWidth <= 1200,
   );
   const [showPremiumOffer, setShowPremiumOffer] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1201,
@@ -802,6 +806,7 @@ export default function HomeView({
     const onResize = () => {
       setIsMobile(window.innerWidth <= 680);
       setIsDesktop(window.innerWidth >= 1201);
+      setIsTablet(window.innerWidth > 680 && window.innerWidth <= 1200);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -827,7 +832,7 @@ export default function HomeView({
     count: cardOrder.length,
     activeIndex,
     onCommit: onCarouselCommit,
-    isMobile,
+    isMobile: isMobile || isTablet,
   });
 
   const getCardSlot = (cardId) => {
@@ -844,7 +849,7 @@ export default function HomeView({
   // On mobile every card renders its full front layout, even while it is off
   // to the side: if the contents swapped at the moment the slot changed, that
   // pop would land in the middle of the swipe and undo the smooth motion.
-  const isFrontLayout = (cardId) => isMobile || isDesktop || isFront(cardId);
+  const isFrontLayout = (cardId) => isMobile || isTablet || isDesktop || isFront(cardId);
   const cardTabIndex = (cardId) =>
     isDesktop || ["front", "previous", "next"].includes(getCardSlot(cardId))
       ? 0
@@ -862,17 +867,6 @@ export default function HomeView({
     [activeIndex],
   );
 
-  const promoteOnHover = (cardId) => {
-    if (isDesktop || window.innerWidth <= 900 || isFront(cardId)) return;
-    window.clearTimeout(hoverTimer.current);
-    hoverTimer.current = window.setTimeout(() => {
-      setMapMode("map");
-      setActiveCard(cardId);
-    }, 160);
-  };
-
-  const clearHoverPromotion = () => window.clearTimeout(hoverTimer.current);
-
   useEffect(() => {
     const onKeyDown = (event) => {
       if (
@@ -889,8 +883,6 @@ export default function HomeView({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [changeCard, isDesktop, isMobile]);
-
-  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   // Bringing a card to the front is itself part of the carousel interaction,
   // so a tap on a peeking card focuses it rather than jumping straight to its
@@ -1102,7 +1094,7 @@ export default function HomeView({
           </DailyTasks>
         </div>
         <motion.section
-          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] max-[680px]:![touch-action:pan-y] max-[680px]:![overscroll-behavior-x:contain]"
+          className="home-map-scene relative left-1/2 h-[500px] w-screen -translate-x-1/2 min-[1201px]:contents max-[680px]:!h-[420px] max-[680px]:![perspective:1150px] max-[680px]:![perspective-origin:50%_42%] min-[681px]:max-[1200px]:![perspective:1400px] min-[681px]:max-[1200px]:![perspective-origin:50%_42%] max-[1200px]:![touch-action:pan-y] max-[1200px]:![overscroll-behavior-x:contain]"
           data-mode={mapMode}
           aria-label="Learning map"
           onWheel={onSceneWheel}
@@ -1131,8 +1123,6 @@ export default function HomeView({
             aria-label="Continue learning"
             aria-current={isFront("continueLearning") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
-            onMouseEnter={() => promoteOnHover("continueLearning")}
-            onMouseLeave={clearHoverPromotion}
             onClick={() =>
               openOrSelect("continueLearning", continueSelectedCourse)
             }
@@ -1299,8 +1289,6 @@ export default function HomeView({
             aria-label="Leaderboard"
             aria-current={isFront("leaderboard") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
-            onMouseEnter={() => promoteOnHover("leaderboard")}
-            onMouseLeave={clearHoverPromotion}
             onClick={() => openOrSelect("leaderboard", onOpenLeaderboard)}
           >
             {(!isFrontLayout("leaderboard") || !leagueUnlocked) && (
@@ -1517,8 +1505,6 @@ export default function HomeView({
             aria-label="Your work"
             aria-current={isFront("portfolio") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
-            onMouseEnter={() => promoteOnHover("portfolio")}
-            onMouseLeave={clearHoverPromotion}
             onClick={() => openOrSelect("portfolio", onOpenCareerPath)}
           >
             <div className="flex w-full items-center justify-between gap-2">
@@ -1634,8 +1620,6 @@ export default function HomeView({
             aria-label="What's new"
             aria-current={isFront("dynamic") ? "true" : undefined}
             onKeyDown={onCardKeyDown}
-            onMouseEnter={() => promoteOnHover("dynamic")}
-            onMouseLeave={clearHoverPromotion}
             onClick={() => {
               if (!isDesktop) openOrSelect("dynamic", dynamicAction);
             }}
@@ -1985,7 +1969,7 @@ export default function HomeView({
             onComposeStart={() => setMapMode((mode) => (mode === "chat" ? "chat" : "compose"))}
             onComposeEnd={() => setMapMode((mode) => (mode === "chat" ? "chat" : "map"))}
             onDismiss={closeChat}
-            onOpen={(prompt) => (isDesktop ? askDevy(prompt) : onOpenDevy(prompt))}
+            onOpen={askDevy}
           />
         </section>
 

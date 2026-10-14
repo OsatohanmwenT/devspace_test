@@ -6,6 +6,7 @@ export function LessonLoading({ title }) {
   const loaderRef = useRef(null)
 
   useLayoutEffect(() => {
+    loaderRef.current?.focus()
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
 
     const context = gsap.context(() => {
@@ -23,7 +24,7 @@ export function LessonLoading({ title }) {
       aria-live="polite"
       aria-busy="true"
     >
-      <main ref={loaderRef} className="grid w-full max-w-[520px] justify-items-center text-center">
+      <main ref={loaderRef} tabIndex={-1} className="grid w-full max-w-[520px] justify-items-center text-center outline-none">
         <DevyLottie data-lesson-loader-devy clip="walk" className="mb-7 h-44 w-32 max-[680px]:mb-6 max-[680px]:h-36 max-[680px]:w-28" />
         <p data-lesson-loader-copy className="m-0 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#b2b2b6] [[data-theme=light]_&]:text-[#686968]">Preparing your lesson</p>
         <h1 data-lesson-loader-copy className="mt-3 mb-0 font-rethink-sans text-[clamp(28px,4vw,38px)] font-semibold leading-[1.14]">

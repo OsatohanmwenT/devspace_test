@@ -28,7 +28,9 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   const [showLessonPreview, setShowLessonPreview] = useState(false)
   const [showPodcast, setShowPodcast] = useState(false)
   const [flying, setFlying] = useState(false)
+  const [spotlightOrigin, setSpotlightOrigin] = useState(null)
   const openTimer = useRef(0)
+  const launching = useRef(false)
   const reducedMotion = useReducedMotion()
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId)
   const podcastLesson = selectedLesson ? getLesson(selectedLesson.id) : null
@@ -48,25 +50,24 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
   // it immediately rather than making people scroll to find where they are.
   useEffect(() => () => window.clearTimeout(openTimer.current), [])
 
-  // Click handler for "Start lesson": Devy takes off (flying = true) and the
-  // lesson opens as he goes. Skipped when the tile is off-screen or motion is
-  // reduced; pressing again mid-flight opens the lesson at once.
-  const startSelectedLesson = () => {
-    setStartedLessonIds((startedIds) => startedIds.includes(selectedLesson.id)
+  // Devy and the bar share one launch path. The mascot always starts its own
+  // current lesson, even if another row was selected first.
+  const startSelectedLesson = (lesson = selectedLesson) => {
+    if (!lesson || launching.current) return
+    launching.current = true
+    setSelectedLessonId(lesson.id)
+    setStartedLessonIds((startedIds) => startedIds.includes(lesson.id)
       ? startedIds
-      : [...startedIds, selectedLesson.id])
-    const open = () => onOpenLesson(selectedLesson.id, path.id)
-    if (flying) {
-      window.clearTimeout(openTimer.current)
-      open()
-      return
-    }
+      : [...startedIds, lesson.id])
+    const open = () => onOpenLesson(lesson.id, path.id)
     const tile = document.querySelector('[data-current-lesson]')?.getBoundingClientRect()
     const tileOnScreen = tile && tile.bottom > 0 && tile.top < window.innerHeight
-    if (reducedMotion || !tileOnScreen || selectedLesson.id !== currentLesson?.id) {
+    if (reducedMotion || !tileOnScreen || lesson.id !== currentLesson?.id) {
       open()
       return
     }
+    const mascot = document.querySelector('[data-devy-start]')?.getBoundingClientRect()
+    if (mascot) setSpotlightOrigin({ x: mascot.left + mascot.width / 2, y: mascot.top + mascot.height / 2 })
     setFlying(true)
     openTimer.current = window.setTimeout(open, FLY_OPEN_MS)
   }
@@ -178,6 +179,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
                       index={index}
                       isSelected={lesson.id === selectedLessonId}
                       onSelect={() => setSelectedLessonId(lesson.id)}
+                      onStart={startSelectedLesson}
                     />
                   ))}
                 </div>
@@ -207,7 +209,7 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
               </div>
               <div className="flex flex-none items-center gap-3.5 max-[680px]:gap-2">
                 {canOpenLesson && (
-                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap max-[680px]:px-5" onClick={startSelectedLesson}>
+                <ActionButton variant="primary" className="min-h-11 w-fit! px-7 whitespace-nowrap max-[680px]:px-5" disabled={flying} onClick={() => startSelectedLesson()}>
                   {selectedLessonStarted ? 'Continue' : (
                     <>
                       <span className="max-[680px]:hidden">Start lesson</span>
@@ -269,6 +271,13 @@ export function LearningPathDetail({ path, completedLessons, onOpenLesson, onBac
       )}
       {showPodcast && podcastLesson && (
         <LessonPodcastModal lesson={podcastLesson} onClose={() => setShowPodcast(false)} />
+      )}
+      {spotlightOrigin && (
+        <div
+          className="lesson-start-spotlight"
+          style={{ '--spot-x': `${spotlightOrigin.x}px`, '--spot-y': `${spotlightOrigin.y}px` }}
+          aria-hidden="true"
+        />
       )}
     </section>
   )

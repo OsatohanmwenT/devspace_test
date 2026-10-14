@@ -39,7 +39,6 @@ export const plans = [
     period: 'per month',
     billedLabel: '$84 billed yearly',
     thenLabel: '$84 a year',
-    compareLabel: '$12',
     badge: 'Best value',
     savingLabel: 'Save 42%',
   },

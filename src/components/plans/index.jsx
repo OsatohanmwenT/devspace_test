@@ -85,7 +85,7 @@ export default function PlansView({ progress, onActivate, onCancel, highlightPer
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#111113] px-5 py-16 text-[#f4f4f6] max-[680px]:px-4 max-[680px]:py-20 [[data-theme=light]_&]:bg-white [[data-theme=light]_&]:text-neutral-800" aria-label="Premium plans">
       <CloseButton onClick={onBack} />
-      <div className="mx-auto grid w-full max-w-[560px] gap-8">
+      <div className="mx-auto grid w-full max-w-[680px] gap-8">
         <header className="mx-auto grid max-w-[630px] gap-3 text-center">
           <span className="text-[11px] font-bold tracking-[.13em] text-[#89baff] uppercase [[data-theme=light]_&]:text-[#3d77eb]">Devspace Premium</span>
           <h1 className="m-0 font-rethink-sans text-[clamp(32px,4vw,48px)] leading-[1.05] font-medium tracking-[-.04em]">Choose the pace that fits you</h1>
@@ -106,7 +106,11 @@ export default function PlansView({ progress, onActivate, onCancel, highlightPer
           {/* The note sits tight under the plans it explains, not floating
               halfway to the button. */}
           <div className="grid gap-3">
-            <div className="grid gap-3" role="radiogroup" aria-label={`Choose a ${activeType.label.toLowerCase()} plan`}>
+            <div
+              className={`grid gap-3 max-[680px]:grid-cols-1 ${visiblePlans.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}
+              role="radiogroup"
+              aria-label={`Choose a ${activeType.label.toLowerCase()} plan`}
+            >
               {visiblePlans.map((plan) => (
                 <PlanCard
                   key={plan.id}
